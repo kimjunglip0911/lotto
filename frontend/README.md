@@ -40,3 +40,4 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 
 - **Lotto Elite 프리미엄 다크 테마 적용**: 글로벌 CSS 배경 및 테마 변수(`--color-background`, `--color-primary` 등) 전면 수정 및 홈 화면 UI 재구성 (`page.tsx`) 완료.
 - **VS Code CSS 경고 해결**: Tailwind CSS v4를 위해 사용된 최신 구문(`@theme`, `@custom-variant`, `@apply`)으로 인해 IDE가 내뿜던 "Unknown at rule" 경고를 없애고자, `.vscode/settings.json` 설정에 `"css.lint.unknownAtRules": "ignore"` 룰을 추가하였습니다.
+- **UI 요소 제거 및 정리**: `Next Power Draw` 카드 내부의 `SECURE ALGORITHM` 뱃지, 제목, 타이머 텍스트, `Estimated Jackpot` 정보를 제거하여 사용자가 번호 생성에 더 집중할 수 있도록 단순화하였습니다.

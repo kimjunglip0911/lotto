@@ -48,7 +48,7 @@ trigger: always_on
 
 - **Tailwind Utility First**: 별도의 CSS 파일 생성 대신 Tailwind 유틸리티 클래스를 우선 사용하세요.
 - **일관성**: 간격(Spacing), 그림자(Soft Shadows), 타이포그래피 계층을 통일하세요.
-- **Responsive**: **14인치 노트북**과 **27인치 모니터**에 최적화된 반응형 디자인을 우선 고려하세요.
+- **Responsive**: 반응형 디자인을 우선 고려하세요.
 - **Chart Standard**: 차트 구현 시 **ApexCharts (`react-apexcharts`)**를 표준으로 사용합니다. Next.js App Router 환경의 SSR 에러(`window is not defined`) 방지를 위해 반드시 `next/dynamic`을 사용하여 `ssr: false` 옵션으로 동적 임포트하세요.
 
 ## 6. 문서 동기화
