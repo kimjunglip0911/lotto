@@ -9,7 +9,7 @@ import { EliteMembers } from '@/components/page-specific/home/EliteMembers';
 export default function Home() {
   return (
     <div className="bg-background min-h-screen flex justify-center w-full">
-      <div className="bg-background text-foreground font-display min-h-screen flex flex-col w-full lg:w-[95%] xl:w-[90%] 2xl:w-[85%] max-w-[1600px] border-x border-card-border/30 relative shadow-2xl">
+      <div className="bg-background text-foreground font-display min-h-screen flex flex-col w-full lg:w-[95%] xl:w-[95%] 2xl:w-[90%] max-w-[1920px] border-x border-card-border/30 relative shadow-2xl">
         <Header />
 
         {/* Main Content */}

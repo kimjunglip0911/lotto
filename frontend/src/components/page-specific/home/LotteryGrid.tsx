@@ -21,7 +21,7 @@ export function LotteryGrid() {
                 <div className="absolute top-0 inset-x-0 h-40 bg-primary/20 blur-[60px] pointer-events-none rounded-t-3xl"></div>
 
                 {/* 10 Sets Grid - Card based with large gaps */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 3xl:grid-cols-5 gap-6 xl:gap-8 z-10 mb-8">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6 xl:gap-8 z-10 mb-8">
                     {sets.map((setInfo, index) => (
                         <LotteryCard
                             key={index}
