@@ -61,11 +61,8 @@ def import_lotto_data():
         # SQLite OR REPLACE를 사용하기 위해 DataFrame을 리스트로 변환하여 수동 삽입
         cursor = conn.cursor()
         
-        insert_query = """
-        INSERT OR REPLACE INTO lotto_winners 
-        (draw_no, num1, num2, num3, num4, num5, num6, bonus_num, winner_count, winner_amount)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """
+        from . import queries
+        insert_query = queries.INSERT_OR_REPLACE_WINNER
         
         data_to_insert = df_lotto.values.tolist()
         cursor.executemany(insert_query, data_to_insert)

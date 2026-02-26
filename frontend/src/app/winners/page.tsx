@@ -22,22 +22,94 @@ export default function WinnersPage() {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [winners, setWinners] = useState<LottoWinner[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [editingDrawNo, setEditingDrawNo] = useState<number | null>(null);
+    const [editValues, setEditValues] = useState<{ count: string; amount: string }>({ count: '', amount: '' });
+
+    const fetchWinners = async () => {
+        try {
+            const response = await fetch('http://localhost:8000/api/winners', { cache: 'no-store' });
+            if (!response.ok) throw new Error('Failed to fetch');
+            const data = await response.json();
+            setWinners(data);
+        } catch (error) {
+            console.error('Error fetching winners:', error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     useEffect(() => {
-        async function fetchWinners() {
-            try {
-                const response = await fetch('http://localhost:8000/api/winners');
-                if (!response.ok) throw new Error('Failed to fetch');
-                const data = await response.ok ? await response.json() : [];
-                setWinners(data);
-            } catch (error) {
-                console.error('Error fetching winners:', error);
-            } finally {
-                setIsLoading(false);
-            }
-        }
         fetchWinners();
     }, []);
+
+    const handleDeleteWinner = async (drawNo: number) => {
+        if (!confirm(`${drawNo}회차 당첨 정보를 삭제하시겠습니까?`)) return;
+
+        try {
+            const response = await fetch(`http://localhost:8000/api/winners/${drawNo}`, {
+                method: 'DELETE',
+            });
+
+            if (response.ok) {
+                alert('삭제되었습니다.');
+                fetchWinners(); // 리스트 갱신
+            } else {
+                const error = await response.json();
+                alert(`삭제 실패: ${error.detail}`);
+            }
+        } catch (error) {
+            console.error('Error deleting winner:', error);
+            alert('삭제 중 오류가 발생했습니다.');
+        }
+    };
+
+    const startEditing = (winner: LottoWinner) => {
+        setEditingDrawNo(winner.draw_no);
+        setEditValues({
+            count: winner.winner_count?.toString() || '',
+            amount: winner.winner_amount?.toString() || '',
+        });
+    };
+
+    const cancelEditing = () => {
+        setEditingDrawNo(null);
+    };
+
+    const saveStats = async (drawNo: number) => {
+        try {
+            const count = editValues.count.trim() === '' ? null : parseInt(editValues.count);
+            const amount = editValues.amount.trim() === '' ? null : parseInt(editValues.amount);
+
+            if (editValues.count.trim() !== '' && isNaN(count!)) {
+                alert('당첨자 수는 숫자여야 합니다.');
+                return;
+            }
+            if (editValues.amount.trim() !== '' && isNaN(amount!)) {
+                alert('당첨금은 숫자여야 합니다.');
+                return;
+            }
+
+            const response = await fetch(`http://localhost:8000/api/winners/${drawNo}/stats`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    winner_count: count,
+                    winner_amount: amount,
+                }),
+            });
+
+            if (response.ok) {
+                setEditingDrawNo(null);
+                fetchWinners();
+            } else {
+                const error = await response.json();
+                alert(`저장 실패: ${error.detail}`);
+            }
+        } catch (error) {
+            console.error('Error updating stats:', error);
+            alert('수정 중 오류가 발생했습니다.');
+        }
+    };
 
     const getBallColor = (num: number) => {
         if (num <= 10) return 'bg-[#fbc400] shadow-[0_0_10px_rgba(251,196,0,0.4)]';
@@ -74,6 +146,7 @@ export default function WinnersPage() {
                                             <th className="p-5 text-slate-400 font-semibold text-sm uppercase tracking-wider text-center">보너스</th>
                                             <th className="p-5 text-slate-400 font-semibold text-sm uppercase tracking-wider text-right">당첨자(명)</th>
                                             <th className="p-5 text-slate-400 font-semibold text-sm uppercase tracking-wider text-right">1등 당첨금(원)</th>
+                                            <th className="p-5 text-slate-400 font-semibold text-sm uppercase tracking-wider text-center">관리</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-card-border/20">
@@ -104,10 +177,69 @@ export default function WinnersPage() {
                                                     </div>
                                                 </td>
                                                 <td className="p-5 text-right font-medium text-slate-300">
-                                                    {winner.winner_count?.toLocaleString() || '-'}
+                                                    {editingDrawNo === winner.draw_no ? (
+                                                        <input
+                                                            type="text"
+                                                            value={editValues.count}
+                                                            onChange={(e) => setEditValues({ ...editValues, count: e.target.value })}
+                                                            className="w-20 bg-black/40 border border-primary/40 rounded px-2 py-1 text-right text-sm text-white focus:outline-none focus:border-primary"
+                                                            placeholder="명"
+                                                        />
+                                                    ) : (
+                                                        winner.winner_count?.toLocaleString() || '-'
+                                                    )}
                                                 </td>
                                                 <td className="p-5 text-right font-bold text-primary">
-                                                    {winner.winner_amount?.toLocaleString() || '-'}
+                                                    {editingDrawNo === winner.draw_no ? (
+                                                        <input
+                                                            type="text"
+                                                            value={editValues.amount}
+                                                            onChange={(e) => setEditValues({ ...editValues, amount: e.target.value })}
+                                                            className="w-32 bg-black/40 border border-primary/40 rounded px-2 py-1 text-right text-sm text-primary focus:outline-none focus:border-primary"
+                                                            placeholder="원"
+                                                        />
+                                                    ) : (
+                                                        winner.winner_amount?.toLocaleString() || '-'
+                                                    )}
+                                                </td>
+                                                <td className="p-5 text-center">
+                                                    <div className="flex items-center justify-center gap-2">
+                                                        {editingDrawNo === winner.draw_no ? (
+                                                            <>
+                                                                <button
+                                                                    onClick={() => saveStats(winner.draw_no)}
+                                                                    className="p-1.5 text-green-400 hover:bg-green-400/10 rounded-lg transition-all"
+                                                                    title="저장"
+                                                                >
+                                                                    <span className="material-symbols-outlined text-[18px]">check</span>
+                                                                </button>
+                                                                <button
+                                                                    onClick={cancelEditing}
+                                                                    className="p-1.5 text-slate-400 hover:bg-white/10 rounded-lg transition-all"
+                                                                    title="취소"
+                                                                >
+                                                                    <span className="material-symbols-outlined text-[18px]">close</span>
+                                                                </button>
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <button
+                                                                    onClick={() => startEditing(winner)}
+                                                                    className="p-1.5 text-slate-500 hover:text-primary hover:bg-primary/10 rounded-lg transition-all"
+                                                                    title="수정"
+                                                                >
+                                                                    <span className="material-symbols-outlined text-[18px]">edit</span>
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => handleDeleteWinner(winner.draw_no)}
+                                                                    className="p-1.5 text-slate-500 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-all"
+                                                                    title="삭제"
+                                                                >
+                                                                    <span className="material-symbols-outlined text-[18px]">delete</span>
+                                                                </button>
+                                                            </>
+                                                        )}
+                                                    </div>
                                                 </td>
                                             </tr>
                                         ))}

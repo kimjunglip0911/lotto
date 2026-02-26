@@ -9,7 +9,7 @@ export function Header({ onMenuClick }: HeaderProps) {
         <header className="flex items-center justify-between p-4 sticky top-0 z-50 bg-background/95 backdrop-blur-md border-b border-card-border/30">
             <button
                 onClick={onMenuClick}
-                className="text-slate-400 hover:text-white transition-colors"
+                className="text-slate-400 hover:text-white transition-colors cursor-pointer"
             >
                 <span className="material-symbols-outlined" style={{ fontSize: '28px' }}>menu</span>
             </button>

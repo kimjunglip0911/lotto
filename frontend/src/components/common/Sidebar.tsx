@@ -15,23 +15,24 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const menuItems = [
     { title: '로또 번호 생성기', icon: 'casino', href: '/' },
     { title: '역대 당첨 리스트', icon: 'format_list_bulleted', href: '/winners' },
+    { title: '번호 분석', icon: 'analytics', href: '/analysis' },
+    { title: '추첨 번호 풀', icon: 'inventory_2', href: '/drawings' },
   ];
 
   return (
     <>
       {/* Backdrop */}
       {isOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] transition-opacity duration-300"
           onClick={onClose}
         />
       )}
 
       {/* Sidebar Panel */}
-      <aside 
-        className={`fixed top-0 left-0 h-full w-72 bg-card-bg border-r border-card-border/30 z-[70] transform transition-transform duration-300 ease-in-out ${
-          isOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
+      <aside
+        className={`fixed top-0 left-0 h-full w-72 bg-card-bg border-r border-card-border/30 z-[70] transform transition-transform duration-300 ease-in-out ${isOpen ? 'translate-x-0' : '-translate-x-full'
+          }`}
       >
         <div className="flex flex-col h-full">
           {/* Header */}
@@ -40,7 +41,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               <span className="material-symbols-outlined text-primary" style={{ fontSize: '28px' }}>monetization_on</span>
               <span className="text-white font-bold text-lg">LOTTO AI</span>
             </div>
-            <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors">
+            <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors cursor-pointer">
               <span className="material-symbols-outlined">close</span>
             </button>
           </div>
@@ -50,15 +51,14 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
             {menuItems.map((item) => {
               const isActive = pathname === item.href;
               return (
-                <Link 
-                  key={item.href} 
+                <Link
+                  key={item.href}
                   href={item.href}
                   onClick={onClose}
-                  className={`flex items-center gap-4 p-4 rounded-xl transition-all duration-200 group ${
-                    isActive 
-                      ? 'bg-primary/20 text-white' 
-                      : 'text-slate-400 hover:bg-white/5 hover:text-white'
-                  }`}
+                  className={`flex items-center gap-4 p-4 rounded-xl transition-all duration-200 group cursor-pointer ${isActive
+                    ? 'bg-primary/20 text-white'
+                    : 'text-slate-400 hover:bg-white/5 hover:text-white'
+                    }`}
                 >
                   <span className={`material-symbols-outlined ${isActive ? 'text-primary' : 'group-hover:text-primary'}`}>
                     {item.icon}

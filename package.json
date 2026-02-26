@@ -1,12 +1,21 @@
 {
     "name": "lotto",
     "version": "1.0.0",
-    "description": "Lotto AI root package",
+    "workspaces": [
+        "frontend"
+    ],
     "scripts": {
-        "dev": "npm run dev --prefix frontend",
+        "dev": "concurrently \"npm run dev -w frontend\" \"npm run dev:backend\"",
         "dev:backend": "cd backend && python -m uvicorn main:app --reload",
-        "build": "npm run build --prefix frontend",
-        "start": "npm run start --prefix frontend",
-        "lint": "npm run lint --prefix frontend"
+        "build": "npm run build -w frontend",
+        "start": "npm run start -w frontend",
+        "lint": "npm run lint -w frontend"
+    },
+    "devDependencies": {
+        "@tailwindcss/postcss": "^4.2.1",
+        "autoprefixer": "^10.4.27",
+        "concurrently": "^9.2.1",
+        "postcss": "^8.5.6",
+        "tailwindcss": "^4.2.1"
     }
 }

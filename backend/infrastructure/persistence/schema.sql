@@ -22,5 +22,6 @@ CREATE TABLE IF NOT EXISTS lotto_drawings (
     num4 INTEGER NOT NULL,
     num5 INTEGER NOT NULL,
     num6 INTEGER NOT NULL,
-    bonus_num INTEGER NOT NULL
+    bonus_num INTEGER NOT NULL,
+    draw_count INTEGER NOT NULL
 );
