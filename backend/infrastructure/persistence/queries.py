@@ -23,12 +23,14 @@ UPDATE_WINNER_STATS = """
 # Lotto Drawings Queries
 GET_ALL_DRAWINGS = "SELECT * FROM lotto_drawings ORDER BY id DESC"
 DELETE_ALL_DRAWINGS = "DELETE FROM lotto_drawings"
+DELETE_DRAWINGS_BY_NO = "DELETE FROM lotto_drawings WHERE draw_no = ?"
 GET_MAX_DRAW_COUNT = "SELECT MAX(draw_count) FROM lotto_drawings"
+GET_DISTINCT_DRAW_NOS = "SELECT DISTINCT draw_no FROM lotto_drawings WHERE draw_no IS NOT NULL ORDER BY draw_no DESC"
 
 INSERT_DRAWING = """
     INSERT INTO lotto_drawings 
-    (group_id, num1, num2, num3, num4, num5, num6, bonus_num, draw_count)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    (group_id, num1, num2, num3, num4, num5, num6, bonus_num, draw_count, method, draw_no)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 """
 
 # Database Initialization Queries
@@ -58,6 +60,8 @@ CREATE_DRAWINGS_TABLE = """
         num5 INTEGER NOT NULL,
         num6 INTEGER NOT NULL,
         bonus_num INTEGER NOT NULL,
-        draw_count INTEGER NOT NULL
+        draw_count INTEGER NOT NULL,
+        method TEXT,
+        draw_no INTEGER
     )
 """

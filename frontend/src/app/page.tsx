@@ -3,11 +3,9 @@
 import React, { useState } from 'react';
 import { Header } from '@/components/common/Header';
 import { Sidebar } from '@/components/common/Sidebar';
-import { BottomNav } from '@/components/common/BottomNav';
 import { LotteryGrid } from '@/components/page-specific/home/LotteryGrid';
 import { AlgorithmInfo } from '@/components/page-specific/home/AlgorithmInfo';
 import { WinningStats } from '@/components/page-specific/home/WinningStats';
-import { EliteMembers } from '@/components/page-specific/home/EliteMembers';
 
 export default function Home() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -19,14 +17,11 @@ export default function Home() {
         <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
         {/* Main Content */}
-        <main className="flex-1 overflow-y-auto pb-24 px-4 pt-4 space-y-8">
+        <main className="flex-1 overflow-y-auto pb-8 px-4 pt-4 space-y-8">
           <LotteryGrid />
           <AlgorithmInfo />
           <WinningStats />
-          <EliteMembers />
         </main>
-
-        <BottomNav />
       </div>
     </div>
   );

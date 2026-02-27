@@ -209,10 +209,6 @@ export function LotteryGrid() {
 
                 {/* Top: Winning Number Input */}
                 <div className="flex flex-col lg:flex-row lg:justify-center items-center gap-4 lg:gap-8 mb-10 z-10 w-full">
-                    <h3 className="text-white/80 font-medium flex items-center gap-2 shrink-0">
-                        <span className="material-symbols-outlined text-primary">celebration</span>
-                        이번 회차 당첨 번호 입력
-                    </h3>
                     <div className="flex flex-wrap justify-center items-center gap-2 sm:gap-3 bg-white/5 p-4 rounded-2xl border border-white/10 backdrop-blur-md">
                         <div className="flex gap-2">
                             {winningNumbers.map((num, i) => (
@@ -223,7 +219,7 @@ export function LotteryGrid() {
                                     max="45"
                                     value={num || ''}
                                     onChange={(e) => handleWinningNumberChange(i, e.target.value)}
-                                    placeholder={`${i + 1}`}
+                                    placeholder=""
                                     className="w-10 h-10 sm:w-12 sm:h-12 bg-slate-900 border border-white/20 rounded-full text-center text-white font-bold focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                 />
                             ))}
@@ -236,7 +232,7 @@ export function LotteryGrid() {
                                 max="45"
                                 value={winningBonus || ''}
                                 onChange={(e) => handleBonusNumberChange(e.target.value)}
-                                placeholder="B"
+                                placeholder=""
                                 className="w-10 h-10 sm:w-12 sm:h-12 bg-slate-900 border border-emerald-500/50 rounded-full text-center text-emerald-400 font-bold focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                             />
                         </div>

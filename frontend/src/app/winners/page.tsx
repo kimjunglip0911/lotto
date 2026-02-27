@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from 'react';
 import { Header } from '@/components/common/Header';
 import { Sidebar } from '@/components/common/Sidebar';
-import { BottomNav } from '@/components/common/BottomNav';
 
 interface LottoWinner {
     draw_no: number;
@@ -125,7 +124,7 @@ export default function WinnersPage() {
                 <Header onMenuClick={() => setIsSidebarOpen(true)} />
                 <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
-                <main className="flex-1 overflow-y-auto pb-24 px-4 pt-6 space-y-6">
+                <main className="flex-1 overflow-y-auto pb-12 px-4 pt-6 space-y-6">
                     <div className="flex flex-col gap-2 mb-8">
                         <h2 className="text-3xl font-bold text-white tracking-tight">역대 당첨 리스트</h2>
                         <p className="text-slate-400 text-sm">전체 회차의 당첨 번호와 통계를 최신순으로 확인하세요.</p>
@@ -249,8 +248,6 @@ export default function WinnersPage() {
                         </div>
                     )}
                 </main>
-
-                <BottomNav />
             </div>
         </div>
     );
