@@ -25,6 +25,17 @@ GET_ALL_DRAWINGS = "SELECT * FROM lotto_drawings ORDER BY id DESC"
 DELETE_ALL_DRAWINGS = "DELETE FROM lotto_drawings"
 DELETE_DRAWINGS_BY_NO = "DELETE FROM lotto_drawings WHERE draw_no = ?"
 GET_MAX_DRAW_COUNT = "SELECT MAX(draw_count) FROM lotto_drawings"
+GET_SET_MAX_DRAW_COUNT = """
+    SELECT MAX(draw_count) FROM lotto_drawings 
+    WHERE num1=? AND num2=? AND num3=? AND num4=? AND num5=? AND num6=? AND bonus_num=?
+"""
+GET_DRAWING_ID_BY_NUMBERS = """
+    SELECT id FROM lotto_drawings 
+    WHERE num1=? AND num2=? AND num3=? AND num4=? AND num5=? AND num6=? AND bonus_num=? AND draw_no=?
+    LIMIT 1
+"""
+UPDATE_DRAW_COUNT = "UPDATE lotto_drawings SET draw_count = draw_count + 1 WHERE id = ?"
+DELETE_GROUP_DRAWINGS = "DELETE FROM lotto_drawings WHERE group_id LIKE 'group_%'"
 GET_DISTINCT_DRAW_NOS = "SELECT DISTINCT draw_no FROM lotto_drawings WHERE draw_no IS NOT NULL ORDER BY draw_no DESC"
 
 INSERT_DRAWING = """

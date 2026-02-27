@@ -6,6 +6,7 @@ import { LotteryCard } from './LotteryCard';
 interface LotterySet {
     numbers: number[];
     bonusNum: number;
+    method?: string; // 추천 기법 정보 추가
 }
 
 export function LotteryGrid() {
@@ -39,7 +40,7 @@ export function LotteryGrid() {
         const numbers = selected.slice(0, 6).sort((a, b) => a - b);
         const bonusNum = selected[6];
 
-        return { numbers, bonusNum };
+        return { numbers, bonusNum, method: "Random Generation" };
     };
 
     const handleAIRecommend = async () => {
@@ -57,10 +58,11 @@ export function LotteryGrid() {
                 return;
             }
 
-            // 추천된 데이터를 UI 형식에 맞춰 변환
+            // 추천된 데이터를 UI 형식에 맞춰 변환 (기법 정보 포함)
             const recommendedSets: LotterySet[] = data.map((d: any) => ({
                 numbers: [d.num1, d.num2, d.num3, d.num4, d.num5, d.num6],
-                bonusNum: d.bonus_num
+                bonusNum: d.bonus_num,
+                method: d.method // 백엔드에서 온 기법명 그대로 사용
             }));
 
             // 애니메이션 효과를 위해 잠시 대기 후 세팅
@@ -87,14 +89,15 @@ export function LotteryGrid() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     group_id: groupId,
-                    drawings: sets.map(s => ({
+                    drawings: sets.map((s) => ({
                         num1: s.numbers[0],
                         num2: s.numbers[1],
                         num3: s.numbers[2],
                         num4: s.numbers[3],
                         num5: s.numbers[4],
                         num6: s.numbers[5],
-                        bonus_num: s.bonusNum
+                        bonus_num: s.bonusNum,
+                        method: s.method || "Manual Selection" // 넘버링 대신 기법명 또는 기본값 저장
                     }))
                 })
             });

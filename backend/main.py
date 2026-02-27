@@ -87,6 +87,7 @@ class LottoDrawingCreate(BaseModel):
     num5: int
     num6: int
     bonus_num: int
+    method: Optional[str] = None
 
 class LottoDrawingGroup(BaseModel):
     group_id: str
@@ -581,9 +582,10 @@ def generate_ai_drawings(draw_no: Optional[int] = None):
             nums = res['numbers']
             remaining = [n for n in range(1, 46) if n not in nums]
             bonus = int(np.random.choice(remaining))
+            # 초기 카운트는 0으로 설정 (확정 시 1이 됨)
             cursor.execute(
                 queries.INSERT_DRAWING,
-                ("AI_GENERATED", *nums, bonus, next_count, res['method'], target_draw_no)
+                ("AI_GENERATED", *nums, bonus, 0, res['method'], target_draw_no)
             )
         conn.commit()
         conn.close()
@@ -676,16 +678,56 @@ def recommend_drawings():
         conn = sqlite3.connect(db_path)
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
-        cursor.execute(queries.GET_ALL_DRAWINGS)
+        
+        # 1. 가장 최신 회차(draw_no) 조회
+        cursor.execute("SELECT MAX(draw_no) FROM lotto_drawings")
+        latest_row = cursor.fetchone()
+        latest_draw_no = latest_row[0] if latest_row and latest_row[0] is not None else None
+        
+        if latest_draw_no is None:
+            conn.close()
+            return []
+            
+        # 2. 해당 최신 회차의 데이터 조회
+        cursor.execute("SELECT * FROM lotto_drawings WHERE draw_no = ?", (latest_draw_no,))
         rows = cursor.fetchall()
         conn.close()
         
         if not rows:
             return []
+        
+        # 3. 7가지 기법별 균등 추천 로직
+        # 기법별로 그룹화
+        by_method = {}
+        for row in rows:
+            m = row['method']
+            # Fallback 표시 제거하여 기본 기법명으로 그룹화
+            base_m = m.replace(" (Fallback)", "")
+            if base_m not in by_method:
+                by_method[base_m] = []
+            by_method[base_m].append(dict(row))
+        
+        # 각 기법 내에서 랜덤 셔플
+        for m in by_method:
+            random.shuffle(by_method[m])
             
-        # 100개 중 10개 랜덤 선택
-        sample_size = min(len(rows), 10)
-        recommended = random.sample([dict(row) for row in rows], sample_size)
+        recommended = []
+        methods = list(by_method.keys())
+        
+        # 우선 순환하며 1개씩 선택 (최대 7개)
+        for m in methods:
+            if by_method[m]:
+                recommended.append(by_method[m].pop())
+        
+        # 나머지 10개까지를 남은 전체 풀에서 랜덤하게 채움
+        remaining_pool = []
+        for m in by_method:
+            remaining_pool.extend(by_method[m])
+            
+        if remaining_pool and len(recommended) < 10:
+            sample_size = min(len(remaining_pool), 10 - len(recommended))
+            recommended.extend(random.sample(remaining_pool, sample_size))
+            
         return recommended
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -697,19 +739,33 @@ def save_drawings(group: LottoDrawingGroup):
         conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
         
-        # 현재 최대 draw_count 조회
-        cursor.execute(queries.GET_MAX_DRAW_COUNT)
+        # 1. 자동 회차(draw_no) 판별: 최신 당첨 회차 + 1
+        cursor.execute("SELECT MAX(draw_no) FROM lotto_winners")
         row = cursor.fetchone()
-        max_count = row[0] if row and row[0] is not None else 0
-        next_count = max_count + 1
+        latest_winner_no = row[0] if row and row[0] is not None else 0
+        target_draw_no = latest_winner_no + 1
         
-        # 여러 세트 저장
+        # 2. 개별 세트별 누적 카운팅 및 저장 (기본적으로 기존 행 업데이트)
         for d in group.drawings:
-            cursor.execute(queries.INSERT_DRAWING, 
-                (group.group_id, d.num1, d.num2, d.num3, d.num4, d.num5, d.num6, d.bonus_num, next_count, "Manual Selection"))
+            # 해당 회차에 이미 번호 세트가 존재하는지 확인
+            cursor.execute(queries.GET_DRAWING_ID_BY_NUMBERS, 
+                (d.num1, d.num2, d.num3, d.num4, d.num5, d.num6, d.bonus_num, target_draw_no))
+            row = cursor.fetchone()
+            
+            if row:
+                # 기존 행이 있으면 카운트만 증가 (업데이트)
+                drawing_id = row[0]
+                cursor.execute(queries.UPDATE_DRAW_COUNT, (drawing_id,))
+            else:
+                # 만약 기존 풀에 없는 번호라면 (수동 입력 등) 신규 삽입
+                cursor.execute(queries.INSERT_DRAWING, 
+                    ("AI_GENERATED", d.num1, d.num2, d.num3, d.num4, d.num5, d.num6, d.bonus_num, 1, d.method or "Manual Selection", target_draw_no))
+            
+        # 3. 데이터 클리닝: 기존 임시 group_ 데이터 삭제 (User request)
+        cursor.execute(queries.DELETE_GROUP_DRAWINGS)
             
         conn.commit()
         conn.close()
-        return {"message": f"성공적으로 저장되었습니다. (추첨 횟수: {next_count})"}
+        return {"message": "번호 확정 및 저장이 완료되었습니다. (임시 데이터 정리 완료)"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
