@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Optional
@@ -34,7 +34,7 @@ class LottoWinner(BaseModel):
     num4: int
     num5: int
     num6: int
-    bonus_num: int
+    bonus_num: int = 0
     winner_count: Optional[int] = None
     winner_amount: Optional[int] = None
 
@@ -86,7 +86,6 @@ class LottoDrawingCreate(BaseModel):
     num4: int
     num5: int
     num6: int
-    bonus_num: int
     method: Optional[str] = None
 
 class LottoDrawingGroup(BaseModel):
@@ -202,13 +201,16 @@ def get_descriptive_stats():
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/analysis/gaps")
-def get_gap_analysis():
+def get_gap_analysis(draw_no: int = Query(None)):
     import pandas as pd
     db_path = get_db_path()
     try:
         conn = sqlite3.connect(db_path)
         df = pd.read_sql_query(queries.GET_ALL_WINNERS, conn)
         conn.close()
+
+        if draw_no:
+            df = df[df['draw_no'] < draw_no]
 
         if df.empty:
             return {"gaps": {}}
@@ -240,13 +242,18 @@ class AnalysisStatsResponse(BaseModel):
     high_low: dict # {high: int, low: int}
 
 @app.get("/api/analysis/stats", response_model=AnalysisStatsResponse)
-def get_analysis_stats():
+def get_analysis_stats(draw_no: int = Query(None)):
     db_path = get_db_path()
     try:
         conn = sqlite3.connect(db_path)
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
-        cursor.execute(queries.GET_ALL_WINNERS)
+        
+        if draw_no:
+            cursor.execute("SELECT * FROM lotto_winners WHERE draw_no < ? ORDER BY draw_no DESC", (draw_no,))
+        else:
+            cursor.execute(queries.GET_ALL_WINNERS)
+            
         rows = cursor.fetchall()
         conn.close()
 
@@ -320,7 +327,7 @@ def get_analysis_groups():
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/analysis/timeframes")
-def get_analysis_timeframes():
+def get_analysis_timeframes(draw_no: int = Query(None)):
     import pandas as pd
     import numpy as np
     db_path = get_db_path()
@@ -328,6 +335,9 @@ def get_analysis_timeframes():
         conn = sqlite3.connect(db_path)
         df = pd.read_sql_query(queries.GET_ALL_WINNERS, conn)
         conn.close()
+
+        if draw_no:
+            df = df[df['draw_no'] < draw_no]
 
         if df.empty:
             return {}
@@ -393,9 +403,9 @@ cdm_service = LottoCDMService(get_db_path())
 feature_service = LottoFeatureService(get_db_path())
 
 @app.get("/api/analysis/predict/ai")
-def get_ai_prediction():
+def get_ai_prediction(draw_no: int = Query(None)):
     try:
-        prediction = ai_service.predict_next()
+        prediction = ai_service.predict_next(draw_no=draw_no)
         if prediction is None:
             # 데이터가 부족하거나 모델이 없을 경우 학습 시도
             if ai_service.train():
@@ -413,9 +423,9 @@ def get_ai_prediction():
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/analysis/predict/rf")
-def get_rf_prediction():
+def get_rf_prediction(draw_no: int = Query(None)):
     try:
-        prediction = rf_service.predict_next()
+        prediction = rf_service.predict_next(draw_no=draw_no)
         if prediction is None:
             # 데이터가 부족하거나 모델이 없을 경우 학습 시도
             if rf_service.train():
@@ -433,9 +443,9 @@ def get_rf_prediction():
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/analysis/clustering")
-def get_clustering_analysis():
+def get_clustering_analysis(draw_no: int = Query(None)):
     try:
-        results = clustering_service.analyze()
+        results = clustering_service.analyze(draw_no=draw_no)
         return results
     except Exception as e:
         import traceback
@@ -443,9 +453,9 @@ def get_clustering_analysis():
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/analysis/regression")
-def get_regression_analysis():
+def get_regression_analysis(draw_no: int = Query(None)):
     try:
-        results = regression_service.analyze()
+        results = regression_service.analyze(draw_no=draw_no)
         return results
     except Exception as e:
         import traceback
@@ -453,9 +463,9 @@ def get_regression_analysis():
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/analysis/cdm")
-def get_cdm_analysis():
+def get_cdm_analysis(draw_no: int = Query(None)):
     try:
-        results = cdm_service.analyze()
+        results = cdm_service.analyze(draw_no=draw_no)
         return results
     except Exception as e:
         import traceback
@@ -463,9 +473,9 @@ def get_cdm_analysis():
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/analysis/features")
-def get_feature_analysis(limit: int = 50):
+def get_feature_analysis(draw_no: int = Query(None), limit: int = 50):
     try:
-        results = feature_service.analyze(limit=limit)
+        results = feature_service.analyze(draw_no=draw_no, limit=limit)
         return results
     except Exception as e:
         import traceback
@@ -477,84 +487,225 @@ def generate_ai_drawings(draw_no: Optional[int] = None):
     try:
         results = []
         
-        # 1. MLP Prediction
-        print("Starting MLP Prediction...")
-        mlp_pred = ai_service.predict_next()
+        # 1. MLP TOP6
+        print(f"Starting MLP Prediction for draw_no: {draw_no}...")
+        mlp_pred = ai_service.predict_next(draw_no=draw_no)
+        num_sets = 2
         if mlp_pred and sum(mlp_pred) > 0:
-            print("MLP Prediction found, generating 10 sets...")
             p = np.array(mlp_pred, dtype='float64')
-            p /= p.sum() # Normalize
-            p[0] = 1.0 - p[1:].sum() # Force exact 1.0 sum for numpy
-            for _ in range(10):
-                nums = sorted(np.random.choice(range(1, 46), 6, replace=False, p=p).tolist())
-                results.append({"method": "MLP Prediction", "numbers": nums})
+            p /= p.sum()
+            p[0] = 1.0 - p[1:].sum()
+            
+            # Set 1: Pure Top 6 (확정)
+            top6_indices = np.argsort(p)[-6:][::-1]
+            top6_nums = sorted([int(i + 1) for i in top6_indices])
+            results.append({"method": "MLP TOP6 (Pure)", "numbers": top6_nums})
+            
+            # Set 2: Probability Sampling (확률)
+            nums = sorted(np.random.choice(range(1, 46), 6, replace=False, p=p).tolist())
+            results.append({"method": "MLP TOP6 (Prob)", "numbers": nums})
         else:
-            print("MLP Prediction empty, using fallback...")
-            # Fallback
-            for _ in range(10):
+            for _ in range(num_sets):
                 nums = sorted(random.sample(range(1, 46), 6))
-                results.append({"method": "MLP Prediction (Fallback)", "numbers": nums})
+                results.append({"method": "MLP TOP6 (Fallback)", "numbers": nums})
 
-        # 2. Random Forest
-        print("Starting RF Prediction...")
-        rf_pred = rf_service.predict_next()
+        # 2. RF TOP6
+        print(f"Starting RF Prediction for draw_no: {draw_no}...")
+        rf_pred = rf_service.predict_next(draw_no=draw_no)
+        num_sets = 2
         if rf_pred and sum(rf_pred) > 0:
-            print("RF Prediction found, generating 10 sets...")
             p = np.array(rf_pred, dtype='float64')
             p /= p.sum()
             p[0] = 1.0 - p[1:].sum()
-            for _ in range(10):
-                nums = sorted(np.random.choice(range(1, 46), 6, replace=False, p=p).tolist())
-                results.append({"method": "Random Forest", "numbers": nums})
+            
+            # Set 1: Pure Top 6 (확정)
+            top6_indices = np.argsort(p)[-6:][::-1]
+            top6_nums = sorted([int(i + 1) for i in top6_indices])
+            results.append({"method": "RF TOP6 (Pure)", "numbers": top6_nums})
+            
+            # Set 2: Probability Sampling (확률)
+            nums = sorted(np.random.choice(range(1, 46), 6, replace=False, p=p).tolist())
+            results.append({"method": "RF TOP6 (Prob)", "numbers": nums})
         else:
-            print("RF Prediction empty, using fallback...")
-            for _ in range(10):
+            for _ in range(num_sets):
                 nums = sorted(random.sample(range(1, 46), 6))
-                results.append({"method": "Random Forest (Fallback)", "numbers": nums})
+                results.append({"method": "RF TOP6 (Fallback)", "numbers": nums})
 
-        # 3. Clustering & PCA
-        for _ in range(10):
-            nums = sorted(np.random.choice(range(1, 46), 6, replace=False).tolist())
-            results.append({"method": "Clustering Analysis", "numbers": nums})
+        # 3. 군집화 및 PCA
+        print("Starting Clustering Analysis...")
+        try:
+            clustering_data = clustering_service.analyze(draw_no=draw_no)
+            if clustering_data:
+                # 번호별 확률 추출 (구조에 따라 조정 필요, 여기서는 CDM과 유사한 구조로 가정)
+                probs = np.zeros(45)
+                for item in clustering_data:
+                    if 'number' in item and 'probability' in item:
+                        probs[item['number']-1] = item['probability']
+                
+                if probs.sum() > 0:
+                    p = probs / probs.sum()
+                    p[0] = 1.0 - p[1:].sum()
+                    
+                    # Set 1: Pure Top 6
+                    top6_indices = np.argsort(p)[-6:][::-1]
+                    top6_nums = sorted([int(i + 1) for i in top6_indices])
+                    results.append({"method": "군집화 및 PCA (Pure)", "numbers": top6_nums})
+                    
+                    # Set 2: Prob
+                    nums = sorted(np.random.choice(range(1, 46), 6, replace=False, p=p).tolist())
+                    results.append({"method": "군집화 및 PCA (Prob)", "numbers": nums})
+                else: raise ValueError("No cluster data")
+            else: raise ValueError("No clustering_data")
+        except Exception as e:
+            print(f"Clustering Fallback: {e}")
+            for _ in range(2):
+                nums = sorted(random.sample(range(1, 46), 6))
+                results.append({"method": "군집화 및 PCA (Fallback)", "numbers": nums})
 
-        # 4. Linear Regression
-        for _ in range(10):
-            nums = sorted(np.random.choice(range(1, 46), 6, replace=False).tolist())
-            results.append({"method": "Linear Regression", "numbers": nums})
+        # 4. 선형 및 로지스틱 회귀 분석
+        print("Starting Regression Analysis...")
+        try:
+            reg_data = regression_service.analyze(draw_no=draw_no)
+            if reg_data:
+                # 선형 회귀 상위 6개
+                l_probs = np.array([max(0, item.get('linear_weight', 0)) for item in sorted(reg_data, key=lambda x: x['number'])], dtype='float64')
+                if l_probs.sum() > 0:
+                    lp = l_probs / l_probs.sum()
+                    lp[0] = 1.0 - lp[1:].sum()
+                    top6_indices = np.argsort(lp)[-6:][::-1]
+                    results.append({"method": "선형 회귀 (Pure)", "numbers": sorted([int(i + 1) for i in top6_indices])})
+                else:
+                    results.append({"method": "선형 회귀 (Fallback)", "numbers": sorted(random.sample(range(1, 46), 6))})
+                
+                # 로지스틱 회귀 상위 6개
+                log_probs = np.array([max(0, item.get('logistic_weight', 0)) for item in sorted(reg_data, key=lambda x: x['number'])], dtype='float64')
+                if log_probs.sum() > 0:
+                    logp = log_probs / log_probs.sum()
+                    logp[0] = 1.0 - logp[1:].sum()
+                    top6_indices = np.argsort(logp)[-6:][::-1]
+                    results.append({"method": "로지스틱 회귀 (Pure)", "numbers": sorted([int(i + 1) for i in top6_indices])})
+                else:
+                    results.append({"method": "로지스틱 회귀 (Fallback)", "numbers": sorted(random.sample(range(1, 46), 6))})
+            else: raise ValueError("No reg_data")
+        except Exception as e:
+            print(f"Regression Fallback: {e}")
+            for _ in range(2):
+                results.append({"method": "회귀 분석 (Fallback)", "numbers": sorted(random.sample(range(1, 46), 6))})
 
-        # 5. Logistic Regression
-        for _ in range(10):
-            nums = sorted(np.random.choice(range(1, 46), 6, replace=False).tolist())
-            results.append({"method": "Logistic Regression", "numbers": nums})
-
-        # 6. CDM Bayesian Model
+        # 5. CDM 베이지안
         print("Starting CDM Analysis...")
-        cdm_data = cdm_service.analyze()
+        cdm_data = cdm_service.analyze(draw_no=draw_no)
+        num_sets = 2
         if cdm_data:
             cdm_probs = [item['probability'] for item in sorted(cdm_data, key=lambda x: x['number'])]
             if sum(cdm_probs) > 0:
-                print("CDM Data found, generating 10 sets...")
                 p = np.array(cdm_probs, dtype='float64')
                 p /= p.sum()
                 p[0] = 1.0 - p[1:].sum()
-                for _ in range(10):
-                    nums = sorted(np.random.choice(range(1, 46), 6, replace=False, p=p).tolist())
-                    results.append({"method": "CDM Bayesian Model", "numbers": nums})
+                
+                # Set 1: Pure Top 6 (확정)
+                top6_indices = np.argsort(p)[-6:][::-1]
+                top6_nums = sorted([int(i + 1) for i in top6_indices])
+                results.append({"method": "CDM 베이지안 (Pure)", "numbers": top6_nums})
+                
+                # Set 2: Probability Sampling (확률)
+                nums = sorted(np.random.choice(range(1, 46), 6, replace=False, p=p).tolist())
+                results.append({"method": "CDM 베이지안 (Prob)", "numbers": nums})
             else:
-                print("CDM Probs sum 0, using fallback...")
-                for _ in range(10):
+                for _ in range(num_sets):
                     nums = sorted(random.sample(range(1, 46), 6))
-                    results.append({"method": "CDM (Fallback)", "numbers": nums})
+                    results.append({"method": "CDM 베이지안 (Fallback)", "numbers": nums})
         else:
-            for _ in range(10):
+            for _ in range(num_sets):
                 nums = sorted(random.sample(range(1, 46), 6))
-                results.append({"method": "CDM (Fallback)", "numbers": nums})
+                results.append({"method": "CDM 베이지안 (Fallback)", "numbers": nums})
 
-        # 7. Feature Engineering
+        # 6. 특성 공학 및 조합 분석
         print("Starting Feature Engineering...")
-        for _ in range(10):
-            nums = sorted(np.random.choice(range(1, 46), 6, replace=False).tolist())
-            results.append({"method": "Feature Engineering", "numbers": nums})
+        try:
+            feat_data = feature_service.analyze(draw_no=draw_no)
+            if feat_data:
+                # 여러 통계 모델의 가중치 합산
+                total_weights = np.zeros(45)
+                for item in feat_data:
+                    num_idx = item['number'] - 1
+                    # 빈도, 순위 등을 종합적으로 가중치로 환산
+                    total_weights[num_idx] = item.get('weight', 0) + (100 - item.get('rank', 100)) / 10.0
+                
+                if total_weights.sum() > 0:
+                    p = total_weights / total_weights.sum()
+                    p[0] = 1.0 - p[1:].sum()
+                    
+                    # Set 1-2: Pure Top (고정 상위 조합)
+                    top6_indices = np.argsort(p)[-6:][::-1]
+                    results.append({"method": "특성공학 (Pure Top)", "numbers": sorted([int(i + 1) for i in top6_indices])})
+                    
+                    # 조금씩 변형된 상위 조합 (7-12위 등 활용 가능하지만 여기선 하던대로 샘플링)
+                    for i in range(5):
+                        nums = sorted(np.random.choice(range(1, 46), 6, replace=False, p=p).tolist())
+                        results.append({"method": f"특성공학 (Prob-{i+1})", "numbers": nums})
+                else: raise ValueError("No weight sum")
+            else: raise ValueError("No feat_data")
+        except Exception as e:
+            print(f"Feature Engineering Fallback: {e}")
+            for _ in range(6):
+                results.append({"method": "특성공학 (Fallback)", "numbers": sorted(random.sample(range(1, 46), 6))})
+
+        # 7. 6개월 추세 분석
+        print("Starting 6-Month Trend Analysis...")
+        try:
+            timeframe_data = get_analysis_timeframes(draw_no=draw_no)
+            if "6M" in timeframe_data:
+                trends = timeframe_data["6M"]["trends"]
+                weights = np.zeros(45)
+                for t in trends:
+                    idx = t["num"] - 1
+                    weights[idx] = t["data"][-1] if t["data"] else 0
+                
+                if weights.sum() > 0:
+                    p = weights / weights.sum()
+                    p[0] = 1.0 - p[1:].sum()
+                    
+                    # Set 1: Top Trend (확정)
+                    top6_indices = np.argsort(p)[-6:][::-1]
+                    top6_nums = sorted([int(i + 1) for i in top6_indices])
+                    results.append({"method": "6개월 추세 분석 (Pure)", "numbers": top6_nums})
+                    
+                    # Set 2: Trend Sampling (확률)
+                    nums = sorted(np.random.choice(range(1, 46), 6, replace=False, p=p).tolist())
+                    results.append({"method": "6개월 추세 분석 (Prob)", "numbers": nums})
+                else:
+                    raise ValueError("No trend data weights")
+            else:
+                raise ValueError("6M data not found")
+        except Exception as e:
+            print(f"Trend Analysis Fallback: {e}")
+            for _ in range(2):
+                nums = sorted(random.sample(range(1, 46), 6))
+                results.append({"method": "6개월 추세 분석 (Fallback)", "numbers": nums})
+
+        # 8. 번호별 미출현 간격 분석
+        print("Starting Gap Analysis...")
+        try:
+            gap_data = get_gap_analysis(draw_no=draw_no)
+            gaps = gap_data["gaps"]
+            gap_weights = np.array([max(0, gaps.get(str(i), 0)) + 1 for i in range(1, 46)], dtype='float64')
+            p = gap_weights / gap_weights.sum()
+            p[0] = 1.0 - p[1:].sum()
+            
+            # Set 1: Max Gap (확정)
+            top6_indices = np.argsort(p)[-6:][::-1]
+            top6_nums = sorted([int(i + 1) for i in top6_indices])
+            results.append({"method": "번호별 미출현 간격 분석 (Pure)", "numbers": top6_nums})
+            
+            # Set 2: Gap Sampling (확률)
+            nums = sorted(np.random.choice(range(1, 46), 6, replace=False, p=p).tolist())
+            results.append({"method": "번호별 미출현 간격 분석 (Prob)", "numbers": nums})
+        except Exception as e:
+            print(f"Gap Analysis Fallback: {e}")
+            for _ in range(2):
+                nums = sorted(random.sample(range(1, 46), 6))
+                results.append({"method": "번호별 미출현 간격 분석 (Fallback)", "numbers": nums})
 
         print(f"Total results generated: {len(results)}. Saving to DB...")
         conn = sqlite3.connect(get_db_path())
@@ -580,8 +731,8 @@ def generate_ai_drawings(draw_no: Optional[int] = None):
 
         for res in results:
             nums = res['numbers']
-            remaining = [n for n in range(1, 46) if n not in nums]
-            bonus = int(np.random.choice(remaining))
+            # 보너스 번호 제외 (DB 스키마 호환을 위해 0으로 저장)
+            bonus = 0
             # 초기 카운트는 0으로 설정 (확정 시 1이 됨)
             cursor.execute(
                 queries.INSERT_DRAWING,
@@ -628,7 +779,7 @@ def generate_100_sets():
                 selected.add(n)
             
             sorted_nums = sorted(list(selected))
-            bonus = random.choice([n for n in all_nums if n not in selected])
+            bonus = 0 # 보너스 번호 제외
             
             cursor.execute(queries.INSERT_DRAWING, 
                 ("ANALYSIS_POOL", sorted_nums[0], sorted_nums[1], sorted_nums[2], 
@@ -671,7 +822,7 @@ def get_drawings(draw_no: Optional[int] = None):
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/drawings/recommend", response_model=List[dict])
-def recommend_drawings():
+def recommend_drawings(draw_no: Optional[int] = Query(None)):
     import random
     db_path = get_db_path()
     try:
@@ -679,17 +830,20 @@ def recommend_drawings():
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
         
-        # 1. 가장 최신 회차(draw_no) 조회
-        cursor.execute("SELECT MAX(draw_no) FROM lotto_drawings")
-        latest_row = cursor.fetchone()
-        latest_draw_no = latest_row[0] if latest_row and latest_row[0] is not None else None
+        # 1. 기준 회차(draw_no) 확정
+        if draw_no:
+            target_draw_no = draw_no
+        else:
+            cursor.execute("SELECT MAX(draw_no) FROM lotto_drawings")
+            latest_row = cursor.fetchone()
+            target_draw_no = latest_row[0] if latest_row and latest_row[0] is not None else None
         
-        if latest_draw_no is None:
+        if target_draw_no is None:
             conn.close()
             return []
             
-        # 2. 해당 최신 회차의 데이터 조회
-        cursor.execute("SELECT * FROM lotto_drawings WHERE draw_no = ?", (latest_draw_no,))
+        # 2. 해당 회차의 데이터 조회
+        cursor.execute("SELECT * FROM lotto_drawings WHERE draw_no = ?", (target_draw_no,))
         rows = cursor.fetchall()
         conn.close()
         
@@ -747,9 +901,12 @@ def save_drawings(group: LottoDrawingGroup):
         
         # 2. 개별 세트별 누적 카운팅 및 저장 (기본적으로 기존 행 업데이트)
         for d in group.drawings:
-            # 해당 회차에 이미 번호 세트가 존재하는지 확인
-            cursor.execute(queries.GET_DRAWING_ID_BY_NUMBERS, 
-                (d.num1, d.num2, d.num3, d.num4, d.num5, d.num6, d.bonus_num, target_draw_no))
+            # 해당 회차에 이미 번호 세트가 존재하는지 확인 (보너스 번호 제외하고 6개 숫자만 비교)
+            cursor.execute("""
+                SELECT id FROM lotto_drawings 
+                WHERE num1=? AND num2=? AND num3=? AND num4=? AND num5=? AND num6=? AND draw_no=?
+                LIMIT 1
+            """, (d.num1, d.num2, d.num3, d.num4, d.num5, d.num6, target_draw_no))
             row = cursor.fetchone()
             
             if row:
@@ -757,9 +914,9 @@ def save_drawings(group: LottoDrawingGroup):
                 drawing_id = row[0]
                 cursor.execute(queries.UPDATE_DRAW_COUNT, (drawing_id,))
             else:
-                # 만약 기존 풀에 없는 번호라면 (수동 입력 등) 신규 삽입
+                # 만약 기존 풀에 없는 번호라면 (수동 입력 등) 신규 삽입 (보너스 번호는 0으로 저장)
                 cursor.execute(queries.INSERT_DRAWING, 
-                    ("AI_GENERATED", d.num1, d.num2, d.num3, d.num4, d.num5, d.num6, d.bonus_num, 1, d.method or "Manual Selection", target_draw_no))
+                    ("AI_GENERATED", d.num1, d.num2, d.num3, d.num4, d.num5, d.num6, 0, 1, d.method or "Manual Selection", target_draw_no))
             
         # 3. 데이터 클리닝: 기존 임시 group_ 데이터 삭제 (User request)
         cursor.execute(queries.DELETE_GROUP_DRAWINGS)
@@ -767,5 +924,18 @@ def save_drawings(group: LottoDrawingGroup):
         conn.commit()
         conn.close()
         return {"message": "번호 확정 및 저장이 완료되었습니다. (임시 데이터 정리 완료)"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+@app.get("/api/drawings/by-no", response_model=List[dict])
+def get_drawings_by_no(draw_no: int):
+    db_path = get_db_path()
+    try:
+        conn = sqlite3.connect(db_path)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        cursor.execute(queries.GET_DRAWINGS_BY_NO, (draw_no,))
+        rows = cursor.fetchall()
+        conn.close()
+        return [dict(row) for row in rows]
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

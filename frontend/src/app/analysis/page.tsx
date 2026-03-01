@@ -48,48 +48,75 @@ export default function AnalysisPage() {
     const [cdmData, setCdmData] = useState<any[] | null>(null);
     const [featureData, setFeatureData] = useState<any | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [drawNumbers, setDrawNumbers] = useState<number[]>([]);
+    const [selectedDrawNo, setSelectedDrawNo] = useState<string>(""); // 빈 값은 최신/전체 의미
+
+    async function fetchDrawNumbers() {
+        try {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+            const response = await fetch(`${apiUrl}/api/drawings/draw-numbers`);
+            if (response.ok) {
+                const data = await response.json();
+                setDrawNumbers(data);
+            }
+        } catch (error) {
+            console.error('Error fetching draw numbers:', error);
+        }
+    }
+
+    async function fetchAllData() {
+        setIsLoading(true);
+        console.log('Fetching all analysis data for draw_no:', selectedDrawNo);
+        try {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+            const queryParam = selectedDrawNo ? `?draw_no=${selectedDrawNo}` : "";
+
+            const fetchWithErrorHandling = async (url: string, name: string) => {
+                try {
+                    const res = await fetch(url);
+                    if (!res.ok) {
+                        console.warn(`API Warning: ${name} returned status ${res.status}`);
+                        return null;
+                    }
+                    return await res.json();
+                } catch (e) {
+                    console.error(`API Error: ${name} failed`, e);
+                    return null;
+                }
+            };
+
+            const [tfData, gapData, aiData, rfData, clusterData, regrData, bayesData, featData] = await Promise.all([
+                fetchWithErrorHandling(`${apiUrl}/api/analysis/timeframes${queryParam}`, 'timeframes'),
+                fetchWithErrorHandling(`${apiUrl}/api/analysis/gaps${queryParam}`, 'gaps'),
+                fetchWithErrorHandling(`${apiUrl}/api/analysis/predict/ai${queryParam}`, 'predict/ai'),
+                fetchWithErrorHandling(`${apiUrl}/api/analysis/predict/rf${queryParam}`, 'predict/rf'),
+                fetchWithErrorHandling(`${apiUrl}/api/analysis/clustering${queryParam}`, 'clustering'),
+                fetchWithErrorHandling(`${apiUrl}/api/analysis/regression${queryParam}`, 'regression'),
+                fetchWithErrorHandling(`${apiUrl}/api/analysis/cdm${queryParam}`, 'cdm'),
+                fetchWithErrorHandling(`${apiUrl}/api/analysis/features${queryParam}`, 'features')
+            ]);
+
+            if (tfData) setAnalysisData(tfData);
+            if (gapData) setGapAnalysis(gapData);
+            if (aiData) setAiPrediction(aiData.prediction);
+            if (rfData) setRfPrediction(rfData.prediction);
+            if (clusterData) setClusteringData(clusterData);
+            if (regrData) setRegressionData(regrData);
+            if (bayesData) setCdmData(bayesData);
+            if (featData) setFeatureData(featData);
+
+            console.log('All analysis data fetched successfully');
+        } catch (error) {
+            console.error('Critical Error fetching data:', error);
+        } finally {
+            setIsLoading(false);
+        }
+    }
 
     useEffect(() => {
-        async function fetchAllData() {
-            try {
-                const [tfRes, gapRes, aiRes, rfRes, clusterRes, regressionRes, cdmRes, featureRes] = await Promise.all([
-                    fetch('http://localhost:8000/api/analysis/timeframes'),
-                    fetch('http://localhost:8000/api/analysis/gaps'),
-                    fetch('http://localhost:8000/api/analysis/predict/ai'),
-                    fetch('http://localhost:8000/api/analysis/predict/rf'),
-                    fetch('http://localhost:8000/api/analysis/clustering'),
-                    fetch('http://localhost:8000/api/analysis/regression'),
-                    fetch('http://localhost:8000/api/analysis/cdm'),
-                    fetch('http://localhost:8000/api/analysis/features')
-                ]);
-
-                if (!tfRes.ok || !gapRes.ok) throw new Error('Failed to fetch analysis data');
-
-                const tfData = await tfRes.json();
-                const gapData = await gapRes.json();
-                const aiData = aiRes.ok ? await aiRes.json() : null;
-                const rfData = rfRes.ok ? await rfRes.json() : null;
-                const clusterData = clusterRes.ok ? await clusterRes.json() : null;
-                const regrData = regressionRes.ok ? await regressionRes.json() : null;
-                const bayesData = cdmRes.ok ? await cdmRes.json() : null;
-                const featData = featureRes.ok ? await featureRes.json() : null;
-
-                setAnalysisData(tfData);
-                setGapAnalysis(gapData);
-                if (aiData) setAiPrediction(aiData.prediction);
-                if (rfData) setRfPrediction(rfData.prediction);
-                if (clusterData) setClusteringData(clusterData);
-                if (regrData) setRegressionData(regrData);
-                if (bayesData) setCdmData(bayesData);
-                if (featData) setFeatureData(featData);
-            } catch (error) {
-                console.error('Error fetching data:', error);
-            } finally {
-                setIsLoading(false);
-            }
-        }
+        fetchDrawNumbers();
         fetchAllData();
-    }, []);
+    }, [selectedDrawNo]);
 
     const getNumberColor = (num: number) => {
         if (num <= 10) return 'bg-amber-400 text-slate-900';
@@ -104,7 +131,7 @@ export default function AnalysisPage() {
             <div className="bg-background min-h-screen flex items-center justify-center">
                 <div className="flex flex-col items-center gap-4">
                     <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-primary border-r-2"></div>
-                    <p className="text-slate-400 animate-pulse font-bold tracking-widest text-sm uppercase">Analyzing Multi-Timeframes...</p>
+                    <p className="text-slate-400 animate-pulse font-bold tracking-widest text-sm uppercase">Analyzing Draw Data...</p>
                 </div>
             </div>
         );
@@ -232,12 +259,33 @@ export default function AnalysisPage() {
                 <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
                 <main className="flex-1 overflow-y-auto pb-12 px-6 pt-8 space-y-12">
-                    <div className="flex flex-col gap-2">
-                        <h1 className="text-3xl font-black text-white tracking-tighter flex items-center gap-3">
-                            <span className="material-symbols-outlined text-primary text-4xl">timeline</span>
-                            기간별 정밀 추세 분석 대시보드
-                        </h1>
-                        <p className="text-slate-400 font-medium">최근 1개월부터 3년까지, 주요 번호들의 주기적인 흐름을 추적합니다.</p>
+                    <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-white/5">
+                        <div className="flex flex-col gap-2">
+                            <h1 className="text-3xl font-black text-white tracking-tighter flex items-center gap-3">
+                                <span className="material-symbols-outlined text-primary text-4xl">timeline</span>
+                                회차별 분석 대시보드
+                            </h1>
+                        </div>
+
+                        {/* 회차 선택 박스 */}
+                        <div className="flex items-center gap-4 bg-[#0f172a]/40 p-2 pl-4 rounded-2xl border border-white/5 backdrop-blur-md shadow-xl">
+                            <span className="text-slate-400 text-xs font-black uppercase tracking-widest">Select Draw</span>
+                            <div className="relative group min-w-[160px]">
+                                <select
+                                    value={selectedDrawNo}
+                                    onChange={(e) => setSelectedDrawNo(e.target.value)}
+                                    className="w-full appearance-none bg-slate-800/50 border border-white/10 text-white text-sm font-bold py-2.5 pl-4 pr-10 rounded-xl focus:outline-none focus:border-primary/50 transition-all hover:bg-slate-700/50 cursor-pointer shadow-inner"
+                                >
+                                    <option value="">최신 회차 기반 (다음 회차 예측)</option>
+                                    {drawNumbers.map(no => (
+                                        <option key={no} value={no}>{no}회차 대비 분석 (시뮬레이션)</option>
+                                    ))}
+                                </select>
+                                <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none group-hover:text-primary transition-colors text-lg">
+                                    expand_more
+                                </span>
+                            </div>
+                        </div>
                     </div>
 
                     {/* AI 예측 엔진 (MLP + RF) */}

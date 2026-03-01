@@ -12,7 +12,6 @@ interface LottoWinner {
     num4: number;
     num5: number;
     num6: number;
-    bonus_num: number;
     winner_count?: number;
     winner_amount?: number;
 }
@@ -26,7 +25,8 @@ export default function WinnersPage() {
 
     const fetchWinners = async () => {
         try {
-            const response = await fetch('http://localhost:8000/api/winners', { cache: 'no-store' });
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+            const response = await fetch(`${apiUrl}/api/winners`, { cache: 'no-store' });
             if (!response.ok) throw new Error('Failed to fetch');
             const data = await response.json();
             setWinners(data);
@@ -45,7 +45,8 @@ export default function WinnersPage() {
         if (!confirm(`${drawNo}회차 당첨 정보를 삭제하시겠습니까?`)) return;
 
         try {
-            const response = await fetch(`http://localhost:8000/api/winners/${drawNo}`, {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+            const response = await fetch(`${apiUrl}/api/winners/${drawNo}`, {
                 method: 'DELETE',
             });
 
@@ -88,7 +89,8 @@ export default function WinnersPage() {
                 return;
             }
 
-            const response = await fetch(`http://localhost:8000/api/winners/${drawNo}/stats`, {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+            const response = await fetch(`${apiUrl}/api/winners/${drawNo}/stats`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -142,7 +144,6 @@ export default function WinnersPage() {
                                         <tr className="bg-white/5 border-b border-card-border/40">
                                             <th className="p-5 text-slate-400 font-semibold text-sm uppercase tracking-wider">회차</th>
                                             <th className="p-5 text-slate-400 font-semibold text-sm uppercase tracking-wider">당첨 번호</th>
-                                            <th className="p-5 text-slate-400 font-semibold text-sm uppercase tracking-wider text-center">보너스</th>
                                             <th className="p-5 text-slate-400 font-semibold text-sm uppercase tracking-wider text-right">당첨자(명)</th>
                                             <th className="p-5 text-slate-400 font-semibold text-sm uppercase tracking-wider text-right">1등 당첨금(원)</th>
                                             <th className="p-5 text-slate-400 font-semibold text-sm uppercase tracking-wider text-center">관리</th>
@@ -166,13 +167,6 @@ export default function WinnersPage() {
                                                                 {num}
                                                             </div>
                                                         ))}
-                                                    </div>
-                                                </td>
-                                                <td className="p-5">
-                                                    <div className="flex justify-center">
-                                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white ${getBallColor(winner.bonus_num)}`}>
-                                                            {winner.bonus_num}
-                                                        </div>
                                                     </div>
                                                 </td>
                                                 <td className="p-5 text-right font-medium text-slate-300">

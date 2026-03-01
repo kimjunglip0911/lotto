@@ -6,7 +6,7 @@
     ],
     "scripts": {
         "dev": "concurrently \"npm run dev -w frontend\" \"npm run dev:backend\"",
-        "dev:backend": "cd backend && python -m uvicorn main:app --reload",
+        "dev:backend": "cd backend && python -m uvicorn main:app --host 127.0.0.1 --port 8000 --reload",
         "build": "npm run build -w frontend",
         "start": "npm run start -w frontend",
         "lint": "npm run lint -w frontend"

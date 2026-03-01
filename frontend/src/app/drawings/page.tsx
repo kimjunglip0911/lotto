@@ -14,7 +14,8 @@ export default function DrawingsPage() {
 
     const fetchDrawNumbers = async () => {
         try {
-            const response = await fetch('http://localhost:8000/api/drawings/draw-numbers');
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+            const response = await fetch(`${apiUrl}/api/drawings/draw-numbers`);
             if (response.ok) {
                 const data = await response.json();
                 setDrawNumbers(data);
@@ -39,9 +40,10 @@ export default function DrawingsPage() {
                 return;
             }
 
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
             const url = drawNo && drawNo !== ""
-                ? `http://localhost:8000/api/drawings?draw_no=${drawNo}`
-                : 'http://localhost:8000/api/drawings';
+                ? `${apiUrl}/api/drawings?draw_no=${drawNo}`
+                : `${apiUrl}/api/drawings`;
             const response = await fetch(url);
             if (!response.ok) throw new Error('Failed to fetch drawings');
             const data = await response.json();
@@ -71,9 +73,17 @@ export default function DrawingsPage() {
 
         setIsGenerating(true);
         try {
-            const url = selectedDrawNo === "new"
-                ? 'http://localhost:8000/api/analysis/generate/ai'
-                : `http://localhost:8000/api/analysis/generate/ai?draw_no=${selectedDrawNo}`;
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+            let url = `${apiUrl}/api/analysis/generate/ai`;
+
+            if (selectedDrawNo === "new") {
+                const userDrawNo = prompt('생성할 회차 번호를 입력하세요 (숫자만 입력, 미입력 시 최신회차+1로 자동 생성)');
+                if (userDrawNo && userDrawNo.trim() !== "") {
+                    url += `?draw_no=${userDrawNo.trim()}`;
+                }
+            } else {
+                url += `?draw_no=${selectedDrawNo}`;
+            }
 
             const response = await fetch(url);
             if (!response.ok) throw new Error('Failed to generate AI drawings');
@@ -81,17 +91,17 @@ export default function DrawingsPage() {
             // 회차 목록 갱신
             await fetchDrawNumbers();
 
-            // 만약 신규 회차였다면, 생성된 최신 회차를 가져와서 선택해줘야 함 (backend에서 +1 됨)
-            // 이를 위해 전체 목록을 다시 가져오고 그 중 첫 번째(최신)를 선택
-            const listRes = await fetch('http://localhost:8000/api/drawings/draw-numbers');
+            // 생성된 회차 데이터 바로 조회 (Response에서 생성된 draw_no를 보내주면 좋겠지만 현재는 목록 갱신 후 최신 선택)
+            const listRes = await fetch(`${apiUrl}/api/drawings/draw-numbers`);
             if (listRes.ok) {
                 const refreshedNumbers = await listRes.json();
                 if (refreshedNumbers.length > 0) {
+                    // 수동 입력한 번호가 있다면 명시적으로 선택, 아니면 최신(0번) 선택
                     setSelectedDrawNo(refreshedNumbers[0].toString());
                 }
             }
 
-            alert('7가지 분석 기법을 활용한 70세트가 생성되었습니다.');
+            alert('8가지 분석 기법을 활용한 20세트가 생성되었습니다.');
         } catch (error) {
             console.error('Error generating AI drawings:', error);
             alert('번호 생성 중 오류가 발생했습니다.');
@@ -132,7 +142,7 @@ export default function DrawingsPage() {
                                 ) : (
                                     <span className="material-symbols-outlined text-xl group-hover:rotate-180 transition-transform duration-500">psychology</span>
                                 )}
-                                {isGenerating ? 'AI 번호 분석 중...' : 'AI 번호 추첨 실행 (70세트)'}
+                                {isGenerating ? 'AI 번호 분석 중...' : 'AI 번호 추첨 실행 (20세트)'}
                             </button>
 
                             {/* 회차 선택 박스 */}
@@ -187,10 +197,6 @@ export default function DrawingsPage() {
                                                 {num}
                                             </div>
                                         ))}
-                                        <div className="flex items-center px-1 text-slate-600 font-bold">+</div>
-                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white ${getBallColor(draw.bonus_num)}`}>
-                                            {draw.bonus_num}
-                                        </div>
                                     </div>
                                 </div>
                             ))}

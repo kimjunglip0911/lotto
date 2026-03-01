@@ -7,10 +7,13 @@ class LottoCDMService:
     def __init__(self, db_path):
         self.db_path = db_path
         
-    def analyze(self):
+    def analyze(self, draw_no: int = None):
         """베이지안 Dirichlet-Multinomial 모델 기반 확률 추정"""
         conn = sqlite3.connect(self.db_path)
-        df = pd.read_sql_query("SELECT num1, num2, num3, num4, num5, num6 FROM lotto_winners", conn)
+        if draw_no:
+            df = pd.read_sql_query("SELECT num1, num2, num3, num4, num5, num6 FROM lotto_winners WHERE draw_no < ?", conn, params=(draw_no,))
+        else:
+            df = pd.read_sql_query("SELECT num1, num2, num3, num4, num5, num6 FROM lotto_winners", conn)
         conn.close()
         
         if len(df) < 10:

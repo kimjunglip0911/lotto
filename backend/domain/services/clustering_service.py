@@ -10,10 +10,13 @@ class LottoClusteringService:
     def __init__(self, db_path):
         self.db_path = db_path
         
-    def analyze(self):
+    def analyze(self, draw_no: int = None):
         """K-Means 군집화 및 PCA 분석 수행"""
         conn = sqlite3.connect(self.db_path)
-        df = pd.read_sql_query("SELECT draw_no, num1, num2, num3, num4, num5, num6 FROM lotto_winners ORDER BY draw_no ASC", conn)
+        if draw_no:
+            df = pd.read_sql_query("SELECT draw_no, num1, num2, num3, num4, num5, num6 FROM lotto_winners WHERE draw_no < ? ORDER BY draw_no ASC", conn, params=(draw_no,))
+        else:
+            df = pd.read_sql_query("SELECT draw_no, num1, num2, num3, num4, num5, num6 FROM lotto_winners ORDER BY draw_no ASC", conn)
         conn.close()
         
         if len(df) < 5: # 최소 데이터 부족

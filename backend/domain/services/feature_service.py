@@ -5,11 +5,14 @@ class LottoFeatureService:
     def __init__(self, db_path):
         self.db_path = db_path
 
-    def analyze(self, limit=50):
+    def analyze(self, draw_no: int = None, limit: int = 50):
         """특성 공학 및 조합 분석 데이터 추출"""
         conn = sqlite3.connect(self.db_path)
         # 최신 회차부터 limit 만큼 가져옴
-        df = pd.read_sql_query(f"SELECT draw_no, num1, num2, num3, num4, num5, num6 FROM lotto_winners ORDER BY draw_no DESC LIMIT {limit}", conn)
+        if draw_no:
+            df = pd.read_sql_query("SELECT draw_no, num1, num2, num3, num4, num5, num6 FROM lotto_winners WHERE draw_no < ? ORDER BY draw_no DESC LIMIT ?", conn, params=(draw_no, limit))
+        else:
+            df = pd.read_sql_query("SELECT draw_no, num1, num2, num3, num4, num5, num6 FROM lotto_winners ORDER BY draw_no DESC LIMIT ?", conn, params=(limit,))
         conn.close()
 
         if len(df) == 0:
