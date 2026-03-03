@@ -8,7 +8,7 @@ class LottoRFService:
     def __init__(self, db_path):
         self.db_path = db_path
         self.model = None
-        self.lookback = 10  # 최근 10회차를 보고 다음 예측
+        self.lookback = 20  # 변경: 10 → 20 (패턴 인식 범위 확대)
         
     def prepare_data(self, df):
         """데이터를 RF 학습용 벡터로 변환 (pandas 활용)"""
@@ -44,11 +44,11 @@ class LottoRFService:
         X, y = self.prepare_data(df)
         
         # Random Forest 모델 생성 및 학습
-        # n_estimators: 트리의 개수
-        # random_state: 결과 재현성을 위한 시드
         self.model = RandomForestClassifier(
-            n_estimators=200,
-            max_depth=10,
+            n_estimators=500,
+            max_depth=15,
+            min_samples_leaf=2,
+            max_features='sqrt',
             random_state=42
         )
         self.model.fit(X, y)
@@ -103,10 +103,10 @@ class LottoRFService:
             
         conn = sqlite3.connect(self.db_path)
         if draw_no:
-            query = "SELECT num1, num2, num3, num4, num5, num6 FROM lotto_winners WHERE draw_no < ? ORDER BY draw_no DESC LIMIT 10"
+            query = f"SELECT num1, num2, num3, num4, num5, num6 FROM lotto_winners WHERE draw_no < ? ORDER BY draw_no DESC LIMIT {self.lookback}"
             df = pd.read_sql_query(query, conn, params=(draw_no,))
         else:
-            df = pd.read_sql_query("SELECT num1, num2, num3, num4, num5, num6 FROM lotto_winners ORDER BY draw_no DESC LIMIT 10", conn)
+            df = pd.read_sql_query(f"SELECT num1, num2, num3, num4, num5, num6 FROM lotto_winners ORDER BY draw_no DESC LIMIT {self.lookback}", conn)
         conn.close()
         
         if len(df) < self.lookback:
@@ -141,8 +141,8 @@ class LottoRFService:
             # 하이브리드 가중치 결합
             hybrid_weights = self.get_hybrid_weights(draw_no=draw_no)
             
-            # 결합 공식: (RF 결과 * 0.5) + (통계 가중치 * 0.5)
-            combined = (rf_preds * 0.5) + (hybrid_weights * 0.5)
+            # 결합 공식: (RF 결과 * 0.55) + (통계 가중치 * 0.45)
+            combined = (rf_preds * 0.55) + (hybrid_weights * 0.45)
             
             # 0.2~0.8 사이로 안정화
             min_val, max_val = combined.min(), combined.max()
@@ -154,3 +154,40 @@ class LottoRFService:
         except Exception as e:
             print(f"RF Prediction Error: {e}")
             return None
+
+    def predict_multiple(self, draw_no: int = None, n_iterations: int = 5):
+        """다양한 random_state로 N번 학습+예측 (앙상블용)"""
+        conn = sqlite3.connect(self.db_path)
+        if draw_no:
+            df = pd.read_sql_query("SELECT num1, num2, num3, num4, num5, num6 FROM lotto_winners WHERE draw_no < ? ORDER BY draw_no ASC", conn, params=(draw_no,))
+        else:
+            df = pd.read_sql_query("SELECT num1, num2, num3, num4, num5, num6 FROM lotto_winners ORDER BY draw_no ASC", conn)
+        conn.close()
+        
+        if len(df) <= self.lookback:
+            return []
+            
+        X, y = self.prepare_data(df)
+        results = []
+        
+        for i in range(n_iterations):
+            model = RandomForestClassifier(
+                n_estimators=500,
+                max_depth=15,
+                min_samples_leaf=2,
+                max_features='sqrt',
+                random_state=42 + i * 7
+            )
+            try:
+                model.fit(X, y)
+                original_model = self.model
+                self.model = model
+                pred = self.predict_next(draw_no)
+                self.model = original_model
+                
+                if pred:
+                    results.append(pred)
+            except:
+                continue
+                
+        return results

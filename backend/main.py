@@ -9,6 +9,7 @@ from domain.services.clustering_service import LottoClusteringService
 from domain.services.regression_service import LottoRegressionService
 from domain.services.cdm_service import LottoCDMService
 from domain.services.feature_service import LottoFeatureService
+from domain.services.ensemble_engine import EnsembleEngine
 import os
 import sqlite3
 import random
@@ -401,6 +402,7 @@ clustering_service = LottoClusteringService(get_db_path())
 regression_service = LottoRegressionService(get_db_path())
 cdm_service = LottoCDMService(get_db_path())
 feature_service = LottoFeatureService(get_db_path())
+ensemble_engine = EnsembleEngine(get_db_path())
 
 @app.get("/api/analysis/predict/ai")
 def get_ai_prediction(draw_no: int = Query(None)):
@@ -487,49 +489,26 @@ def generate_ai_drawings(draw_no: Optional[int] = None):
     try:
         results = []
         
-        # 1. MLP TOP6
-        print(f"Starting MLP Prediction for draw_no: {draw_no}...")
-        mlp_pred = ai_service.predict_next(draw_no=draw_no)
-        num_sets = 2
-        if mlp_pred and sum(mlp_pred) > 0:
-            p = np.array(mlp_pred, dtype='float64')
-            p /= p.sum()
-            p[0] = 1.0 - p[1:].sum()
-            
-            # Set 1: Pure Top 6 (확정)
-            top6_indices = np.argsort(p)[-6:][::-1]
-            top6_nums = sorted([int(i + 1) for i in top6_indices])
-            results.append({"method": "MLP TOP6 (Pure)", "numbers": top6_nums})
-            
-            # Set 2: Probability Sampling (확률)
-            nums = sorted(np.random.choice(range(1, 46), 6, replace=False, p=p).tolist())
-            results.append({"method": "MLP TOP6 (Prob)", "numbers": nums})
-        else:
-            for _ in range(num_sets):
+        # 1. MLP+RF 앙상블 (기존 단일 모델 블록 대체)
+        print(f"Starting MLP+RF Ensemble for draw_no: {draw_no}...")
+        try:
+            ensemble_results = ensemble_engine.generate_with_retry(draw_no=draw_no, max_attempts=5)
+            if ensemble_results:
+                for er in ensemble_results:
+                    results.append({
+                        "method": er["method"],
+                        "numbers": er["numbers"]
+                    })
+            else:
+                # 앙상블 실패 시 폴백
+                for _ in range(4):
+                    nums = sorted(random.sample(range(1, 46), 6))
+                    results.append({"method": "MLP+RF Ensemble (Fallback)", "numbers": nums})
+        except Exception as e:
+            print(f"Ensemble generation failed: {e}")
+            for _ in range(4):
                 nums = sorted(random.sample(range(1, 46), 6))
-                results.append({"method": "MLP TOP6 (Fallback)", "numbers": nums})
-
-        # 2. RF TOP6
-        print(f"Starting RF Prediction for draw_no: {draw_no}...")
-        rf_pred = rf_service.predict_next(draw_no=draw_no)
-        num_sets = 2
-        if rf_pred and sum(rf_pred) > 0:
-            p = np.array(rf_pred, dtype='float64')
-            p /= p.sum()
-            p[0] = 1.0 - p[1:].sum()
-            
-            # Set 1: Pure Top 6 (확정)
-            top6_indices = np.argsort(p)[-6:][::-1]
-            top6_nums = sorted([int(i + 1) for i in top6_indices])
-            results.append({"method": "RF TOP6 (Pure)", "numbers": top6_nums})
-            
-            # Set 2: Probability Sampling (확률)
-            nums = sorted(np.random.choice(range(1, 46), 6, replace=False, p=p).tolist())
-            results.append({"method": "RF TOP6 (Prob)", "numbers": nums})
-        else:
-            for _ in range(num_sets):
-                nums = sorted(random.sample(range(1, 46), 6))
-                results.append({"method": "RF TOP6 (Fallback)", "numbers": nums})
+                results.append({"method": "MLP+RF Ensemble (Error Fallback)", "numbers": nums})
 
         # 3. 군집화 및 PCA
         print("Starting Clustering Analysis...")

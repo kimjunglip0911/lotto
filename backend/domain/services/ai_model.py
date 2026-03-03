@@ -8,7 +8,7 @@ class LottoMLPService:
     def __init__(self, db_path):
         self.db_path = db_path
         self.model = None
-        self.lookback = 10  # 최근 10회차를 보고 다음 예측
+        self.lookback = 20  # 변경: 10 → 20 (패턴 인식 범위 확대)
         
     def prepare_data(self, df):
         data = []
@@ -40,13 +40,15 @@ class LottoMLPService:
             
         X, y = self.prepare_data(df)
         
-        # 모델 정교화: 학습률 조절 및 반복 횟수 증가로 과적합 방지 및 수렴 개선
+        # 모델 정교화: 구조 확장 및 얼리 스토핑 도입
         self.model = MLPClassifier(
-            hidden_layer_sizes=(100, 100, 50), 
-            max_iter=1000, 
+            hidden_layer_sizes=(256, 128, 64), 
+            max_iter=2000, 
             random_state=42,
             learning_rate_init=0.001,
-            activation='logistic' # 확률 분포에 더 적합한 시그모이드(기반) 활성화 함수
+            activation='logistic',
+            early_stopping=True,
+            validation_fraction=0.1
         )
         self.model.fit(X, y)
         return True
@@ -103,10 +105,10 @@ class LottoMLPService:
             
         conn = sqlite3.connect(self.db_path)
         if draw_no:
-            query = "SELECT num1, num2, num3, num4, num5, num6 FROM lotto_winners WHERE draw_no < ? ORDER BY draw_no DESC LIMIT 10"
+            query = f"SELECT num1, num2, num3, num4, num5, num6 FROM lotto_winners WHERE draw_no < ? ORDER BY draw_no DESC LIMIT {self.lookback}"
             df = pd.read_sql_query(query, conn, params=(draw_no,))
         else:
-            df = pd.read_sql_query("SELECT num1, num2, num3, num4, num5, num6 FROM lotto_winners ORDER BY draw_no DESC LIMIT 10", conn)
+            df = pd.read_sql_query(f"SELECT num1, num2, num3, num4, num5, num6 FROM lotto_winners ORDER BY draw_no DESC LIMIT {self.lookback}", conn)
         conn.close()
         
         if len(df) < self.lookback:
@@ -132,8 +134,8 @@ class LottoMLPService:
             # 하이브리드 가중치 결합
             hybrid_weights = self.get_hybrid_weights(draw_no=draw_no)
             
-            # 결합 공식: (NN 결과 * 0.5) + (통계 가중치 * 0.5) - 통계 비중 확대
-            combined = (nn_preds * 0.5) + (hybrid_weights * 0.5)
+            # 결합 공식: (NN 결과 * 0.6) + (통계 가중치 * 0.4) - 신경망 비중 강화
+            combined = (nn_preds * 0.6) + (hybrid_weights * 0.4)
             
             # 가시성 및 신뢰도를 위해 0.2~0.8 사이로 안정화 (Softmax 효과)
             min_val, max_val = combined.min(), combined.max()
@@ -142,4 +144,45 @@ class LottoMLPService:
                 return scaled.tolist()
             return combined.tolist()
         except:
-            return self.model.predict(input_data)[0].tolist()
+            return None
+            
+    def predict_multiple(self, draw_no: int = None, n_iterations: int = 5):
+        """서로 다른 random_state로 N번 학습+예측하여 다양한 확률 벡터 반환"""
+        conn = sqlite3.connect(self.db_path)
+        if draw_no:
+            df = pd.read_sql_query("SELECT num1, num2, num3, num4, num5, num6 FROM lotto_winners WHERE draw_no < ? ORDER BY draw_no ASC", conn, params=(draw_no,))
+        else:
+            df = pd.read_sql_query("SELECT num1, num2, num3, num4, num5, num6 FROM lotto_winners ORDER BY draw_no ASC", conn)
+        conn.close()
+        
+        if len(df) <= self.lookback:
+            return []
+            
+        X, y = self.prepare_data(df)
+        results = []
+        
+        for i in range(n_iterations):
+            # 시드를 변경하며 학습 (다양성 확보)
+            model = MLPClassifier(
+                hidden_layer_sizes=(256, 128, 64), 
+                max_iter=2000, 
+                random_state=42 + i * 7,
+                learning_rate_init=0.001,
+                activation='logistic',
+                early_stopping=True,
+                validation_fraction=0.1
+            )
+            try:
+                model.fit(X, y)
+                # 현재 모델을 임시로 교체하여 predict_next 호출
+                original_model = self.model
+                self.model = model
+                pred = self.predict_next(draw_no)
+                self.model = original_model
+                
+                if pred:
+                    results.append(pred)
+            except:
+                continue
+                
+        return results
