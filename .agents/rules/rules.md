@@ -66,3 +66,8 @@ trigger: always_on
 - **개념**: 철저히 검증된 설계서(`implementation-plan.md`)의 내용만을 코드로 옮겨 적고 테스트하는 실제 개발 프로세스.
 - **산출물**: 코딩 완료된 파일들, `README.md` 업데이트, 테스트 통과 증명.
 - **핵심 스킬**: `frontend-testing`, `python-expert`, `fix`, `debugger`
+
+### [긴급] `/05-bug-fix` (버그 수정)
+- **개념**: 발생한 오류에 대해 가설 수립 → 검증 → 최소 범위 수정의 체계적 디버깅 프로세스. Phase 1~4 파이프라인과 독립적으로 즉시 실행 가능.
+- **산출물**: 근본 원인 분석 보고서, 최소 범위 코드 수정, 회귀 테스트 결과.
+- **핵심 스킬**: `debugger`, `frontend-code-review`, `fix`, `frontend-testing`

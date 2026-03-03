@@ -1,27 +1,33 @@
 ---
-description: 03-verify (상세 기술 설계안에 대한 치명적 오류 및 아키텍처 위반 사전 검증)
+description: 03-verify-plan (상세 기술 설계안에 대한 치명적 오류 및 아키텍처 위반 사전 검증)
 ---
 
-# 03. 검증 (디테일 플랜 사전 리뷰 및 테스트 설계)
+# 03. 검증 (설계 사전 리뷰)
 
-이 단계는 `02-detail-plan`에서 완성된 기술 설계서를 바탕으로, **아키텍처 위반 여부, 보안 취약점, 예외 처리 누락** 등을 코딩 시작 전에 엄격하게 리뷰하는 단계입니다. 발견된 문제점은 즉시 설계서에 반영하여 수정합니다.
+`02-detail-plan`에서 완성된 기술 설계서를 바탕으로, **아키텍처 위반, 보안 취약점, 예외 처리 누락**을 코딩 전에 엄격하게 리뷰하는 단계입니다.
 
-## 🎯 사용 스킬 지침
-이 단계에서는 코드 리뷰어 역할을 하는 스킬들을 동원하여 무결성을 확보하세요:
+## 🎯 사용 스킬
 
-1. **`frontend-code-review` & `code-reviewer`**:
-   - 작성된 컴포넌트 구조와 로직 설계가 React/FastAPI 베스트 프랙티스에 어긋나지 않는지 감시합니다.
-   - 단일 책임 원칙(SRP) 위반이나 지나치게 비대한 컴포넌트(300줄 이상 예상)가 있는 경우 사전 리팩토링/분리를 강제합니다.
-2. **`decision-helper`**:
-   - 설계된 두 가지 이상의 기술적 대안 중 논리적 오류가 없는지 검토합니다.
+| 역할 | 스킬명 | 용도 |
+|------|--------|------|
+| 프론트 리뷰 | `frontend-code-review` | 컴포넌트 구조, 성능, 비즈니스 로직 체크리스트 적용 |
+| 전체 리뷰 | `code-reviewer` | Security → Performance → Correctness → Maintainability 4단계 |
+| 성능 검증 | `vercel-react-best-practices` | Waterfall, 번들 크기, Re-render 패턴 위반 여부 검사 |
+| 의사결정 | `decision-helper` | 설계 대안이 2개 이상일 때 Decision Matrix로 최적안 선택 |
 
-## 📝 워크플로우 진행 순서
+## 📝 워크플로우 순서
 
 1. **설계서 심층 리뷰**
-   - `implementation-plan.md`를 바탕으로 데이터의 흐름, 예외 상황(Error Handling), 로딩 상태(Loading State) 처리가 모두 명세되어 있는지 검증합니다.
+   - `implementation-plan.md`의 데이터 흐름, 예외 처리(Error Handling), 로딩 상태(Loading State) 처리가 모두 명세되어 있는지 검증합니다.
+
 2. **클린 아키텍처 규칙 검사**
-   - `.agents/rules/rules.md`에 명시된 규칙(Domain과 Infrastructure 분리 등)이 설계에서 제대로 지켜지고 있는지 대조합니다.
-3. **취약점 및 엣지 케이스 분석**
-   - 빈 배열 입력, 서버 시간 초과(Timeout), 잘못된 타입 전달 등 발생 가능한 엣지 케이스를 찾고 해결책을 설계에 추가합니다.
-4. **설계서 최종 승인 (Finalize)**
-   - 검증된 보완점들을 `implementation-plan.md`에 즉각 반영하여 버전업 시키고, 문서의 상태를 '개발 준비 완료됨(Ready for Development)' 상태로 명시합니다.
+   - `.agents/rules/rules.md`의 규칙(Domain ↔ Infrastructure 분리 등)이 설계에서 준수되고 있는지 대조합니다.
+
+3. **성능 패턴 검증**
+   - `vercel-react-best-practices`의 핵심 규칙(Waterfall 제거, 번들 크기, RSC 경계)을 기준으로 설계가 최적인지 점검합니다.
+
+4. **취약점 및 엣지 케이스 분석**
+   - 빈 배열, 서버 타임아웃, 잘못된 타입 전달 등 엣지 케이스를 찾고 해결책을 설계에 추가합니다.
+
+5. **설계서 최종 승인**
+   - 보완점들을 `implementation-plan.md`에 반영하고, 문서 상태를 **'Ready for Development'**로 명시합니다.
