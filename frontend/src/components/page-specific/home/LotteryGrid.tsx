@@ -46,7 +46,7 @@ export function LotteryGrid() {
 
     const fetchAvailableDraws = async () => {
         try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
             const response = await fetch(`${apiUrl}/api/drawings/draw-numbers`);
             if (response.ok) {
                 const data = await response.json();
@@ -69,7 +69,7 @@ export function LotteryGrid() {
 
         setIsGenerating(true);
         try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
             const url = selectedDraw
                 ? `${apiUrl}/api/drawings/recommend?draw_no=${selectedDraw}`
                 : `${apiUrl}/api/drawings/recommend`;
@@ -109,7 +109,7 @@ export function LotteryGrid() {
 
         try {
             const groupId = `group_${Date.now()}`;
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
             const response = await fetch(`${apiUrl}/api/drawings`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -177,7 +177,7 @@ export function LotteryGrid() {
             if (selectedDraw) {
                 checkRound = Number(selectedDraw);
             } else {
-                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+                const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
                 const latestResponse = await fetch(`${apiUrl}/api/winners/latest`, { cache: 'no-store' });
                 if (!latestResponse.ok) throw new Error('회차 정보를 가져오지 못했습니다.');
                 const latestData = await latestResponse.json();
@@ -185,7 +185,7 @@ export function LotteryGrid() {
             }
 
             // 2. 해당 회차의 모든 추천 데이터(70~100개) 백엔드에서 조회
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
             const allSetsResponse = await fetch(`${apiUrl}/api/drawings/by-no?draw_no=${checkRound}`);
             if (!allSetsResponse.ok) throw new Error('전체 추천 데이터를 가져오지 못했습니다.');
             const allSetsData = await allSetsResponse.json();
@@ -279,7 +279,7 @@ export function LotteryGrid() {
         }
 
         try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
             const response = await fetch(`${apiUrl}/api/winners`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },

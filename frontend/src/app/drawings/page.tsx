@@ -14,7 +14,7 @@ export default function DrawingsPage() {
 
     const fetchDrawNumbers = async () => {
         try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
             const response = await fetch(`${apiUrl}/api/drawings/draw-numbers`);
             if (response.ok) {
                 const data = await response.json();
@@ -40,7 +40,7 @@ export default function DrawingsPage() {
                 return;
             }
 
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
             const url = drawNo && drawNo !== ""
                 ? `${apiUrl}/api/drawings?draw_no=${drawNo}`
                 : `${apiUrl}/api/drawings`;
@@ -73,7 +73,7 @@ export default function DrawingsPage() {
 
         setIsGenerating(true);
         try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
             let url = `${apiUrl}/api/analysis/generate/ai`;
 
             if (selectedDrawNo === "new") {

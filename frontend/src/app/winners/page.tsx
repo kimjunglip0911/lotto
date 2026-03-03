@@ -25,7 +25,7 @@ export default function WinnersPage() {
 
     const fetchWinners = async () => {
         try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
             const response = await fetch(`${apiUrl}/api/winners`, { cache: 'no-store' });
             if (!response.ok) throw new Error('Failed to fetch');
             const data = await response.json();
@@ -45,7 +45,7 @@ export default function WinnersPage() {
         if (!confirm(`${drawNo}회차 당첨 정보를 삭제하시겠습니까?`)) return;
 
         try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
             const response = await fetch(`${apiUrl}/api/winners/${drawNo}`, {
                 method: 'DELETE',
             });
@@ -89,7 +89,7 @@ export default function WinnersPage() {
                 return;
             }
 
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
             const response = await fetch(`${apiUrl}/api/winners/${drawNo}/stats`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },

@@ -53,7 +53,7 @@ export default function AnalysisPage() {
 
     async function fetchDrawNumbers() {
         try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
             const response = await fetch(`${apiUrl}/api/drawings/draw-numbers`);
             if (response.ok) {
                 const data = await response.json();
@@ -68,7 +68,7 @@ export default function AnalysisPage() {
         setIsLoading(true);
         console.log('Fetching all analysis data for draw_no:', selectedDrawNo);
         try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
             const queryParam = selectedDrawNo ? `?draw_no=${selectedDrawNo}` : "";
 
             const fetchWithErrorHandling = async (url: string, name: string) => {
