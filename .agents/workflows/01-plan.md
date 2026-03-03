@@ -15,15 +15,17 @@ description: 01-plan (개발 전 기획 및 마일스톤 작성)
    - 예상 소요 시간과 잠재적 리스크(Risk & Mitigation)를 분석합니다.
 
 2. **`vercel-react-best-practices`** (보조 스킬):
-   - 기술 스택에 React/Next.js가 포함되어 있을 경우, 성능 최적화와 올바른 렌더링 패턴을 기획 단계부터 고려하여 목표(Requirements)에 반영합니다.
+   - 성능 최적화와 올바른 렌더링 패턴을 기획 단계부터 고려하여 목표(Requirements)에 반영합니다.
 
 ## 🛠️ 기술 스택 및 아키텍처 (Constraints)
 모든 기획은 `.agents/rules/rules.md`에 명시된 원칙을 준수해야 합니다.
-- **아키텍처**: 클린 아키텍처 (Domain, Application, Infrastructure, Interface/Presentation 계층 분리 엄수)
-- **UI/UX**: Tailwind CSS 기반 반응형 UI (`tailwind-component-architect`)
-- **API 설계**: oRPC Contract-First 패턴 적용하여 타입 안정성 보장 (`orpc-contract-first`)
-- **데이터베이스**: 효율적인 SQL 쿼리 설계 (`db-optimization`)
-- **테스트 전략**: 기획 단계부터 Vitest/RTL을 고려한 설계 반영 (`frontend-testing`)
+- **아키텍처**: 클린 아키텍처 (Domain, Application, Infrastructure, Interface/Presentation 계층 분리)
+- **프론트엔드 스택**: Next.js 16.1.6 (App Router), React 19.2.3, Tailwind CSS v4, shadcn/ui 3.8.5, swr 2.4.0
+- **백엔드 스택**: 파이썬 FastAPI, Uvicorn, pydantic, pandas, openpyxl
+- **UI/UX 설계**: Tailwind CSS 기반 반응형 UI 설계 (`tailwind-component-architect` 활용)
+- **API 설계**: oRPC Contract-First 패턴 적용하여 프론트-백엔드 간 타입 안정성 보장 (`orpc-contract-first` 활용)
+- **데이터베이스**: 성능을 고려한 효율적인 쿼리 모델링
+- **테스트 전략**: 기획 단계부터 기능 테스트(Vitest/RTL)를 고려한 설계 반영 (`frontend-testing` 활용)
 
 ## 📝 워크플로우 진행 순서
 
