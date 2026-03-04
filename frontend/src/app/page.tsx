@@ -3,9 +3,9 @@
 import React, { useState } from 'react';
 import { Header } from '@/components/common/Header';
 import { Sidebar } from '@/components/common/Sidebar';
-import { LotteryGrid } from '@/components/page-specific/home/LotteryGrid';
-import { AlgorithmInfo } from '@/components/page-specific/home/AlgorithmInfo';
-import { WinningStats } from '@/components/page-specific/home/WinningStats';
+import { LotteryGrid } from '@/features/home/components/LotteryGrid';
+import { AlgorithmInfo } from '@/features/home/components/AlgorithmInfo';
+import { WinningStats } from '@/features/home/components/WinningStats';
 
 export default function Home() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
