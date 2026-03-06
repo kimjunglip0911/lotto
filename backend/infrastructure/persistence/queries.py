@@ -20,6 +20,39 @@ UPDATE_WINNER_STATS = """
     WHERE draw_no = ?
 """
 
+# limit가 0보다 클 때만 외부에서 주입해서 사용하도록 기본 쿼리는 전체 대상으로 함. 별도로 LIMIT용 쿼리를 분리.
+GET_WINNERS_AVG_ALL = """
+    SELECT 
+        COUNT(draw_no) as total_draws,
+        AVG(num1) as avg_1,
+        AVG(num2) as avg_2,
+        AVG(num3) as avg_3,
+        AVG(num4) as avg_4,
+        AVG(num5) as avg_5,
+        AVG(num6) as avg_6
+    FROM lotto_winners
+    WHERE draw_no IS NOT NULL
+"""
+
+GET_WINNERS_AVG_LIMIT = """
+    SELECT 
+        COUNT(draw_no) as total_draws,
+        AVG(num1) as avg_1,
+        AVG(num2) as avg_2,
+        AVG(num3) as avg_3,
+        AVG(num4) as avg_4,
+        AVG(num5) as avg_5,
+        AVG(num6) as avg_6
+    FROM (
+        SELECT * FROM lotto_winners
+        WHERE draw_no IS NOT NULL
+        ORDER BY draw_no DESC
+        LIMIT ?
+    )
+"""
+
+
+
 # Lotto Drawings Queries
 GET_ALL_DRAWINGS = "SELECT * FROM lotto_drawings ORDER BY id DESC"
 DELETE_ALL_DRAWINGS = "DELETE FROM lotto_drawings"
@@ -37,7 +70,13 @@ GET_DRAWING_ID_BY_NUMBERS = """
 """
 UPDATE_DRAW_COUNT = "UPDATE lotto_drawings SET draw_count = draw_count + 1 WHERE id = ?"
 DELETE_GROUP_DRAWINGS = "DELETE FROM lotto_drawings WHERE group_id LIKE 'group_%'"
-GET_DISTINCT_DRAW_NOS = "SELECT DISTINCT draw_no FROM lotto_winners WHERE draw_no IS NOT NULL ORDER BY draw_no DESC"
+GET_DISTINCT_DRAW_NOS = """
+    SELECT DISTINCT draw_no FROM (
+        SELECT draw_no FROM lotto_winners WHERE draw_no IS NOT NULL
+        UNION
+        SELECT draw_no FROM lotto_drawings WHERE draw_no IS NOT NULL
+    ) ORDER BY draw_no DESC
+"""
 
 INSERT_DRAWING = """
     INSERT INTO lotto_drawings 

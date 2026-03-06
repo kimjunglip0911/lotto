@@ -23,5 +23,7 @@ CREATE TABLE IF NOT EXISTS lotto_drawings (
     num5 INTEGER NOT NULL,
     num6 INTEGER NOT NULL,
     bonus_num INTEGER NOT NULL,
-    draw_count INTEGER NOT NULL
+    draw_count INTEGER NOT NULL,
+    method TEXT,
+    draw_no INTEGER
 );

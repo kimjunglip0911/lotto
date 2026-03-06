@@ -34,6 +34,24 @@ def get_latest_draw():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@router.get("/{draw_no}", response_model=LottoWinner)
+def get_winner_by_no(draw_no: int):
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM lotto_winners WHERE draw_no = ?", (draw_no,))
+        row = cursor.fetchone()
+        conn.close()
+        
+        if not row:
+            raise HTTPException(status_code=404, detail=f"{draw_no}회차 당첨 정보를 찾을 수 없습니다.")
+            
+        return dict(row)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @router.post("", response_model=MessageResponse)
 def save_winner(winner: LottoWinner):
     try:

@@ -45,3 +45,16 @@ class LottoWinnerCreate(BaseModel):
     num5: int
     num6: int
     bonus_num: int
+
+class PositionStat(BaseModel):
+    position: int
+    theoretical_expected: float
+    actual_average: float
+    deviation: float
+
+class OrderStatisticsResponse(BaseModel):
+    total_draws_analyzed: int
+    statistics: List[PositionStat]
+    generated_sets: List[LottoDrawingItem]
+class GenerateSaveRequest(BaseModel):
+    draw_no: int

@@ -4,8 +4,6 @@ import React, { useState } from 'react';
 import { Header } from '@/components/common/Header';
 import { Sidebar } from '@/components/common/Sidebar';
 import { LotteryGrid } from '@/features/home/components/LotteryGrid';
-import { AlgorithmInfo } from '@/features/home/components/AlgorithmInfo';
-import { WinningStats } from '@/features/home/components/WinningStats';
 
 export default function Home() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -19,8 +17,6 @@ export default function Home() {
         {/* Main Content */}
         <main className="flex-1 overflow-y-auto pb-8 px-4 pt-4 space-y-8">
           <LotteryGrid />
-          <AlgorithmInfo />
-          <WinningStats />
         </main>
       </div>
     </div>

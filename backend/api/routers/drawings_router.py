@@ -4,8 +4,9 @@ from typing import List, Optional
 
 from infrastructure.persistence.database import get_connection
 from infrastructure.persistence import queries
-from domain.models.schemas import LottoDrawingGroup, MessageResponse
+from domain.models.schemas import LottoDrawingGroup, MessageResponse, GenerateSaveRequest
 from domain.services.generator_service import generate_random_sets
+import uuid
 
 router = APIRouter(tags=["drawings_and_analysis"])
 
@@ -88,40 +89,6 @@ def recommend_drawings(draw_no: Optional[int] = Query(None)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.post("/api/drawings", response_model=MessageResponse)
-def save_drawings(group: LottoDrawingGroup):
-    try:
-        conn = get_connection()
-        cursor = conn.cursor()
-        
-        cursor.execute("SELECT MAX(draw_no) FROM lotto_winners")
-        row = cursor.fetchone()
-        latest_winner_no = row[0] if row and row[0] is not None else 0
-        target_draw_no = latest_winner_no + 1
-        
-        for d in group.drawings:
-            cursor.execute("""
-                SELECT id FROM lotto_drawings 
-                WHERE num1=? AND num2=? AND num3=? AND num4=? AND num5=? AND num6=? AND draw_no=?
-                LIMIT 1
-            """, (d.num1, d.num2, d.num3, d.num4, d.num5, d.num6, target_draw_no))
-            row = cursor.fetchone()
-            
-            if row:
-                drawing_id = dict(row)["id"]
-                cursor.execute(queries.UPDATE_DRAW_COUNT, (drawing_id,))
-            else:
-                cursor.execute(queries.INSERT_DRAWING, 
-                    ("AI_GENERATED", d.num1, d.num2, d.num3, d.num4, d.num5, d.num6, 0, 1, d.method or "Manual Selection", target_draw_no))
-            
-        cursor.execute(queries.DELETE_GROUP_DRAWINGS)
-            
-        conn.commit()
-        conn.close()
-        return {"message": "번호 확정 및 저장이 완료되었습니다. (임시 데이터 정리 완료)"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
 @router.get("/api/drawings/by-no", response_model=List[dict])
 def get_drawings_by_no(draw_no: int):
     try:
@@ -142,3 +109,209 @@ def generate_ai_drawings():
         return results
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/api/analysis/generate-and-save", response_model=List[dict])
+def generate_and_save_drawings(request: GenerateSaveRequest):
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+        
+        # Checking current count
+        cursor.execute("SELECT COUNT(*) FROM lotto_drawings WHERE draw_no = ?", (request.draw_no,))
+        current_count = cursor.fetchone()[0]
+        
+        if current_count >= 20:
+            conn.close()
+            raise HTTPException(status_code=400, detail="해당 회차에 이미 20세트의 추천 번호가 존재합니다.")
+            
+        allowed_new_sets = min(2, 20 - current_count)
+        
+        # Generation Logic utilizing Order Statistics
+        # 기존 random_sets 로직을 제거하고, 순서 통계량 로직으로 대체
+        # (임시: get_order_statistics 내 로직과 동일하게 기댓값 기반 샘플링)
+        
+        # 1. 과거 당첨 번호의 평균(기댓값) 계산
+        base_where = "WHERE draw_no IS NOT NULL AND draw_no < ?"
+        cursor.execute(f"""
+            SELECT 
+                AVG(num1) as avg_1, AVG(num2) as avg_2, AVG(num3) as avg_3,
+                AVG(num4) as avg_4, AVG(num5) as avg_5, AVG(num6) as avg_6
+            FROM lotto_winners
+            {base_where}
+        """, (request.draw_no,))
+        row = cursor.fetchone()
+        
+        saved_sets = []
+        group_id = f"group_ai_{uuid.uuid4().hex[:8]}"
+        
+        for _ in range(allowed_new_sets):
+            new_nums = []
+            for i in range(1, 7):
+                # 데이터가 없을 경우(row[f'avg_{i}'] == None)를 대비해 이론적 기댓값(i * 46 / 7) fallback
+                exp_val = row[f'avg_{i}'] if row and row[f'avg_{i}'] else (i * 46 / 7)
+                
+                min_val = max(1, int(exp_val) - 3)
+                max_val = min(45, int(exp_val) + 3)
+                
+                if i > 1 and new_nums[-1] >= min_val:
+                    min_val = new_nums[-1] + 1
+                
+                if min_val > 45: min_val = 45
+                if max_val < min_val: max_val = min_val
+                
+                import random
+                chosen = random.randint(min_val, max_val)
+                new_nums.append(chosen)
+
+            # 동일 번호 방지용 fallback
+            new_nums = list(set(new_nums))
+            while len(new_nums) < 6:
+                pool = [n for n in range(1, 46) if n not in new_nums]
+                new_nums.append(random.choice(pool))
+            new_nums.sort()
+            
+            method = "순서 통계량"
+            
+            cursor.execute(queries.INSERT_DRAWING, (
+                group_id,
+                new_nums[0], new_nums[1], new_nums[2],
+                new_nums[3], new_nums[4], new_nums[5],
+                0, # bonus_num
+                0, # draw_count
+                method,
+                request.draw_no
+            ))
+            
+            # Make sure we return the actual inserted dict
+            saved_set = {
+                "num1": new_nums[0],
+                "num2": new_nums[1],
+                "num3": new_nums[2],
+                "num4": new_nums[3],
+                "num5": new_nums[4],
+                "num6": new_nums[5],
+                "method": method,
+                "draw_no": request.draw_no,
+                "group_id": group_id,
+            }
+            saved_sets.append(saved_set)
+            
+        conn.commit()
+        conn.close()
+        return saved_sets
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+from domain.models.schemas import OrderStatisticsResponse, PositionStat, LottoDrawingItem
+
+@router.get("/api/analysis/order-statistics", response_model=OrderStatisticsResponse)
+def get_order_statistics(
+    limit: int = Query(0, description="0이면 전체, 양수면 최근 N회차 대상"),
+    draw_no: Optional[int] = Query(None, description="특정 회차 지정 (해당 회차 미만 데이터 분석)")
+):
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+        
+        base_where = "WHERE draw_no IS NOT NULL"
+        params = []
+        if draw_no is not None:
+            base_where += " AND draw_no < ?"
+            params.append(draw_no)
+            
+        if limit > 0:
+            query = f"""
+                SELECT 
+                    COUNT(draw_no) as total_draws,
+                    AVG(num1) as avg_1, AVG(num2) as avg_2, AVG(num3) as avg_3,
+                    AVG(num4) as avg_4, AVG(num5) as avg_5, AVG(num6) as avg_6
+                FROM (
+                    SELECT * FROM lotto_winners
+                    {base_where}
+                    ORDER BY draw_no DESC
+                    LIMIT ?
+                )
+            """
+            params.append(limit)
+        else:
+            query = f"""
+                SELECT 
+                    COUNT(draw_no) as total_draws,
+                    AVG(num1) as avg_1, AVG(num2) as avg_2, AVG(num3) as avg_3,
+                    AVG(num4) as avg_4, AVG(num5) as avg_5, AVG(num6) as avg_6
+                FROM lotto_winners
+                {base_where}
+            """
+            
+        cursor.execute(query, tuple(params))
+        row = cursor.fetchone()
+        conn.close()
+
+        if not row or row['total_draws'] == 0:
+            # 데이터가 없을 경우 204 또는 기본값 세팅. 
+            # 프론트가 받아서 처리할 수 있게 기본값 0으로 응답
+            return OrderStatisticsResponse(
+                total_draws_analyzed=0,
+                statistics=[PositionStat(position=i, theoretical_expected=round(i * 46 / 7, 2), actual_average=0.0, deviation=0.0) for i in range(1, 7)],
+                generated_sets=[]
+            )
+
+        total_draws = row['total_draws']
+        statistics = []
+        for i in range(1, 7):
+            expected = round(i * 46 / 7, 2)
+            actual = round(row[f'avg_{i}'] or 0.0, 2)
+            deviation = round(actual - expected, 2)
+            statistics.append(PositionStat(
+                position=i,
+                theoretical_expected=expected,
+                actual_average=actual,
+                deviation=deviation
+            ))
+
+        # 순서 통계량을 응용한 2세트 추천 번호 생성 로직 (단순 기댓값 기반 샘플링)
+        generated_sets = []
+        for _ in range(2):
+            new_nums = []
+            for i in range(1, 7):
+                exp_val = i * 46 / 7
+                # 기댓값 근처에서 약간의 랜덤 오차(±3)를 두고 뽑되 오름차순과 1~45 범위 보장
+                min_val = max(1, int(exp_val) - 3)
+                max_val = min(45, int(exp_val) + 3)
+                
+                # 이전 공보다 커야 함
+                if i > 1 and new_nums[-1] >= min_val:
+                    min_val = new_nums[-1] + 1
+                
+                # 중첩/오버플로우 방지 보호
+                if min_val > 45: min_val = 45
+                if max_val < min_val: max_val = min_val
+                
+                chosen = random.randint(min_val, max_val)
+                new_nums.append(chosen)
+
+            # 万が一 동일 번호가 생겼을 경우를 대비해 pool에서 fallback 보정
+            new_nums = list(set(new_nums))
+            while len(new_nums) < 6:
+                pool = [n for n in range(1, 46) if n not in new_nums]
+                new_nums.append(random.choice(pool))
+            new_nums.sort()
+
+            generated_sets.append(LottoDrawingItem(
+                num1=new_nums[0], num2=new_nums[1], num3=new_nums[2],
+                num4=new_nums[3], num5=new_nums[4], num6=new_nums[5],
+                method="Order Statistics"
+            ))
+
+        return OrderStatisticsResponse(
+            total_draws_analyzed=total_draws,
+            statistics=statistics,
+            generated_sets=generated_sets
+        )
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
