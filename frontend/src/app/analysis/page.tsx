@@ -122,7 +122,10 @@ export default function AnalysisPage() {
         }
     };
 
-    const isMaxReached = generatedSets.length >= 20;
+    // 사용 가능한 분석 기법 목록 (새로운 기법 추가 시 여기에 추가하면 자동 활성화됨)
+    const availableMethods = ['순서 통계량', 'CDM 바이시안', 'LSTM', 'Bi-LSTM'];
+    const generatedMethods = new Set(generatedSets.map(set => set.method));
+    const isMaxReached = availableMethods.every(m => generatedMethods.has(m));
 
     return (
         <div className="bg-background min-h-screen flex justify-center w-full overflow-x-hidden">

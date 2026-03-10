@@ -117,20 +117,19 @@ def generate_and_save_drawings(request: GenerateSaveRequest):
         cursor = conn.cursor()
         
         # Checking current count
-        cursor.execute("SELECT COUNT(*) FROM lotto_drawings WHERE draw_no = ?", (request.draw_no,))
-        current_count = cursor.fetchone()[0]
+        cursor.execute("SELECT DISTINCT method FROM lotto_drawings WHERE draw_no = ?", (request.draw_no,))
+        existing_methods = [row[0] for row in cursor.fetchall()]
         
-        if current_count >= 20:
+        needs_os = "순서 통계량" not in existing_methods
+        needs_cdm = "CDM 바이시안" not in existing_methods
+        needs_lstm = "LSTM" not in existing_methods
+        needs_bilstm = "Bi-LSTM" not in existing_methods
+        
+        if not needs_os and not needs_cdm and not needs_lstm and not needs_bilstm:
             conn.close()
-            raise HTTPException(status_code=400, detail="해당 회차에 이미 20세트의 추천 번호가 존재합니다.")
+            raise HTTPException(status_code=400, detail="해당 회차에 모든 추천 번호 세트가 존재합니다.")
             
-        allowed_new_sets = min(2, 20 - current_count)
-        
-        # Generation Logic utilizing Order Statistics
-        # 기존 random_sets 로직을 제거하고, 순서 통계량 로직으로 대체
-        # (임시: get_order_statistics 내 로직과 동일하게 기댓값 기반 샘플링)
-        
-        # 1. 과거 당첨 번호의 평균(기댓값) 계산
+        # 1. Order Statistics Logic
         base_where = "WHERE draw_no IS NOT NULL AND draw_no < ?"
         cursor.execute(f"""
             SELECT 
@@ -144,60 +143,74 @@ def generate_and_save_drawings(request: GenerateSaveRequest):
         saved_sets = []
         group_id = f"group_ai_{uuid.uuid4().hex[:8]}"
         
-        for _ in range(allowed_new_sets):
-            new_nums = []
-            for i in range(1, 7):
-                # 데이터가 없을 경우(row[f'avg_{i}'] == None)를 대비해 이론적 기댓값(i * 46 / 7) fallback
-                exp_val = row[f'avg_{i}'] if row and row[f'avg_{i}'] else (i * 46 / 7)
-                
-                min_val = max(1, int(exp_val) - 3)
-                max_val = min(45, int(exp_val) + 3)
-                
-                if i > 1 and new_nums[-1] >= min_val:
-                    min_val = new_nums[-1] + 1
-                
-                if min_val > 45: min_val = 45
-                if max_val < min_val: max_val = min_val
-                
-                import random
-                chosen = random.randint(min_val, max_val)
-                new_nums.append(chosen)
+        if needs_os:
+            for set_idx in range(2):
+                new_nums = []
+                for i in range(1, 7):
+                    exp_val = row[f'avg_{i}'] if row and row[f'avg_{i}'] else (i * 46 / 7)
+                    
+                    # 1번째 세트는 반올림, 2번째 세트는 올림/내림 교차 등 약간의 차이를 둠
+                    if set_idx == 0:
+                        chosen = int(round(exp_val))
+                    else:
+                        # 2번째 세트는 단순 +1 오프셋 적용으로 확정적인 다른 세트 생성
+                        chosen = int(round(exp_val)) + 1
+                        
+                    if i > 1 and chosen <= new_nums[-1]:
+                        chosen = new_nums[-1] + 1
+                        
+                    if chosen > 45:
+                        chosen = 45
+                    
+                    new_nums.append(chosen)
 
-            # 동일 번호 방지용 fallback
-            new_nums = list(set(new_nums))
-            while len(new_nums) < 6:
-                pool = [n for n in range(1, 46) if n not in new_nums]
-                new_nums.append(random.choice(pool))
-            new_nums.sort()
-            
-            method = "순서 통계량"
-            
-            cursor.execute(queries.INSERT_DRAWING, (
-                group_id,
-                new_nums[0], new_nums[1], new_nums[2],
-                new_nums[3], new_nums[4], new_nums[5],
-                0, # bonus_num
-                0, # draw_count
-                method,
-                request.draw_no
-            ))
-            
-            # Make sure we return the actual inserted dict
-            saved_set = {
-                "num1": new_nums[0],
-                "num2": new_nums[1],
-                "num3": new_nums[2],
-                "num4": new_nums[3],
-                "num5": new_nums[4],
-                "num6": new_nums[5],
-                "method": method,
-                "draw_no": request.draw_no,
-                "group_id": group_id,
-            }
-            saved_sets.append(saved_set)
+                new_nums = list(set(new_nums))
+                while len(new_nums) < 6:
+                    pool = [n for n in range(1, 46) if n not in new_nums]
+                    new_nums.append(pool[0])
+                new_nums.sort()
+                
+                method = "순서 통계량"
+                
+                cursor.execute(queries.INSERT_DRAWING, (
+                    group_id,
+                    new_nums[0], new_nums[1], new_nums[2],
+                    new_nums[3], new_nums[4], new_nums[5],
+                    0, # bonus_num
+                    0, # draw_count
+                    method,
+                    request.draw_no
+                ))
+                
+                saved_sets.append({
+                    "num1": new_nums[0], "num2": new_nums[1], "num3": new_nums[2],
+                    "num4": new_nums[3], "num5": new_nums[4], "num6": new_nums[5],
+                    "method": method,
+                    "draw_no": request.draw_no,
+                    "group_id": group_id,
+                })
             
         conn.commit()
         conn.close()
+        
+        # 2. CDM Logic
+        if needs_cdm:
+            from domain.services.analysis.cdm.cdm_service import generate_cdm_sets
+            cdm_sets = generate_cdm_sets(2, request.draw_no)
+            saved_sets.extend(cdm_sets)
+
+        # 3. LSTM Logic
+        if needs_lstm:
+            from domain.services.analysis.lstm_service import generate_lstm_sets
+            lstm_sets = generate_lstm_sets(2, request.draw_no, "LSTM")
+            saved_sets.extend(lstm_sets)
+
+        # 4. Bi-LSTM Logic
+        if needs_bilstm:
+            from domain.services.analysis.lstm_service import generate_lstm_sets
+            bilstm_sets = generate_lstm_sets(2, request.draw_no, "Bi-LSTM")
+            saved_sets.extend(bilstm_sets)
+            
         return saved_sets
 
     except HTTPException:
@@ -206,6 +219,8 @@ def generate_and_save_drawings(request: GenerateSaveRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 from domain.models.schemas import OrderStatisticsResponse, PositionStat, LottoDrawingItem
+
+
 
 @router.get("/api/analysis/order-statistics", response_model=OrderStatisticsResponse)
 def get_order_statistics(
