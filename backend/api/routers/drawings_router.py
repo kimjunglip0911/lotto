@@ -124,8 +124,9 @@ def generate_and_save_drawings(request: GenerateSaveRequest):
         needs_cdm = "CDM 바이시안" not in existing_methods
         needs_lstm = "LSTM" not in existing_methods
         needs_bilstm = "Bi-LSTM" not in existing_methods
+        needs_cnn = "CNN" not in existing_methods
         
-        if not needs_os and not needs_cdm and not needs_lstm and not needs_bilstm:
+        if not needs_os and not needs_cdm and not needs_lstm and not needs_bilstm and not needs_cnn:
             conn.close()
             raise HTTPException(status_code=400, detail="해당 회차에 모든 추천 번호 세트가 존재합니다.")
             
@@ -210,6 +211,12 @@ def generate_and_save_drawings(request: GenerateSaveRequest):
             from domain.services.analysis.lstm_service import generate_lstm_sets
             bilstm_sets = generate_lstm_sets(2, request.draw_no, "Bi-LSTM")
             saved_sets.extend(bilstm_sets)
+
+        # 5. CNN Logic
+        if needs_cnn:
+            from domain.services.analysis.cnn_service import generate_cnn_sets
+            cnn_sets = generate_cnn_sets(2, request.draw_no)
+            saved_sets.extend(cnn_sets)
             
         return saved_sets
 

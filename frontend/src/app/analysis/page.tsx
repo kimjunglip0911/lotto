@@ -123,7 +123,7 @@ export default function AnalysisPage() {
     };
 
     // 사용 가능한 분석 기법 목록 (새로운 기법 추가 시 여기에 추가하면 자동 활성화됨)
-    const availableMethods = ['순서 통계량', 'CDM 바이시안', 'LSTM', 'Bi-LSTM'];
+    const availableMethods = ['순서 통계량', 'CDM 바이시안', 'LSTM', 'Bi-LSTM', 'CNN'];
     const generatedMethods = new Set(generatedSets.map(set => set.method));
     const isMaxReached = availableMethods.every(m => generatedMethods.has(m));
 
