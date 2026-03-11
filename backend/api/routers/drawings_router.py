@@ -127,8 +127,9 @@ def generate_and_save_drawings(request: GenerateSaveRequest):
         needs_cnn = "CNN" not in existing_methods
         needs_markov = "마르코프 체인" not in existing_methods
         needs_ga = "유전 알고리즘" not in existing_methods
+        needs_pso = "입자 군집 최적화" not in existing_methods
         
-        if not needs_os and not needs_cdm and not needs_lstm and not needs_bilstm and not needs_cnn and not needs_markov and not needs_ga:
+        if not needs_os and not needs_cdm and not needs_lstm and not needs_bilstm and not needs_cnn and not needs_markov and not needs_ga and not needs_pso:
             conn.close()
             raise HTTPException(status_code=400, detail="해당 회차에 모든 추천 번호 세트가 존재합니다.")
             
@@ -231,6 +232,12 @@ def generate_and_save_drawings(request: GenerateSaveRequest):
             from domain.services.analysis.ga_service import generate_ga_sets
             ga_sets = generate_ga_sets(2, request.draw_no)
             saved_sets.extend(ga_sets)
+            
+        # 8. Particle Swarm Optimization Logic
+        if needs_pso:
+            from domain.services.analysis.pso_service import generate_pso_sets
+            pso_sets = generate_pso_sets(2, request.draw_no)
+            saved_sets.extend(pso_sets)
             
         return saved_sets
 
