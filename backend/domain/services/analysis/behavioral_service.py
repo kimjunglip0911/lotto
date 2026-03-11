@@ -109,3 +109,55 @@ def generate_behavioral_sets(count: int, draw_no: int) -> list[dict]:
     conn.commit()
     conn.close()
     return saved_sets
+
+def get_scores(draw_no: int) -> list[float]:
+    """
+    행동 경제학 분석 기법의 1~45번 숫자별 정규화된 확률(Softmax)을 도출합니다.
+    """
+    conn = get_connection()
+    conn.row_factory = None
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT num1, num2, num3, num4, num5, num6 
+        FROM lotto_winners 
+        WHERE draw_no < ? 
+        ORDER BY draw_no DESC 
+        LIMIT 10
+    """, (draw_no,))
+    rows = cursor.fetchall()
+    conn.close()
+    
+    if len(rows) < 8:
+        return [1.0 / 45.0 for _ in range(45)]
+
+    last_draw = set(rows[0])
+    recent_5_rows = rows[:5]
+    recent_5_freq = Counter()
+    for row in recent_5_rows:
+        for n in row:
+            recent_5_freq[n] += 1
+
+    scores = {}
+    for num in range(1, 46):
+        score = 0.0
+        if num <= 31:
+            score -= 1.0  
+        else:
+            score += 2.0  
+            
+        if num in last_draw:
+            score += 2.0  
+            
+        if recent_5_freq[num] >= 3:
+            score -= 3.0  
+            
+        scores[num] = score
+
+    nums = list(range(1, 46))
+    raw_scores = np.array([scores[n] for n in nums])
+    
+    exp_scores = np.exp(raw_scores - np.max(raw_scores))
+    probs = exp_scores / exp_scores.sum()
+    
+    return probs.tolist()

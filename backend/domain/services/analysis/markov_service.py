@@ -99,3 +99,61 @@ def generate_markov_sets(count: int, draw_no: int) -> list[dict]:
     conn.commit()
     conn.close()
     return saved_sets
+
+def get_scores(draw_no: int) -> list[float]:
+    """
+    마르코프 체인 기법의 1~45번 숫자별 정규화된 확률을 도출합니다.
+    """
+    conn = get_connection()
+    conn.row_factory = None
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT num1, num2, num3, num4, num5, num6 
+        FROM lotto_winners 
+        WHERE draw_no < ? 
+        ORDER BY draw_no ASC
+    """, (draw_no,))
+    rows = cursor.fetchall()
+    conn.close()
+    
+    if len(rows) < 8:
+        return [1.0 / 45.0 for _ in range(45)]
+
+    transition_counts = np.zeros((45, 45), dtype=float)
+    
+    for k in range(len(rows) - 1):
+        current_set = set(rows[k])
+        next_set = set(rows[k+1])
+        
+        for cur_num in current_set:
+            if 1 <= cur_num <= 45:
+                for next_num in next_set:
+                    if 1 <= next_num <= 45:
+                        transition_counts[cur_num-1][next_num-1] += 1
+
+    row_sums = transition_counts.sum(axis=1)
+    transition_matrix = np.where(
+        row_sums[:, np.newaxis] > 0,
+        transition_counts / row_sums[:, np.newaxis],
+        1.0 / 45.0
+    )
+
+    latest_numbers = rows[-1]
+    prob_vector = np.zeros(45)
+    valid_nums = 0
+    for num in latest_numbers:
+        if 1 <= num <= 45:
+            prob_vector += transition_matrix[num-1]
+            valid_nums += 1
+    
+    if valid_nums > 0:
+        prob_vector /= valid_nums
+        
+    total_prob = prob_vector.sum()
+    if total_prob > 0:
+        norm_probs = prob_vector / total_prob
+    else:
+        norm_probs = np.full(45, 1.0 / 45.0)
+        
+    return norm_probs.tolist()

@@ -146,3 +146,25 @@ def generate_lstm_sets(count: int, draw_no: int, method: str):
     conn.commit()
     conn.close()
     return sets_to_save
+
+def get_lstm_scores(draw_no: int, method: str) -> list[float]:
+    """
+    LSTM/Bi-LSTM 기법의 1~45번 숫자별 정규화된 확률을 도출합니다.
+    """
+    X, y, latest_X = prepare_data(draw_no)
+    
+    if X is None:
+        return [1.0 / 45.0 for _ in range(45)]
+
+    if method == "LSTM":
+        model = LottoLSTM()
+    else:
+        model = LottoBiLSTM()
+        
+    probs = train_and_predict(model, X, y, latest_X)
+    
+    # 0 방지 및 정규화
+    probs = np.maximum(probs, 1e-5)
+    total_prob = probs.sum()
+    norm_probs = probs / total_prob
+    return norm_probs.tolist()

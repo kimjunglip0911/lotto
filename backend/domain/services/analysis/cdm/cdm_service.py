@@ -68,3 +68,34 @@ def generate_cdm_sets(count: int, draw_no: int):
     conn.commit()
     conn.close()
     return sets_to_save
+
+def get_scores(draw_no: int) -> list[float]:
+    """
+    CDM 기법의 1~45번 숫자별 정규화된 확률을 도출합니다.
+    """
+    conn = get_connection()
+    conn.row_factory = None 
+    cursor = conn.cursor()
+    
+    if draw_no:
+        cursor.execute("SELECT num1, num2, num3, num4, num5, num6 FROM lotto_winners WHERE draw_no < ?", (draw_no,))
+    else:
+        cursor.execute("SELECT num1, num2, num3, num4, num5, num6 FROM lotto_winners")
+    rows = cursor.fetchall()
+    conn.close()
+    
+    counts = {i: 0 for i in range(1, 46)}
+    for row in rows:
+        for num in row:
+            if num in counts:
+                counts[num] += 1
+                
+    alpha = 1.0
+    scores = []
+    for num in range(1, 46):
+        weight = alpha + counts[num]
+        scores.append(weight)
+        
+    total_score = sum(scores)
+    normalized = [s / total_score for s in scores]
+    return normalized

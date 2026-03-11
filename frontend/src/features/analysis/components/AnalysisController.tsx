@@ -57,13 +57,13 @@ export function AnalysisController({
                             </span>
                         )}
                         {isGenerating
-                            ? '추천 번호 도출 중...'
-                            : '추천 번호 생성하기'}
+                            ? '최적 20세트 분석 및 생성 중...'
+                            : '통합 20세트 추출하기'}
                     </button>
                 ) : (
                     <div className="w-full sm:w-auto px-6 py-3 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 rounded-xl font-medium text-sm flex items-center justify-center gap-2 shadow-inner">
                         <span className="material-symbols-outlined text-[20px]">check_circle</span>
-                        모든 분석 기법 렌더링 완료 (최적의 2세트 도출 완료)
+                        모든 분석 완료 (통합 최적 20세트 도출 성공)
                     </div>
                 )}
             </div>

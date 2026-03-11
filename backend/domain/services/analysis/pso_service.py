@@ -171,3 +171,35 @@ def generate_pso_sets(count: int, draw_no: int) -> list[dict]:
     conn.commit()
     conn.close()
     return saved_sets
+
+def get_scores(draw_no: int) -> list[float]:
+    """
+    PSO(입자 군집 최적화) 기법의 1~45번 숫자별 정규화된 확률 분포를 도출합니다.
+    """
+    conn = get_connection()
+    conn.row_factory = None
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT num1, num2, num3, num4, num5, num6 
+        FROM lotto_winners 
+        WHERE draw_no < ? 
+        ORDER BY draw_no ASC
+    """, (draw_no,))
+    rows = cursor.fetchall()
+    conn.close()
+    
+    if len(rows) < 8:
+        return [1.0 / 45.0 for _ in range(45)]
+
+    flat_numbers = [num for row in rows for num in row]
+    freq_counter = Counter(flat_numbers)
+    
+    scores = np.zeros(45, dtype=float)
+    for i in range(1, 46):
+        scores[i-1] = freq_counter.get(i, 0)
+        
+    scores = np.maximum(scores, 1e-2)
+    total_score = scores.sum()
+    norm_probs = scores / total_score
+    return norm_probs.tolist()

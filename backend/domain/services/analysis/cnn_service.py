@@ -151,3 +151,20 @@ def generate_cnn_sets(count: int, draw_no: int):
     conn.commit()
     conn.close()
     return sets_to_save
+
+def get_cnn_scores(draw_no: int) -> list[float]:
+    """
+    CNN 기법의 1~45번 숫자별 정규화된 확률을 도출합니다.
+    """
+    X, y, latest_X = prepare_data(draw_no)
+
+    if X is None:
+        return [1.0 / 45.0 for _ in range(45)]
+
+    model = LottoCNN()
+    probs = train_and_predict(model, X, y, latest_X)
+    
+    probs = np.maximum(probs, 1e-5)
+    total_prob = probs.sum()
+    norm_probs = probs / total_prob
+    return norm_probs.tolist()

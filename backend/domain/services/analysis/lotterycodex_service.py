@@ -146,3 +146,90 @@ def generate_lotterycodex_sets(count: int, draw_no: int) -> list[dict]:
     conn.commit()
     conn.close()
     return saved_sets
+
+def get_scores(draw_no: int) -> list[float]:
+    """
+    조합론적 템플릿(Lotterycodex) 기법 점수를 1~45번 각 숫자 단위로 분배하여 정규화된 확률을 도출합니다.
+    """
+    conn = get_connection()
+    conn.row_factory = None
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT num1, num2, num3, num4, num5, num6 
+        FROM lotto_winners 
+        WHERE draw_no < ? 
+        ORDER BY draw_no ASC
+    """, (draw_no,))
+    rows = cursor.fetchall()
+    conn.close()
+    
+    if len(rows) < 8:
+        return [1.0 / 45.0 for _ in range(45)]
+
+    LO = [n for n in range(1, 23) if n % 2 != 0]
+    LE = [n for n in range(1, 23) if n % 2 == 0]
+    HO = [n for n in range(23, 46) if n % 2 != 0]
+    HE = [n for n in range(23, 46) if n % 2 == 0]
+
+    total_combinations = comb(45, 6)
+    templates = []
+    
+    for n_lo in range(min(6, len(LO)) + 1):
+        for n_le in range(min(6 - n_lo, len(LE)) + 1):
+            for n_ho in range(min(6 - n_lo - n_le, len(HO)) + 1):
+                n_he = 6 - n_lo - n_le - n_ho
+                if n_he < 0 or n_he > len(HE):
+                    continue
+                count_combos = comb(len(LO), n_lo) * comb(len(LE), n_le) * comb(len(HO), n_ho) * comb(len(HE), n_he)
+                if count_combos == 0:
+                    continue
+                templates.append({
+                    "pattern": (n_lo, n_le, n_ho, n_he),
+                    "probability": count_combos / total_combinations
+                })
+
+    patterns_set = {"lo": set(LO), "le": set(LE), "ho": set(HO), "he": set(HE)}
+    def classify_row(row):
+        return (
+            sum(1 for n in row if n in patterns_set["lo"]),
+            sum(1 for n in row if n in patterns_set["le"]),
+            sum(1 for n in row if n in patterns_set["ho"]),
+            sum(1 for n in row if n in patterns_set["he"])
+        )
+
+    actual_counts = {}
+    for row in rows:
+        p = classify_row(row)
+        actual_counts[p] = actual_counts.get(p, 0) + 1
+    
+    for t in templates:
+        actual_freq = actual_counts.get(t["pattern"], 0) / len(rows)
+        t["score"] = t["probability"] * 0.6 + actual_freq * 0.4
+
+    templates.sort(key=lambda x: x["score"], reverse=True)
+
+    # Convert template scores into 45 number scores. 
+    # Use top 10 templates. Distribute score proportional to n_pick
+    number_scores = {i: 0.1 for i in range(1, 46)}
+    groups_list = [LO, LE, HO, HE]
+    
+    for t in templates[:10]:
+        t_score = t["score"]
+        pattern = t["pattern"]
+        
+        for group_idx, n_pick in enumerate(pattern):
+            if n_pick > 0:
+                group = groups_list[group_idx]
+                dist_score = (t_score * n_pick) / len(group)
+                for num in group:
+                    number_scores[num] += dist_score
+
+    # Normalize
+    total_score = sum(number_scores.values())
+    if total_score > 0:
+        norm_probs = [number_scores[i] / total_score for i in range(1, 46)]
+    else:
+        norm_probs = [1.0 / 45.0 for _ in range(45)]
+        
+    return norm_probs

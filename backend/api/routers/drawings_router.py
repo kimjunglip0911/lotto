@@ -22,6 +22,18 @@ def get_drawings():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@router.delete("/api/drawings/all")
+def delete_all_drawings():
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute(queries.DELETE_ALL_DRAWINGS)
+        conn.commit()
+        conn.close()
+        return {"message": "All drawings deleted successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @router.get("/api/drawings/draw-numbers", response_model=List[int])
 def get_draw_numbers():
     try:
@@ -113,146 +125,8 @@ def generate_ai_drawings():
 @router.post("/api/analysis/generate-and-save", response_model=List[dict])
 def generate_and_save_drawings(request: GenerateSaveRequest):
     try:
-        conn = get_connection()
-        cursor = conn.cursor()
-        
-        # Checking current count
-        cursor.execute("SELECT DISTINCT method FROM lotto_drawings WHERE draw_no = ?", (request.draw_no,))
-        existing_methods = [row[0] for row in cursor.fetchall()]
-        
-        needs_os = "순서 통계량" not in existing_methods
-        needs_cdm = "CDM 바이시안" not in existing_methods
-        needs_lstm = "LSTM" not in existing_methods
-        needs_bilstm = "Bi-LSTM" not in existing_methods
-        needs_cnn = "CNN" not in existing_methods
-        needs_markov = "마르코프 체인" not in existing_methods
-        needs_ga = "유전 알고리즘" not in existing_methods
-        needs_pso = "입자 군집 최적화" not in existing_methods
-        needs_lotterycodex = "조합론적 템플릿 분석" not in existing_methods
-        needs_behavioral = "행동 경제학 분석" not in existing_methods
-        
-        if not needs_os and not needs_cdm and not needs_lstm and not needs_bilstm and not needs_cnn and not needs_markov and not needs_ga and not needs_pso and not needs_lotterycodex and not needs_behavioral:
-            conn.close()
-            raise HTTPException(status_code=400, detail="해당 회차에 모든 추천 번호 세트가 존재합니다.")
-            
-        # 1. Order Statistics Logic
-        base_where = "WHERE draw_no IS NOT NULL AND draw_no < ?"
-        cursor.execute(f"""
-            SELECT 
-                AVG(num1) as avg_1, AVG(num2) as avg_2, AVG(num3) as avg_3,
-                AVG(num4) as avg_4, AVG(num5) as avg_5, AVG(num6) as avg_6
-            FROM lotto_winners
-            {base_where}
-        """, (request.draw_no,))
-        row = cursor.fetchone()
-        
-        saved_sets = []
-        group_id = f"group_ai_{uuid.uuid4().hex[:8]}"
-        
-        if needs_os:
-            for set_idx in range(2):
-                new_nums = []
-                for i in range(1, 7):
-                    exp_val = row[f'avg_{i}'] if row and row[f'avg_{i}'] else (i * 46 / 7)
-                    
-                    # 1번째 세트는 반올림, 2번째 세트는 올림/내림 교차 등 약간의 차이를 둠
-                    if set_idx == 0:
-                        chosen = int(round(exp_val))
-                    else:
-                        # 2번째 세트는 단순 +1 오프셋 적용으로 확정적인 다른 세트 생성
-                        chosen = int(round(exp_val)) + 1
-                        
-                    if i > 1 and chosen <= new_nums[-1]:
-                        chosen = new_nums[-1] + 1
-                        
-                    if chosen > 45:
-                        chosen = 45
-                    
-                    new_nums.append(chosen)
-
-                new_nums = list(set(new_nums))
-                while len(new_nums) < 6:
-                    pool = [n for n in range(1, 46) if n not in new_nums]
-                    new_nums.append(pool[0])
-                new_nums.sort()
-                
-                method = "순서 통계량"
-                
-                cursor.execute(queries.INSERT_DRAWING, (
-                    group_id,
-                    new_nums[0], new_nums[1], new_nums[2],
-                    new_nums[3], new_nums[4], new_nums[5],
-                    0, # bonus_num
-                    0, # draw_count
-                    method,
-                    request.draw_no
-                ))
-                
-                saved_sets.append({
-                    "num1": new_nums[0], "num2": new_nums[1], "num3": new_nums[2],
-                    "num4": new_nums[3], "num5": new_nums[4], "num6": new_nums[5],
-                    "method": method,
-                    "draw_no": request.draw_no,
-                    "group_id": group_id,
-                })
-            
-        conn.commit()
-        conn.close()
-        
-        # 2. CDM Logic
-        if needs_cdm:
-            from domain.services.analysis.cdm.cdm_service import generate_cdm_sets
-            cdm_sets = generate_cdm_sets(2, request.draw_no)
-            saved_sets.extend(cdm_sets)
-
-        # 3. LSTM Logic
-        if needs_lstm:
-            from domain.services.analysis.lstm_service import generate_lstm_sets
-            lstm_sets = generate_lstm_sets(2, request.draw_no, "LSTM")
-            saved_sets.extend(lstm_sets)
-
-        # 4. Bi-LSTM Logic
-        if needs_bilstm:
-            from domain.services.analysis.lstm_service import generate_lstm_sets
-            bilstm_sets = generate_lstm_sets(2, request.draw_no, "Bi-LSTM")
-            saved_sets.extend(bilstm_sets)
-
-        # 5. CNN Logic
-        if needs_cnn:
-            from domain.services.analysis.cnn_service import generate_cnn_sets
-            cnn_sets = generate_cnn_sets(2, request.draw_no)
-            saved_sets.extend(cnn_sets)
-
-        # 6. Markov Chain Logic
-        if needs_markov:
-            from domain.services.analysis.markov_service import generate_markov_sets
-            markov_sets = generate_markov_sets(2, request.draw_no)
-            saved_sets.extend(markov_sets)
-
-        # 7. Genetic Algorithm Logic
-        if needs_ga:
-            from domain.services.analysis.ga_service import generate_ga_sets
-            ga_sets = generate_ga_sets(2, request.draw_no)
-            saved_sets.extend(ga_sets)
-            
-        # 8. Particle Swarm Optimization Logic
-        if needs_pso:
-            from domain.services.analysis.pso_service import generate_pso_sets
-            pso_sets = generate_pso_sets(2, request.draw_no)
-            saved_sets.extend(pso_sets)
-            
-        # 9. Lotterycodex Structural Approach Logic
-        if needs_lotterycodex:
-            from domain.services.analysis.lotterycodex_service import generate_lotterycodex_sets
-            lotterycodex_sets = generate_lotterycodex_sets(2, request.draw_no)
-            saved_sets.extend(lotterycodex_sets)
-            
-        # 10. Behavioral Economics Analysis Logic
-        if needs_behavioral:
-            from domain.services.analysis.behavioral_service import generate_behavioral_sets
-            behavioral_sets = generate_behavioral_sets(2, request.draw_no)
-            saved_sets.extend(behavioral_sets)
-            
+        from domain.services.analysis.unified_generator_service import generate_optimal_20_sets
+        saved_sets = generate_optimal_20_sets(request.draw_no)
         return saved_sets
 
     except HTTPException:
