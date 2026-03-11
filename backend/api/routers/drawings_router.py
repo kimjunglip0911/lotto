@@ -125,8 +125,10 @@ def generate_and_save_drawings(request: GenerateSaveRequest):
         needs_lstm = "LSTM" not in existing_methods
         needs_bilstm = "Bi-LSTM" not in existing_methods
         needs_cnn = "CNN" not in existing_methods
+        needs_markov = "마르코프 체인" not in existing_methods
+        needs_ga = "유전 알고리즘" not in existing_methods
         
-        if not needs_os and not needs_cdm and not needs_lstm and not needs_bilstm and not needs_cnn:
+        if not needs_os and not needs_cdm and not needs_lstm and not needs_bilstm and not needs_cnn and not needs_markov and not needs_ga:
             conn.close()
             raise HTTPException(status_code=400, detail="해당 회차에 모든 추천 번호 세트가 존재합니다.")
             
@@ -217,6 +219,18 @@ def generate_and_save_drawings(request: GenerateSaveRequest):
             from domain.services.analysis.cnn_service import generate_cnn_sets
             cnn_sets = generate_cnn_sets(2, request.draw_no)
             saved_sets.extend(cnn_sets)
+
+        # 6. Markov Chain Logic
+        if needs_markov:
+            from domain.services.analysis.markov_service import generate_markov_sets
+            markov_sets = generate_markov_sets(2, request.draw_no)
+            saved_sets.extend(markov_sets)
+
+        # 7. Genetic Algorithm Logic
+        if needs_ga:
+            from domain.services.analysis.ga_service import generate_ga_sets
+            ga_sets = generate_ga_sets(2, request.draw_no)
+            saved_sets.extend(ga_sets)
             
         return saved_sets
 
