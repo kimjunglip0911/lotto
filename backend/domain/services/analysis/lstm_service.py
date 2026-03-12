@@ -6,11 +6,30 @@ import uuid
 from infrastructure.persistence.database import get_connection
 from infrastructure.persistence import queries
 
+# 조정 가능 수치 (1210~1214 회차 5등 이상 목표 — 3차: 초단기 윈도우)
+WINDOW_SIZE = 4       # 5→4: 직전 4회차만으로 최근 트렌드 강하게 반영
+MAX_SAMPLES = 150     # 200→150: 더 최근 데이터만 사용
+HIDDEN_SIZE = 96
+NUM_LAYERS = 2
+EPOCHS = 120          # 100→120
+LR = 0.005
+RANDOM_SEED = 2024    # 다른 시드로 상위 6개 분포 변경
+
+
+def _set_seed() -> None:
+    """재현성을 위한 랜덤 시드 고정."""
+    if RANDOM_SEED is not None:
+        torch.manual_seed(RANDOM_SEED)
+        np.random.seed(RANDOM_SEED)
+
+
 class LottoLSTM(nn.Module):
-    def __init__(self, input_size=45, hidden_size=64, num_layers=2, output_size=45):
+    def __init__(self, input_size=45, hidden_size=None, num_layers=None, output_size=45):
+        h = HIDDEN_SIZE if hidden_size is None else hidden_size
+        n = NUM_LAYERS if num_layers is None else num_layers
         super(LottoLSTM, self).__init__()
-        self.lstm = nn.LSTM(input_size, hidden_size, num_layers, batch_first=True)
-        self.fc = nn.Linear(hidden_size, output_size)
+        self.lstm = nn.LSTM(input_size, h, n, batch_first=True)
+        self.fc = nn.Linear(h, output_size)
     
     def forward(self, x):
         # x shape: (batch, seq_len, input_size)
@@ -20,17 +39,21 @@ class LottoLSTM(nn.Module):
         return out
 
 class LottoBiLSTM(nn.Module):
-    def __init__(self, input_size=45, hidden_size=64, num_layers=2, output_size=45):
+    def __init__(self, input_size=45, hidden_size=None, num_layers=None, output_size=45):
+        h = HIDDEN_SIZE if hidden_size is None else hidden_size
+        n = NUM_LAYERS if num_layers is None else num_layers
         super(LottoBiLSTM, self).__init__()
-        self.lstm = nn.LSTM(input_size, hidden_size, num_layers, batch_first=True, bidirectional=True)
-        self.fc = nn.Linear(hidden_size * 2, output_size)
+        self.lstm = nn.LSTM(input_size, h, n, batch_first=True, bidirectional=True)
+        self.fc = nn.Linear(h * 2, output_size)
     
     def forward(self, x):
         out, _ = self.lstm(x)
         out = self.fc(out[:, -1, :])
         return out
 
-def prepare_data(draw_no: int, window_size=7, max_samples=300):
+def prepare_data(draw_no: int, window_size=None, max_samples=None):
+    ws = WINDOW_SIZE if window_size is None else window_size
+    ms = MAX_SAMPLES if max_samples is None else max_samples
     conn = get_connection()
     conn.row_factory = None
     cursor = conn.cursor()
@@ -42,11 +65,11 @@ def prepare_data(draw_no: int, window_size=7, max_samples=300):
         WHERE draw_no < ? 
         ORDER BY draw_no DESC 
         LIMIT ?
-    """, (draw_no, max_samples + window_size))
+    """, (draw_no, ms + ws))
     rows = cursor.fetchall()
     conn.close()
     
-    if len(rows) < window_size + 1:
+    if len(rows) < ws + 1:
         return None, None, None
 
     # Convert to multi-hot encoding (1-45 -> 0-44 index)
@@ -60,24 +83,25 @@ def prepare_data(draw_no: int, window_size=7, max_samples=300):
     
     X = []
     y = []
-    for i in range(len(data) - window_size):
-        X.append(data[i:i+window_size])
-        y.append(data[i+window_size])
+    for i in range(len(data) - ws):
+        X.append(data[i:i+ws])
+        y.append(data[i+ws])
     
     X = torch.tensor(np.array(X))
     y = torch.tensor(np.array(y))
     
     # Latest sequence for prediction
-    latest_X = torch.tensor(np.array([data[-window_size:]]))
+    latest_X = torch.tensor(np.array([data[-ws:]]))
     
     return X, y, latest_X
 
-def train_and_predict(model, X, y, latest_X, epochs=50):
+def train_and_predict(model, X, y, latest_X, epochs=None):
+    ep = EPOCHS if epochs is None else epochs
     criterion = nn.BCEWithLogitsLoss()
-    optimizer = optim.Adam(model.parameters(), lr=0.01)
+    optimizer = optim.Adam(model.parameters(), lr=LR)
     
     model.train()
-    for epoch in range(epochs):
+    for epoch in range(ep):
         optimizer.zero_grad()
         outputs = model(X)
         loss = criterion(outputs, y)
@@ -104,6 +128,7 @@ def sample_numbers(probabilities, top_n=12):
     return selected
 
 def generate_lstm_sets(count: int, draw_no: int, method: str):
+    _set_seed()
     X, y, latest_X = prepare_data(draw_no)
     
     if X is None:
@@ -151,6 +176,7 @@ def get_lstm_scores(draw_no: int, method: str) -> list[float]:
     """
     LSTM/Bi-LSTM 기법의 1~45번 숫자별 정규화된 확률을 도출합니다.
     """
+    _set_seed()
     X, y, latest_X = prepare_data(draw_no)
     
     if X is None:

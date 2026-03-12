@@ -8,7 +8,7 @@ from infrastructure.persistence import queries
 
 
 # --- 1-1. 데이터 준비 ---
-def prepare_data(draw_no: int, window_size=7, max_samples=300):
+def prepare_data(draw_no: int, window_size=4, max_samples=400):
     """과거 당첨 번호를 2D Grid(5x9)로 변환하여 CNN 학습용 데이터셋을 구성한다."""
     conn = get_connection()
     conn.row_factory = None
@@ -60,11 +60,12 @@ def prepare_data(draw_no: int, window_size=7, max_samples=300):
 
 # --- 1-2. CNN 모델 ---
 class LottoCNN(nn.Module):
-    def __init__(self, in_channels=7, output_size=45):
+    def __init__(self, in_channels=4, output_size=45):
         super().__init__()
         self.conv1 = nn.Conv2d(in_channels, 32, kernel_size=3, padding=1)
         self.conv2 = nn.Conv2d(32, 64, kernel_size=3, padding=1)
         self.pool = nn.MaxPool2d(kernel_size=2, stride=1)
+        self.dropout = nn.Dropout(0.2)
         # 5→pool→4→pool→3,  9→pool→8→pool→7
         self.fc1 = nn.Linear(64 * 3 * 7, output_size)
 
@@ -73,15 +74,16 @@ class LottoCNN(nn.Module):
         x = self.pool(x)
         x = torch.relu(self.conv2(x))
         x = self.pool(x)
+        x = self.dropout(x)
         x = x.view(x.size(0), -1)
         x = self.fc1(x)
         return x
 
 
 # --- 1-3. 학습 및 추론 ---
-def train_and_predict(model, X, y, latest_X, epochs=50):
+def train_and_predict(model, X, y, latest_X, epochs=120):
     criterion = nn.BCEWithLogitsLoss()
-    optimizer = optim.Adam(model.parameters(), lr=0.01)
+    optimizer = optim.Adam(model.parameters(), lr=0.002)
 
     model.train()
     for epoch in range(epochs):
@@ -157,6 +159,8 @@ def get_cnn_scores(draw_no: int) -> list[float]:
     CNN 기법의 1~45번 숫자별 정규화된 확률을 도출합니다.
     """
     X, y, latest_X = prepare_data(draw_no)
+    torch.manual_seed(42)
+    np.random.seed(42)
 
     if X is None:
         return [1.0 / 45.0 for _ in range(45)]

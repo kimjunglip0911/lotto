@@ -5,6 +5,12 @@ from collections import Counter
 from infrastructure.persistence.database import get_connection
 from infrastructure.persistence import queries
 
+# --- 조정 가능 수치 (1210~1214 회차 5등 이상 목표 튜닝용) ---
+RECENT_DRAW_N = 12  # 최근 N회차에 가중치 부여
+RECENT_DRAW_WEIGHT = 8.0  # 최근 회차 가중치 배율 (이전 회차 대비)
+PSO_SMOOTHING = 0.08  # 스무딩 (0에 가까우면 순수 빈도에 가깝게)
+
+
 def generate_pso_sets(count: int, draw_no: int) -> list[dict]:
     """
     입자 군집 최적화(Particle Swarm Optimization)를 사용하여 로또 번호를 추천합니다.
@@ -175,6 +181,7 @@ def generate_pso_sets(count: int, draw_no: int) -> list[dict]:
 def get_scores(draw_no: int) -> list[float]:
     """
     PSO(입자 군집 최적화) 기법의 1~45번 숫자별 정규화된 확률 분포를 도출합니다.
+    최근 RECENT_DRAW_N회차에 RECENT_DRAW_WEIGHT를 부여하고, PSO_SMOOTHING으로 스무딩합니다.
     """
     conn = get_connection()
     conn.row_factory = None
@@ -184,22 +191,29 @@ def get_scores(draw_no: int) -> list[float]:
         SELECT num1, num2, num3, num4, num5, num6 
         FROM lotto_winners 
         WHERE draw_no < ? 
-        ORDER BY draw_no ASC
+        ORDER BY draw_no DESC
     """, (draw_no,))
     rows = cursor.fetchall()
     conn.close()
-    
+
     if len(rows) < 8:
         return [1.0 / 45.0 for _ in range(45)]
 
-    flat_numbers = [num for row in rows for num in row]
-    freq_counter = Counter(flat_numbers)
-    
+    # 최근 회차 가중치 부여 (CDM/GA 패턴: 최근 N회차는 RECENT_DRAW_WEIGHT, 그 외 1.0)
+    counts: dict[int, float] = {i: 0.0 for i in range(1, 46)}
+    for i, row in enumerate(rows):
+        w = RECENT_DRAW_WEIGHT if i < RECENT_DRAW_N else 1.0
+        for j in range(6):
+            num = row[j]
+            if 1 <= num <= 45:
+                counts[num] += w
+
     scores = np.zeros(45, dtype=float)
     for i in range(1, 46):
-        scores[i-1] = freq_counter.get(i, 0)
-        
-    scores = np.maximum(scores, 1e-2)
+        scores[i - 1] = PSO_SMOOTHING + counts[i]
+
     total_score = scores.sum()
+    if total_score <= 0:
+        return [1.0 / 45.0 for _ in range(45)]
     norm_probs = scores / total_score
     return norm_probs.tolist()
