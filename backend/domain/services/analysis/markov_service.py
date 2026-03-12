@@ -7,10 +7,14 @@ from infrastructure.persistence.database import get_connection
 from infrastructure.persistence import queries
 
 # --- 조정 가능 수치 (1210~1214 회차 5등 이상 목표 튜닝용) ---
-MIN_TRAIN_ROWS = 8  # 최소 학습 회차 수 (5~15 구간에서 조정 가능)
-LAPLACE_ALPHA = 0.02  # 전이 행렬 Laplace 스무딩
-RECENT_N = 5  # 직전 5회차 가중 블렌딩
-RECENT_WEIGHTS = (0.05, 0.1, 0.15, 0.25, 0.45)  # 최신 회차 강조
+MIN_TRAIN_ROWS = 8  # 최소 학습 회차 수
+LAPLACE_ALPHA = 0.05  # 전이 행렬 Laplace 스무딩
+RECENT_N = 10  # 직전 10회차 가중 블렌딩
+RECENT_WEIGHTS = (0.02, 0.03, 0.05, 0.07, 0.09, 0.11, 0.13, 0.15, 0.17, 0.18)  # 최신 회차 강조
+# 전이 확률 + 최근 빈도 블렌딩 (5등 목표: 빈도 신호 보강)
+FREQ_BLEND_WEIGHT = 0.65  # 최근 N회차 출현 빈도 가중치 (0~1)
+FREQ_RECENT_N = 12  # 빈도 계산용 최근 회차 수
+FREQ_RECENT_WEIGHT = 6.0  # 최근 6회차 빈도에 부여할 배율 (CDM 패턴)
 
 
 def _compute_transition_matrix(rows: list, laplace_alpha: float) -> np.ndarray:
@@ -87,6 +91,18 @@ def _get_prob_vector_for_draw(draw_no: int, cursor=None) -> np.ndarray | None:
     prob_vector = _compute_prob_vector(
         rows, transition_matrix, RECENT_N, RECENT_WEIGHTS
     )
+    # 최근 빈도 블렌딩 (CDM 패턴: 직전 트렌드 반영)
+    n_freq = min(FREQ_RECENT_N, len(rows))
+    freq_counts = np.zeros(45, dtype=float)
+    for i, row in enumerate(rows[-n_freq:]):
+        w = FREQ_RECENT_WEIGHT if i >= n_freq - 6 else 1.0
+        for num in row:
+            if 1 <= num <= 45:
+                freq_counts[num - 1] += w
+    freq_sum = freq_counts.sum()
+    freq_probs = (freq_counts + 0.1) / (freq_sum + 45 * 0.1) if freq_sum > 0 else np.full(45, 1.0 / 45.0)
+    prob_vector = (1.0 - FREQ_BLEND_WEIGHT) * prob_vector + FREQ_BLEND_WEIGHT * freq_probs
+    prob_vector = prob_vector / prob_vector.sum()
     if own_conn:
         conn.close()
     return prob_vector

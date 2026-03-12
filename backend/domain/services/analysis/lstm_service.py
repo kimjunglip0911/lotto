@@ -6,14 +6,14 @@ import uuid
 from infrastructure.persistence.database import get_connection
 from infrastructure.persistence import queries
 
-# 조정 가능 수치 (1210~1214 회차 5등 이상 목표 — 3차: 초단기 윈도우)
-WINDOW_SIZE = 4       # 5→4: 직전 4회차만으로 최근 트렌드 강하게 반영
-MAX_SAMPLES = 150     # 200→150: 더 최근 데이터만 사용
-HIDDEN_SIZE = 96
+# 조정 가능 수치 (1210~1214 회차 5등 이상 목표 — 4차 재조정)
+WINDOW_SIZE = 3       # 직전 3회차로 최근 트렌드 강하게 반영
+MAX_SAMPLES = 120     # 최근 120회차만 사용 (직전 패턴 집중)
+HIDDEN_SIZE = 128     # 모델 용량 확대
 NUM_LAYERS = 2
-EPOCHS = 120          # 100→120
-LR = 0.005
-RANDOM_SEED = 2024    # 다른 시드로 상위 6개 분포 변경
+EPOCHS = 150
+LR = 0.004
+RANDOM_SEED = 2025    # 시드 변경으로 분포 다양화
 
 
 def _set_seed() -> None:

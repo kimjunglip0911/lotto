@@ -9,10 +9,10 @@ from infrastructure.persistence.database import get_connection
 from infrastructure.persistence import queries
 
 # Dirichlet prior (낮을수록 고빈도 번호 집중, 1210~1214 회차 5등 이상 목표에 맞춤)
-CDM_ALPHA = 0.2
-# 최근 N회차 당첨에 부여할 가중치 배율 (직전 트렌드 반영)
-RECENT_DRAW_N = 10
-RECENT_DRAW_WEIGHT = 6.0
+CDM_ALPHA = 0.15
+# 최근 N회차 당첨에 부여할 가중치 배율 (직전 트렌드 반영, GA/PSO 5등 달성 패턴 적용)
+RECENT_DRAW_N = 12
+RECENT_DRAW_WEIGHT = 8.0
 
 
 def _compute_counts(draw_no: Optional[int], cursor=None) -> dict[int, float]:

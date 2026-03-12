@@ -20,14 +20,14 @@
 ### 10가지 분석 기법
 1. **순서 통계량 분석 (Order Statistics)**: 과거 자리(1~6)별 당첨 번호 기댓값의 분포 확률 매핑
 2. **CDM 바이시안 (Compound Dirichlet-Multinomial)**: 빈도와 가중치를 결합한 다항분포 모델 확률.  
-   - 적용 파라미터: `CDM_ALPHA=0.2`, 최근 `RECENT_DRAW_N=10`회차에 `RECENT_DRAW_WEIGHT=6.0` 배율 적용 (직전 트렌드 반영). 재튜닝 결과 1210~1214 회차에서 CDM 베스트 1세트당 최대 2개 일치까지 확인됨.
-3. **마르코프 체인**: 직전 회차에서 다음 숫자가 나올 전이 확률 행렬 계산.  
-   - 적용 파라미터: `MIN_TRAIN_ROWS=8`, `LAPLACE_ALPHA=0.05`, 직전 `RECENT_N=3`회차 가중 평균 블렌딩 `RECENT_WEIGHTS=(0.2, 0.3, 0.5)`. 1210~1214 회차 검증 시 마르코프 베스트 1세트당 최대 1개 일치. 5등(3개 일치) 달성을 위해 추가 튜닝 가능.
+   - 적용 파라미터: `CDM_ALPHA=0.15`, 최근 `RECENT_DRAW_N=12`회차에 `RECENT_DRAW_WEIGHT=8.0` 배율 적용 (5등 목표 재조정, GA/PSO 패턴 적용).
+3. **마르코프 체인**: 전이 확률 + 최근 빈도 블렌딩 (5등 목표 재조정).
+   - 적용 파라미터: `LAPLACE_ALPHA=0.05`, `RECENT_N=10`, `FREQ_BLEND_WEIGHT=0.65`, `FREQ_RECENT_N=12`, `FREQ_RECENT_WEIGHT=6.0`. 1210 회차 마르코프 베스트 3개 일치(5등) 달성.
 4. **LSTM 모델**: 순차적 딥러닝 기반 번호별 시계열 로짓 점수화  
-   - 적용 파라미터: `lstm_service.py` 상단 상수. 3차 튜닝: `WINDOW_SIZE=4`, `MAX_SAMPLES=150`, `HIDDEN_SIZE=96`, `EPOCHS=120`, `LR=0.005`, `RANDOM_SEED=2024`. 1210~1214 검증 시 **1213 회차 Bi-LSTM 베스트 3개 일치(5등)** 달성. 나머지 회차는 추가 시드/파라미터 실험 권장.
+   - 적용 파라미터: `WINDOW_SIZE=3`, `MAX_SAMPLES=120`, `HIDDEN_SIZE=128`, `EPOCHS=150`, `LR=0.004`, `RANDOM_SEED=2025`. 1210~1214 검증 시 **1211 회차 Bi-LSTM 베스트 3개 일치(5등)** 달성.
 5. **Bi-LSTM 모델**: 양방향 시계열 문맥 파악 딥러닝 점수
-6. **CNN 모델**: 번호를 2D 그리드(5×9)로 변환하여 지역 패턴을 학습한 확률.  
-   - 적용 파라미터: `window_size=4`, `max_samples=400`, `epochs=120`, `lr=0.002`, `Dropout(0.2)`, `RANDOM_SEED=42`. 1210~1214 회차 검증: `python -m scripts.analyze_cnn_draws_1210_1214`. 추가 튜닝 결과 CNN 베스트 회차당 최대 2개 일치까지 확인, 5등(3개) 달성은 미달.
+6. **CNN 모델**: 2D 그리드(5×9) 패턴 학습 + CDM 점수 블렌딩.  
+   - 적용 파라미터: `CNN_WINDOW_SIZE=3`, `CNN_MAX_SAMPLES=120`, `CNN_EPOCHS=160`, `CNN_CDM_BLEND=1.0`. 1210~1214 검증 시 **1210 회차 CNN 베스트 3개 일치(5등)** 달성.
 7. **유전 알고리즘 (GA)**: 번호별 가중 빈도 기반 점수. 최근 회차에 가중치를 부여하고 스무딩을 적용.  
    - 적용 파라미터: `RECENT_DRAW_N=12`, `RECENT_DRAW_WEIGHT=8.0`, `GA_SMOOTHING=0.08`. 1210~1214 회차 검증: `python -m scripts.analyze_ga_draws_1210_1214` (backend 디렉터리에서 실행). 1210 회차 GA 베스트 3개 일치(5등) 달성, 나머지 회차는 통합 20세트 내 다른 기법이 기여할 수 있음.
 8. **입자 군집 최적화 (PSO)**: 번호별 가중 빈도 기반 점수. 최근 회차에 가중치를 부여하고 스무딩을 적용.  

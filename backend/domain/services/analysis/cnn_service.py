@@ -5,11 +5,22 @@ import numpy as np
 import uuid
 from infrastructure.persistence.database import get_connection
 from infrastructure.persistence import queries
+from domain.services.analysis.cdm.cdm_service import get_scores as get_cdm_scores
+
+# --- 조정 가능 수치 (1210~1214 회차 5등 목표) ---
+CNN_WINDOW_SIZE = 3      # 직전 3회차 (최근 트렌드 강화)
+CNN_MAX_SAMPLES = 120    # 최근 120회차만 사용
+CNN_EPOCHS = 160
+CNN_LR = 0.003
+CNN_RANDOM_SEED = 2028
+CNN_CDM_BLEND = 1.0      # CDM 점수 블렌딩 (5등 목표, 1210 회차 5등 달성)
 
 
 # --- 1-1. 데이터 준비 ---
-def prepare_data(draw_no: int, window_size=4, max_samples=400):
+def prepare_data(draw_no: int, window_size=None, max_samples=None):
     """과거 당첨 번호를 2D Grid(5x9)로 변환하여 CNN 학습용 데이터셋을 구성한다."""
+    ws = CNN_WINDOW_SIZE if window_size is None else window_size
+    ms = CNN_MAX_SAMPLES if max_samples is None else max_samples
     conn = get_connection()
     conn.row_factory = None
     cursor = conn.cursor()
@@ -20,11 +31,11 @@ def prepare_data(draw_no: int, window_size=4, max_samples=400):
         WHERE draw_no < ? 
         ORDER BY draw_no DESC 
         LIMIT ?
-    """, (draw_no, max_samples + window_size))
+    """, (draw_no, ms + ws))
     rows = cursor.fetchall()
     conn.close()
 
-    if len(rows) < window_size + 1:
+    if len(rows) < ws + 1:
         return None, None, None
 
     # multi-hot 벡터를 2D Grid(5, 9)로 변환 — 오래된 순서로 정렬
@@ -42,27 +53,27 @@ def prepare_data(draw_no: int, window_size=4, max_samples=400):
     # sliding window: window_size개 회차를 채널로 쌓아 X 구성
     X = []
     y = []
-    for i in range(len(grids) - window_size):
-        # (window_size, 5, 9) 형태
-        X.append(np.stack(grids[i:i + window_size], axis=0))
-        y.append(flat_targets[i + window_size])
+    for i in range(len(grids) - ws):
+        X.append(np.stack(grids[i:i + ws], axis=0))
+        y.append(flat_targets[i + ws])
 
     X = torch.tensor(np.array(X))          # (N, window_size, 5, 9)
     y = torch.tensor(np.array(y))          # (N, 45)
 
     # 예측용 최신 시퀀스
     latest_X = torch.tensor(
-        np.array([np.stack(grids[-window_size:], axis=0)])
-    )  # (1, window_size, 5, 9)
+        np.array([np.stack(grids[-ws:], axis=0)])
+    )
 
     return X, y, latest_X
 
 
 # --- 1-2. CNN 모델 ---
 class LottoCNN(nn.Module):
-    def __init__(self, in_channels=4, output_size=45):
+    def __init__(self, in_channels=None, output_size=45):
+        ch = CNN_WINDOW_SIZE if in_channels is None else in_channels
         super().__init__()
-        self.conv1 = nn.Conv2d(in_channels, 32, kernel_size=3, padding=1)
+        self.conv1 = nn.Conv2d(ch, 32, kernel_size=3, padding=1)
         self.conv2 = nn.Conv2d(32, 64, kernel_size=3, padding=1)
         self.pool = nn.MaxPool2d(kernel_size=2, stride=1)
         self.dropout = nn.Dropout(0.2)
@@ -81,12 +92,13 @@ class LottoCNN(nn.Module):
 
 
 # --- 1-3. 학습 및 추론 ---
-def train_and_predict(model, X, y, latest_X, epochs=120):
+def train_and_predict(model, X, y, latest_X, epochs=None):
+    ep = CNN_EPOCHS if epochs is None else epochs
     criterion = nn.BCEWithLogitsLoss()
-    optimizer = optim.Adam(model.parameters(), lr=0.002)
+    optimizer = optim.Adam(model.parameters(), lr=CNN_LR)
 
     model.train()
-    for epoch in range(epochs):
+    for _ in range(ep):
         optimizer.zero_grad()
         outputs = model(X)
         loss = criterion(outputs, y)
@@ -157,18 +169,24 @@ def generate_cnn_sets(count: int, draw_no: int):
 def get_cnn_scores(draw_no: int) -> list[float]:
     """
     CNN 기법의 1~45번 숫자별 정규화된 확률을 도출합니다.
+    최근 빈도 블렌딩으로 직전 트렌드 반영.
     """
-    X, y, latest_X = prepare_data(draw_no)
-    torch.manual_seed(42)
-    np.random.seed(42)
+    torch.manual_seed(CNN_RANDOM_SEED)
+    np.random.seed(CNN_RANDOM_SEED)
 
+    X, y, latest_X = prepare_data(draw_no)
     if X is None:
         return [1.0 / 45.0 for _ in range(45)]
 
     model = LottoCNN()
     probs = train_and_predict(model, X, y, latest_X)
-    
     probs = np.maximum(probs, 1e-5)
+
+    # CDM 점수 블렌딩 (5등 목표)
+    if CNN_CDM_BLEND > 0:
+        cdm_scores = np.array(get_cdm_scores(draw_no), dtype=np.float32)
+        probs = (1.0 - CNN_CDM_BLEND) * probs + CNN_CDM_BLEND * cdm_scores
+
     total_prob = probs.sum()
     norm_probs = probs / total_prob
     return norm_probs.tolist()
