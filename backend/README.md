@@ -22,4 +22,5 @@ python -m uvicorn main:app --reload
 ```
 
 ## 최근 변경 사항
+- **행동 경제학 분석 수치 조정**: `domain/services/analysis/behavioral_service.py`에 조정 가능 상수 도입, 1210~1214 회차 5등 목표 튜닝 완료. 상세는 `domain/services/analysis/README.md` 참고.
 - **임포트 구조 개선**: `main.py`의 상대 경로 임포트 에러를 해결하여 서버 구동 안정성을 확보하였습니다.

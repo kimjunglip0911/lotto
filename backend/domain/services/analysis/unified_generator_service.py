@@ -1,3 +1,4 @@
+import random
 import uuid
 import itertools
 from infrastructure.persistence.database import get_connection
@@ -12,7 +13,7 @@ from domain.services.analysis.cnn_service import get_cnn_scores
 from domain.services.analysis.ga_service import get_scores as get_ga_scores
 from domain.services.analysis.pso_service import get_scores as get_pso_scores
 from domain.services.analysis.behavioral_service import get_scores as get_behav_scores
-from domain.services.analysis.lotterycodex_service import get_scores as get_codex_scores
+from domain.services.analysis.frequency_trend_service import get_scores as get_frequency_trend_scores
 
 def get_lstm_scores(draw_no: int): return get_lstm_scores_raw(draw_no, "LSTM")
 def get_bilstm_scores(draw_no: int): return get_lstm_scores_raw(draw_no, "Bi-LSTM")
@@ -27,7 +28,7 @@ METHODS = [
     ("유전 알고리즘", get_ga_scores),
     ("입자 군집 최적화", get_pso_scores),
     ("행동 경제학 분석", get_behav_scores),
-    ("조합론적 템플릿 분석", get_codex_scores)
+    ("출현 빈도 및 추세 기법", get_frequency_trend_scores)
 ]
 
 def resolve_duplicates(method_ranks: dict) -> list[int]:
@@ -110,8 +111,15 @@ def generate_optimal_20_sets(draw_no: int) -> list[dict]:
     
     # 2. 1차 세트: 기법별 베스트 1~6위 픽 1세트씩 = 10세트
     for idx in range(10):
-        # 상위 6개 도출
-        best_nums = sorted([method_ranks[idx][i][0] for i in range(6)])
+        # 상위 6개 도출 (출현 빈도 및 추세 기법은 draw_no별 다양화)
+        if idx == 9:
+            # draw_no 시드로 상위 9개 중 6개 선택 → 회차별로 다른 베스트 세트
+            rng = random.Random(draw_no)
+            pool_size = min(9, 45)
+            indices = sorted(rng.sample(range(pool_size), 6))
+            best_nums = sorted([method_ranks[idx][i][0] for i in indices])
+        else:
+            best_nums = sorted([method_ranks[idx][i][0] for i in range(6)])
         method_name = f"{scores_dict[idx]['name']} 베스트"
         group_id = f"group_stage1_{uuid.uuid4().hex[:8]}"
         

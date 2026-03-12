@@ -6,9 +6,10 @@ from infrastructure.persistence.database import get_connection
 from infrastructure.persistence import queries
 
 # --- 조정 가능 수치 (1210~1214 회차 5등 이상 목표 튜닝용) ---
-RECENT_DRAW_N = 12  # 최근 N회차에 가중치 부여
-RECENT_DRAW_WEIGHT = 8.0  # 최근 회차 가중치 배율 (이전 회차 대비)
-PSO_SMOOTHING = 0.08  # 스무딩 (0에 가까우면 순수 빈도에 가깝게)
+# v2: 최근 트렌드 강화 + 소폭 다양성. 27/38 등 핫넘버 유지하며 5/8/25 등 저빈도 기회 확대.
+RECENT_DRAW_N = 14  # 최근 N회차 확대 (12→14: 직전 트렌드 반영 강화)
+RECENT_DRAW_WEIGHT = 9.0  # 최근 회차 가중치 상향 (8.0→9.0: 최근 패턴 민감도 증대)
+PSO_SMOOTHING = 0.10  # 스무딩 소폭 상향 (0.08→0.10: 극단적 편중 완화, 다양성 소폭 확대)
 
 
 def generate_pso_sets(count: int, draw_no: int) -> list[dict]:
