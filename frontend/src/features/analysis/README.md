@@ -29,8 +29,8 @@
 6. **CNN 모델**: 2D 그리드(5×9) 패턴 학습 + CDM 점수 블렌딩.  
    - 적용 파라미터: `CNN_WINDOW_SIZE=3`, `CNN_MAX_SAMPLES=120`, `CNN_EPOCHS=160`, `CNN_CDM_BLEND=1.0`. 1210~1214 검증 시 **1210 회차 CNN 베스트 3개 일치(5등)** 달성.
 7. **유전 알고리즘 (GA)**: 번호별 가중 빈도 기반 점수. 최근 회차에 가중치를 부여하고 스무딩을 적용.  
-   - 적용 파라미터: `RECENT_DRAW_N=12`, `RECENT_DRAW_WEIGHT=8.0`, `GA_SMOOTHING=0.08`. 1210~1214 회차 검증: `python -m scripts.analyze_ga_draws_1210_1214` (backend 디렉터리에서 실행). 1210 회차 GA 베스트 3개 일치(5등) 달성, 나머지 회차는 통합 20세트 내 다른 기법이 기여할 수 있음.
+   - 적용 파라미터: `RECENT_DRAW_N=12`, `RECENT_DRAW_WEIGHT=8.0`, `GA_SMOOTHING=0.08`. 1210 회차 GA 베스트 3개 일치(5등) 달성, 나머지 회차는 통합 20세트 내 다른 기법이 기여할 수 있음.
 8. **입자 군집 최적화 (PSO)**: 번호별 가중 빈도 기반 점수. 최근 회차에 가중치를 부여하고 스무딩을 적용.  
-   - 적용 파라미터: `RECENT_DRAW_N=12`, `RECENT_DRAW_WEIGHT=8.0`, `PSO_SMOOTHING=0.08`. 1210~1214 회차 검증: `python -m scripts.analyze_pso_draws_1210_1214` (backend 디렉터리에서 실행). 1210 회차 PSO 베스트 3개 일치(5등) 달성, 나머지 회차는 통합 20세트 내 다른 기법이 기여할 수 있음.
+   - 적용 파라미터: `RECENT_DRAW_N=12`, `RECENT_DRAW_WEIGHT=8.0`, `PSO_SMOOTHING=0.08`. 1210 회차 PSO 베스트 3개 일치(5등) 달성, 나머지 회차는 통합 20세트 내 다른 기법이 기여할 수 있음.
 9. **행동 경제학 모형**: '도박사의 오류' 역이용 및 '가용성 편향' 보정 등 휴리스틱 가중치 (Softmax 변환)
 10. **조합론적 구조 분석 (Lotterycodex)**: 짝홀/고저 패턴 템플릿의 과거 빈도 기반 분배 확률
