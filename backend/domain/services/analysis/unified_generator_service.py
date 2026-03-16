@@ -89,6 +89,58 @@ def resolve_duplicates(method_ranks: dict) -> list[int]:
         
     return list(current_picks.values())
 
+
+TOP_CANDIDATES_FOR_DIVERSITY = 50
+
+
+def select_diverse_top10(combo_scores: list) -> list[tuple]:
+    """
+    점수 상위 후보 중에서 겹침을 최소화하는 Greedy 다양화 선택으로 10개 조합을 반환합니다.
+    - 입력: combo_scores = [(combo_tuple, total_score), ...], 점수 내림차순 정렬됨
+    - 출력: 10개의 combo_tuple(6개 번호) 리스트
+    - 1번째: 점수 1위 조합. 2~10번째: 후보(점수 상위 TOP_CANDIDATES_FOR_DIVERSITY개) 중
+      이미 선택된 조합들과의 최대 겹침 수가 가장 작은 것을 순차 선택 (동점 시 점수 높은 쪽).
+    """
+    if len(combo_scores) < 10:
+        return [c[0] for c in combo_scores]
+
+    selected: list[tuple] = [combo_scores[0][0]]
+    used_indices = {0}
+    candidate_end = min(TOP_CANDIDATES_FOR_DIVERSITY + 1, len(combo_scores))
+
+    for _ in range(9):
+        best_idx = None
+        best_max_overlap = 7
+        best_score = -1.0
+
+        for i in range(1, candidate_end):
+            if i in used_indices:
+                continue
+            combo, score = combo_scores[i]
+            max_overlap = max(
+                len(set(combo) & set(sel)) for sel in selected
+            )
+            if max_overlap < best_max_overlap or (
+                max_overlap == best_max_overlap and score > best_score
+            ):
+                best_max_overlap = max_overlap
+                best_score = score
+                best_idx = i
+
+        if best_idx is None:
+            for i in range(candidate_end, len(combo_scores)):
+                if i not in used_indices:
+                    best_idx = i
+                    break
+        if best_idx is None:
+            break
+
+        selected.append(combo_scores[best_idx][0])
+        used_indices.add(best_idx)
+
+    return selected
+
+
 def generate_optimal_20_sets(draw_no: int) -> list[dict]:
     # 1. 10개 기법 점수 (45개) 수집
     scores_dict = {}
@@ -154,9 +206,11 @@ def generate_optimal_20_sets(draw_no: int) -> list[dict]:
     # 합산 스코어가 높은 순 정렬
     combo_scores.sort(key=lambda x: x[1], reverse=True)
     
-    # 가장 높은 10개 세트를 2차 세트로 저장
-    for i in range(10):
-        combo_nums = combo_scores[i][0]
+    # Greedy 다양화 선택으로 10개 세트 추출
+    selected_10 = select_diverse_top10(combo_scores)
+
+    # 2차 세트로 저장
+    for combo_nums in selected_10:
         method_name = "통합 최적 조합"
         group_id = f"group_stage2_{uuid.uuid4().hex[:8]}"
         
