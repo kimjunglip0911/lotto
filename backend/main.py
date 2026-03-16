@@ -1,3 +1,7 @@
+# __pycache__ 생성 방지 (유지보수 시 캐시 폴더 정리 부담 감소)
+import sys
+sys.dont_write_bytecode = True
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from domain.models.schemas import MessageResponse

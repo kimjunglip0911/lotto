@@ -9,6 +9,8 @@
 import sys
 import os
 from pathlib import Path
+
+sys.dont_write_bytecode = True
 from contextlib import redirect_stdout
 from datetime import datetime
 

@@ -32,10 +32,7 @@ _SCORERS = [
 
 # 융합 가중치 (합=1 권장). 순서: 순서통계량, CDM, 마르코프, LSTM, Bi-LSTM, CNN, GA, PSO, 행동경제학, 출현빈도·추세
 # 로그 기준 최고 9회: 파인_w0=0.33_w9=0.12 (순서통계_단독강화 주변 파인 그리드)
-WEIGHTS = [0.3301, 0.0675, 0.0675, 0.0675, 0.0675, 0.0675, 0.0675, 0.0675, 0.0772, 0.12]
-
-
-def get_scores(draw_no: int, weights: list[float] | None = None) -> list[float]:
+WEIGHTS = [0.35, 0.07, 0.07, 0.07, 0.07, 0.07, 0.07, 0.07, 0.08, 0.08]  # tune_fusion_52_grid 최고: 순서통계_단독강화
     """10개 기법 점수의 가중 합산 후 정규화. 길이 45."""
     w = weights if weights is not None else WEIGHTS
     if len(w) != 10:

@@ -14,6 +14,7 @@ import sys
 import uuid
 from pathlib import Path
 
+sys.dont_write_bytecode = True
 _backend_root = Path(__file__).resolve().parent.parent
 if str(_backend_root) not in sys.path:
     sys.path.insert(0, str(_backend_root))
