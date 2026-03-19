@@ -7,6 +7,7 @@ from infrastructure.persistence import queries
 from domain.models.schemas import LottoDrawingGroup, MessageResponse, GenerateSaveRequest
 from domain.services.generator_service import generate_random_sets
 import uuid
+from domain.services.analysis.order_statistics_service import get_scores as get_order_statistics_scores
 
 router = APIRouter(tags=["drawings_and_analysis"])
 
@@ -179,6 +180,10 @@ def get_order_statistics(
             
         cursor.execute(query, tuple(params))
         row = cursor.fetchone()
+        prediction_draw_no = draw_no
+        if prediction_draw_no is None:
+            cursor.execute("SELECT COALESCE(MAX(draw_no), 0) + 1 FROM lotto_winners")
+            prediction_draw_no = cursor.fetchone()[0]
         conn.close()
 
         if not row or row['total_draws'] == 0:
@@ -203,39 +208,18 @@ def get_order_statistics(
                 deviation=deviation
             ))
 
-        # 순서 통계량을 응용한 2세트 추천 번호 생성 로직 (단순 기댓값 기반 샘플링)
-        generated_sets = []
-        for _ in range(2):
-            new_nums = []
-            for i in range(1, 7):
-                exp_val = i * 46 / 7
-                # 기댓값 근처에서 약간의 랜덤 오차(±3)를 두고 뽑되 오름차순과 1~45 범위 보장
-                min_val = max(1, int(exp_val) - 3)
-                max_val = min(45, int(exp_val) + 3)
-                
-                # 이전 공보다 커야 함
-                if i > 1 and new_nums[-1] >= min_val:
-                    min_val = new_nums[-1] + 1
-                
-                # 중첩/오버플로우 방지 보호
-                if min_val > 45: min_val = 45
-                if max_val < min_val: max_val = min_val
-                
-                chosen = random.randint(min_val, max_val)
-                new_nums.append(chosen)
-
-            # 万が一 동일 번호가 생겼을 경우를 대비해 pool에서 fallback 보정
-            new_nums = list(set(new_nums))
-            while len(new_nums) < 6:
-                pool = [n for n in range(1, 46) if n not in new_nums]
-                new_nums.append(random.choice(pool))
-            new_nums.sort()
-
-            generated_sets.append(LottoDrawingItem(
-                num1=new_nums[0], num2=new_nums[1], num3=new_nums[2],
-                num4=new_nums[3], num5=new_nums[4], num6=new_nums[5],
-                method="Order Statistics"
-            ))
+        # 정식 서비스: 고도화된 순서 통계량 수치 적용 (1세트). order_statistics_service 상수 사용.
+        scores = get_order_statistics_scores(prediction_draw_no)
+        num_rank = [(i + 1, float(scores[i])) for i in range(min(45, len(scores)))]
+        num_rank.sort(key=lambda x: x[1], reverse=True)
+        best_six = sorted([num_rank[i][0] for i in range(6)])
+        generated_sets = [
+            LottoDrawingItem(
+                num1=best_six[0], num2=best_six[1], num3=best_six[2],
+                num4=best_six[3], num5=best_six[4], num6=best_six[5],
+                method="Order Statistics",
+            )
+        ]
 
         return OrderStatisticsResponse(
             total_draws_analyzed=total_draws,

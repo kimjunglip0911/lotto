@@ -1,0 +1,229 @@
+{
+  "baseline": {
+    "num_draws_evaluated": 52,
+    "draws_per_tier": {
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 2,
+      "5": 15
+    },
+    "num_hit_draws": 15,
+    "weighted_score": 21,
+    "draws_with_ge3": 15,
+    "draws_with_ge4": 2,
+    "passed_all_draws_hit": false
+  },
+  "baseline_draws_per_tier": {
+    "1": 0,
+    "2": 0,
+    "3": 0,
+    "4": 2,
+    "5": 15
+  },
+  "top5": [
+    {
+      "rank": 1,
+      "eval": {
+        "num_draws_evaluated": 52,
+        "draws_per_tier": {
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 3,
+          "5": 9
+        },
+        "num_hit_draws": 9,
+        "weighted_score": 18,
+        "draws_with_ge3": 9,
+        "draws_with_ge4": 3,
+        "passed_all_draws_hit": false
+      },
+      "params": {
+        "freq_below_avg_scale": 2.525878,
+        "freq_above_avg_scale": 0.481281,
+        "streak_near_max_penalty": 0.465458,
+        "gap_above_avg_bonus_scale": 1.255327,
+        "gap_below_avg_penalty_scale": 0.745197,
+        "window_size": 413,
+        "recent_n": 2,
+        "neighbor_weight": 0.01,
+        "neighbor_bonus_per_hit": 0.052538,
+        "zone_weight": 0.01,
+        "trend_weight": 0.01,
+        "last_draw_bonus": 0.984142,
+        "use_gap_exponential": false,
+        "gap_threshold_ratio": 0.8260817065227277,
+        "gap_exp_scale": 2.70246,
+        "gap_linear_below": 0.387478,
+        "sum_margin_ratio": 0.0,
+        "odd_even_min_ratio": 0.009911585296417239,
+        "apply_sum_filter": true,
+        "apply_odd_even_filter": true
+      }
+    },
+    {
+      "rank": 2,
+      "eval": {
+        "num_draws_evaluated": 52,
+        "draws_per_tier": {
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 2,
+          "5": 11
+        },
+        "num_hit_draws": 11,
+        "weighted_score": 17,
+        "draws_with_ge3": 11,
+        "draws_with_ge4": 2,
+        "passed_all_draws_hit": false
+      },
+      "params": {
+        "freq_below_avg_scale": 2.220216,
+        "freq_above_avg_scale": 0.51331,
+        "streak_near_max_penalty": 0.449319,
+        "gap_above_avg_bonus_scale": 1.083414,
+        "gap_below_avg_penalty_scale": 0.778167,
+        "window_size": 409,
+        "recent_n": 3,
+        "neighbor_weight": 0.01,
+        "neighbor_bonus_per_hit": 0.048775,
+        "zone_weight": 0.01,
+        "trend_weight": 0.01,
+        "last_draw_bonus": 0.919928,
+        "use_gap_exponential": false,
+        "gap_threshold_ratio": 0.7811156972161865,
+        "gap_exp_scale": 2.840044,
+        "gap_linear_below": 0.319502,
+        "sum_margin_ratio": 0.0,
+        "odd_even_min_ratio": 0.010120526926727672,
+        "apply_sum_filter": true,
+        "apply_odd_even_filter": true
+      }
+    },
+    {
+      "rank": 3,
+      "eval": {
+        "num_draws_evaluated": 52,
+        "draws_per_tier": {
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 2,
+          "5": 11
+        },
+        "num_hit_draws": 11,
+        "weighted_score": 17,
+        "draws_with_ge3": 11,
+        "draws_with_ge4": 2,
+        "passed_all_draws_hit": false
+      },
+      "params": {
+        "freq_below_avg_scale": 2.185718,
+        "freq_above_avg_scale": 0.468865,
+        "streak_near_max_penalty": 0.459335,
+        "gap_above_avg_bonus_scale": 1.094892,
+        "gap_below_avg_penalty_scale": 0.804062,
+        "window_size": 392,
+        "recent_n": 2,
+        "neighbor_weight": 0.01,
+        "neighbor_bonus_per_hit": 0.05492,
+        "zone_weight": 0.01,
+        "trend_weight": 0.01,
+        "last_draw_bonus": 1.020004,
+        "use_gap_exponential": false,
+        "gap_threshold_ratio": 0.8776249807120717,
+        "gap_exp_scale": 2.942852,
+        "gap_linear_below": 0.385089,
+        "sum_margin_ratio": 0.0,
+        "odd_even_min_ratio": 0.01007637990984624,
+        "apply_sum_filter": true,
+        "apply_odd_even_filter": true
+      }
+    },
+    {
+      "rank": 4,
+      "eval": {
+        "num_draws_evaluated": 52,
+        "draws_per_tier": {
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 2,
+          "5": 11
+        },
+        "num_hit_draws": 11,
+        "weighted_score": 17,
+        "draws_with_ge3": 11,
+        "draws_with_ge4": 2,
+        "passed_all_draws_hit": false
+      },
+      "params": {
+        "freq_below_avg_scale": 2.452374,
+        "freq_above_avg_scale": 0.457976,
+        "streak_near_max_penalty": 0.411288,
+        "gap_above_avg_bonus_scale": 1.195215,
+        "gap_below_avg_penalty_scale": 0.745282,
+        "window_size": 386,
+        "recent_n": 2,
+        "neighbor_weight": 0.01,
+        "neighbor_bonus_per_hit": 0.052188,
+        "zone_weight": 0.01,
+        "trend_weight": 0.01,
+        "last_draw_bonus": 1.066358,
+        "use_gap_exponential": false,
+        "gap_threshold_ratio": 0.8735797403721277,
+        "gap_exp_scale": 2.680912,
+        "gap_linear_below": 0.32407,
+        "sum_margin_ratio": 0.0,
+        "odd_even_min_ratio": 0.009034588655967367,
+        "apply_sum_filter": true,
+        "apply_odd_even_filter": true
+      }
+    },
+    {
+      "rank": 5,
+      "eval": {
+        "num_draws_evaluated": 52,
+        "draws_per_tier": {
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 3,
+          "5": 8
+        },
+        "num_hit_draws": 8,
+        "weighted_score": 17,
+        "draws_with_ge3": 8,
+        "draws_with_ge4": 3,
+        "passed_all_draws_hit": false
+      },
+      "params": {
+        "freq_below_avg_scale": 2.562893,
+        "freq_above_avg_scale": 0.44559,
+        "streak_near_max_penalty": 0.488715,
+        "gap_above_avg_bonus_scale": 1.103326,
+        "gap_below_avg_penalty_scale": 0.749989,
+        "window_size": 362,
+        "recent_n": 5,
+        "neighbor_weight": 0.01,
+        "neighbor_bonus_per_hit": 0.047702,
+        "zone_weight": 0.01,
+        "trend_weight": 0.01,
+        "last_draw_bonus": 1.019584,
+        "use_gap_exponential": false,
+        "gap_threshold_ratio": 0.8266713860338273,
+        "gap_exp_scale": 2.908126,
+        "gap_linear_below": 0.354011,
+        "sum_margin_ratio": 0.0,
+        "odd_even_min_ratio": 0.00894304280791896,
+        "apply_sum_filter": true,
+        "apply_odd_even_filter": true
+      }
+    }
+  ],
+  "n_samples": 20,
+  "rel": 0.12,
+  "seed": 7
+}
