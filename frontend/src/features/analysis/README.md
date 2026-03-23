@@ -5,14 +5,16 @@
 ## Architecture
 
 - `components/`:
-  - `AnalysisController`: 번호 자동 추출 명령 및 진행 상태(AI 분석 중) 표시 UI 컨트롤러 
-  - `AnalysisResultList`: 생성된 20개의 번호 세트를 1차/2차 두 그룹으로 분류하여 렌더링
+  - `AnalysisController`: 통합 20세트 저장 생성 + **휠 시뮬레이션 20세트(미저장)** 버튼, 진행 상태 표시
+  - `AnalysisResultList`: 생성된 세트를 카드 그리드로 표시. 휠 미리보기 시 상단 배너·제목으로 구분
 - `hooks/`: 분석 상태 관리 및 백엔드 생성 데이터 Fetching 훅
 - `types/`: 분석 추천 세트 인터페이스(`LotterySet`) 정의
 
 ## 주요 로직 및 기법 소개
 
-`unified_generator_service.py`를 중심으로 다음과 같은 10대 분석 모델의 확률 점수를 종합하여 20세트 번호를 생성합니다.
+백엔드 연동:
+- **JL Wheel 저장**: `POST /api/analysis/generate-and-save` — `jl_service` 기반 20세트, `method`: `JL Wheel Method`
+- **JL Wheel 미저장**: `GET /api/analysis/generate/wheel?count=20&draw_no=` — `jl_service.generate_wheel_sets`
 
 - **1차 통합 10세트 (기법별 단독 추천)**: 아래 10개의 기법들에서 가장 확률 점수가 높게 매겨진 6개 번호 조합 (기법당 1개 세트)
 - **2차 최고 최적화 10세트 (통합 결합)**: 여러 기법의 모델들이 공통으로 지목한 1순위 번호 풀에서 충돌을 조정/정리한 후, 확률 점수 총합이 가장 높은 최종 10가지 세트

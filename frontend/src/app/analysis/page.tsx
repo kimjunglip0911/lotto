@@ -6,6 +6,10 @@ import { Sidebar } from '@/components/common/Sidebar';
 import { AnalysisController } from '@/features/analysis/components/AnalysisController';
 import { AnalysisResultList } from '@/features/analysis/components/AnalysisResultList';
 
+function errorMessage(err: unknown): string {
+    return err instanceof Error ? err.message : String(err);
+}
+
 interface LotterySet {
     id?: number;
     draw_no?: number;
@@ -26,6 +30,9 @@ export default function AnalysisPage() {
 
     const [generatedSets, setGeneratedSets] = useState<LotterySet[]>([]);
     const [isGenerating, setIsGenerating] = useState(false);
+    const [isGeneratingWheel, setIsGeneratingWheel] = useState(false);
+    /** 휠 API로만 채운 목록이면 true (DB 미저장 안내) */
+    const [isWheelPreview, setIsWheelPreview] = useState(false);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -41,8 +48,8 @@ export default function AnalysisPage() {
 
                 const draws: number[] = await drawsRes.json();
                 setAvailableDraws(draws.slice(0, 50));
-            } catch (err: any) {
-                setError(err.message);
+            } catch (err: unknown) {
+                setError(errorMessage(err));
             } finally {
                 setLoading(false);
             }
@@ -57,18 +64,20 @@ export default function AnalysisPage() {
         const fetchSavedSets = async () => {
             if (selectedDraw === 'new') {
                 setGeneratedSets([]);
+                setIsWheelPreview(false);
                 return;
             }
 
             try {
+                setIsWheelPreview(false);
                 setLoading(true);
                 const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
                 const res = await fetch(`${baseUrl}/api/drawings/by-no?draw_no=${selectedDraw}`);
                 if (!res.ok) throw new Error('조회에 실패했습니다.');
                 const data = await res.json();
                 if (isMounted) setGeneratedSets(data);
-            } catch (err: any) {
-                if (isMounted) setError(err.message);
+            } catch (err: unknown) {
+                if (isMounted) setError(errorMessage(err));
             } finally {
                 if (isMounted) setLoading(false);
             }
@@ -105,6 +114,7 @@ export default function AnalysisPage() {
             if (refreshedRes.ok) {
                 const refreshedData = await refreshedRes.json();
                 setGeneratedSets(refreshedData);
+                setIsWheelPreview(false);
 
                 // 만약 'new' 상태에서 실행했다면, 화면도 새로 고정된 회차로 포커스 변경
                 if (selectedDraw === 'new') {
@@ -113,12 +123,41 @@ export default function AnalysisPage() {
                 }
             }
 
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error('Error generating numbers:', err);
-            setError(err.message);
-            alert(`오류: ${err.message}`);
+            const msg = errorMessage(err);
+            setError(msg);
+            alert(`오류: ${msg}`);
         } finally {
             setIsGenerating(false);
+        }
+    };
+
+    const handleGenerateWheel = async () => {
+        setIsGeneratingWheel(true);
+        setError(null);
+        try {
+            const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+            const response = await fetch(
+                `${baseUrl}/api/analysis/generate/wheel?count=20`
+            );
+            if (!response.ok) {
+                const errData = await response.json().catch(() => ({}));
+                throw new Error(
+                    (errData as { detail?: string }).detail ||
+                        '휠 시뮬레이션 생성에 실패했습니다.'
+                );
+            }
+            const data = (await response.json()) as LotterySet[];
+            setGeneratedSets(data);
+            setIsWheelPreview(true);
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : String(err);
+            console.error('Error generating wheel sets:', err);
+            setError(message);
+            alert(`오류: ${message}`);
+        } finally {
+            setIsGeneratingWheel(false);
         }
     };
 
@@ -144,7 +183,9 @@ export default function AnalysisPage() {
                         selectedDraw={selectedDraw}
                         onDrawSelect={setSelectedDraw}
                         onGenerate={handleGenerate}
+                        onGenerateWheel={handleGenerateWheel}
                         isGenerating={isGenerating}
+                        isGeneratingWheel={isGeneratingWheel}
                         isMaxReached={isMaxReached}
                         totalSets={generatedSets.length}
                     />
@@ -157,7 +198,21 @@ export default function AnalysisPage() {
                     )}
 
                     {/* 카드 리스트 렌더링 영역 */}
-                    <AnalysisResultList sets={generatedSets} loading={loading} error={error} />
+                    <AnalysisResultList
+                        sets={generatedSets}
+                        loading={loading}
+                        error={error}
+                        bannerNote={
+                            isWheelPreview
+                                ? '휠 시뮬레이션 결과입니다. 서버 DB에 저장되지 않았습니다. 회차를 바꾸거나 「통합 20세트 추출」로 저장본을 불러오면 이 목록이 대체될 수 있습니다.'
+                                : null
+                        }
+                        sectionTitle={
+                            isWheelPreview
+                                ? '휠 시뮬레이션 20세트 (미저장)'
+                                : undefined
+                        }
+                    />
 
                 </main>
             </div>

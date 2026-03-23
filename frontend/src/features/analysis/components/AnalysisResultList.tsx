@@ -19,9 +19,19 @@ interface AnalysisResultListProps {
     sets: LotterySet[];
     loading?: boolean;
     error?: string | null;
+    /** 휠 미리보기 등 안내 배너 (있으면 목록 위에 표시) */
+    bannerNote?: string | null;
+    /** 목록 상단 제목 오버라이드 */
+    sectionTitle?: string;
 }
 
-export const AnalysisResultList: React.FC<AnalysisResultListProps> = ({ sets, loading, error }) => {
+export const AnalysisResultList: React.FC<AnalysisResultListProps> = ({
+    sets,
+    loading,
+    error,
+    bannerNote,
+    sectionTitle,
+}) => {
     if (loading) {
         return (
             <div className="text-slate-400 py-12 text-center animate-pulse flex flex-col items-center gap-4">
@@ -51,12 +61,20 @@ export const AnalysisResultList: React.FC<AnalysisResultListProps> = ({ sets, lo
     const remaining = len < bestSets.length ? bestSets.slice(len) : optimalSets.slice(len);
     mergedSets.push(...remaining);
 
+    const title =
+        sectionTitle ?? '통합 20세트 — 기법·통합 최적 조합';
+
     return (
         <div className="mt-8 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+            {bannerNote ? (
+                <div className="mb-4 rounded-xl border border-amber-500/40 bg-amber-950/30 px-4 py-3 text-amber-200 text-sm">
+                    {bannerNote}
+                </div>
+            ) : null}
             <div className="flex items-center gap-3 mb-6">
                 <span className="text-2xl">👑</span>
                 <h3 className="text-xl font-bold text-white tracking-wide">
-                    통합 20세트 — 기법·통합 최적 조합
+                    {title}
                 </h3>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
