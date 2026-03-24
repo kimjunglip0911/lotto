@@ -2,9 +2,10 @@
 """
 JL 휠 시뮬레이션 (연속 등속 감속 물리 모델).
 
-- **기본 시작 번호**: 대상 회차 ``draw_no`` 의 **직전 회차(`draw_no-1`) 당첨 본번호 6개**.
-- API/저장 시 ``draw_no``는 ‘대상 회차’로 보고, 시작번호는 ``draw_no-1`` 당첨번호를 사용합니다.
-- 배치 시뮬(``scripts.run_wheel_52``): 각 평가 회차마다 해당 회차의 직전 회차 당첨번호를 시작번호로 사용합니다.
+- **기본 시작 번호**: 1회차 ~ ``up_to``회차(공개 당첨) 구간에서 본번호 6개(num1~6) 출현 **누적 합**이 큰 순으로 6개.
+  동률(6위권)은 **번호 오름차순**으로 순위를 매겨 6개 확정 (정렬 키: ``(-빈도, 번호)`` 후 상위 6개).
+- API/저장 시 ``draw_no``는 ‘대상 회차’로 보고, 공개 데이터는 ``1 .. draw_no-1`` 까지 사용합니다.
+- 배치 시뮬(``scripts.run_wheel_52``): 평가 구간 상한 ``up_to=max(draw_nos)`` 에 대해 ``get_global_top6_frequency_starts(up_to)`` 로 **1~up_to회차** 누적 상위 6개를 1회 확정하여 전 회차에 **고정 적용**합니다. 회차 내 세트 생성은 실제 생성과 동일하게 ``generate_jl_wheel_sets(..., dedup_across_sets=True)`` 를 사용해 사후 교체 규칙으로 중복 조합을 해소합니다. API·저장 경로도 동일 규칙입니다.
 - **20세트**마다 서로 다른 초기 **speed** 를 적용합니다 (감속도는 정지 시간 고정 규칙에 따라 파생).
 - 총 이동 거리: speed^2 / (2 * deceleration), 정지 시간: speed / deceleration
 - **실험 규칙**: `FIXED_STOP_TIME` 으로 정지 시간을 고정하고, 세트별로는 **speed만** 바꾼다.  
@@ -62,29 +63,6 @@ TWENTY_BASE_SPEEDS: List[float] = [
 
 TWENTY_SPEED_PROFILES: List[Tuple[float, float]] = [
     (s, s / FIXED_STOP_TIME) for s in TWENTY_BASE_SPEEDS
-]
-
-AI_METHODS = [
-    "MLP TOP6 (Pure)",
-    "MLP TOP6 (Prob)",
-    "RF TOP6 (Pure)",
-    "RF TOP6 (Prob)",
-    "군집화 및 PCA (Fallback)",
-    "군집화 및 PCA (Fallback)",
-    "회귀 분석 (Fallback)",
-    "회귀 분석 (Fallback)",
-    "LightGBM 앙상블",
-    "XGBoost 패턴 예측",
-    "LSTM 시계열 분석",
-    "LSTM 시계열 (변동값)",
-    "Transformer 어텐션",
-    "몬테카를로 시뮬레이션",
-    "순서 통계량 (이론 vs 실제)",
-    "이동 평균 (EMA) 분석",
-    "과거 당첨 빈도 유사도 (KNN)",
-    "출현 주기 (Gap) 극대화",
-    "생성형 적대 신경망 (GAN)",
-    "심층 강화학습 (RL) 추천",
 ]
 
 
@@ -255,22 +233,6 @@ def _fetch_winner_for_draw(draw_no: int) -> Optional[Tuple[set[int], int]]:
     main = {int(row[0]), int(row[1]), int(row[2]), int(row[3]), int(row[4]), int(row[5])}
     bonus = int(row[6] or 0)
     return main, bonus
-
-
-def get_previous_draw_winning_starts(draw_no: int) -> List[int]:
-    """
-    대상 회차 ``draw_no`` 의 직전 회차(``draw_no-1``) 당첨 본번호 6개를 반환.
-
-    - draw_no <= 1 이면 기본값 ``[1..6]`` 반환
-    - 직전 회차 데이터가 없으면 fallback 으로 누적 TOP6 반환
-    """
-    if draw_no <= 1:
-        return [1, 2, 3, 4, 5, 6]
-    prev = _fetch_winner_for_draw(draw_no - 1)
-    if prev is None:
-        return get_global_top6_frequency_starts(draw_no - 1)
-    main, _ = prev
-    return sorted(int(x) for x in main)
 
 
 def _build_hit_rows(
@@ -563,8 +525,9 @@ def generate_jl_wheel_sets(
     prevent_duplicates_before_replace: bool = True,
 ) -> List[Dict[str, object]]:
     """
-    **시작 번호**: ``fixed_start_nums`` 가 있으면 그 6개를 사용.
-    없으면 대상 회차 ``draw_no`` 의 직전 회차(``draw_no-1``) 당첨 본번호 6개를 사용.
+    **시작 번호**: ``fixed_start_nums`` 가 있으면 그 6개를 사용(시뮬에서 회차 공통 고정).
+    없으면 대상 회차 ``draw_no`` 기준 공개 데이터 ``1 .. draw_no-1`` 까지의 전역 누적 상위 6개
+    (``get_global_top6_frequency_starts(draw_no - 1)``).
 
     속도 프로파일: count=20 기본. ``fixed_stop_time`` 이 있으면 세트별 ``deceleration = speed / 고정값``.
 
@@ -593,8 +556,12 @@ def generate_jl_wheel_sets(
                 raise ValueError("fixed_start_nums 는 1~45 정수여야 합니다.")
         if len(set(top6)) != 6:
             raise ValueError("fixed_start_nums 는 서로 달라야 합니다.")
+    elif draw_no <= 1:
+        top6 = [1, 2, 3, 4, 5, 6]
     else:
-        top6 = get_previous_draw_winning_starts(draw_no)
+        top6 = get_global_top6_frequency_starts(draw_no - 1)
+    from domain.services.generator_service import AI_METHODS
+
     results: List[Dict[str, object]] = []
     generated_nums: List[List[int]] = []
     generated_meta: List[Tuple[float, float, List[int], str]] = []

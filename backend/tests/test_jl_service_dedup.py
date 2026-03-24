@@ -11,6 +11,7 @@ from domain.services.analysis.jl_service import (
     _rotate_start_nums,
     _replace_duplicate_sets_by_frequency,
     _replacement_pool_from_frequency,
+    get_previous_draw_winning_starts,
 )
 
 
@@ -121,3 +122,21 @@ def test_build_hit_rows_contains_set_indexes_and_rank() -> None:
     assert len(hits) == 2
     assert hits[0]["set_index"] == 1 and hits[0]["rank"] == 1
     assert hits[1]["set_index"] == 2 and hits[1]["rank"] == 2
+
+
+def test_previous_draw_winning_starts_uses_previous_draw(monkeypatch) -> None:
+    def fake_fetch(draw_no: int):
+        if draw_no == 1216:
+            return ({24, 3, 15, 10, 14, 23}, 25)
+        return None
+
+    monkeypatch.setattr(
+        "domain.services.analysis.jl_service._fetch_winner_for_draw",
+        fake_fetch,
+    )
+    starts = get_previous_draw_winning_starts(1217)
+    assert starts == [3, 10, 14, 15, 23, 24]
+
+
+def test_previous_draw_winning_starts_for_first_draw_defaults() -> None:
+    assert get_previous_draw_winning_starts(1) == [1, 2, 3, 4, 5, 6]

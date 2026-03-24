@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { LotteryCard } from '@/features/home/components/LotteryCard';
+import { LotteryCard } from '@/components/ui/LotteryCard';
 
 interface LotterySet {
     id?: number;

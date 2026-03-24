@@ -1,27 +1,23 @@
 # Lotto Backend
 
-FastAPI 기반의 로또 정보 관리 백엔드 서버입니다.
+FastAPI 기반 백엔드 공통 계층입니다. 실제 기능 라우터는 `features/*/api/router.py`에서 로드합니다.
 
 ## 폴더 구조 (유지보수 시 참고)
 
 ```
 backend/
 ├── main.py                 # FastAPI 앱 진입점
-├── api/
-│   └── routers/            # HTTP 라우터 (당첨·추첨 조회)
-├── domain/
-│   ├── models/             # Pydantic 스키마 등
-│   └── services/
-│       └── analysis/       # JL 휠 시뮬레이션 (jl_service.py)
-├── infrastructure/
-│   └── persistence/        # DB 연결, 쿼리, schema, lotto.db
-└── docs/                   # 참고 문서 (예: 당첨 이력)
+├── router_loader.py        # features 라우터 동적 로더
+├── models.py               # 공통 Pydantic 모델 export
+├── database.py             # 공통 DB 연결
+├── domain/services/analysis/jl_service.py
+├── infrastructure/persistence/
+└── scripts/
 ```
 
-- **API 추가/수정** → `api/routers/`
+- **API 추가/수정** → `features/<feature>/api/router.py`
 - **JL 휠 로직/속도 프로파일** → `domain/services/analysis/jl_service.py`
-- **DB/쿼리** → `infrastructure/persistence/`
-- **참고 문서** → `docs/당첨 이력.md`
+- **52회 테스트 스크립트/이력** → `features/analysis/scripts/`
 
 ## __pycache__ 사용 안 함
 
@@ -32,10 +28,10 @@ backend/
 
 ## 주요 기능
 
-- 로또 당첨 정보 조회 및 저장
-- 추첨 세트 저장
-- 분석·생성 API: 순수 난수 20세트(`GET /api/analysis/generate/ai`), JL 휠(`GET /api/analysis/generate/wheel`), JL 휠 저장(`POST /api/analysis/generate-and-save`)
-- JL 휠 관련 요약·이력은 `docs/당첨 이력.md`를 참고
+- 로또 당첨 정보 조회/저장/수정/삭제
+- 추첨 세트 조회/추천/저장
+- 분석·생성 API: JL 휠(`GET /api/analysis/generate/wheel`), JL 휠 저장(`POST /api/analysis/generate-and-save`)
+- JL 휠 관련 요약·이력은 `features/analysis/scripts/당첨 이력.md` 참고
 
 ## 기술 스택
 
@@ -61,6 +57,6 @@ npm run dev
 ```
 백엔드만 실행:
 ```bash
-cd backend && python -m uvicorn main:app --reload
+python -m uvicorn backend.main:app --reload
 ```
 
