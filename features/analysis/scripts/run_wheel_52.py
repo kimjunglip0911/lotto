@@ -16,8 +16,10 @@ JL 휠: **최신 52개 회차**(기본) × 20세트 당첨 비교.
 from __future__ import annotations
 
 import argparse
+import ast
 import math
 import random
+import re
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -54,6 +56,69 @@ DEFAULT_RANK_WEIGHTS: dict[int, int] = {
     4: 10**3,
     5: 1,
 }
+
+JL_SERVICE_FILE = _project_root / "features" / "analysis" / "api" / "jl_service.py"
+
+
+def _format_float_list(values: list[float]) -> str:
+    body = "\n".join(f"    {float(v)!r}," for v in values)
+    return "[\n" + body + "\n]"
+
+
+def _format_int_list(values: list[int], *, per_line: int = 10) -> str:
+    rows: list[str] = []
+    for i in range(0, len(values), per_line):
+        chunk = values[i:i + per_line]
+        rows.append("    " + ", ".join(str(int(x)) for x in chunk) + ",")
+    return "[\n" + "\n".join(rows) + "\n]"
+
+
+def _replace_typed_list_literal(src: str, var_name: str, new_list_literal: str) -> tuple[str, bool]:
+    pattern = re.compile(
+        rf"({re.escape(var_name)}\s*:\s*List\[[^\]]+\]\s*=\s*)(\[[\s\S]*?\])",
+        re.MULTILINE,
+    )
+    updated, n = pattern.subn(r"\1" + new_list_literal, src, count=1)
+    return updated, n == 1
+
+
+def _persist_offset_speed_update(set_index_1based: int, new_offset: int, new_speed: float) -> None:
+    if not JL_SERVICE_FILE.exists():
+        raise FileNotFoundError(f"jl_service.py를 찾을 수 없습니다: {JL_SERVICE_FILE}")
+
+    src = JL_SERVICE_FILE.read_text(encoding="utf-8")
+
+    m_speed = re.search(
+        r"_JITTER_BASE_SPEEDS\s*:\s*List\[[^\]]+\]\s*=\s*(\[[\s\S]*?\])",
+        src,
+        re.MULTILINE,
+    )
+    m_offset = re.search(
+        r"TWENTY_BASE_OFFSETS\s*:\s*List\[[^\]]+\]\s*=\s*(\[[\s\S]*?\])",
+        src,
+        re.MULTILINE,
+    )
+    if not m_speed or not m_offset:
+        raise ValueError("jl_service.py에서 기준 리스트를 찾지 못했습니다.")
+
+    speeds = list(ast.literal_eval(m_speed.group(1)))
+    offsets = list(ast.literal_eval(m_offset.group(1)))
+    idx = int(set_index_1based) - 1
+    if not (0 <= idx < len(speeds) and 0 <= idx < len(offsets)):
+        raise IndexError(f"세트 인덱스 범위 오류: {set_index_1based}")
+
+    speeds[idx] = float(new_speed)
+    offsets[idx] = int(new_offset) % 45
+
+    src2, ok1 = _replace_typed_list_literal(src, "_JITTER_BASE_SPEEDS", _format_float_list(speeds))
+    if not ok1:
+        raise ValueError("_JITTER_BASE_SPEEDS 치환 실패")
+    src3, ok2 = _replace_typed_list_literal(src2, "TWENTY_BASE_OFFSETS", _format_int_list(offsets))
+    if not ok2:
+        raise ValueError("TWENTY_BASE_OFFSETS 치환 실패")
+
+    if src3 != src:
+        JL_SERVICE_FILE.write_text(src3, encoding="utf-8")
 
 
 def fetch_latest_draw_nos_ascending(count: int = REQUIRED_DRAW_COUNT) -> tuple[int, ...]:
@@ -1336,6 +1401,18 @@ def main() -> None:
             if new_speed is not None:
                 print(f"  [채택 안내] offset {current_off} → {best_off}")
                 print(f"  [코드 반영] _JITTER_BASE_SPEEDS[{idx}]: {TWENTY_BASE_SPEEDS[idx]} → {new_speed}")
+                try:
+                    _persist_offset_speed_update(
+                        set_index_1based=si,
+                        new_offset=int(best_off),
+                        new_speed=float(new_speed),
+                    )
+                    print(
+                        f"  [파일 반영 완료] 세트#{si} offset={int(best_off)}, speed={float(new_speed)} "
+                        f"-> {JL_SERVICE_FILE}"
+                    )
+                except Exception as e:
+                    print(f"  [파일 반영 실패] {e}", file=sys.stderr)
             else:
                 print(f"  [주의] offset {best_off}에 대응하는 speed를 {lo_sp}~{hi_sp} 범위에서 찾지 못했습니다.")
         else:

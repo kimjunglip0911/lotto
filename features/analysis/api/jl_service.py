@@ -35,10 +35,10 @@ _JITTER_K: float = _FIXED_STOP_TIME / 2.0
 # 세트#1~20의 내부 jitter 기준 speed (기존 값 유지)
 _JITTER_BASE_SPEEDS: List[float] = [
     81.06,
-    82.57,
+    82.98,
     83.58,
-    89.59,
-    90.6,
+    84.21,
+    85.95,
     90.9,
     90.91,
     91.42,
@@ -59,7 +59,7 @@ _JITTER_BASE_SPEEDS: List[float] = [
 # 외부 공개 파라미터: 세트#1~20의 기준 offset (0~44)
 # 2026-03-26 연구 반영: 세트#15 offset 38 -> 31 (best-so-far)
 TWENTY_BASE_OFFSETS: List[int] = [
-    15, 3, 25, 21, 43, 5, 5, 16, 35, 23,
+    15, 12, 25, 39, 32, 5, 5, 16, 35, 23,
     38, 38, 32, 38, 31, 26, 25, 2, 11, 7,
 ]
 
