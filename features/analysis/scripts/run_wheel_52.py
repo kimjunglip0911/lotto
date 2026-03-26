@@ -505,6 +505,283 @@ def refine_one_set_speed_grid(
     return best_result, best_speeds, best_speed, eval_count
 
 
+def refine_one_set_offset_search(
+    draw_nos: tuple[int, ...],
+    *,
+    set_index: int,
+    seed: int,
+    search_range: int = 5,
+    full_search: bool = False,
+    protect_other_sets: bool = True,
+    start_strategy: Literal["global_top6_fixed", "previous_draw", "blended"] = "previous_draw",
+    independent_wheels: bool = False,
+    rank_weights: dict[int, int] | None = None,
+) -> tuple[dict[str, Any], list[int], int, list[dict[str, Any]]]:
+    """
+    워크플로우 Step 2~3: 세트#N의 offset을 정수 공간(0~44)에서 체계적으로 탐색.
+
+    분석 내용:
+    - 2-1. 후보 공간 정의: 국소(±search_range) 또는 전체(0~44)
+    - 2-2. 방향성 연구: +1 vs -1 비교
+    - 2-3. 범위/제약 연구: 이웃 세트 충돌, 다른 세트 점수 보호
+
+    반환:
+    - best_result: 최적 offset의 52회차 평가 결과
+    - best_offsets: 최적 offset 배열 (20개)
+    - best_offset: 세트#N의 최적 offset 값
+    - analysis: 각 후보별 분석 리스트
+    """
+    if not 1 <= set_index <= 20:
+        raise ValueError("set_index는 1~20이어야 합니다.")
+
+    idx = set_index - 1
+    base_offsets = list(TWENTY_BASE_OFFSETS)
+    current_offset = base_offsets[idx]
+    weights = rank_weights or DEFAULT_RANK_WEIGHTS
+
+    random.seed(seed)
+    res0 = evaluate_wheel_52(
+        draw_nos, seed=seed, base_offsets=base_offsets,
+        start_strategy=start_strategy, independent_wheels=independent_wheels,
+    )
+    scores0 = _baseline_scores_from_result(res0, rank_weights=weights)
+    baseline_score = _weighted_hit_score(res0["by_set_index"][set_index], rank_weights=weights)
+    baseline_counts = _per_set_hit_counts(res0["by_set_index"][set_index])
+    eval_count = 1
+
+    if full_search:
+        candidates = [o for o in range(45) if o != current_offset]
+    else:
+        seen: set[int] = set()
+        candidates = []
+        for delta in range(1, search_range + 1):
+            for sign in [1, -1]:
+                c = (current_offset + sign * delta) % 45
+                if c not in seen and c != current_offset:
+                    seen.add(c)
+                    candidates.append(c)
+
+    neighbor_offsets = []
+    if idx > 0:
+        neighbor_offsets.append(base_offsets[idx - 1])
+    if idx < 19:
+        neighbor_offsets.append(base_offsets[idx + 1])
+
+    analysis: list[dict[str, Any]] = []
+    best_offset = current_offset
+    best_score = baseline_score
+    best_result = res0
+    best_offsets = list(base_offsets)
+
+    for trial_offset in candidates:
+        trial_offsets = list(base_offsets)
+        trial_offsets[idx] = trial_offset
+
+        random.seed(seed)
+        res = evaluate_wheel_52(
+            draw_nos, seed=seed, base_offsets=trial_offsets,
+            start_strategy=start_strategy, independent_wheels=independent_wheels,
+        )
+        eval_count += 1
+
+        sc = _weighted_hit_score(res["by_set_index"][set_index], rank_weights=weights)
+        counts = _per_set_hit_counts(res["by_set_index"][set_index])
+        total_hits_all = sum(res["ticket_counts"].values())
+
+        passed = True
+        fail_reason = ""
+        if protect_other_sets:
+            for si in range(1, 21):
+                if si == set_index:
+                    continue
+                if _weighted_hit_score(res["by_set_index"][si], rank_weights=weights) < scores0[si]:
+                    passed = False
+                    fail_reason = f"세트#{si} 점수 악화"
+                    break
+
+        neighbor_min_dist = 45
+        if neighbor_offsets:
+            for no in neighbor_offsets:
+                d = min((trial_offset - no) % 45, (no - trial_offset) % 45)
+                neighbor_min_dist = min(neighbor_min_dist, d)
+
+        if passed:
+            if sc > best_score:
+                best_score = sc
+                best_offset = trial_offset
+                best_result = res
+                best_offsets = list(trial_offsets)
+            elif sc == best_score and trial_offset != current_offset:
+                cur_min_dist = 45
+                if neighbor_offsets:
+                    for no in neighbor_offsets:
+                        d = min((best_offset - no) % 45, (no - best_offset) % 45)
+                        cur_min_dist = min(cur_min_dist, d)
+                if neighbor_min_dist > cur_min_dist:
+                    best_offset = trial_offset
+                    best_result = res
+                    best_offsets = list(trial_offsets)
+
+        signed_delta = trial_offset - current_offset
+        if signed_delta > 22:
+            signed_delta -= 45
+        elif signed_delta < -22:
+            signed_delta += 45
+
+        if not passed:
+            reason = f"보호위반({fail_reason})"
+        elif sc > baseline_score:
+            reason = "개선"
+        elif sc == baseline_score:
+            reason = "유지"
+        else:
+            reason = "악화"
+
+        analysis.append({
+            "offset": trial_offset,
+            "delta": signed_delta,
+            "score": sc,
+            "counts": counts,
+            "total_hits": sum(counts.values()),
+            "total_hits_all": total_hits_all,
+            "neighbor_min_dist": neighbor_min_dist,
+            "passed": passed,
+            "reason": reason,
+        })
+
+    analysis.sort(key=lambda x: x["offset"])
+
+    return best_result, best_offsets, best_offset, analysis
+
+
+def _format_offset_analysis(
+    set_index: int,
+    current_offset: int,
+    baseline_counts: dict[int, int],
+    baseline_score: int,
+    best_offset: int,
+    analysis: list[dict[str, Any]],
+    neighbor_offsets: list[int],
+    eval_count: int,
+) -> str:
+    """워크플로우 Step 2~3 분석 보고서를 마크다운 형식으로 생성."""
+    lines: list[str] = []
+    lines.append(f"[방향 1] 세트#{set_index} Offset 파라미터 분석")
+    lines.append("=" * 50)
+    lines.append("")
+
+    lines.append("▶ 현재 상태 (Baseline)")
+    lines.append(f"  - 현재 offset: {current_offset}")
+    lines.append(f"  - 이웃 세트 offset: {neighbor_offsets}")
+    b = baseline_counts
+    lines.append(
+        f"  - Baseline: 3등 {b.get(3, 0)} / 4등 {b.get(4, 0)} / 5등 {b.get(5, 0)} "
+        f"/ 합계 {sum(b.values())} / 가중점수 {baseline_score}"
+    )
+    lines.append("")
+
+    passed_list = [a for a in analysis if a["passed"]]
+    blocked_count = len(analysis) - len(passed_list)
+    lines.append("▶ 2-1. 후보 공간 정의")
+    if len(analysis) >= 44:
+        lines.append(f"  - 탐색 범위: 0~44 전체 (후보 {len(analysis)}개)")
+    else:
+        deltas = [a["delta"] for a in analysis]
+        lo_d = min(deltas) if deltas else 0
+        hi_d = max(deltas) if deltas else 0
+        lines.append(f"  - 탐색 범위: offset {current_offset}{lo_d:+d}~{current_offset}{hi_d:+d} (후보 {len(analysis)}개)")
+    lines.append(f"  - 다른 세트 보호 위반으로 제외: {blocked_count}개")
+    lines.append(f"  - 유효 후보: {len(passed_list)}개")
+    lines.append(f"  - 총 평가 횟수: {eval_count}회")
+    lines.append("")
+
+    plus1 = [a for a in analysis if a["delta"] == 1]
+    minus1 = [a for a in analysis if a["delta"] == -1]
+    lines.append("▶ 2-2. 방향성 연구 (+1 vs -1)")
+    if plus1:
+        a = plus1[0]
+        lines.append(f"  offset {a['offset']} (+1): 가중점수 {a['score']}, "
+                      f"3등 {a['counts'].get(3,0)} / 4등 {a['counts'].get(4,0)} / 5등 {a['counts'].get(5,0)} "
+                      f"→ {a['reason']}")
+    if minus1:
+        a = minus1[0]
+        lines.append(f"  offset {a['offset']} (-1): 가중점수 {a['score']}, "
+                      f"3등 {a['counts'].get(3,0)} / 4등 {a['counts'].get(4,0)} / 5등 {a['counts'].get(5,0)} "
+                      f"→ {a['reason']}")
+    if plus1 and minus1:
+        p, m = plus1[0], minus1[0]
+        if p["score"] > m["score"]:
+            lines.append("  → +1 방향이 우세")
+        elif m["score"] > p["score"]:
+            lines.append("  → -1 방향이 우세")
+        else:
+            lines.append("  → 동점 (이웃 세트 충돌 거리로 판단)")
+    lines.append("")
+
+    lines.append("▶ 2-3. 범위/제약 연구 (이웃 세트 offset 충돌)")
+    for no in neighbor_offsets:
+        lines.append(f"  - 이웃 offset {no}: 현재값과 거리 = {min((current_offset - no) % 45, (no - current_offset) % 45)}")
+    lines.append("")
+
+    lines.append("▶ 후보별 52회차 평가 결과")
+    lines.append(f"  | {'offset':>6} | {'delta':>5} | {'3등':>3} | {'4등':>3} | {'5등':>3} | {'합계':>4} | {'가중점수':>8} | {'이웃거리':>6} | {'판정':<12} |")
+    lines.append(f"  |{'-'*8}|{'-'*7}|{'-'*5}|{'-'*5}|{'-'*5}|{'-'*6}|{'-'*10}|{'-'*8}|{'-'*14}|")
+    baseline_entry = {
+        "offset": current_offset, "delta": 0, "score": baseline_score,
+        "counts": baseline_counts, "total_hits": sum(baseline_counts.values()),
+        "neighbor_min_dist": min(
+            min((current_offset - no) % 45, (no - current_offset) % 45) for no in neighbor_offsets
+        ) if neighbor_offsets else 45,
+        "passed": True, "reason": "★현재값",
+    }
+    all_entries = sorted(analysis + [baseline_entry], key=lambda x: x["offset"])
+    for a in all_entries:
+        c = a["counts"]
+        marker = " ★" if a["offset"] == best_offset and a["offset"] != current_offset else ""
+        lines.append(
+            f"  | {a['offset']:>6} | {a['delta']:>+5d} | {c.get(3,0):>3} | {c.get(4,0):>3} | {c.get(5,0):>3} "
+            f"| {a['total_hits']:>4} | {a['score']:>8} | {a['neighbor_min_dist']:>6} | {a['reason']:<12}{marker} |"
+        )
+    lines.append("")
+
+    lines.append("▶ 최적 offset 선정")
+    if best_offset == current_offset:
+        lines.append(f"  - 추천: 현재값 유지 (offset {current_offset})")
+        lines.append("  - 근거: 유효 후보 중 현재값보다 우수한 offset이 없음")
+    else:
+        best_a = next((a for a in analysis if a["offset"] == best_offset), None)
+        lines.append(f"  - 추천 offset: {best_offset} (현재 {current_offset} → {best_offset}, delta {best_offset - current_offset:+d})")
+        if best_a:
+            bc = best_a["counts"]
+            lines.append(
+                f"  - 근거: 가중점수 {baseline_score} → {best_a['score']}, "
+                f"3등 {baseline_counts.get(3,0)}→{bc.get(3,0)} / "
+                f"4등 {baseline_counts.get(4,0)}→{bc.get(4,0)} / "
+                f"5등 {baseline_counts.get(5,0)}→{bc.get(5,0)}"
+            )
+            lines.append(f"  - 이웃 세트 offset 거리: {best_a['neighbor_min_dist']}")
+    lines.append("")
+
+    return "\n".join(lines)
+
+
+def _speed_for_target_offset(
+    target_offset: int, neighbor_lo: float, neighbor_hi: float
+) -> float | None:
+    """target_offset(0~44)을 만드는 speed를 neighbor_lo~neighbor_hi 사이에서 찾는다."""
+    k = FIXED_STOP_TIME / 2.0
+    for n in range(200):
+        speed = (target_offset + 45 * n) / k
+        if speed < neighbor_lo - 0.1:
+            continue
+        if speed > neighbor_hi + 0.1:
+            break
+        actual = int(speed * k) % 45
+        if actual == target_offset and neighbor_lo < speed < neighbor_hi:
+            return round(speed, 2)
+    return None
+
+
 def refine_all_sets_speed_grid(
     draw_nos: tuple[int, ...],
     *,
@@ -560,6 +837,7 @@ def evaluate_wheel_52(
     base_offsets: list[int] | None = None,
     start_strategy: Literal["global_top6_fixed", "previous_draw", "blended"] = "previous_draw",
     independent_wheels: bool = False,
+    combo_filter: bool = False,
 ) -> dict[str, Any]:
     if len(draw_nos) != REQUIRED_DRAW_COUNT:
         raise ValueError(
@@ -592,6 +870,10 @@ def evaluate_wheel_52(
     conn.close()
 
     ticket_counts = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0}
+    match_distribution_total: dict[int, int] = {k: 0 for k in range(0, 7)}
+    match_distribution_by_set: dict[int, dict[int, int]] = {
+        i: {k: 0 for k in range(0, 7)} for i in range(1, 21)
+    }
     total_tickets = 0
     per_draw: dict[int, dict[int, int]] = {}
     hit_draws: list[tuple[int, int]] = []
@@ -628,6 +910,7 @@ def evaluate_wheel_52(
             offsets=offsets_used,
             dedup_across_sets=True,
             independent_wheels=independent_wheels,
+            combo_filter=combo_filter,
         )
         if sets_rows:
             t0 = sets_rows[0].get("top6_starts")
@@ -638,11 +921,14 @@ def evaluate_wheel_52(
         for row in sets_rows:
             total_tickets += 1
             s = _ticket_row_to_set(row)
+            match_count = len(main.intersection(s))
             rnk = rank_lotto_ticket(main, bonus, s)
             si = int(row["set_index"])
             off = int(row.get("profile_offset", 0))
             sp = float(row.get("profile_speed", 0.0))
             dec = float(row.get("profile_deceleration", 0.0))
+            match_distribution_total[match_count] += 1
+            match_distribution_by_set[si][match_count] += 1
 
             if rnk is not None:
                 ticket_counts[rnk] += 1
@@ -675,6 +961,11 @@ def evaluate_wheel_52(
 
     theo = _theoretical_single_ticket_probs()
     expected = {t: theo[t] * total_tickets for t in (1, 2, 3, 4, 5)}
+    avg_match = (
+        sum(match * cnt for match, cnt in match_distribution_total.items()) / total_tickets
+        if total_tickets > 0
+        else 0.0
+    )
 
     return {
         "draw_nos": draw_nos,
@@ -687,6 +978,9 @@ def evaluate_wheel_52(
         "draws_per_tier": draws_per_tier,
         "theoretical_per_ticket": theo,
         "expected_counts": expected,
+        "match_distribution_total": match_distribution_total,
+        "match_distribution_by_set": match_distribution_by_set,
+        "avg_match": avg_match,
         "total_combos": math.comb(45, 6),
         "hit_rows": hit_rows,
         "by_set_index": by_set_index,
@@ -734,6 +1028,7 @@ def _format_report(result: dict[str, Any], seed: int | None) -> str:
     lines.append(f"- 세트별 기준값: **20단계 offset** ({offset_note})")
     lines.append(f"- 회차당 생성 세트 수: **{result['num_sets_per_draw']}**")
     lines.append(f"- 비교한 총 게임 수: **{result['total_tickets']}** (= 52 × 20)")
+    lines.append(f"- 평균 매치 수(본번호 6개 기준): **{result.get('avg_match', 0.0):.4f}**")
     if seed is not None:
         lines.append(f"- 난수 시드: `{seed}` (재현용, 중복 재시도 지터에만 영향)")
     lines.append("")
@@ -759,6 +1054,18 @@ def _format_report(result: dict[str, Any], seed: int | None) -> str:
     lines.append(f"- **임의 1게임당 1~5등 합산 이론확률**: {sum(theo.values()):.6%}")
     lines.append(f"- **총 {n}게임 중 1~5등 적중 세트 수**: {any_hit}")
     lines.append("")
+    md = result.get("match_distribution_total", {})
+    if md:
+        lines.append("### 매치 수 분포 (본번호 6개 일치 개수)")
+        lines.append("")
+        lines.append("| 매치 수 | 세트 수 | 비율(%) |")
+        lines.append("|---------|---------|---------|")
+        total_tickets = max(1, int(result["total_tickets"]))
+        for m in range(6, -1, -1):
+            cnt = int(md.get(m, 0))
+            pct = (cnt / total_tickets) * 100.0
+            lines.append(f"| {m}개 | {cnt} | {pct:.4f}% |")
+        lines.append("")
     lines.append("## 2. 등수별 '해당 등수 당첨 세트가 있었던 회차' 수")
     lines.append("")
     lines.append("(각 회차 20세트 중 **그 등수**로 당첨된 세트가 1장 이상인 회차만 카운트합니다.)")
@@ -933,9 +1240,33 @@ def main() -> None:
         help="세트#1~20 전체를 순차 그리드 탐색(--refine-step 권장: 0.25~0.5)",
     )
     parser.add_argument(
+        "--refine-offset",
+        type=int,
+        default=None,
+        metavar="N",
+        help="세트#N의 offset을 정수 공간(0~44)에서 체계적으로 탐색 (워크플로우 Step 2~3)",
+    )
+    parser.add_argument(
+        "--offset-range",
+        type=int,
+        default=5,
+        metavar="R",
+        help="--refine-offset 탐색 범위 ±R (기본: 5)",
+    )
+    parser.add_argument(
+        "--offset-full",
+        action="store_true",
+        help="--refine-offset 시 0~44 전체 탐색",
+    )
+    parser.add_argument(
         "--independent-wheels",
         action="store_true",
         help="6휠 독립 speed 모드: 각 휠이 서로 다른 speed로 회전하여 별자리 제약 해소",
+    )
+    parser.add_argument(
+        "--combo-filter",
+        action="store_true",
+        help="조합 필터(합계/홀짝/고저) 적용: 비현실적 조합을 offset 조정으로 재생성",
     )
     args = parser.parse_args()
 
@@ -959,7 +1290,58 @@ def main() -> None:
 
     print(f"[JL 휠] {REQUIRED_DRAW_COUNT}개 회차 × 회차당 {NUM_SETS_PER_DRAW}세트 평가 중...")
     print(f"  회차 범위: {draw_nos[0]} ~ {draw_nos[-1]}")
-    if args.refine_all:
+    if args.refine_offset is not None:
+        seed_ro = args.seed if args.seed is not None else 42
+        si = int(args.refine_offset)
+        idx = si - 1
+        base_offsets = list(TWENTY_BASE_OFFSETS)
+        current_off = base_offsets[idx]
+
+        neighbor_offs: list[int] = []
+        if idx > 0:
+            neighbor_offs.append(base_offsets[idx - 1])
+        if idx < 19:
+            neighbor_offs.append(base_offsets[idx + 1])
+
+        random.seed(seed_ro)
+        res_baseline = evaluate_wheel_52(
+            draw_nos, seed=seed_ro, base_offsets=base_offsets,
+            start_strategy=args.start_strategy,
+            independent_wheels=args.independent_wheels,
+        )
+        bl_counts = _per_set_hit_counts(res_baseline["by_set_index"][si])
+        bl_score = _weighted_hit_score(res_baseline["by_set_index"][si])
+
+        result, best_offsets, best_off, analysis = refine_one_set_offset_search(
+            draw_nos,
+            set_index=si,
+            seed=seed_ro,
+            search_range=int(args.offset_range),
+            full_search=args.offset_full,
+            start_strategy=args.start_strategy,
+            independent_wheels=args.independent_wheels,
+        )
+
+        report = _format_offset_analysis(
+            si, current_off, bl_counts, bl_score,
+            best_off, analysis, neighbor_offs,
+            eval_count=len(analysis) + 1,
+        )
+        print(report)
+
+        if best_off != current_off:
+            lo_sp = TWENTY_BASE_SPEEDS[idx - 1] + 0.01 if idx > 0 else 65.0
+            hi_sp = TWENTY_BASE_SPEEDS[idx + 1] - 0.01 if idx < 19 else 124.0
+            new_speed = _speed_for_target_offset(best_off, lo_sp, hi_sp)
+            if new_speed is not None:
+                print(f"  [채택 안내] offset {current_off} → {best_off}")
+                print(f"  [코드 반영] _JITTER_BASE_SPEEDS[{idx}]: {TWENTY_BASE_SPEEDS[idx]} → {new_speed}")
+            else:
+                print(f"  [주의] offset {best_off}에 대응하는 speed를 {lo_sp}~{hi_sp} 범위에서 찾지 못했습니다.")
+        else:
+            print("  [결론] 현재 offset이 최적이므로 변경 불필요.")
+
+    elif args.refine_all:
         seed_rf = args.seed if args.seed is not None else 42
         min_sp = args.refine_min_speed if args.refine_min_speed is not None else 75.0
         max_sp = args.refine_max_speed if args.refine_max_speed is not None else 130.0
@@ -1065,6 +1447,7 @@ def main() -> None:
             seed=args.seed,
             start_strategy=args.start_strategy,
             independent_wheels=args.independent_wheels,
+            combo_filter=args.combo_filter,
         )
 
     md = _format_report(result, args.seed)

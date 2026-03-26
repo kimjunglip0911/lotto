@@ -57,7 +57,11 @@ _JITTER_BASE_SPEEDS: List[float] = [
 ]
 
 # 외부 공개 파라미터: 세트#1~20의 기준 offset (0~44)
-TWENTY_BASE_OFFSETS: List[int] = [int(s * _JITTER_K) % 45 for s in _JITTER_BASE_SPEEDS]
+# 2026-03-26 연구 반영: 세트#15 offset 38 -> 31 (best-so-far)
+TWENTY_BASE_OFFSETS: List[int] = [
+    15, 3, 25, 21, 43, 5, 5, 16, 35, 23,
+    38, 38, 32, 38, 31, 26, 25, 2, 11, 7,
+]
 
 # 하위 호환(외부 참조 유지): 점진적 전환을 위해 기존 식별자 제공
 FIXED_STOP_TIME: float = _FIXED_STOP_TIME
@@ -86,13 +90,21 @@ def _speed_from_offset(offset: int, set_index: int) -> float:
     """
     offset(0~44)를 내부 jitter 계산용 speed로 변환한다.
 
-    - 기본은 세트별 기존 speed를 우선 사용해 결과 동일성을 보존.
+    - 세트#1~20 범위에서는 '기존 speed와 가까운 대역'에서 target offset에 해당하는 speed를 계산.
     - 세트 외 범위는 수학적 역변환(offset / K)으로 fallback.
     """
     if not 0 <= offset <= 44:
         raise ValueError("offset must be in 0..44")
     if 0 <= set_index < len(_JITTER_BASE_SPEEDS):
-        return float(_JITTER_BASE_SPEEDS[set_index])
+        base_speed = float(_JITTER_BASE_SPEEDS[set_index])
+        base_steps = int(base_speed * _JITTER_K)
+        # 기존 speed 인근(45-step 격자)에서 target offset에 해당하는 step을 찾는다.
+        candidate_steps = base_steps - (base_steps % 45) + int(offset)
+        if candidate_steps - base_steps > 22:
+            candidate_steps -= 45
+        elif base_steps - candidate_steps > 22:
+            candidate_steps += 45
+        return float(candidate_steps) / _JITTER_K
     return float(offset) / _JITTER_K
 
 AI_METHODS = [
@@ -666,6 +678,24 @@ def _row_dict(
     }
 
 
+COMBO_FILTER_SUM_MIN = 100
+COMBO_FILTER_SUM_MAX = 179
+
+
+def _passes_combo_filter(nums: List[int]) -> bool:
+    """워크플로우 Step 5: 합계/홀짝/고저 필터. 통과하면 True."""
+    s = sum(nums)
+    if s < COMBO_FILTER_SUM_MIN or s > COMBO_FILTER_SUM_MAX:
+        return False
+    odds = sum(1 for n in nums if n % 2 == 1)
+    if odds == 6 or odds == 0:
+        return False
+    highs = sum(1 for n in nums if n >= 23)
+    if highs == 6 or highs == 0:
+        return False
+    return True
+
+
 def generate_jl_wheel_sets(
     draw_no: int,
     count: int = 20,
@@ -679,6 +709,7 @@ def generate_jl_wheel_sets(
     dedup_across_sets: bool = True,
     prevent_duplicates_before_replace: bool = True,
     independent_wheels: bool = False,
+    combo_filter: bool = False,
 ) -> List[Dict[str, object]]:
     """
     **시작 번호**: ``fixed_start_nums`` 가 있으면 그 6개를 사용.
@@ -750,6 +781,28 @@ def generate_jl_wheel_sets(
                 fixed_stop_time=fixed_stop_time,
                 wheel_speeds=ws,
             )
+        if combo_filter and not _passes_combo_filter(nums):
+            original_nums = list(nums)
+            found = False
+            for delta in range(1, 45):
+                for sign in (1, -1):
+                    alt_offset = (offset + sign * delta) % 45
+                    alt_speed = _speed_from_offset(alt_offset, i)
+                    alt_decel = alt_speed / FIXED_STOP_TIME
+                    alt_ws = _derive_wheel_speeds(alt_speed) if independent_wheels else None
+                    alt_nums, _ = draw_six_with_profile(
+                        current_starts, alt_speed, alt_decel,
+                        fixed_stop_time=fixed_stop_time, wheel_speeds=alt_ws,
+                    )
+                    if _passes_combo_filter(alt_nums) and frozenset(alt_nums) not in seen_set_keys:
+                        nums = alt_nums
+                        found = True
+                        break
+                if found:
+                    break
+            if not found:
+                nums = original_nums
+
         base = AI_METHODS[(start_index + i) % len(AI_METHODS)]
         method = f"{METHOD_NAME} ({base})"
         generated_nums.append(sorted(nums))
