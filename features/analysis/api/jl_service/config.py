@@ -1,0 +1,86 @@
+# -*- coding: utf-8 -*-
+"""
+JL 휠 — 설정 상수.
+
+모든 튜닝 파라미터(오프셋, 휠 스텝 등)를 한곳에서 관리한다.
+run_wheel_52.py 의 자동 반영(AST/정규식) 대상도 이 파일이다.
+"""
+from __future__ import annotations
+
+from typing import Dict, List, Tuple
+
+# ── 메서드 이름 / 재시도 한계 ─────────────────────────────────
+METHOD_NAME = "JL Wheel Method"
+MAX_DUPLICATE_RETRIES = 300
+MAX_SET_DEDUP_RETRIES = 50
+
+# ── speed ↔ steps 변환 상수 ───────────────────────────────────
+# steps = int(speed × K).  K는 레거시 물리 모델에서 파생된 변환 계수.
+_JITTER_K: float = (82.11 / 1.88) / 2.0  # ≈ 21.838
+
+# 세트#1~20 내부 기준 speed (run_wheel_52.py가 이 리스트를 정규식으로 수정)
+_JITTER_BASE_SPEEDS: List[float] = [
+    81.06,
+    82.98,
+    83.58,
+    84.21,
+    85.95,
+    86.64,
+    90.91,
+    91.42,
+    96.43,
+    97.94,
+    98.61,
+    98.62,
+    108.63,
+    108.92,
+    108.93,
+    110.44,
+    112.45,
+    113.46,
+    117.97,
+    123.98,
+]
+
+# 중복 재시도 시 이동량 변화 (speed 단위 → steps로 환산하여 사용)
+_RETRY_SPEED_JITTER: float = 1.25
+_PRE_DEDUP_SPEED_JITTER: float = 0.35
+
+# speed 클램프 범위에 대응하는 step 범위
+_MIN_STEPS: int = int(65.0 * _JITTER_K)   # 1419
+_MAX_STEPS: int = int(135.0 * _JITTER_K)  # 2948
+
+# ── 세트별 기준 offset (0~44) — 유일한 튜닝 대상 ─────────────
+# 2026-03-26: 세트#15 offset 38 -> 31
+# 2026-04-02: 세트#12 offset 38 -> 44 (B조합)
+TWENTY_BASE_OFFSETS: List[int] = [
+    15, 12, 25, 39, 32, 2, 5, 16, 35, 23,
+    38, 44, 32, 38, 31, 26, 25, 2, 11, 7,
+]
+
+# ── 6휠 독립 step (각 휠의 추가 이동량) ──────────────────────
+# 황금각 분산: 45 × (2 − φ) ≈ 17.189칸 간격으로 6개 휠을 비주기적·균일 배치.
+# 각 점이 기존 최대 빈 구간에 놓여 클러스터링을 방지한다.
+WHEEL_OFFSET_STEPS: List[int] = [0, 7, 17, 24, 34, 41]
+
+# 세트별 커스텀 독립 휠 step
+PER_SET_WHEEL_STEPS: Dict[int, List[int]] = {
+    11: [7, 6, 1, 2, 6, 8],  # set#12 B조합 (1217회차 1등 역산, offset=44)
+}
+
+# ── 조합 필터 임계값 ──────────────────────────────────────────
+COMBO_FILTER_SUM_MIN = 100
+COMBO_FILTER_SUM_MAX = 175
+COMBO_FILTER_ODD_MIN = 2
+COMBO_FILTER_ODD_MAX = 4
+COMBO_FILTER_HIGH_MIN = 2
+COMBO_FILTER_HIGH_MAX = 4
+
+# ── 스크립트 호환용 별칭 (run_wheel_52, run_research에서 사용) ─
+FIXED_STOP_TIME: float = 82.11 / 1.88
+TWENTY_BASE_SPEEDS: List[float] = list(_JITTER_BASE_SPEEDS)
+TWENTY_SPEED_PROFILES: List[Tuple[float, float]] = [
+    (s, s / FIXED_STOP_TIME) for s in TWENTY_BASE_SPEEDS
+]
+RETRY_SPEED_JITTER: float = _RETRY_SPEED_JITTER
+PRE_DEDUP_SPEED_JITTER: float = _PRE_DEDUP_SPEED_JITTER

@@ -40,8 +40,6 @@ from features.analysis.api.jl_service import (
     TWENTY_BASE_SPEEDS,
     WHEEL_OFFSET_STEPS,
     generate_jl_wheel_sets,
-    get_blended_start_nums,
-    get_global_top6_frequency_starts,
     get_previous_draw_winning_starts,
 )
 from backend.domain.services.lotto_rank import rank_lotto_ticket
@@ -57,7 +55,7 @@ DEFAULT_RANK_WEIGHTS: dict[int, int] = {
     5: 1,
 }
 
-JL_SERVICE_FILE = _project_root / "features" / "analysis" / "api" / "jl_service.py"
+JL_SERVICE_FILE = _project_root / "features" / "analysis" / "api" / "jl_service" / "config.py"
 
 
 def _format_float_list(values: list[float]) -> str:
@@ -84,7 +82,7 @@ def _replace_typed_list_literal(src: str, var_name: str, new_list_literal: str) 
 
 def _persist_offset_speed_update(set_index_1based: int, new_offset: int, new_speed: float) -> None:
     if not JL_SERVICE_FILE.exists():
-        raise FileNotFoundError(f"jl_service.py를 찾을 수 없습니다: {JL_SERVICE_FILE}")
+        raise FileNotFoundError(f"config.py를 찾을 수 없습니다: {JL_SERVICE_FILE}")
 
     src = JL_SERVICE_FILE.read_text(encoding="utf-8")
 
@@ -99,7 +97,7 @@ def _persist_offset_speed_update(set_index_1based: int, new_offset: int, new_spe
         re.MULTILINE,
     )
     if not m_speed or not m_offset:
-        raise ValueError("jl_service.py에서 기준 리스트를 찾지 못했습니다.")
+        raise ValueError("config.py에서 기준 리스트를 찾지 못했습니다.")
 
     speeds = list(ast.literal_eval(m_speed.group(1)))
     offsets = list(ast.literal_eval(m_offset.group(1)))
@@ -380,7 +378,6 @@ def tune_reconcile_speeds(
     alternate_delta: float | None = None,
     tune_policy: Literal["double_fifth", "single_fifth", "unhit"] = "unhit",
     rank_weights: dict[int, int] | None = None,
-    start_strategy: Literal["global_top6_fixed", "previous_draw", "blended"] = "previous_draw",
     independent_wheels: bool = False,
 ) -> tuple[dict[str, Any], list[float], list[int]]:
     """
@@ -399,7 +396,7 @@ def tune_reconcile_speeds(
 
     random.seed(seed)
     res0 = evaluate_wheel_52(
-        draw_nos, seed=seed, base_speeds=baseline, start_strategy=start_strategy,
+        draw_nos, seed=seed, base_speeds=baseline,
         independent_wheels=independent_wheels,
     )
     scores0 = _baseline_scores_from_result(res0, rank_weights=rank_weights)
@@ -416,7 +413,7 @@ def tune_reconcile_speeds(
     for _ in range(max_rounds):
         random.seed(seed)
         res1 = evaluate_wheel_52(
-            draw_nos, seed=seed, base_speeds=candidate, start_strategy=start_strategy,
+            draw_nos, seed=seed, base_speeds=candidate,
             independent_wheels=independent_wheels,
         )
         regressed = [
@@ -449,7 +446,7 @@ def tune_reconcile_speeds(
 
     random.seed(seed)
     res_final = evaluate_wheel_52(
-        draw_nos, seed=seed, base_speeds=candidate, start_strategy=start_strategy,
+        draw_nos, seed=seed, base_speeds=candidate,
         independent_wheels=independent_wheels,
     )
     if alt_retuned_all:
@@ -482,7 +479,6 @@ def refine_one_set_speed_grid(
     protect_other_sets: bool = True,
     speed_min: float | None = None,
     speed_max: float | None = None,
-    start_strategy: Literal["global_top6_fixed", "previous_draw", "blended"] = "previous_draw",
     independent_wheels: bool = False,
 ) -> tuple[dict[str, Any], list[float], float, int]:
     """
@@ -512,7 +508,7 @@ def refine_one_set_speed_grid(
 
     random.seed(seed)
     res0 = evaluate_wheel_52(
-        draw_nos, seed=seed, base_speeds=base, start_strategy=start_strategy,
+        draw_nos, seed=seed, base_speeds=base,
         independent_wheels=independent_wheels,
     )
     scores0 = _baseline_scores_from_result(res0)
@@ -535,7 +531,7 @@ def refine_one_set_speed_grid(
 
         random.seed(seed)
         res = evaluate_wheel_52(
-            draw_nos, seed=seed, base_speeds=cand, start_strategy=start_strategy,
+            draw_nos, seed=seed, base_speeds=cand,
             independent_wheels=independent_wheels,
         )
         eval_count += 1
@@ -563,7 +559,7 @@ def refine_one_set_speed_grid(
     best_speeds = _normalize_strict_increasing_speeds(best_speeds)
     random.seed(seed)
     best_result = evaluate_wheel_52(
-        draw_nos, seed=seed, base_speeds=best_speeds, start_strategy=start_strategy,
+        draw_nos, seed=seed, base_speeds=best_speeds,
         independent_wheels=independent_wheels,
     )
     eval_count += 1
@@ -578,7 +574,6 @@ def refine_one_set_offset_search(
     search_range: int = 5,
     full_search: bool = False,
     protect_other_sets: bool = True,
-    start_strategy: Literal["global_top6_fixed", "previous_draw", "blended"] = "previous_draw",
     independent_wheels: bool = False,
     rank_weights: dict[int, int] | None = None,
 ) -> tuple[dict[str, Any], list[int], int, list[dict[str, Any]]]:
@@ -607,7 +602,7 @@ def refine_one_set_offset_search(
     random.seed(seed)
     res0 = evaluate_wheel_52(
         draw_nos, seed=seed, base_offsets=base_offsets,
-        start_strategy=start_strategy, independent_wheels=independent_wheels,
+        independent_wheels=independent_wheels,
     )
     scores0 = _baseline_scores_from_result(res0, rank_weights=weights)
     baseline_score = _weighted_hit_score(res0["by_set_index"][set_index], rank_weights=weights)
@@ -645,7 +640,7 @@ def refine_one_set_offset_search(
         random.seed(seed)
         res = evaluate_wheel_52(
             draw_nos, seed=seed, base_offsets=trial_offsets,
-            start_strategy=start_strategy, independent_wheels=independent_wheels,
+            independent_wheels=independent_wheels,
         )
         eval_count += 1
 
@@ -855,7 +850,6 @@ def refine_all_sets_speed_grid(
     step: float = 0.5,
     speed_min: float = 75.0,
     speed_max: float = 130.0,
-    start_strategy: Literal["global_top6_fixed", "previous_draw", "blended"] = "previous_draw",
     independent_wheels: bool = False,
 ) -> tuple[dict[str, Any], list[float], int]:
     """
@@ -872,7 +866,7 @@ def refine_all_sets_speed_grid(
 
     total_eval = 0
     result = evaluate_wheel_52(
-        draw_nos, seed=seed, base_speeds=current, start_strategy=start_strategy,
+        draw_nos, seed=seed, base_speeds=current,
         independent_wheels=independent_wheels,
     )
     total_eval += 1
@@ -886,7 +880,6 @@ def refine_all_sets_speed_grid(
             protect_other_sets=True,
             speed_min=speed_min,
             speed_max=speed_max,
-            start_strategy=start_strategy,
             independent_wheels=independent_wheels,
         )
         total_eval += n_eval
@@ -900,9 +893,8 @@ def evaluate_wheel_52(
     seed: int | None = None,
     base_speeds: list[float] | None = None,
     base_offsets: list[int] | None = None,
-    start_strategy: Literal["global_top6_fixed", "previous_draw", "blended"] = "previous_draw",
     independent_wheels: bool = False,
-    combo_filter: bool = False,
+    **_kwargs: object,
 ) -> dict[str, Any]:
     if len(draw_nos) != REQUIRED_DRAW_COUNT:
         raise ValueError(
@@ -946,7 +938,6 @@ def evaluate_wheel_52(
     by_set_index: dict[int, list[tuple[int, int]]] = {i: [] for i in range(1, 21)}
     top6_by_draw: dict[int, list[int]] = {}
     up_to = max(draw_nos)
-    latest_top6 = get_global_top6_frequency_starts(up_to)
     if base_offsets is not None:
         offsets_used = [int(x) % 45 for x in list(base_offsets)]
     elif base_speeds is not None:
@@ -961,21 +952,12 @@ def evaluate_wheel_52(
         if dn not in winners:
             continue
         main, bonus = winners[dn]
-        if start_strategy == "global_top6_fixed":
-            start6 = latest_top6
-        elif start_strategy == "previous_draw":
-            start6 = get_previous_draw_winning_starts(dn)
-        else:
-            start6 = get_blended_start_nums(dn)
         sets_rows = generate_jl_wheel_sets(
             dn,
             count=num_sets,
-            start_index=0,
-            fixed_start_nums=start6,
             offsets=offsets_used,
             dedup_across_sets=True,
             independent_wheels=independent_wheels,
-            combo_filter=combo_filter,
         )
         if sets_rows:
             t0 = sets_rows[0].get("top6_starts")
@@ -990,8 +972,6 @@ def evaluate_wheel_52(
             rnk = rank_lotto_ticket(main, bonus, s)
             si = int(row["set_index"])
             off = int(row.get("profile_offset", 0))
-            sp = float(row.get("profile_speed", 0.0))
-            dec = float(row.get("profile_deceleration", 0.0))
             match_distribution_total[match_count] += 1
             match_distribution_by_set[si][match_count] += 1
 
@@ -1005,8 +985,6 @@ def evaluate_wheel_52(
                         "draw_no": dn,
                         "set_index": si,
                         "offset": off,
-                        "speed": sp,
-                        "deceleration": dec,
                         "rank": rnk,
                         "picked": _fmt_nums(s),
                         "winning": _fmt_nums(main),
@@ -1050,12 +1028,8 @@ def evaluate_wheel_52(
         "hit_rows": hit_rows,
         "by_set_index": by_set_index,
         "top6_by_draw": top6_by_draw,
-        "latest_top6_starts": latest_top6,
         "eval_max_draw_no": up_to,
-        "fixed_top6_starts": latest_top6,
-        "fixed_top6_up_to_draw": up_to,
         "nominal_base_offsets": offsets_used,
-        "start_strategy": start_strategy,
         "independent_wheels": independent_wheels,
     }
 
@@ -1068,22 +1042,7 @@ def _format_report(result: dict[str, Any], seed: int | None) -> str:
     lines.append(
         f"- 검증 회차: **{result['draw_nos'][0]}~{result['draw_nos'][-1]}** (총 **{REQUIRED_DRAW_COUNT}개 회차**)"
     )
-    up = result.get("eval_max_draw_no") or result.get("fixed_top6_up_to_draw")
-    latest = result.get("latest_top6_starts") or result.get("fixed_top6_starts")
-    strategy = result.get("start_strategy", "global_top6_fixed")
-    if isinstance(latest, list) and latest and up is not None:
-        if strategy == "global_top6_fixed":
-            lines.append(
-                f"- 시작번호 전략: **global_top6_fixed** — 평가 구간 상한 **{up}**회 기준 "
-                f"**1~{up}회차** 본번호 누적 합 상위 6개: **{', '.join(str(int(x)) for x in latest)}** "
-                f"(모든 평가 회차에 동일 적용)"
-            )
-        elif strategy == "previous_draw":
-            lines.append("- 시작번호 전략: **previous_draw** — 각 회차 직전 당첨 본번호 6개 사용")
-        else:
-            lines.append("- 시작번호 전략: **blended** — 직전 회차 + 핫번호 + 과숙번호 가중 블렌딩")
-    else:
-        lines.append("- 시작번호 전략: 결과 객체 `start_strategy`/`top6_by_draw` 참고")
+    lines.append("- 시작번호 전략: **previous_draw** — 각 회차 직전 당첨 본번호 6개 사용")
     nom = result.get("nominal_base_offsets")
     offset_note = (
         "이번 실행 기준 offset (`result['nominal_base_offsets']`)"
@@ -1225,12 +1184,6 @@ def main() -> None:
     )
     parser.add_argument("--seed", type=int, default=None, help="재현용 난수 시드")
     parser.add_argument(
-        "--start-strategy",
-        choices=["global_top6_fixed", "previous_draw", "blended"],
-        default="previous_draw",
-        help="시작번호 전략 (기본: previous_draw — 직전 회차 당첨번호)",
-    )
-    parser.add_argument(
         "--write-report",
         type=str,
         default=None,
@@ -1326,17 +1279,12 @@ def main() -> None:
     parser.add_argument(
         "--apply-offset-update",
         action="store_true",
-        help="--refine-offset 결과를 jl_service.py에 실제 반영 (Step 8 최종 반영에서만 사용)",
+        help="--refine-offset 결과를 config.py에 실제 반영 (Step 8 최종 반영에서만 사용)",
     )
     parser.add_argument(
         "--independent-wheels",
         action="store_true",
         help="6휠 독립 speed 모드: 각 휠이 서로 다른 speed로 회전하여 별자리 제약 해소",
-    )
-    parser.add_argument(
-        "--combo-filter",
-        action="store_true",
-        help="조합 필터(합계/홀짝/고저) 적용: 비현실적 조합을 offset 조정으로 재생성",
     )
     args = parser.parse_args()
 
@@ -1376,7 +1324,6 @@ def main() -> None:
         random.seed(seed_ro)
         res_baseline = evaluate_wheel_52(
             draw_nos, seed=seed_ro, base_offsets=base_offsets,
-            start_strategy=args.start_strategy,
             independent_wheels=args.independent_wheels,
         )
         bl_counts = _per_set_hit_counts(res_baseline["by_set_index"][si])
@@ -1388,7 +1335,6 @@ def main() -> None:
             seed=seed_ro,
             search_range=int(args.offset_range),
             full_search=args.offset_full,
-            start_strategy=args.start_strategy,
             independent_wheels=args.independent_wheels,
         )
 
@@ -1436,7 +1382,6 @@ def main() -> None:
             step=float(args.refine_step),
             speed_min=float(min_sp),
             speed_max=float(max_sp),
-            start_strategy=args.start_strategy,
             independent_wheels=args.independent_wheels,
         )
         print(
@@ -1467,7 +1412,6 @@ def main() -> None:
             step=float(args.refine_step),
             speed_min=args.refine_min_speed,
             speed_max=args.refine_max_speed,
-            start_strategy=args.start_strategy,
             independent_wheels=args.independent_wheels,
         )
         print(
@@ -1489,7 +1433,6 @@ def main() -> None:
         baseline_before_tune = evaluate_wheel_52(
             draw_nos,
             seed=seed_tr,
-            start_strategy=args.start_strategy,
             independent_wheels=args.independent_wheels,
         )
         if args.tune_double_fifth:
@@ -1504,7 +1447,6 @@ def main() -> None:
             delta=args.tune_delta,
             alternate_delta=args.tune_alt_delta,
             tune_policy=policy,
-            start_strategy=args.start_strategy,
             independent_wheels=args.independent_wheels,
         )
         passed, gate_msg = _passes_priority_gate(baseline_before_tune, result)
@@ -1530,9 +1472,7 @@ def main() -> None:
         result = evaluate_wheel_52(
             draw_nos,
             seed=args.seed,
-            start_strategy=args.start_strategy,
             independent_wheels=args.independent_wheels,
-            combo_filter=args.combo_filter,
         )
 
     md = _format_report(result, args.seed)
