@@ -1324,6 +1324,11 @@ def main() -> None:
         help="--refine-offset 시 0~44 전체 탐색",
     )
     parser.add_argument(
+        "--apply-offset-update",
+        action="store_true",
+        help="--refine-offset 결과를 jl_service.py에 실제 반영 (Step 8 최종 반영에서만 사용)",
+    )
+    parser.add_argument(
         "--independent-wheels",
         action="store_true",
         help="6휠 독립 speed 모드: 각 휠이 서로 다른 speed로 회전하여 별자리 제약 해소",
@@ -1401,18 +1406,21 @@ def main() -> None:
             if new_speed is not None:
                 print(f"  [채택 안내] offset {current_off} → {best_off}")
                 print(f"  [코드 반영] _JITTER_BASE_SPEEDS[{idx}]: {TWENTY_BASE_SPEEDS[idx]} → {new_speed}")
-                try:
-                    _persist_offset_speed_update(
-                        set_index_1based=si,
-                        new_offset=int(best_off),
-                        new_speed=float(new_speed),
-                    )
-                    print(
-                        f"  [파일 반영 완료] 세트#{si} offset={int(best_off)}, speed={float(new_speed)} "
-                        f"-> {JL_SERVICE_FILE}"
-                    )
-                except Exception as e:
-                    print(f"  [파일 반영 실패] {e}", file=sys.stderr)
+                if args.apply_offset_update:
+                    try:
+                        _persist_offset_speed_update(
+                            set_index_1based=si,
+                            new_offset=int(best_off),
+                            new_speed=float(new_speed),
+                        )
+                        print(
+                            f"  [파일 반영 완료] 세트#{si} offset={int(best_off)}, speed={float(new_speed)} "
+                            f"-> {JL_SERVICE_FILE}"
+                        )
+                    except Exception as e:
+                        print(f"  [파일 반영 실패] {e}", file=sys.stderr)
+                else:
+                    print("  [반영 보류] --apply-offset-update 미지정: Step 8에서만 최종 반영 권장")
             else:
                 print(f"  [주의] offset {best_off}에 대응하는 speed를 {lo_sp}~{hi_sp} 범위에서 찾지 못했습니다.")
         else:
