@@ -40,6 +40,7 @@ from .physics import (
 )
 from .start_numbers import (
     _get_number_frequency_counter,
+    get_previous_draw_top7,
     get_previous_draw_winning_starts,
 )
 
@@ -256,6 +257,16 @@ def _validate_start_permutation(start_permutation: Sequence[int]) -> Tuple[int, 
     return t
 
 
+def _validate_start_seven_pick(start_pick: Sequence[int]) -> Tuple[int, ...]:
+    """7개 풀(본6 정렬+보너스)에서 6휠에 넣을 인덱스: 길이 6, 서로 다름, 각 0~6."""
+    t = tuple(int(x) for x in start_pick)
+    if len(t) != 6 or len(set(t)) != 6:
+        raise ValueError("start_pick은 서로 다른 정수 6개여야 합니다.")
+    if any(i < 0 or i > 6 for i in t):
+        raise ValueError("start_pick 각 원소는 0~6 이어야 합니다.")
+    return t
+
+
 def generate_jl_ticket_for_draw_and_set(
     draw_no: int,
     *,
@@ -263,23 +274,20 @@ def generate_jl_ticket_for_draw_and_set(
     offset: int,
     start_permutation: Tuple[int, ...],
     forced_previous_main: Optional[List[int]] = None,
+    forced_previous_bonus: Optional[int] = None,
 ) -> Dict[str, object]:
     """
     한 회차·한 세트에 대해 JL 휠 6번호 1줄만 생성한다.
 
-    - 직전 회차 본번호 6개: ``forced_previous_main``이 있으면 그 값(정렬 후 순열 적용),
-      없으면 DB에서 ``draw_no - 1`` 당첨 본번호.
-    - 사전/사후 세트 간 dedup 경로는 거치지 않는다(워크플로 offset×720 탐색·단일 세트 3년 평가용).
+    - 시작 풀: 직전 회차 본6(오름차순)+보너스 7개가 있으면 ``start_permutation``은
+      그중 6개를 고르는 인덱스(0~5 본번호, 6 보너스), 길이 6, 서로 다름 → P(7,6)=5040.
+    - ``forced_previous_bonus``가 있으면 ``forced_previous_main``과 함께 위 7풀을 구성.
+    - 보너스 없이 ``forced_previous_main``만 있으면 레거시: 0~5 순열 720.
+    - 둘 다 없으면 DB 직전 회차에서 7풀 조회 가능 시 7풀, 아니면 본6만.
+    - 사전/사후 세트 간 dedup 경로는 거치지 않는다(워크플로 탐색·단일 세트 3년 평가용).
     """
     if not 1 <= set_index <= 20:
         raise ValueError("set_index는 1~20이어야 합니다.")
-    perm = _validate_start_permutation(start_permutation)
-    if forced_previous_main is not None:
-        if len(forced_previous_main) != 6:
-            raise ValueError("forced_previous_main은 서로 다른 정수 6개여야 합니다.")
-        top6 = sorted(int(x) for x in forced_previous_main)
-    else:
-        top6 = list(get_previous_draw_winning_starts(draw_no))
 
     freq_scope = draw_no - 1 if draw_no > 1 else 0
     freq_counter = _get_number_frequency_counter(freq_scope)
@@ -288,7 +296,41 @@ def generate_jl_ticket_for_draw_and_set(
     off = int(offset) % 45
     base_steps = _steps_from_offset(off, idx0)
     ws = _derive_wheel_steps(base_steps, set_index=idx0)
-    starts = [top6[i] for i in perm]
+
+    top7: Optional[List[int]] = None
+    if forced_previous_main is not None:
+        if len(forced_previous_main) != 6:
+            raise ValueError("forced_previous_main은 서로 다른 정수 6개여야 합니다.")
+        sm = sorted(int(x) for x in forced_previous_main)
+        if forced_previous_bonus is not None:
+            b = int(forced_previous_bonus)
+            if b in sm or not 1 <= b <= 45:
+                raise ValueError("forced_previous_bonus는 본번호와 겹치지 않는 1~45 여야 합니다.")
+            top7 = sm + [b]
+        else:
+            perm = _validate_start_permutation(start_permutation)
+            top6 = sm
+            starts = [top6[i] for i in perm]
+            nums = draw_six(starts, base_steps, wheel_steps=ws)
+            nums = sorted(_repair_combo(nums, freq_counter))
+            return _row_dict(
+                nums,
+                METHOD_NAME,
+                set_index=set_index,
+                offset=off,
+                top6_starts=list(starts),
+            )
+    else:
+        top7 = get_previous_draw_top7(draw_no)
+
+    if top7 is not None:
+        pick = _validate_start_seven_pick(start_permutation)
+        starts = [top7[i] for i in pick]
+    else:
+        perm = _validate_start_permutation(start_permutation)
+        top6 = list(get_previous_draw_winning_starts(draw_no))
+        starts = [top6[i] for i in perm]
+
     nums = draw_six(starts, base_steps, wheel_steps=ws)
     nums = sorted(_repair_combo(nums, freq_counter))
 

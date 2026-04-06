@@ -30,7 +30,7 @@ JL 휠 기반 번호 생성/저장/중복 인사이트 분석을 담당합니다
 > import 경로는 기존과 동일: `from features.analysis.api.jl_service import X`
 
 ### 연구 스크립트 (`scripts/`)
-- `run_01_pick_offset_start.py`: 1등 offset·시작순열 선정(P,C,S) → pick JSON
+- `run_01_pick_offset_start.py`: 1등 offset·시작 배치 선정 — P의 본6+보너스 7풀에서 6휠 `P(7,6)=5040` × offset 45 → pick JSON (총 226,800 후보)
 - `run_02_three_year_single_set.py`: pick 기준 단일 세트 약 3년치 평가 → `당첨 이력.md`
 - `jl_wheel_batch_eval.py`: 가변 회차 배치 평가·이력 포맷·config 반영 헬퍼
 - `당첨 이력.md`: 단일 세트 3년치 평가 결과(2번 스크립트가 덮어씀)

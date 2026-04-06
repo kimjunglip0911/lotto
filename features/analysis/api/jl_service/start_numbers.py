@@ -105,3 +105,23 @@ def get_previous_draw_winning_starts(draw_no: int) -> List[int]:
         return [1, 2, 3, 4, 5, 6]
     main, _ = prev
     return sorted(int(x) for x in main)
+
+
+def get_previous_draw_top7(draw_no: int) -> Optional[List[int]]:
+    """
+    직전 회차(draw_no-1) 기준 본번호 6개(오름차순) + 보너스 1개, 총 7개.
+
+    인덱스 0~5: 정렬된 본번호, 인덱스 6: 보너스. 데이터 없거나 보너스가 본번호와
+    겹치면 None (레거시 6시작 경로로 폴백).
+    """
+    if draw_no <= 1:
+        return None
+    prev = _fetch_winner_for_draw(draw_no - 1)
+    if prev is None:
+        return None
+    main, bonus = prev
+    sm = sorted(int(x) for x in main)
+    b = int(bonus)
+    if not 1 <= b <= 45 or b in sm:
+        return None
+    return sm + [b]

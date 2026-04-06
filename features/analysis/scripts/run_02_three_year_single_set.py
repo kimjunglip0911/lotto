@@ -24,7 +24,10 @@ _backend_root = _project_root / "backend"
 if str(_backend_root) not in sys.path:
     sys.path.insert(0, str(_backend_root))
 
-from features.analysis.api.jl_service.generator import _validate_start_permutation
+from features.analysis.api.jl_service.generator import (
+    _validate_start_permutation,
+    _validate_start_seven_pick,
+)
 
 from features.analysis.scripts.jl_wheel_batch_eval import (
     THREE_YEAR_DRAW_COUNT,
@@ -86,7 +89,11 @@ def main() -> None:
         c = int(pick["current_draw"])
         s = int(pick["set_index"])
         offset = int(pick["offset"])
-        perm = _validate_start_permutation(pick["start_permutation"])
+        raw_perm = pick["start_permutation"]
+        try:
+            perm = _validate_start_seven_pick(raw_perm)
+        except ValueError:
+            perm = _validate_start_permutation(raw_perm)
     else:
         if (
             args.set_index is None
@@ -102,7 +109,11 @@ def main() -> None:
             sys.exit(2)
         s = int(args.set_index)
         offset = int(args.offset)
-        perm = _validate_start_permutation(args.start_permutation)
+        raw = args.start_permutation
+        try:
+            perm = _validate_start_seven_pick(raw)
+        except ValueError:
+            perm = _validate_start_permutation(raw)
         p = int(args.prev_draw) if args.prev_draw is not None else -1
         c = int(args.current_draw)
 
@@ -128,7 +139,9 @@ def main() -> None:
     meta: list[str] = []
     if p > 0:
         meta.append(f"- 직전회차 P: {p}")
-    meta.append(f"- 시작순열(인덱스): {list(perm)}")
+    meta.append(
+        f"- 시작 배치 인덱스(0~5=직전 본6 정렬, 6=보너스 / 레거시는 0~5만): {list(perm)}"
+    )
     meta.append(f"- 평가 회차 구간: {draw_nos[0]}~{draw_nos[-1]} ({len(draw_nos)}회차)")
 
     md = format_history_single_set(

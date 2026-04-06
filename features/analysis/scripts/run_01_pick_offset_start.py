@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-1단계: 직전 회차 ``P`` 본번호 6개를 시작으로, 현재 회차 ``C``에서 1등이 나오는
-(offset × 시작순열 720) 탐색. 없으면 동일 프로세스 안에서 ``C`` 단일 회차 보조 점수로 확정 후 pick JSON.
+1단계: 직전 회차 ``P`` 본6(정렬)+보너스 7개 풀에서 6휠에 넣는 배치 ``P(7,6)=5040`` 과
+``offset`` 0~44 를 탐색해 ``C``에서 1등을 찾는다. 없으면 ``C`` 단일 회차 보조 점수로 폴백 후 pick JSON.
 
 사용 (프로젝트 루트):
   python -m features.analysis.scripts.run_01_pick_offset_start --prev-draw 1217 --current-draw 1218 --set-index 1 --write-pick pick.json
@@ -101,14 +101,22 @@ def main() -> None:
         sys.exit(2)
 
     main_c, bonus_c = w_c
-    p_main, _ = _fetch_winner_for_draw(p)
+    p_main, p_bonus = _fetch_winner_for_draw(p)
     assert p_main is not None
     prev_starts = sorted(int(x) for x in p_main)
+    pb = int(p_bonus)
+    if pb not in range(1, 46) or pb in prev_starts:
+        print(
+            f"오류: 회차 {p} 보너스({pb})가 없거나 본번호와 겹칩니다.",
+            file=sys.stderr,
+        )
+        sys.exit(2)
 
     db_n = count_total_draws_in_db()
     print(
         f"요약: prev_draw={p}, current_draw={c}, set_index={s}, "
-        f"C당첨={_winner_summary(c)}, P시작6(정렬)=[{','.join(str(x) for x in prev_starts)}], "
+        f"C당첨={_winner_summary(c)}, "
+        f"P시작7 본6=[{','.join(str(x) for x in prev_starts)}] 보너스={pb}, "
         f"DB총회차={db_n}"
     )
     if c != p + 1:
@@ -125,7 +133,7 @@ def main() -> None:
     candidates: list[tuple[int, int, int, tuple[int, ...]]] = []
 
     for o in range(45):
-        for perm in itertools.permutations(range(6)):
+        for perm in itertools.permutations(range(7), 6):
             perm_t = tuple(int(x) for x in perm)
             row = generate_jl_ticket_for_draw_and_set(
                 c,
@@ -133,6 +141,7 @@ def main() -> None:
                 offset=o,
                 start_permutation=perm_t,
                 forced_previous_main=list(prev_starts),
+                forced_previous_bonus=pb,
             )
             ticket = {
                 int(row["num1"]),
@@ -160,7 +169,7 @@ def main() -> None:
         fallback_used = True
         picked_o, picked_perm = _fallback_pick_best(candidates)
         print(
-            f"1등 없음(45×720 종료). 폴백 확정: offset={picked_o}, perm={list(picked_perm)} "
+            f"1등 없음(45×5040 종료). 폴백 확정: offset={picked_o}, perm={list(picked_perm)} "
             f"(타이브레이크: 동점 시 offset 오름차순 → 순열 튜플 사전순)"
         )
 
@@ -172,6 +181,8 @@ def main() -> None:
         "set_index": s,
         "offset": int(picked_o),
         "start_permutation": list(picked_perm),
+        "prev_bonus": pb,
+        "start_pick_mode": "seven_pool_p7_6",
         "rank1_achieved": rank1_achieved,
         "fallback_used": fallback_used,
         "picked_at_utc": datetime.now(timezone.utc).isoformat(),

@@ -41,6 +41,7 @@ from .physics import draw_six
 # ── start_numbers ─────────────────────────────────────────────
 from .start_numbers import (
     START_PERMUTATIONS,
+    get_previous_draw_top7,
     get_previous_draw_winning_starts,
 )
 
@@ -79,6 +80,7 @@ __all__ = [
     "draw_six",
     # start_numbers
     "START_PERMUTATIONS",
+    "get_previous_draw_top7",
     "get_previous_draw_winning_starts",
     # generator
     "generate_jl_ticket_for_draw_and_set",
