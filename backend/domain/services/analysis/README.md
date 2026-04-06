@@ -31,7 +31,7 @@ features/analysis/api/jl_service/
 ### 튜닝
 
 - `config.py`의 `TWENTY_BASE_OFFSETS`와 `_JITTER_BASE_SPEEDS`를 수정
-- `run_wheel_52.py --refine-offset N` 으로 자동 탐색 후 반영 가능
+- 오프셋 자동 반영: `features.analysis.scripts.jl_wheel_batch_eval.persist_offset_speed_update` (별도 워크플로에서 호출)
 
 ### API
 

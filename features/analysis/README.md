@@ -30,31 +30,20 @@ JL 휠 기반 번호 생성/저장/중복 인사이트 분석을 담당합니다
 > import 경로는 기존과 동일: `from features.analysis.api.jl_service import X`
 
 ### 연구 스크립트 (`scripts/`)
-- `run_wheel_52.py`: 52회차 배치 평가, offset/speed 튜닝
-- `run_research.py`: 경계속도 분석, 통계 연구
-- `run_multi_seed.py`: 다중 시드 검증
-- `당첨 이력.md`: 52회차 평가 결과 문서
-- `연구 분석 결과.md`: 연구 분석 결과 기록
+- `run_01_pick_offset_start.py`: 1등 offset·시작순열 선정(P,C,S) → pick JSON
+- `run_02_three_year_single_set.py`: pick 기준 단일 세트 약 3년치 평가 → `당첨 이력.md`
+- `jl_wheel_batch_eval.py`: 가변 회차 배치 평가·이력 포맷·config 반영 헬퍼
+- `당첨 이력.md`: 단일 세트 3년치 평가 결과(2번 스크립트가 덮어씀)
+- `연구 분석 결과.md`: 과거 연구 메모(레거시 `run_research`/`run_multi_seed`는 제거됨)
 
 ## 스크립트 사용법
 
-### 52회차 평가 (`run_wheel_52.py`)
+### 1등 offset 선정 워크플로 (요약)
 ```
-python -m features.analysis.scripts.run_wheel_52 --seed 42 --independent-wheels --write-history "features/analysis/scripts/당첨 이력.md"
-python -m features.analysis.scripts.run_wheel_52 --seed 42 --independent-wheels --refine-set 2 --refine-step 0.046
-python -m features.analysis.scripts.run_wheel_52 --seed 42 --independent-wheels --refine-all --refine-step 0.5
+python -m features.analysis.scripts.run_01_pick_offset_start --prev-draw 1217 --current-draw 1218 --set-index 1 --write-pick pick.json
+python -m features.analysis.scripts.run_02_three_year_single_set --pick-json pick.json --write-history "features/analysis/scripts/당첨 이력.md"
 ```
-
-### 연구 분석 (`run_research.py`)
-```
-python -m features.analysis.scripts.run_research --mode boundary --target-set 2 14
-python -m features.analysis.scripts.run_research --mode all
-```
-
-### 다중 시드 검증 (`run_multi_seed.py`)
-```
-python -m features.analysis.scripts.run_multi_seed --seeds 20 --write-result "features/analysis/scripts/연구 분석 결과.md"
-```
+자세한 절차는 `.agents/workflows/01.1등당첨.md` 참고.
 
 ## API
 

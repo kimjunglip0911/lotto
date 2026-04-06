@@ -29,16 +29,28 @@ from .physics import (
 
 # ── 시작번호 다양화 (순열 기반) ───────────────────────────────
 
-def _diversify_start_nums(top6: List[int], set_index: int, attempt: int) -> List[int]:
+def _diversify_start_nums(
+    top6: List[int],
+    set_index: int,
+    attempt: int,
+    *,
+    permutation_override: Optional[Tuple[int, ...]] = None,
+) -> List[int]:
     """
     세트별 시작번호를 config.START_PERMUTATIONS 순열에 따라 재배치한다.
 
     - set_index: 세트 번호 (0~19)
     - attempt: 중복 재시도 횟수 (순열 인덱스를 밀어 다른 배치 시도)
+    - permutation_override: ``attempt == 0``일 때만 적용. 0~5의 순열이면 해당 순서로 top6 매핑.
     - 순열 변경: config.py의 START_PERMUTATIONS 리스트를 직접 수정
     """
     if len(top6) != 6:
         raise ValueError("top6 must have length 6")
+    if permutation_override is not None and attempt == 0:
+        perm = tuple(int(x) for x in permutation_override)
+        if len(perm) != 6 or set(perm) != set(range(6)):
+            raise ValueError("permutation_override는 0~5의 순열(길이 6)이어야 합니다.")
+        return [top6[i] for i in perm]
     perm_idx = (set_index + attempt) % len(START_PERMUTATIONS)
     perm = START_PERMUTATIONS[perm_idx]
     return [top6[i] for i in perm]
@@ -54,13 +66,19 @@ def _draw_unique_set_with_variants(
     set_index_for_steps: int,
     seen_sets: set[frozenset[int]],
     max_attempts: int = MAX_SET_DEDUP_RETRIES,
+    permutation_override: Optional[Tuple[int, ...]] = None,
 ) -> List[int]:
     """
     중복이면 시작번호 다양화 + 이동량 미세 조정으로 재생성한다.
     6휠 각각에 황금각 기반 독립 이동량을 항상 부여.
     """
     for attempt in range(max_attempts):
-        starts = _diversify_start_nums(top6, set_index, attempt)
+        starts = _diversify_start_nums(
+            top6,
+            set_index,
+            attempt,
+            permutation_override=permutation_override if attempt == 0 else None,
+        )
         base_steps = _steps_from_offset(base_offset, set_index_for_steps)
         jitter_speed = _PRE_DEDUP_SPEED_JITTER * attempt
         jitter_sign = 1.0 if attempt % 2 == 0 else -1.0
@@ -74,7 +92,7 @@ def _draw_unique_set_with_variants(
     fallback_steps = _steps_from_offset(base_offset, set_index_for_steps)
     ws = _derive_wheel_steps(fallback_steps, set_index=set_index_for_steps)
     nums = draw_six(
-        _diversify_start_nums(top6, set_index, max_attempts - 1),
+        _diversify_start_nums(top6, set_index, max_attempts - 1, permutation_override=None),
         fallback_steps,
         wheel_steps=ws,
     )

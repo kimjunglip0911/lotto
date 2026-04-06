@@ -3,7 +3,8 @@
 JL 휠 — 설정 상수.
 
 모든 튜닝 파라미터(오프셋, 휠 스텝 등)를 한곳에서 관리한다.
-run_wheel_52.py 의 자동 반영(AST/정규식) 대상도 이 파일이다.
+`features.analysis.scripts.jl_wheel_batch_eval.persist_offset_speed_update` 등이
+이 파일을 AST/정규식으로 갱신할 수 있다.
 """
 from __future__ import annotations
 
@@ -18,7 +19,7 @@ MAX_SET_DEDUP_RETRIES = 50
 # steps = int(speed × K).  K는 레거시 물리 모델에서 파생된 변환 계수.
 _JITTER_K: float = (82.11 / 1.88) / 2.0  # ≈ 21.838
 
-# 세트#1~20 내부 기준 speed (run_wheel_52.py가 이 리스트를 정규식으로 수정)
+# 세트#1~20 내부 기준 speed (오프셋/스피드 자동 반영 스크립트가 이 리스트를 정규식으로 수정)
 _JITTER_BASE_SPEEDS: List[float] = [
     81.06,
     82.98,
@@ -73,7 +74,7 @@ COMBO_FILTER_ODD_MAX = 4
 COMBO_FILTER_HIGH_MIN = 2
 COMBO_FILTER_HIGH_MAX = 4
 
-# ── 스크립트 호환용 별칭 (run_wheel_52, run_research에서 사용) ─
+# ── 스크립트 호환용 별칭 (JL 휠 분석·연구 스크립트에서 사용) ─
 FIXED_STOP_TIME: float = 82.11 / 1.88
 TWENTY_BASE_SPEEDS: List[float] = list(_JITTER_BASE_SPEEDS)
 TWENTY_SPEED_PROFILES: List[Tuple[float, float]] = [

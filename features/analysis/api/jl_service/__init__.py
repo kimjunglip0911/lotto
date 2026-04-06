@@ -46,6 +46,7 @@ from .start_numbers import (
 
 # ── generator ─────────────────────────────────────────────────
 from .generator import (
+    generate_jl_ticket_for_draw_and_set,
     generate_jl_wheel_sets,
     generate_wheel_sets,
 )
@@ -80,6 +81,7 @@ __all__ = [
     "START_PERMUTATIONS",
     "get_previous_draw_winning_starts",
     # generator
+    "generate_jl_ticket_for_draw_and_set",
     "generate_jl_wheel_sets",
     "generate_wheel_sets",
     # analysis

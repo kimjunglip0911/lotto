@@ -13,7 +13,7 @@ JL 휠 — 세트 생성 엔진.
 from __future__ import annotations
 
 from collections import Counter
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Sequence, Tuple
 
 from backend.database import get_connection
 
@@ -160,6 +160,7 @@ def generate_jl_wheel_sets(
     offsets: Optional[List[int]] = None,
     dedup_across_sets: bool = True,
     prevent_duplicates_before_replace: bool = True,
+    start_permutation_overrides: Optional[Dict[int, Tuple[int, ...]]] = None,
     **_kwargs: object,
 ) -> List[Dict[str, object]]:
     """
@@ -173,6 +174,9 @@ def generate_jl_wheel_sets(
     오프셋: offsets 또는 TWENTY_BASE_OFFSETS에서 세트별 적용.
     중복 방지: prevent_duplicates_before_replace(사전) + dedup_across_sets(사후).
     조합 교정: 합계/홀짝/고저 위반 시 번호 1개를 빈도 기반으로 자동 교체.
+
+    start_permutation_overrides: 세트 인덱스(0 기준) → 0~5 순열. 해당 세트의 첫 시도 시작 배치만
+    주입(중복 재시도 시에는 기본 START_PERMUTATIONS 로직).
     """
     if not 1 <= count <= 20:
         raise ValueError("count는 1~20만 허용합니다.")
@@ -193,7 +197,12 @@ def generate_jl_wheel_sets(
     for i in range(count):
         offset = int(offs[i]) % 45
         base_steps = _steps_from_offset(offset, i)
-        current_starts = _diversify_start_nums(top6, i, 0)
+        perm_ov = (
+            start_permutation_overrides.get(i)
+            if start_permutation_overrides is not None
+            else None
+        )
+        current_starts = _diversify_start_nums(top6, i, 0, permutation_override=perm_ov)
 
         ws = _derive_wheel_steps(base_steps, set_index=i)
 
@@ -204,6 +213,7 @@ def generate_jl_wheel_sets(
                 base_offset=offset,
                 set_index_for_steps=i,
                 seen_sets=seen_set_keys,
+                permutation_override=perm_ov,
             )
         else:
             nums = draw_six(current_starts, base_steps, wheel_steps=ws)
@@ -236,6 +246,59 @@ def generate_jl_wheel_sets(
             )
         )
     return results
+
+
+def _validate_start_permutation(start_permutation: Sequence[int]) -> Tuple[int, ...]:
+    """0~5의 순열인지 검증 후 튜플로 반환."""
+    t = tuple(int(x) for x in start_permutation)
+    if len(t) != 6 or set(t) != set(range(6)):
+        raise ValueError("start_permutation은 0~5의 순열(길이 6)이어야 합니다.")
+    return t
+
+
+def generate_jl_ticket_for_draw_and_set(
+    draw_no: int,
+    *,
+    set_index: int,
+    offset: int,
+    start_permutation: Tuple[int, ...],
+    forced_previous_main: Optional[List[int]] = None,
+) -> Dict[str, object]:
+    """
+    한 회차·한 세트에 대해 JL 휠 6번호 1줄만 생성한다.
+
+    - 직전 회차 본번호 6개: ``forced_previous_main``이 있으면 그 값(정렬 후 순열 적용),
+      없으면 DB에서 ``draw_no - 1`` 당첨 본번호.
+    - 사전/사후 세트 간 dedup 경로는 거치지 않는다(워크플로 offset×720 탐색·단일 세트 3년 평가용).
+    """
+    if not 1 <= set_index <= 20:
+        raise ValueError("set_index는 1~20이어야 합니다.")
+    perm = _validate_start_permutation(start_permutation)
+    if forced_previous_main is not None:
+        if len(forced_previous_main) != 6:
+            raise ValueError("forced_previous_main은 서로 다른 정수 6개여야 합니다.")
+        top6 = sorted(int(x) for x in forced_previous_main)
+    else:
+        top6 = list(get_previous_draw_winning_starts(draw_no))
+
+    freq_scope = draw_no - 1 if draw_no > 1 else 0
+    freq_counter = _get_number_frequency_counter(freq_scope)
+
+    idx0 = set_index - 1
+    off = int(offset) % 45
+    base_steps = _steps_from_offset(off, idx0)
+    ws = _derive_wheel_steps(base_steps, set_index=idx0)
+    starts = [top6[i] for i in perm]
+    nums = draw_six(starts, base_steps, wheel_steps=ws)
+    nums = sorted(_repair_combo(nums, freq_counter))
+
+    return _row_dict(
+        nums,
+        METHOD_NAME,
+        set_index=set_index,
+        offset=off,
+        top6_starts=list(starts),
+    )
 
 
 # ── 하위 호환 래퍼 ───────────────────────────────────────────
