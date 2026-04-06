@@ -5,16 +5,19 @@
 
 사용 (프로젝트 루트):
   python -m features.analysis.scripts.run_01_pick_offset_start --prev-draw 1217 --current-draw 1218 --set-index 1 --write-pick pick.json
+
+``--write-audit-md`` 지정 시(Windows) 기본으로 새 PowerShell 창에서 감사 파일을 실시간 표시한다. 끄기: ``--no-audit-follow-window``.
 """
 from __future__ import annotations
 
 import argparse
 import itertools
 import json
+import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import IO, Any
 
 sys.dont_write_bytecode = True
 _project_root = Path(__file__).resolve().parents[3]
@@ -54,6 +57,41 @@ def _winner_summary(draw_no: int) -> str:
     return f"본6=[{nums}] 보너스={bonus}"
 
 
+def _spawn_audit_follow_window(md_path: Path) -> None:
+    """
+    감사 MD를 실시간으로 따라가는 보조 창을 연다.
+
+    Windows: 새 PowerShell 콘솔에서 ``Get-Content -Wait``.
+    그 외: ``tail -f`` 안내 문구만 stderr에 출력.
+    """
+    path_str = str(md_path.resolve())
+    if sys.platform == "win32":
+        lit = json.dumps(path_str, ensure_ascii=False)
+        ps_cmd = f"Get-Content -LiteralPath {lit} -Wait -Tail 35 -Encoding utf8"
+        try:
+            subprocess.Popen(
+                [
+                    "powershell.exe",
+                    "-NoExit",
+                    "-Command",
+                    ps_cmd,
+                ],
+                creationflags=subprocess.CREATE_NEW_CONSOLE,
+            )
+            print(
+                "감사 MD 실시간 보기: 새 PowerShell 창이 열렸습니다. "
+                "이 창은 스크립트 종료 후 수동으로 닫으면 됩니다.",
+                file=sys.stderr,
+            )
+        except OSError as e:
+            print(f"경고: 실시간 보기 창을 열지 못했습니다: {e}", file=sys.stderr)
+    else:
+        print(
+            f"[감사 실시간] 터미널에서 실행: tail -n 35 -f {path_str!r}",
+            file=sys.stderr,
+        )
+
+
 def _fallback_pick_best(
     candidates: list[tuple[int, int, int, tuple[int, ...]]],
 ) -> tuple[int, tuple[int, ...]]:
@@ -84,6 +122,18 @@ def main() -> None:
         default=None,
         metavar="PATH",
         help="선정 결과 JSON 경로",
+    )
+    parser.add_argument(
+        "--write-audit-md",
+        type=str,
+        default=None,
+        metavar="PATH",
+        help="전체 45×5040 후보를 일회성 MD로 기록(누락 검증·1등 grep용). 지정 시 1등이 나와도 끝까지 순회",
+    )
+    parser.add_argument(
+        "--no-audit-follow-window",
+        action="store_true",
+        help="--write-audit-md 사용 시 Windows에서 열리는 실시간 보기 창을 끔",
     )
     args = parser.parse_args()
 
@@ -132,38 +182,95 @@ def main() -> None:
     picked_perm: tuple[int, ...] | None = None
     candidates: list[tuple[int, int, int, tuple[int, ...]]] = []
 
-    for o in range(45):
-        for perm in itertools.permutations(range(7), 6):
-            perm_t = tuple(int(x) for x in perm)
-            row = generate_jl_ticket_for_draw_and_set(
-                c,
-                set_index=s,
-                offset=o,
-                start_permutation=perm_t,
-                forced_previous_main=list(prev_starts),
-                forced_previous_bonus=pb,
-            )
-            ticket = {
-                int(row["num1"]),
-                int(row["num2"]),
-                int(row["num3"]),
-                int(row["num4"]),
-                int(row["num5"]),
-                int(row["num6"]),
-            }
-            rnk = rank_lotto_ticket(main_c, bonus_c, ticket)
-            w, m = single_ticket_fallback_score(main_c, bonus_c, ticket)
-            candidates.append((w, m, o, perm_t))
+    audit_path = Path(args.write_audit_md) if args.write_audit_md else None
+    full_scan = audit_path is not None
+    audit_fp: IO[str] | None = None
+    seq = 0
+    rank1_audit_lines: list[str] = []
 
-            if rnk == 1:
-                rank1_achieved = True
-                picked_o, picked_perm = o, perm_t
-                print(
-                    f"1등 발견: prev={p}, current={c}, set={s}, offset={o}, perm={list(perm_t)}"
+    if audit_path is not None:
+        audit_path.parent.mkdir(parents=True, exist_ok=True)
+        audit_fp = open(audit_path, "w", encoding="utf-8", newline="\n")
+        mc = ",".join(str(x) for x in sorted(main_c))
+        audit_fp.write(
+            f"# run_01 전체 후보 감사 로그 (일회성)\n\n"
+            f"- 생성 시각(UTC): {datetime.now(timezone.utc).isoformat()}\n"
+            f"- prev_draw={p}, current_draw={c}, set_index={s}\n"
+            f"- C 본6(정렬)=[{mc}], C 보너스={bonus_c}\n"
+            f"- P 본6(정렬)=[{','.join(str(x) for x in prev_starts)}], P 보너스={pb}\n"
+            f"- 예상 행 수: 45×5040 = 226800\n\n"
+            "## 검색 힌트\n\n"
+            "- 표에서 **등수** 열이 `1`인 행이 1등 후보.\n"
+            "- 아래 `## 1등 후보 목록`에 해당 행을 동일 형식으로 모아 둠.\n\n"
+            "## 전체 후보\n\n"
+            "| 넘버 | offset | 조합 | 등수 |\n"
+            "|------|--------|------|------|\n"
+        )
+        audit_fp.flush()
+        if not args.no_audit_follow_window:
+            _spawn_audit_follow_window(audit_path)
+
+    try:
+        for o in range(45):
+            for perm in itertools.permutations(range(7), 6):
+                perm_t = tuple(int(x) for x in perm)
+                row = generate_jl_ticket_for_draw_and_set(
+                    c,
+                    set_index=s,
+                    offset=o,
+                    start_permutation=perm_t,
+                    forced_previous_main=list(prev_starts),
+                    forced_previous_bonus=pb,
                 )
+                ticket = {
+                    int(row["num1"]),
+                    int(row["num2"]),
+                    int(row["num3"]),
+                    int(row["num4"]),
+                    int(row["num5"]),
+                    int(row["num6"]),
+                }
+                rnk = rank_lotto_ticket(main_c, bonus_c, ticket)
+                w, m = single_ticket_fallback_score(main_c, bonus_c, ticket)
+                candidates.append((w, m, o, perm_t))
+
+                seq += 1
+                if audit_fp is not None:
+                    t_sorted = sorted(ticket)
+                    t_str = ",".join(str(x) for x in t_sorted)
+                    r_disp = str(rnk) if rnk is not None else "-"
+                    audit_fp.write(
+                        f"| {seq} | {o} | {t_str} | {r_disp} |\n"
+                    )
+                    audit_fp.flush()
+                    if rnk == 1:
+                        rank1_audit_lines.append(
+                            f"| {seq} | {o} | {t_str} | 1 |"
+                        )
+
+                if rnk == 1:
+                    if not rank1_achieved:
+                        rank1_achieved = True
+                        picked_o, picked_perm = o, perm_t
+                        print(
+                            f"1등 발견: prev={p}, current={c}, set={s}, offset={o}, perm={list(perm_t)}"
+                        )
+                    if not full_scan:
+                        break
+            if rank1_achieved and not full_scan:
                 break
-        if rank1_achieved:
-            break
+    finally:
+        if audit_fp is not None:
+            audit_fp.write("\n## 1등 후보 목록\n\n")
+            if rank1_audit_lines:
+                audit_fp.write("| 넘버 | offset | 조합 | 등수 |\n|------|--------|------|------|\n")
+                audit_fp.write("\n".join(rank1_audit_lines))
+                audit_fp.write("\n")
+            else:
+                audit_fp.write("(없음)\n")
+            audit_fp.write(f"\n## 요약\n\n- 기록한 총 행: {seq}\n- 1등 개수: {len(rank1_audit_lines)}\n")
+            audit_fp.close()
+            print(f"감사 MD 저장: {audit_path.resolve()}")
 
     if not rank1_achieved:
         fallback_used = True
