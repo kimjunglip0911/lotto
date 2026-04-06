@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 """
 2단계: 1번에서 확정한 pick(또는 동일 파라미터 CLI)으로 세트 ``S`` 한 줄만
-최근 약 3년(기본 156회차) 구간 평가 후 ``당첨 이력.md`` 전체 덮어쓰기.
+최근 약 3년(기본 156회차) 구간 평가 후 ``당첨 이력.md`` 를 갱신한다.
+기존 파일에 표가 있으면 **해당 세트 행만 덮어쓰고** 다른 세트 표 행은 유지한다.
 
 사용 (프로젝트 루트):
   python -m features.analysis.scripts.run_02_three_year_single_set --pick-json pick.json
@@ -33,7 +34,7 @@ from features.analysis.scripts.jl_wheel_batch_eval import (
     THREE_YEAR_DRAW_COUNT,
     evaluate_jl_wheel_single_set,
     fetch_latest_draw_nos_ascending,
-    format_history_single_set,
+    merge_dangcheom_history_markdown,
 )
 
 
@@ -144,12 +145,14 @@ def main() -> None:
     )
     meta.append(f"- 평가 회차 구간: {draw_nos[0]}~{draw_nos[-1]} ({len(draw_nos)}회차)")
 
-    md = format_history_single_set(
-        result,
+    out = Path(args.write_history)
+    existing = out.read_text(encoding="utf-8") if out.is_file() else None
+    md = merge_dangcheom_history_markdown(
+        existing,
+        result=result,
         rank1_reference_draw=c,
         meta_lines=meta,
     )
-    out = Path(args.write_history)
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(md, encoding="utf-8")
     print(f"당첨 이력 저장: {out.resolve()}")

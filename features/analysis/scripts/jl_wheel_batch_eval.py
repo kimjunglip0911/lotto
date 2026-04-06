@@ -311,6 +311,113 @@ def evaluate_jl_wheel_single_set(
     }
 
 
+def _history_table_data_line(
+    result: dict[str, Any],
+    *,
+    rank1_reference_draw: int,
+) -> tuple[int, str]:
+    """단일 세트 1행(표 데이터 줄 + 세트 인덱스)."""
+    si = int(result["single_set_index"])
+    off = int(result["single_offset"])
+    by_si: dict[int, list[tuple[int, int]]] = result["by_set_index"]
+    hits = by_si.get(si, [])
+    if not hits:
+        cell = "-"
+    else:
+        parts = [f"{dn}({rnk}등)" for dn, rnk in hits]
+        cell = ", ".join(parts)
+    line = f"| {si} | {off} | {cell} | {int(rank1_reference_draw)} |"
+    return si, line
+
+
+def parse_dangcheom_history_table(md: str) -> tuple[str, dict[int, str]] | None:
+    """
+    ``당첨 이력.md`` 에서 표 앞 본문과 ``세트#`` 열 기준 데이터 행을 분리한다.
+
+    표 헤더( ``| 세트# | offset | ...`` )가 없으면 None — 호출부에서 전체를 새로 쓴다.
+    """
+    lines = md.splitlines()
+    table_start: int | None = None
+    for i, line in enumerate(lines):
+        s = line.strip()
+        if s.startswith("|") and "세트#" in s and "offset" in s and "회차" in s:
+            table_start = i
+            break
+    if table_start is None:
+        return None
+    before = "\n".join(lines[:table_start]).rstrip()
+    rows: dict[int, str] = {}
+    j = table_start + 1
+    if j < len(lines) and "---" in lines[j].replace(" ", ""):
+        j += 1
+    while j < len(lines):
+        raw = lines[j]
+        if not raw.strip().startswith("|"):
+            break
+        parts = [p.strip() for p in raw.strip().strip("|").split("|")]
+        if len(parts) < 4 or not parts[0].isdigit():
+            break
+        rows[int(parts[0])] = raw.rstrip()
+        j += 1
+    return before, rows
+
+
+def merge_dangcheom_history_markdown(
+    existing: str | None,
+    *,
+    result: dict[str, Any],
+    rank1_reference_draw: int,
+    meta_lines: list[str] | None = None,
+) -> str:
+    """
+    기존 ``당첨 이력.md`` 가 있으면 **4열 표만 세트별 병합**하고, 그 위에는 이번 실행 메타·요약을 이어 붙인다.
+
+    표를 찾지 못하면 ``format_history_single_set`` 전체로 덮어쓴다(구형·깨진 파일 호환).
+    """
+    new_full = format_history_single_set(
+        result,
+        rank1_reference_draw=rank1_reference_draw,
+        meta_lines=meta_lines,
+    )
+    if not existing or not existing.strip():
+        return new_full
+    parsed_old = parse_dangcheom_history_table(existing)
+    parsed_new = parse_dangcheom_history_table(new_full)
+    if parsed_old is None or parsed_new is None:
+        return new_full
+    before_old, old_rows = parsed_old
+    before_new, new_rows = parsed_new
+    merged_rows = {**old_rows, **new_rows}
+
+    note = (
+        "> 아래 표는 **세트별로 누적**됩니다. "
+        "이어지는 블록은 **이번에 평가한 세트**에 대한 메타·요약입니다.\n"
+    )
+    bn_lines = before_new.splitlines()
+    k = 0
+    if bn_lines and bn_lines[0].lstrip().startswith("##"):
+        k = 1
+        while k < len(bn_lines) and not bn_lines[k].strip():
+            k += 1
+    bn = "\n".join(bn_lines[k:]).strip()
+
+    if before_old.strip():
+        body = before_old.rstrip() + "\n\n" + note + "\n" + bn + "\n"
+    else:
+        body = before_new.rstrip() + "\n"
+
+    out_lines = [
+        body.rstrip(),
+        "",
+        "| 세트# | offset | 회차(등수) | 1등기준회차 |",
+        "|-------|--------|------------|-------------|",
+    ]
+    for idx in sorted(merged_rows):
+        out_lines.append(merged_rows[idx])
+    out_lines.append("")
+    return "\n".join(out_lines)
+
+
 def format_history_single_set(
     result: dict[str, Any],
     *,
@@ -324,7 +431,6 @@ def format_history_single_set(
     표 4열: 세트#, offset, 회차(등수), 1등기준회차(항상 ``rank1_reference_draw`` = pick의 ``current_draw``).
     """
     si = int(result["single_set_index"])
-    off = int(result["single_offset"])
     by_si: dict[int, list[tuple[int, int]]] = result["by_set_index"]
     hits = by_si.get(si, [])
 
@@ -347,12 +453,8 @@ def format_history_single_set(
     lines.append("")
     lines.append("| 세트# | offset | 회차(등수) | 1등기준회차 |")
     lines.append("|-------|--------|------------|-------------|")
-    if not hits:
-        cell = "-"
-    else:
-        parts = [f"{dn}({rnk}등)" for dn, rnk in hits]
-        cell = ", ".join(parts)
-    lines.append(f"| {si} | {off} | {cell} | {int(rank1_reference_draw)} |")
+    _, data_line = _history_table_data_line(result, rank1_reference_draw=rank1_reference_draw)
+    lines.append(data_line)
     lines.append("")
     _ = seed
     return "\n".join(lines)
