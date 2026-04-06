@@ -6,7 +6,8 @@
 사용 (프로젝트 루트):
   python -m features.analysis.scripts.run_01_pick_offset_start --prev-draw 1217 --current-draw 1218 --set-index 1 --write-pick pick.json
 
-``--write-audit-md`` 지정 시(Windows) 기본으로 새 PowerShell 창에서 감사 파일을 실시간 표시한다. 끄기: ``--no-audit-follow-window``.
+``--write-audit-md`` 지정 시(Windows) 기본으로 새 PowerShell 창에서 감사 파일 **마지막 45줄을 약 0.5초마다** 다시 읽어 표시한다. 끄기: ``--no-audit-follow-window``.
+탐색 중에는 **stderr에 offset마다 진행**(누적 건수·%)이 찍힌다. 끄기: ``--quiet``.
 """
 from __future__ import annotations
 
@@ -61,13 +62,28 @@ def _spawn_audit_follow_window(md_path: Path) -> None:
     """
     감사 MD를 실시간으로 따라가는 보조 창을 연다.
 
-    Windows: 새 PowerShell 콘솔에서 ``Get-Content -Wait``.
+    Windows: 새 PowerShell 콘솔에서 **주기적으로 Tail 재읽기**(약 0.5초).
+    ``Get-Content -Wait`` 는 다른 프로세스가 동일 파일을 쓰는 동안 갱신이 안 잡히는
+    경우가 많아 사용하지 않는다.
+
     그 외: ``tail -f`` 안내 문구만 stderr에 출력.
     """
     path_str = str(md_path.resolve())
     if sys.platform == "win32":
         lit = json.dumps(path_str, ensure_ascii=False)
-        ps_cmd = f"Get-Content -LiteralPath {lit} -Wait -Tail 35 -Encoding utf8"
+        # -Wait 대신 폴링: Python이 파일을 열어 두고 줄 단위로 써도 마지막 N줄이 보인다.
+        ps_cmd = (
+            "while ($true) { "
+            f"if (Test-Path -LiteralPath {lit}) {{ "
+            "Clear-Host; "
+            "Write-Host '=== run_01 감사 로그 (마지막 45줄, 0.5초마다 갱신) — 닫기: Ctrl+C ===' -ForegroundColor Cyan; "
+            f"Get-Content -LiteralPath {lit} -Tail 45 -Encoding utf8 "
+            "}} else { "
+            "Write-Host '파일 생성 대기 중...' "
+            "}; "
+            "Start-Sleep -Milliseconds 500 "
+            "}"
+        )
         try:
             subprocess.Popen(
                 [
@@ -80,7 +96,8 @@ def _spawn_audit_follow_window(md_path: Path) -> None:
             )
             print(
                 "감사 MD 실시간 보기: 새 PowerShell 창이 열렸습니다. "
-                "이 창은 스크립트 종료 후 수동으로 닫으면 됩니다.",
+                "0.5초마다 마지막 45줄을 다시 읽어 표시합니다(표 `넘버·조합·등수` 행이 계속 바뀜). "
+                "스크립트 종료 후 창은 Ctrl+C로 닫으면 됩니다.",
                 file=sys.stderr,
             )
         except OSError as e:
@@ -135,6 +152,11 @@ def main() -> None:
         action="store_true",
         help="--write-audit-md 사용 시 Windows에서 열리는 실시간 보기 창을 끔",
     )
+    parser.add_argument(
+        "--quiet",
+        action="store_true",
+        help="탐색 중 offset 단위 진행 로그(stderr) 끔",
+    )
     args = parser.parse_args()
 
     p, c, s = args.prev_draw, args.current_draw, args.set_index
@@ -167,7 +189,8 @@ def main() -> None:
         f"요약: prev_draw={p}, current_draw={c}, set_index={s}, "
         f"C당첨={_winner_summary(c)}, "
         f"P시작7 본6=[{','.join(str(x) for x in prev_starts)}] 보너스={pb}, "
-        f"DB총회차={db_n}"
+        f"DB총회차={db_n}",
+        flush=True,
     )
     if c != p + 1:
         print(
@@ -210,8 +233,20 @@ def main() -> None:
         if not args.no_audit_follow_window:
             _spawn_audit_follow_window(audit_path)
 
+    total_candidates = 45 * 5040
+    if not args.quiet:
+        print(
+            "탐색 중: 총 "
+            f"{total_candidates} 후보(45×5040). "
+            + ("전 구간 순회(감사 모드)." if full_scan else "1등 나오면 조기 종료.")
+            + " 아래는 offset마다 진행(stderr).",
+            file=sys.stderr,
+            flush=True,
+        )
+
     try:
         for o in range(45):
+            inner_stopped_early = False
             for perm in itertools.permutations(range(7), 6):
                 perm_t = tuple(int(x) for x in perm)
                 row = generate_jl_ticket_for_draw_and_set(
@@ -253,10 +288,26 @@ def main() -> None:
                         rank1_achieved = True
                         picked_o, picked_perm = o, perm_t
                         print(
-                            f"1등 발견: prev={p}, current={c}, set={s}, offset={o}, perm={list(perm_t)}"
+                            f"1등 발견: prev={p}, current={c}, set={s}, offset={o}, perm={list(perm_t)}",
+                            flush=True,
                         )
                     if not full_scan:
+                        inner_stopped_early = True
                         break
+            if not args.quiet:
+                pct = min(100, (100 * seq) // total_candidates) if total_candidates else 0
+                if inner_stopped_early:
+                    print(
+                        f"진행: offset={o} 에서 조기 종료 · 처리 후보 {seq}/{total_candidates}",
+                        file=sys.stderr,
+                        flush=True,
+                    )
+                else:
+                    print(
+                        f"진행: offset {o}/44 처리 완료 · 누적 {seq}/{total_candidates} ({pct}%)",
+                        file=sys.stderr,
+                        flush=True,
+                    )
             if rank1_achieved and not full_scan:
                 break
     finally:
@@ -270,14 +321,15 @@ def main() -> None:
                 audit_fp.write("(없음)\n")
             audit_fp.write(f"\n## 요약\n\n- 기록한 총 행: {seq}\n- 1등 개수: {len(rank1_audit_lines)}\n")
             audit_fp.close()
-            print(f"감사 MD 저장: {audit_path.resolve()}")
+            print(f"감사 MD 저장: {audit_path.resolve()}", flush=True)
 
     if not rank1_achieved:
         fallback_used = True
         picked_o, picked_perm = _fallback_pick_best(candidates)
         print(
             f"1등 없음(45×5040 종료). 폴백 확정: offset={picked_o}, perm={list(picked_perm)} "
-            f"(타이브레이크: 동점 시 offset 오름차순 → 순열 튜플 사전순)"
+            f"(타이브레이크: 동점 시 offset 오름차순 → 순열 튜플 사전순)",
+            flush=True,
         )
 
     assert picked_o is not None and picked_perm is not None
@@ -299,9 +351,9 @@ def main() -> None:
         out = Path(args.write_pick)
         out.parent.mkdir(parents=True, exist_ok=True)
         out.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
-        print(f"pick 저장: {out.resolve()}")
+        print(f"pick 저장: {out.resolve()}", flush=True)
 
-    print(json.dumps(payload, ensure_ascii=False))
+    print(json.dumps(payload, ensure_ascii=False), flush=True)
 
 
 if __name__ == "__main__":

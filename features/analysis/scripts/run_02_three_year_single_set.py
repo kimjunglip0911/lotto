@@ -6,7 +6,7 @@
 
 사용 (프로젝트 루트):
   python -m features.analysis.scripts.run_02_three_year_single_set --pick-json pick.json
-  python -m features.analysis.scripts.run_02_three_year_single_set --set-index 1 --offset 17 --start-permutation 0 1 2 3 4 5 --current-draw 1218 --prev-draw 1217
+  python -m features.analysis.scripts.run_02_three_year_single_set --set-index 1 --offset 17 --start-permutation 0 1 2 3 4 5 --current-draw 1218
 """
 from __future__ import annotations
 
@@ -66,7 +66,12 @@ def main() -> None:
     parser.add_argument("--set-index", type=int, default=None)
     parser.add_argument("--offset", type=int, default=None)
     parser.add_argument("--start-permutation", type=int, nargs=6, default=None, metavar="I")
-    parser.add_argument("--prev-draw", type=int, default=None, help="pick 없을 때 메타용")
+    parser.add_argument(
+        "--prev-draw",
+        type=int,
+        default=None,
+        help="pick 없을 때 선택(호환). 이력 MD에는 기록하지 않음",
+    )
     parser.add_argument("--current-draw", type=int, default=None, help="1등기준회차 C (pick 없을 때 필수)")
     parser.add_argument(
         "--draw-count",
@@ -86,7 +91,6 @@ def main() -> None:
 
     if args.pick_json:
         pick = _load_pick(Path(args.pick_json))
-        p = int(pick["prev_draw"])
         c = int(pick["current_draw"])
         s = int(pick["set_index"])
         offset = int(pick["offset"])
@@ -115,7 +119,6 @@ def main() -> None:
             perm = _validate_start_seven_pick(raw)
         except ValueError:
             perm = _validate_start_permutation(raw)
-        p = int(args.prev_draw) if args.prev_draw is not None else -1
         c = int(args.current_draw)
 
     if not 1 <= s <= 20:
@@ -137,21 +140,12 @@ def main() -> None:
         start_permutation=perm,
     )
 
-    meta: list[str] = []
-    if p > 0:
-        meta.append(f"- 직전회차 P: {p}")
-    meta.append(
-        f"- 시작 배치 인덱스(0~5=직전 본6 정렬, 6=보너스 / 레거시는 0~5만): {list(perm)}"
-    )
-    meta.append(f"- 평가 회차 구간: {draw_nos[0]}~{draw_nos[-1]} ({len(draw_nos)}회차)")
-
     out = Path(args.write_history)
     existing = out.read_text(encoding="utf-8") if out.is_file() else None
     md = merge_dangcheom_history_markdown(
         existing,
         result=result,
         rank1_reference_draw=c,
-        meta_lines=meta,
     )
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(md, encoding="utf-8")

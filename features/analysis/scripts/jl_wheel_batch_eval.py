@@ -311,6 +311,72 @@ def evaluate_jl_wheel_single_set(
     }
 
 
+_HIT_CELL_RE = re.compile(r"(\d+)\(([1-5])등\)")
+
+
+def aggregate_dangcheom_merged_rows(merged_rows: dict[int, str]) -> tuple[int, dict[int, int]]:
+    """
+    표 데이터 행(세트# → 마크다운 한 줄)에서 20세트 합산 통계를 계산한다.
+
+    반환: (당첨이 한 번이라도 찍힌 서로 다른 회차 수, 등수별 당첨 건수 합)
+    """
+    distinct_draws: set[int] = set()
+    tier_counts = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0}
+    for raw in merged_rows.values():
+        parts = [p.strip() for p in raw.strip().strip("|").split("|")]
+        if len(parts) < 3:
+            continue
+        cell = parts[2]
+        if cell in ("-", ""):
+            continue
+        for m in _HIT_CELL_RE.finditer(cell):
+            distinct_draws.add(int(m.group(1)))
+            t = int(m.group(2))
+            if t in tier_counts:
+                tier_counts[t] += 1
+    return len(distinct_draws), tier_counts
+
+
+def format_dangcheom_global_summary_section(
+    distinct_draw_count: int, tier_counts: dict[int, int]
+) -> str:
+    """``### 전체 누적`` 블록(헤더 + 불릿)."""
+    lines = [
+        "### 전체 누적 (아래 표 20세트 합산)",
+        "",
+        f"- **당첨이 한 번이라도 찍힌 서로 다른 회차 수**: {int(distinct_draw_count)}회차",
+    ]
+    for t in (1, 2, 3, 4, 5):
+        lines.append(f"- {t}등 : {int(tier_counts.get(t, 0))}번")
+    return "\n".join(lines)
+
+
+def upsert_dangcheom_global_summary(before_table: str, summary_section: str) -> str:
+    """
+    ``before_table`` 표 앞 본문에 ``### 전체 누적`` 구간을 넣거나 치환한다.
+    ``## 2.`` 만 있으면 그 아래에 삽입한다.
+    """
+    lines = before_table.splitlines()
+    for i, line in enumerate(lines):
+        if line.strip().startswith("### 전체 누적"):
+            j = i + 1
+            while j < len(lines) and not lines[j].strip():
+                j += 1
+            while j < len(lines) and lines[j].lstrip().startswith("-"):
+                j += 1
+            merged = lines[:i] + summary_section.splitlines() + lines[j:]
+            return "\n".join(merged).rstrip()
+    for i, line in enumerate(lines):
+        if line.strip().startswith("## 2."):
+            insert_at = i + 1
+            while insert_at < len(lines) and not lines[insert_at].strip():
+                insert_at += 1
+            chunk = [""] + summary_section.splitlines() + [""]
+            merged = lines[:insert_at] + chunk + lines[insert_at:]
+            return "\n".join(merged).rstrip()
+    return (summary_section + "\n\n" + before_table).rstrip()
+
+
 def _history_table_data_line(
     result: dict[str, Any],
     *,
@@ -355,59 +421,18 @@ def parse_dangcheom_history_table(md: str) -> tuple[str, dict[int, str]] | None:
         if not raw.strip().startswith("|"):
             break
         parts = [p.strip() for p in raw.strip().strip("|").split("|")]
-        if len(parts) < 4 or not parts[0].isdigit():
+        # 1등기준회차 열이 비어 있으면 split 결과가 3열이라 기존에는 여기서 중단되어 세트 2~가 사라짐
+        if len(parts) < 3 or not parts[0].isdigit():
             break
         rows[int(parts[0])] = raw.rstrip()
         j += 1
     return before, rows
 
 
-def merge_dangcheom_history_markdown(
-    existing: str | None,
-    *,
-    result: dict[str, Any],
-    rank1_reference_draw: int,
-    meta_lines: list[str] | None = None,
-) -> str:
-    """
-    기존 ``당첨 이력.md`` 가 있으면 **4열 표만 세트별 병합**하고, 그 위에는 이번 실행 메타·요약을 이어 붙인다.
-
-    표를 찾지 못하면 ``format_history_single_set`` 전체로 덮어쓴다(구형·깨진 파일 호환).
-    """
-    new_full = format_history_single_set(
-        result,
-        rank1_reference_draw=rank1_reference_draw,
-        meta_lines=meta_lines,
-    )
-    if not existing or not existing.strip():
-        return new_full
-    parsed_old = parse_dangcheom_history_table(existing)
-    parsed_new = parse_dangcheom_history_table(new_full)
-    if parsed_old is None or parsed_new is None:
-        return new_full
-    before_old, old_rows = parsed_old
-    before_new, new_rows = parsed_new
-    merged_rows = {**old_rows, **new_rows}
-
-    note = (
-        "> 아래 표는 **세트별로 누적**됩니다. "
-        "이어지는 블록은 **이번에 평가한 세트**에 대한 메타·요약입니다.\n"
-    )
-    bn_lines = before_new.splitlines()
-    k = 0
-    if bn_lines and bn_lines[0].lstrip().startswith("##"):
-        k = 1
-        while k < len(bn_lines) and not bn_lines[k].strip():
-            k += 1
-    bn = "\n".join(bn_lines[k:]).strip()
-
-    if before_old.strip():
-        body = before_old.rstrip() + "\n\n" + note + "\n" + bn + "\n"
-    else:
-        body = before_new.rstrip() + "\n"
-
+def _concat_dangcheom_history_table(body_md: str, merged_rows: dict[int, str]) -> str:
+    """표 앞 본문 + 4열 표."""
     out_lines = [
-        body.rstrip(),
+        body_md.rstrip(),
         "",
         "| 세트# | offset | 회차(등수) | 1등기준회차 |",
         "|-------|--------|------------|-------------|",
@@ -418,38 +443,62 @@ def merge_dangcheom_history_markdown(
     return "\n".join(out_lines)
 
 
+def merge_dangcheom_history_markdown(
+    existing: str | None,
+    *,
+    result: dict[str, Any],
+    rank1_reference_draw: int,
+) -> str:
+    """
+    기존 ``당첨 이력.md`` 가 있으면 **4열 표만 세트별 병합**하고,
+    ``### 전체 누적`` 블록은 **표 내용 기준으로 다시 계산**해 갱신한다.
+
+    표를 찾지 못하면 ``format_history_single_set`` 기반으로 새 파일에 요약·표를 쓴다(구형·깨진 파일 호환).
+    """
+    new_full = format_history_single_set(
+        result,
+        rank1_reference_draw=rank1_reference_draw,
+    )
+    parsed_new = parse_dangcheom_history_table(new_full)
+    if parsed_new is None:
+        return new_full
+    before_new_stub, new_rows = parsed_new
+
+    if not existing or not existing.strip():
+        distinct, tiers = aggregate_dangcheom_merged_rows(new_rows)
+        summary = format_dangcheom_global_summary_section(distinct, tiers)
+        body = upsert_dangcheom_global_summary(before_new_stub, summary)
+        return _concat_dangcheom_history_table(body, new_rows)
+
+    parsed_old = parse_dangcheom_history_table(existing)
+    if parsed_old is None:
+        distinct, tiers = aggregate_dangcheom_merged_rows(new_rows)
+        summary = format_dangcheom_global_summary_section(distinct, tiers)
+        body = upsert_dangcheom_global_summary(before_new_stub, summary)
+        return _concat_dangcheom_history_table(body, new_rows)
+
+    before_old, old_rows = parsed_old
+    merged_rows = {**old_rows, **new_rows}
+
+    distinct, tiers = aggregate_dangcheom_merged_rows(merged_rows)
+    summary = format_dangcheom_global_summary_section(distinct, tiers)
+    body = upsert_dangcheom_global_summary(before_old, summary)
+    return _concat_dangcheom_history_table(body, merged_rows)
+
+
 def format_history_single_set(
     result: dict[str, Any],
     *,
     rank1_reference_draw: int,
     seed: int | None = None,
-    meta_lines: list[str] | None = None,
 ) -> str:
     """
-    단일 세트 당첨 이력 Markdown.
+    단일 세트 당첨 이력 Markdown(섹션 제목 + 4열 표만).
 
     표 4열: 세트#, offset, 회차(등수), 1등기준회차(항상 ``rank1_reference_draw`` = pick의 ``current_draw``).
     """
-    si = int(result["single_set_index"])
-    by_si: dict[int, list[tuple[int, int]]] = result["by_set_index"]
-    hits = by_si.get(si, [])
-
-    distinct_draws: set[int] = {dn for dn, _ in hits}
-    tier_hits = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0}
-    for dn, rnk in hits:
-        if rnk in tier_hits:
-            tier_hits[rnk] += 1
-
     lines: list[str] = []
     lines.append("## 2. 오프셋 프로파일(세트#)별 당첨 이력")
-    lines.append("")
-    if meta_lines:
-        for ln in meta_lines:
-            lines.append(ln)
-        lines.append("")
-    lines.append(f"당첨 누적 회차 : {len(distinct_draws)}회")
-    for t in (1, 2, 3, 4, 5):
-        lines.append(f"{t}등 : {tier_hits[t]}번")
     lines.append("")
     lines.append("| 세트# | offset | 회차(등수) | 1등기준회차 |")
     lines.append("|-------|--------|------------|-------------|")
