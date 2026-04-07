@@ -3,13 +3,10 @@ import sqlite3
 
 
 def get_db_path() -> str:
-    """Return active lotto.db path with backward-compatible fallback."""
-    new_path = Path(__file__).parent / "persistence" / "lotto.db"
-    if new_path.exists():
-        return str(new_path)
-
-    legacy_path = Path(__file__).parent / "infrastructure" / "persistence" / "lotto.db"
-    return str(legacy_path)
+    """Return canonical lotto.db path (same directory as init_db.py output)."""
+    return str(
+        Path(__file__).resolve().parent / "infrastructure" / "persistence" / "lotto.db"
+    )
 
 
 def get_connection() -> sqlite3.Connection:

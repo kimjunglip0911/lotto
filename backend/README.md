@@ -10,10 +10,11 @@ backend/
 ├── router_loader.py        # features 라우터 동적 로더
 ├── models.py               # 공통 Pydantic 모델 export
 ├── database.py             # 공통 DB 연결
-├── infrastructure/persistence/
-└── scripts/
+└── infrastructure/persistence/
 ```
 
+- **SQLite 경로**: [`database.py`](database.py)의 `get_db_path()`는 `infrastructure/persistence/lotto.db` 한 경로만 사용합니다(`init_db.py` 출력과 동일).
+- **공통 Pydantic**: [`domain/models/schemas.py`](domain/models/schemas.py)는 [`models.py`](models.py)를 통해 노출되며, 현재는 `MessageResponse`, `GenerateSaveRequest`만 둡니다.
 - **API 추가/수정** → `features/<feature>/api/router.py`
 - **JL 휠 로직/속도 프로파일** → `features/analysis/api/jl_service/`
 - **52회 테스트 스크립트/이력** → `features/analysis/scripts/`
@@ -46,22 +47,10 @@ backend/
 |------|------|------|
 | FastAPI 앱·미들웨어 | [`main.py`](main.py) | `FastAPI()` 인스턴스, `CORSMiddleware`(origins/methods/headers), `include_router`로 기능 라우터 마운트 |
 | 라우터 마운트 | [`router_loader.py`](router_loader.py) | `features/<기능>/api/router.py` 동적 로드 (프레임워크와 기능 모듈 연결) |
-| Python 패키지 | [`requirements.txt`](requirements.txt) | 런타임·도구: `fastapi`, `uvicorn[standard]`, `pydantic`, `torch`, `pytest`, `httpx` |
+| Python 패키지 | [`requirements.txt`](requirements.txt) | 런타임: `fastapi`, `uvicorn[standard]`, `pydantic`, `torch` |
 | 로컬 개발 서버 (Node) | 저장소 루트 `package.json` | `npm run dev:backend` → `uvicorn backend.main:app`, `--reload-dir backend`, `--reload-dir features` |
 
 **역할 분리 참고**: 엔드포인트 구현·DB 접근·공통 Pydantic 스키마는 `features/` 및 본 디렉터리의 `database.py`, `domain/models/`, `infrastructure/` 등에서 담고, 분석 기능의 등수 판정은 `features/analysis/domain/` 에 둡니다. 위 표는 **HTTP 서버 골격과 라이브러리 선언**에 해당합니다.
-
-## 테스트
-
-`backend/tests/` 에 `pytest` 기반 테스트가 있습니다 (`test_lotto_rank.py`, `test_jl_wheel_golden_per_wheel_1218.py` 등). 프로젝트 루트에서 실행하는 것을 권장합니다.
-
-- **`pytest` 실행 시** 로컬에 `.pytest_cache/`가 자동 생성될 수 있습니다. `--lf`/`--ff` 등 캐시 기반 옵션용이며, 저장소에 커밋하지 않습니다. 루트 `.gitignore`에서 무시하고, 필요 시 폴더 삭제 후에도 다음 `pytest` 실행 시 재생성됩니다.
-
-```bash
-cd backend
-pip install -r requirements.txt
-python -m pytest tests/ -v
-```
 
 ## 실행 방법
 

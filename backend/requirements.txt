@@ -2,5 +2,3 @@ fastapi
 uvicorn[standard]
 pydantic
 torch
-pytest>=8.0
-httpx>=0.27.0
