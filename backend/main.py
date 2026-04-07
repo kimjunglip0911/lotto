@@ -19,7 +19,6 @@ app.add_middleware(
 
 app.include_router(load_feature_router("home"))
 app.include_router(load_feature_router("analysis"))
-app.include_router(load_feature_router("winners"))
 
 @app.get("/", response_model=MessageResponse)
 def read_root():

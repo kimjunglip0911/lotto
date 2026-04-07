@@ -20,7 +20,6 @@ export function LotteryGrid() {
     const [sets, setSets] = useState<LotterySet[]>([]);
     const [winningNumbers, setWinningNumbers] = useState<(number | '')[]>(Array(6).fill(''));
     const [winningBonus, setWinningBonus] = useState<number | ''>('');
-    const [isApplying, setIsApplying] = useState(false);
     const [availableDraws, setAvailableDraws] = useState<number[]>([]);
     const [selectedDraw, setSelectedDraw] = useState<number | string>('');
 
@@ -52,24 +51,13 @@ export function LotteryGrid() {
         const loadData = async () => {
             try {
                 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
-                const [winnerRes, setsRes] = await Promise.all([
-                    fetch(`${apiUrl}/api/winners/${selectedDraw}`),
-                    fetch(`${apiUrl}/api/drawings/by-no?draw_no=${selectedDraw}`)
-                ]);
+                const setsRes = await fetch(`${apiUrl}/api/drawings/by-no?draw_no=${selectedDraw}`);
 
                 if (!isMounted) return;
 
-                if (winnerRes.ok) {
-                    const winnerData = await winnerRes.json();
-                    setWinningNumbers([
-                        winnerData.num1, winnerData.num2, winnerData.num3,
-                        winnerData.num4, winnerData.num5, winnerData.num6
-                    ]);
-                    setWinningBonus(winnerData.bonus_num);
-                } else if (winnerRes.status === 404) {
-                    setWinningNumbers(Array(6).fill(''));
-                    setWinningBonus('');
-                }
+                // winners API 제거로 회차 변경 시 입력값은 항상 수동 입력 상태로 초기화
+                setWinningNumbers(Array(6).fill(''));
+                setWinningBonus('');
 
                 if (setsRes.ok) {
                     const setsData = await setsRes.json();
@@ -98,50 +86,6 @@ export function LotteryGrid() {
         setWinningBonus(num);
     };
 
-    const handleApplyWinning = async () => {
-        if (isApplying) return;
-        const winNums = winningNumbers.map(n => parseInt(String(n), 10)).filter(n => !isNaN(n));
-        const winBonus = parseInt(String(winningBonus), 10);
-
-        if (winNums.length < 6 || winNums.some(num => num === 0) || isNaN(winBonus) || winBonus === 0) {
-            alert('당첨 번호 6개와 보너스 번호 1개를 전부 올바르게 채워야 합니다.');
-            return;
-        }
-        if (!selectedDraw) {
-            alert('회차를 선택해 주세요.');
-            return;
-        }
-
-        setIsApplying(true);
-        try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
-            const payload = {
-                draw_no: Number(selectedDraw),
-                num1: winNums[0], num2: winNums[1], num3: winNums[2],
-                num4: winNums[3], num5: winNums[4], num6: winNums[5],
-                bonus_num: winBonus
-            };
-
-            const response = await fetch(`${apiUrl}/api/winners`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-
-            if (response.ok) {
-                const result = await response.json();
-                alert(result.message || '당첨 번호 적용(신규/수정)이 성공적으로 완료되었습니다.');
-                fetchAvailableDraws();
-            } else {
-                alert('당첨 번호 저장/업데이트에 실패했습니다.');
-            }
-        } catch (error) {
-            console.error('Error applying winning numbers:', error);
-            alert('서버 연결 오류가 발생했습니다.');
-        } finally {
-            setIsApplying(false);
-        }
-    };
 
     const mappedSets = sets.map(s => ({
         numbers: [s.num1, s.num2, s.num3, s.num4, s.num5, s.num6],
@@ -173,9 +117,6 @@ export function LotteryGrid() {
                             <span className="text-white/40 font-bold ml-1 mr-1">+</span>
                             <input type="number" min="1" max="45" value={winningBonus} onChange={(e) => handleBonusNumberChange(e.target.value)} className="w-10 h-10 sm:w-11 sm:h-11 bg-slate-900/80 border border-emerald-500/50 rounded-full text-center text-emerald-400 font-bold focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none transition-all shadow-inner [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
                         </div>
-                        <button type="button" onClick={handleApplyWinning} disabled={isApplying || !selectedDraw} className="ml-2 px-5 py-2.5 bg-primary hover:bg-primary-hover disabled:bg-primary/30 disabled:text-white/40 disabled:cursor-not-allowed text-white rounded-xl transition-all font-bold shadow-lg cursor-pointer z-20 flex items-center gap-2">
-                            {isApplying ? <span className="material-symbols-outlined animate-spin text-[18px]">progress_activity</span> : '적용'}
-                        </button>
                     </div>
                 </div>
                 <div className="z-10 w-full mb-2">

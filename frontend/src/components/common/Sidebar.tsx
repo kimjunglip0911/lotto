@@ -14,7 +14,6 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
   const menuItems = [
     { title: '로또 번호 생성기', icon: 'casino', href: '/' },
-    { title: '역대 당첨 리스트', icon: 'format_list_bulleted', href: '/winners' },
     { title: '번호 분석', icon: 'analytics', href: '/analysis' },
   ];
 
