@@ -21,7 +21,7 @@ from pathlib import Path
 from typing import Any
 
 from backend.database import get_connection
-from backend.domain.services.lotto_rank import rank_lotto_ticket
+from features.analysis.domain.lotto_rank import rank_lotto_ticket
 from features.analysis.scripts.run_00_cumulative_winners import build_payload
 
 

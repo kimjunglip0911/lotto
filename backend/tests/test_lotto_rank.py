@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """lotto_rank 단위 테스트."""
 
-from domain.services.lotto_rank import rank_lotto_ticket
+from features.analysis.domain.lotto_rank import rank_lotto_ticket
 
 
 def test_rank_lotto_ticket_tiers() -> None:

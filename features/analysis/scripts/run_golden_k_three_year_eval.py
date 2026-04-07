@@ -27,7 +27,7 @@ if str(_backend_root) not in sys.path:
     sys.path.insert(0, str(_backend_root))
 
 from backend.database import get_connection
-from backend.domain.services.lotto_rank import rank_lotto_ticket
+from features.analysis.domain.lotto_rank import rank_lotto_ticket
 from features.analysis.api.jl_service.config import (
     WHEEL_OFFSET_STEPS,
     _MAX_STEPS,

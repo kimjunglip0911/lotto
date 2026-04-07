@@ -9,6 +9,9 @@ JL 휠 기반 번호 생성/저장/중복 인사이트 분석을 담당합니다
 - `components/AnalysisController.tsx`: 생성/조회 컨트롤 UI
 - `components/AnalysisResultList.tsx`: 세트 카드 리스트 렌더링
 
+### 도메인
+- `domain/lotto_rank.py`: 로또 6/45 등수 판정 (`rank_lotto_ticket`)
+
 ### API
 - `api/router.py`: `/api/analysis/*` 엔드포인트
 - `api/queries.py`: 저장용 SQL

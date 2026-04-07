@@ -14,7 +14,7 @@ from typing import Any
 
 from features.analysis.api.jl_service import TWENTY_BASE_OFFSETS, generate_jl_ticket_for_draw_and_set
 from backend.database import get_connection
-from backend.domain.services.lotto_rank import rank_lotto_ticket
+from features.analysis.domain.lotto_rank import rank_lotto_ticket
 
 DEFAULT_WHEEL_DRAW_COUNT = 52
 THREE_YEAR_DRAW_COUNT = 156

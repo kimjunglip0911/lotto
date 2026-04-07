@@ -10,13 +10,12 @@ backend/
 ├── router_loader.py        # features 라우터 동적 로더
 ├── models.py               # 공통 Pydantic 모델 export
 ├── database.py             # 공통 DB 연결
-├── domain/services/analysis/jl_service.py
 ├── infrastructure/persistence/
 └── scripts/
 ```
 
 - **API 추가/수정** → `features/<feature>/api/router.py`
-- **JL 휠 로직/속도 프로파일** → `domain/services/analysis/jl_service.py`
+- **JL 휠 로직/속도 프로파일** → `features/analysis/api/jl_service/`
 - **52회 테스트 스크립트/이력** → `features/analysis/scripts/`
 
 ## __pycache__ 사용 안 함
@@ -39,9 +38,24 @@ backend/
 - **Database**: SQLite3
 - **Server**: Uvicorn
 
+## 프레임워크·라이브러리 설정
+
+이 폴더에서 다루는 **웹 프레임워크 조립**과 **Python 의존성 목록**은 아래와 같습니다.
+
+| 구분 | 위치 | 내용 |
+|------|------|------|
+| FastAPI 앱·미들웨어 | [`main.py`](main.py) | `FastAPI()` 인스턴스, `CORSMiddleware`(origins/methods/headers), `include_router`로 기능 라우터 마운트 |
+| 라우터 마운트 | [`router_loader.py`](router_loader.py) | `features/<기능>/api/router.py` 동적 로드 (프레임워크와 기능 모듈 연결) |
+| Python 패키지 | [`requirements.txt`](requirements.txt) | 런타임·도구: `fastapi`, `uvicorn[standard]`, `pydantic`, `pandas`, `openpyxl`, `torch`, `pytest`, `httpx` |
+| 로컬 개발 서버 (Node) | 저장소 루트 `package.json` | `npm run dev:backend` → `uvicorn backend.main:app`, `--reload-dir backend`, `--reload-dir features` |
+
+**역할 분리 참고**: 엔드포인트 구현·DB 접근·공통 Pydantic 스키마는 `features/` 및 본 디렉터리의 `database.py`, `domain/models/`, `infrastructure/` 등에서 담고, 분석 기능의 등수 판정은 `features/analysis/domain/` 에 둡니다. 위 표는 **HTTP 서버 골격과 라이브러리 선언**에 해당합니다.
+
 ## 테스트
 
-현재 `tests/` 디렉터리는 비어 있습니다. 필요 시 `pytest`로 스모크 테스트를 추가하세요.
+`backend/tests/` 에 `pytest` 기반 테스트가 있습니다 (`test_lotto_rank.py`, `test_jl_wheel_golden_per_wheel_1218.py` 등). 프로젝트 루트에서 실행하는 것을 권장합니다.
+
+- **`pytest` 실행 시** 로컬에 `.pytest_cache/`가 자동 생성될 수 있습니다. `--lf`/`--ff` 등 캐시 기반 옵션용이며, 저장소에 커밋하지 않습니다. 루트 `.gitignore`에서 무시하고, 필요 시 폴더 삭제 후에도 다음 `pytest` 실행 시 재생성됩니다.
 
 ```bash
 cd backend

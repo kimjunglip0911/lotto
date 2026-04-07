@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, List
 
-from backend.domain.services.lotto_rank import rank_lotto_ticket
+from features.analysis.domain.lotto_rank import rank_lotto_ticket
 
 from .dedup import _find_duplicate_groups, _rows_to_number_lists
 from .generator import generate_jl_wheel_sets
