@@ -13,6 +13,8 @@ JL 휠 — 세트 생성 엔진.
 from __future__ import annotations
 
 from collections import Counter
+import json
+from pathlib import Path
 from typing import Dict, List, Optional, Sequence, Tuple
 
 from backend.database import get_connection
@@ -28,8 +30,6 @@ from .config import (
     TWENTY_BASE_OFFSETS,
 )
 from .dedup import (
-    _diversify_start_nums,
-    _draw_unique_set_with_variants,
     _replace_duplicate_sets_by_frequency,
     _replacement_pool_from_frequency,
 )
@@ -43,6 +43,9 @@ from .start_numbers import (
     get_previous_draw_top7,
     get_previous_draw_winning_starts,
 )
+
+_PROJECT_ROOT = Path(__file__).resolve().parents[4]
+_ACTIVE_PICK_PATH = _PROJECT_ROOT / "pick.json"
 
 
 # ── 헬퍼 ─────────────────────────────────────────────────────
@@ -67,6 +70,106 @@ def _row_dict(
         "profile_offset": int(offset),
         "top6_starts": list(top6_starts),
     }
+
+
+def _load_active_pick_override() -> Optional[dict]:
+    """
+    프로젝트 루트의 pick.json(1번 스크립트 산출물)을 읽어 메인 서비스 오버라이드로 사용.
+
+    유효 조건:
+    - 세트번호(set_index): int
+    - 오프셋칸수(offset_steps): 길이 6 정수 목록
+    """
+    if not _ACTIVE_PICK_PATH.is_file():
+        return None
+    try:
+        data = json.loads(_ACTIVE_PICK_PATH.read_text(encoding="utf-8"))
+    except (OSError, ValueError, TypeError):
+        return None
+
+    try:
+        set_index = int(data.get("세트번호", data.get("set_index")))
+        raw_steps = data.get("오프셋칸수", data.get("offset_steps"))
+        if raw_steps is None:
+            return None
+        if not isinstance(raw_steps, list) or len(raw_steps) != 6:
+            return None
+        offset_steps = [int(x) % 45 for x in raw_steps]
+    except (KeyError, TypeError, ValueError):
+        return None
+
+    if not 1 <= set_index <= 20:
+        return None
+    return {"set_index": set_index, "offset_steps": offset_steps}
+
+
+def _fetch_previous_draw_winning_ordered(draw_no: int) -> List[int]:
+    """
+    직전 회차 본번호를 DB 컬럼 순서(num1~num6) 그대로 반환.
+    데이터가 없으면 기존 레거시 시작번호 함수로 폴백.
+    """
+    if draw_no <= 1:
+        return get_previous_draw_winning_starts(draw_no)
+    with get_connection() as conn:
+        cur = conn.cursor()
+        cur.execute(
+            """
+            SELECT num1, num2, num3, num4, num5, num6
+            FROM lotto_winners
+            WHERE draw_no = ?
+            """,
+            (draw_no - 1,),
+        )
+        row = cur.fetchone()
+    if row is None:
+        return get_previous_draw_winning_starts(draw_no)
+    return [
+        int(row["num1"]),
+        int(row["num2"]),
+        int(row["num3"]),
+        int(row["num4"]),
+        int(row["num5"]),
+        int(row["num6"]),
+    ]
+
+
+def _add_step(num: int, step: int) -> int:
+    return (int(num) - 1 + int(step)) % 45 + 1
+
+
+def _top_bottom_numbers_from_counter(
+    freq: Counter[int],
+    *,
+    top_n: int = 5,
+    bottom_n: int = 5,
+) -> tuple[List[int], List[int]]:
+    all_nums = list(range(1, 46))
+    top_sorted = sorted(all_nums, key=lambda n: (-freq.get(n, 0), n))
+    bottom_sorted = sorted(all_nums, key=lambda n: (freq.get(n, 0), n))
+    return top_sorted[:top_n], bottom_sorted[:bottom_n]
+
+
+def _replace_hot_with_cold(nums: List[int], hot_nums: List[int], cold_nums: List[int]) -> List[int]:
+    out = list(nums)
+    hot_set = set(int(x) for x in hot_nums)
+    for idx, n in enumerate(out):
+        if n not in hot_set:
+            continue
+        candidate = next((x for x in cold_nums if x not in out), None)
+        if candidate is not None:
+            out[idx] = int(candidate)
+
+    seen: set[int] = set()
+    for idx, n in enumerate(out):
+        if n not in seen:
+            seen.add(n)
+            continue
+        candidate = next((x for x in cold_nums if x not in seen), None)
+        if candidate is None:
+            candidate = next((x for x in range(1, 46) if x not in seen), n)
+        out[idx] = int(candidate)
+        seen.add(int(candidate))
+    return out
 
 
 # ── 조합 교정 ────────────────────────────────────────────────
@@ -169,62 +272,39 @@ def generate_jl_wheel_sets(
 
     핵심: 결과번호 = (시작번호 - 1 + offset) mod 45 + 1
 
-    시작번호: 항상 직전 회차(draw_no-1) 당첨 본번호 6개.
-    세트별 다양화: 시작번호 6개의 순열을 세트마다 다르게 적용.
-    독립 휠: 6개 휠 각각에 황금각 기반 step을 부여하여 결과 다양화.
-    오프셋: offsets 또는 TWENTY_BASE_OFFSETS에서 세트별 적용.
-    중복 방지: prevent_duplicates_before_replace(사전) + dedup_across_sets(사후).
-    조합 교정: 합계/홀짝/고저 위반 시 번호 1개를 빈도 기반으로 자동 교체.
-
-    start_permutation_overrides: 세트 인덱스(0 기준) → 0~5 순열. 해당 세트의 첫 시도 시작 배치만
-    주입(중복 재시도 시에는 기본 START_PERMUTATIONS 로직).
+    메인 경로는 pick.json(offset_steps) 기반으로만 동작한다.
+    시작번호는 항상 직전 회차(draw_no-1) 당첨 본번호 6개를 DB 컬럼 순서(num1~num6)대로 사용한다.
+    세트별 오프셋(TWENTY_BASE_OFFSETS)을 합성한 뒤 누적 상/하위 번호 치환을 적용한다.
     """
     if not 1 <= count <= 20:
         raise ValueError("count는 1~20만 허용합니다.")
     offs = offsets if offsets is not None else TWENTY_BASE_OFFSETS
     if len(offs) < count:
         raise ValueError("offset 개수가 count보다 부족합니다.")
-
-    top6 = get_previous_draw_winning_starts(draw_no)
+    # 하위 호환 파라미터는 시그니처 유지를 위해 남기되 메인 경로에서는 사용하지 않는다.
+    _ = prevent_duplicates_before_replace
+    _ = start_permutation_overrides
 
     freq_scope = draw_no - 1 if draw_no > 1 else 0
     freq_counter = _get_number_frequency_counter(freq_scope)
+    top_nums, bottom_nums = _top_bottom_numbers_from_counter(freq_counter, top_n=5, bottom_n=5)
 
     results: List[Dict[str, object]] = []
     generated_nums: List[List[int]] = []
     generated_meta: List[Tuple[int, List[int], str]] = []
-    seen_set_keys: set[frozenset[int]] = set()
+    active_pick = _load_active_pick_override()
+    if active_pick is None:
+        raise ValueError("pick.json이 없거나 형식이 유효하지 않습니다. 1번 스크립트를 먼저 실행하세요.")
+    override_steps = list(active_pick["offset_steps"])
+    starts = _fetch_previous_draw_winning_ordered(draw_no)
 
     for i in range(count):
-        offset = int(offs[i]) % 45
-        base_steps = _steps_from_offset(offset, i)
-        perm_ov = (
-            start_permutation_overrides.get(i)
-            if start_permutation_overrides is not None
-            else None
-        )
-        current_starts = _diversify_start_nums(top6, i, 0, permutation_override=perm_ov)
-
-        ws = _derive_wheel_steps(base_steps, set_index=i)
-
-        if prevent_duplicates_before_replace:
-            nums = _draw_unique_set_with_variants(
-                top6=top6,
-                set_index=i,
-                base_offset=offset,
-                set_index_for_steps=i,
-                seen_sets=seen_set_keys,
-                permutation_override=perm_ov,
-            )
-        else:
-            nums = draw_six(current_starts, base_steps, wheel_steps=ws)
-
-        nums = _repair_combo(nums, freq_counter)
-
-        method = METHOD_NAME
+        set_offset = int(offs[i]) % 45
+        effective_steps = [(int(override_steps[j]) + set_offset) % 45 for j in range(6)]
+        nums = [_add_step(starts[j], effective_steps[j]) for j in range(6)]
+        nums = _replace_hot_with_cold(nums, top_nums, bottom_nums)
         generated_nums.append(sorted(nums))
-        generated_meta.append((offset, current_starts, method))
-        seen_set_keys.add(frozenset(nums))
+        generated_meta.append((set_offset, list(starts), METHOD_NAME))
 
     if dedup_across_sets:
         replacement_pool = _replacement_pool_from_frequency(freq_counter, size=20)
