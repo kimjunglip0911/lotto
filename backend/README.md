@@ -46,7 +46,7 @@ backend/
 |------|------|------|
 | FastAPI 앱·미들웨어 | [`main.py`](main.py) | `FastAPI()` 인스턴스, `CORSMiddleware`(origins/methods/headers), `include_router`로 기능 라우터 마운트 |
 | 라우터 마운트 | [`router_loader.py`](router_loader.py) | `features/<기능>/api/router.py` 동적 로드 (프레임워크와 기능 모듈 연결) |
-| Python 패키지 | [`requirements.txt`](requirements.txt) | 런타임·도구: `fastapi`, `uvicorn[standard]`, `pydantic`, `pandas`, `openpyxl`, `torch`, `pytest`, `httpx` |
+| Python 패키지 | [`requirements.txt`](requirements.txt) | 런타임·도구: `fastapi`, `uvicorn[standard]`, `pydantic`, `torch`, `pytest`, `httpx` |
 | 로컬 개발 서버 (Node) | 저장소 루트 `package.json` | `npm run dev:backend` → `uvicorn backend.main:app`, `--reload-dir backend`, `--reload-dir features` |
 
 **역할 분리 참고**: 엔드포인트 구현·DB 접근·공통 Pydantic 스키마는 `features/` 및 본 디렉터리의 `database.py`, `domain/models/`, `infrastructure/` 등에서 담고, 분석 기능의 등수 판정은 `features/analysis/domain/` 에 둡니다. 위 표는 **HTTP 서버 골격과 라이브러리 선언**에 해당합니다.
