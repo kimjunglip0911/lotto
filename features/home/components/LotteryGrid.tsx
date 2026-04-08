@@ -8,9 +8,6 @@ import { useLotteryGridData } from '@features/home/components/hooks/useLotteryGr
 import { useWinningNumbersInput } from '@features/home/components/hooks/useWinningNumbersInput';
 
 export function LotteryGrid() {
-  // #region agent log
-  fetch('http://127.0.0.1:7362/ingest/abffb62d-8118-4522-ba11-17c2ce3f222c',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'66d4be'},body:JSON.stringify({sessionId:'66d4be',runId:'pre-fix',hypothesisId:'H4',location:'features/home/components/LotteryGrid.tsx:11',message:'LotteryGrid component executed',data:{env:process.env.NODE_ENV ?? null},timestamp:Date.now()})}).catch(()=>{});
-  // #endregion
   const {
     winningNumbers,
     winningBonus,

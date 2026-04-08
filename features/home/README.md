@@ -17,3 +17,9 @@
 - 자동 반영 후에도 사용자가 입력칸 값을 직접 수정할 수 있습니다.
 - 선택 회차에 당첨번호 데이터가 없으면 입력칸은 빈값으로 초기화됩니다.
 
+## UI 스타일링 규칙
+- 홈 UI 컴포넌트는 `features/home/components/*` 경로에 있으며, Tailwind 유틸리티 클래스가 직접 사용됩니다.
+- `features/*` 경로의 클래스가 정상 빌드되도록 `frontend/src/app/globals.css`에 아래 source 선언이 포함되어야 합니다.
+  - `@source "../../../features/**/*.{ts,tsx}";`
+- 카드/그리드는 테마 토큰(`bg-card`, `border-card-border`, `text-primary`)을 우선 사용해 페이지 간 디자인 일관성을 유지합니다.
+

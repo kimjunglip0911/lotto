@@ -60,3 +60,9 @@ python -m features.analysis.scripts.run_02_three_year_single_set --pick-json pic
 | GET | `/api/analysis/draw-duplicate-insight?draw_no=&count=` | 교체 전/후 중복 분석 |
 
 > 로또는 난수 추첨이므로 당첨 보장 불가. 참고·실험용입니다.
+
+## UI 스타일링 규칙
+- 분석 UI 컴포넌트(`AnalysisController`, `AnalysisResultList`)는 `features/analysis/components/*`에 위치하며 Tailwind 유틸리티를 직접 사용합니다.
+- 홈/분석 공통으로 `features/*` 클래스가 빌드되려면 `frontend/src/app/globals.css`의 source 선언이 유지되어야 합니다.
+  - `@source "../../../features/**/*.{ts,tsx}";`
+- 특히 `휠 시뮬레이션 20세트 (미저장)` 버튼을 포함한 CTA는 `text-primary`, `bg-card`, `border-card-border` 기반 토큰 체계를 따릅니다.

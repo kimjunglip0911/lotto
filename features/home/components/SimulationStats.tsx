@@ -71,8 +71,8 @@ export function SimulationStats({ sets, winningNumbers, bonusNumber }: Simulatio
   if (!stats || stats.totalSets === 0) return null;
 
   return (
-    <div className="mt-2 bg-card/50 border border-card-border/50 rounded-3xl p-6 relative overflow-hidden">
-      <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
+    <div className="mt-2 bg-card/50 border border-card-border/50 rounded-3xl p-6 md:p-7 relative overflow-hidden">
+      <h3 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
         <span className="material-symbols-outlined text-primary">analytics</span>
         현재 조회된 20세트 분석 결과
       </h3>
@@ -85,7 +85,7 @@ export function SimulationStats({ sets, winningNumbers, bonusNumber }: Simulatio
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="bg-black/20 rounded-2xl p-5 border border-white/5">
-            <h4 className="text-[15px] text-slate-400 font-semibold mb-4">
+            <h4 className="text-base text-slate-300 font-semibold mb-4">
               전체 대비 당첨 확률 (총 {stats.totalSets}세트)
             </h4>
             <div className="space-y-3">
@@ -93,7 +93,7 @@ export function SimulationStats({ sets, winningNumbers, bonusNumber }: Simulatio
                 const count = stats.rankCounts[rank as keyof typeof stats.rankCounts];
                 const percent = ((count / stats.totalSets) * 100).toFixed(1);
                 return (
-                  <div key={rank} className="flex items-center justify-between text-sm">
+                  <div key={rank} className="flex items-center justify-between text-base">
                     <div className="flex items-center gap-3">
                       <span
                         className={`w-12 text-center font-bold px-2 py-0.5 rounded-md ${
@@ -110,7 +110,7 @@ export function SimulationStats({ sets, winningNumbers, bonusNumber }: Simulatio
                   </div>
                 );
               })}
-              <div className="border-t border-white/10 pt-3 mt-3 flex items-center justify-between text-sm">
+              <div className="border-t border-white/10 pt-3 mt-3 flex items-center justify-between text-base">
                 <span className="font-bold text-slate-500 w-12 text-center px-2">낙첨</span>
                 <span className="text-white/60">{stats.rankCounts.fail}회</span>
                 <span className="text-slate-500 font-mono">
@@ -121,19 +121,19 @@ export function SimulationStats({ sets, winningNumbers, bonusNumber }: Simulatio
           </div>
 
           <div className="bg-black/20 rounded-2xl p-5 border border-white/5">
-            <h4 className="text-[15px] text-slate-400 font-semibold mb-4">분석 기법별 당첨 성공률 순위</h4>
+            <h4 className="text-base text-slate-300 font-semibold mb-4">분석 기법별 당첨 성공률 순위</h4>
             <div className="space-y-3 max-h-[220px] overflow-y-auto pr-2 custom-scrollbar">
               {stats.methodRankings.map((methodStat, index) => (
                 <div key={index} className="flex flex-col gap-1 bg-white/5 p-3 rounded-xl">
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="text-primary-light font-medium truncate pr-2">
+                  <div className="flex justify-between items-center text-base">
+                    <span className="text-primary font-medium truncate pr-2">
                       {index + 1}. {methodStat.method}
                     </span>
                     <span className="text-emerald-400 font-bold whitespace-nowrap">
                       {methodStat.winRate.toFixed(1)}%
                     </span>
                   </div>
-                  <div className="text-xs text-slate-500 flex justify-between">
+                  <div className="text-sm text-slate-400 flex justify-between">
                     <span>추천 {methodStat.total}건</span>
                     <span>당첨 {methodStat.wins}건 (1~5등)</span>
                   </div>
