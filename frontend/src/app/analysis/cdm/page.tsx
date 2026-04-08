@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Header } from '@/components/common/Header';
 import { Sidebar } from '@/components/common/Sidebar';
-import { AnalysisResultList } from '@/features/analysis/components/AnalysisResultList';
+import { AnalysisResultList } from '@features/analysis/components/AnalysisResultList';
 
 interface LotterySet {
     id?: number;
