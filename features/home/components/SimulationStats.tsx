@@ -7,6 +7,11 @@ interface LotterySet {
   method?: string;
 }
 
+interface SetRanking {
+  setNumber: number;
+  rank: number;
+}
+
 interface SimulationStatsProps {
   sets: LotterySet[];
   winningNumbers: number[];
@@ -18,17 +23,13 @@ export function SimulationStats({ sets, winningNumbers, bonusNumber }: Simulatio
     if (!sets || sets.length === 0) return null;
 
     const rankCounts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, fail: 0 };
-    const methodStats: Record<string, { total: number; wins: number }> = {};
+    const setRankings: SetRanking[] = [];
 
     const winNums = winningNumbers.map((number) => parseInt(String(number), 10)).filter((number) => !isNaN(number));
     const winBonus = parseInt(String(bonusNumber), 10);
     const canCalculate = winNums.length === 6 && !winNums.some((number) => number === 0);
 
-    sets.forEach((setInfo) => {
-      const method = setInfo.method || '기본';
-      if (!methodStats[method]) methodStats[method] = { total: 0, wins: 0 };
-      methodStats[method].total += 1;
-
+    sets.forEach((setInfo, index) => {
       if (canCalculate) {
         const setNumbers = setInfo.numbers.map((number) => parseInt(String(number), 10));
         const matchCount = setNumbers.filter((number) => winNums.includes(number)).length;
@@ -43,7 +44,10 @@ export function SimulationStats({ sets, winningNumbers, bonusNumber }: Simulatio
 
         if (rank > 0) {
           rankCounts[rank as keyof typeof rankCounts]++;
-          methodStats[method].wins += 1;
+          setRankings.push({
+            setNumber: index + 1,
+            rank,
+          });
         } else {
           rankCounts.fail++;
         }
@@ -51,20 +55,16 @@ export function SimulationStats({ sets, winningNumbers, bonusNumber }: Simulatio
     });
 
     const totalSets = sets.length;
-    const methodRankings = Object.entries(methodStats)
-      .map(([method, data]) => ({
-        method,
-        total: data.total,
-        wins: data.wins,
-        winRate: data.total > 0 ? (data.wins / data.total) * 100 : 0,
-      }))
-      .sort((a, b) => b.winRate - a.winRate);
+    setRankings.sort((a, b) => {
+      if (a.rank !== b.rank) return a.rank - b.rank;
+      return a.setNumber - b.setNumber;
+    });
 
     return {
       canCalculate,
       totalSets,
       rankCounts,
-      methodRankings,
+      setRankings,
     };
   }, [sets, winningNumbers, bonusNumber]);
 
@@ -121,27 +121,18 @@ export function SimulationStats({ sets, winningNumbers, bonusNumber }: Simulatio
           </div>
 
           <div className="bg-black/20 rounded-2xl p-5 border border-white/5">
-            <h4 className="text-base text-slate-300 font-semibold mb-4">분석 기법별 당첨 성공률 순위</h4>
+            <h4 className="text-base text-slate-300 font-semibold mb-4">당첨 세트 순위</h4>
             <div className="space-y-3 max-h-[220px] overflow-y-auto pr-2 custom-scrollbar">
-              {stats.methodRankings.map((methodStat, index) => (
+              {stats.setRankings.map((setStat, index) => (
                 <div key={index} className="flex flex-col gap-1 bg-white/5 p-3 rounded-xl">
                   <div className="flex justify-between items-center text-base">
                     <span className="text-primary font-medium truncate pr-2">
-                      {index + 1}. {methodStat.method}
+                      {index + 1}. SET {setStat.setNumber}
                     </span>
-                    <span className="text-emerald-400 font-bold whitespace-nowrap">
-                      {methodStat.winRate.toFixed(1)}%
-                    </span>
-                  </div>
-                  <div className="text-sm text-slate-400 flex justify-between">
-                    <span>추천 {methodStat.total}건</span>
-                    <span>당첨 {methodStat.wins}건 (1~5등)</span>
+                    <span className="text-emerald-400 font-bold whitespace-nowrap">{setStat.rank}등</span>
                   </div>
                 </div>
               ))}
-              {stats.methodRankings.length === 0 && (
-                <div className="text-sm text-slate-500 text-center py-4">표시할 통계가 없습니다.</div>
-              )}
             </div>
           </div>
         </div>
