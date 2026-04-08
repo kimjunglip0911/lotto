@@ -13,7 +13,7 @@ interface LotterySetListProps {
 
 export function LotterySetList({ sets }: LotterySetListProps) {
   return (
-    <div className="z-10 w-full mb-2">
+    <div className="z-10 w-full mt-4 mb-2">
       <h3 className="text-lg font-bold text-white mb-4 ml-1">현재 회차 분석 번호 ({sets.length}세트)</h3>
       {sets.length === 0 ? (
         <div className="bg-white/5 border border-white/10 rounded-2xl p-12 text-center text-slate-400 flex flex-col items-center justify-center gap-3">

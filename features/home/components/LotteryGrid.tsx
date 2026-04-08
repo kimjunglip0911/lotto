@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { SimulationStats } from '@features/home/components/SimulationStats';
 import { LotteryGridControls } from '@features/home/components/LotteryGridControls';
 import { LotterySetList } from '@features/home/components/LotterySetList';
@@ -8,17 +8,22 @@ import { useLotteryGridData } from '@features/home/components/hooks/useLotteryGr
 import { useWinningNumbersInput } from '@features/home/components/hooks/useWinningNumbersInput';
 
 export function LotteryGrid() {
+  // #region agent log
+  fetch('http://127.0.0.1:7362/ingest/abffb62d-8118-4522-ba11-17c2ce3f222c',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'66d4be'},body:JSON.stringify({sessionId:'66d4be',runId:'pre-fix',hypothesisId:'H4',location:'features/home/components/LotteryGrid.tsx:11',message:'LotteryGrid component executed',data:{env:process.env.NODE_ENV ?? null},timestamp:Date.now()})}).catch(()=>{});
+  // #endregion
   const {
     winningNumbers,
     winningBonus,
     handleWinningNumberChange,
     handleBonusNumberChange,
-    resetWinningInputs,
+    setWinningNumbersFromDraw,
   } = useWinningNumbersInput();
 
-  const { sets, availableDraws, selectedDraw, setSelectedDraw } = useLotteryGridData({
-    onDrawChange: resetWinningInputs,
-  });
+  const { sets, winningByDraw, availableDraws, selectedDraw, setSelectedDraw } = useLotteryGridData();
+
+  useEffect(() => {
+    setWinningNumbersFromDraw(winningByDraw);
+  }, [setWinningNumbersFromDraw, winningByDraw]);
 
   const mappedSets = useMemo(
     () =>
@@ -43,13 +48,13 @@ export function LotteryGrid() {
           onWinningNumberChange={handleWinningNumberChange}
           onBonusNumberChange={handleBonusNumberChange}
         />
+        <SimulationStats
+          sets={mappedSets}
+          winningNumbers={winningNumbers as number[]}
+          bonusNumber={winningBonus as number}
+        />
         <LotterySetList sets={mappedSets} />
       </div>
-      <SimulationStats
-        sets={mappedSets}
-        winningNumbers={winningNumbers as number[]}
-        bonusNumber={winningBonus as number}
-      />
     </section>
   );
 }

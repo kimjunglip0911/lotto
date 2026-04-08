@@ -116,3 +116,20 @@ def get_drawings_by_no(draw_no: int):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
+@router.get("/api/drawings/winning-by-no", response_model=dict)
+def get_winning_by_no(draw_no: int):
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute(queries.GET_WINNING_BY_NO, (draw_no,))
+        row = cursor.fetchone()
+        conn.close()
+        if not row:
+            raise HTTPException(status_code=404, detail=f"No winning numbers found for draw_no={draw_no}")
+        return dict(row)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
