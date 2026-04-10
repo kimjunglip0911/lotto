@@ -57,10 +57,6 @@ export const useLotteryGridData = (options?: UseLotteryGridDataOptions) => {
   useEffect(() => {
     if (!selectedDraw) return;
 
-    // #region agent log
-    fetch('http://127.0.0.1:7362/ingest/abffb62d-8118-4522-ba11-17c2ce3f222c',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'66d4be'},body:JSON.stringify({sessionId:'66d4be',runId:'pre-fix',hypothesisId:'H3',location:'features/home/components/hooks/useLotteryGridData.ts:50',message:'selectedDraw effect fired',data:{selectedDraw},timestamp:Date.now()})}).catch(()=>{});
-    // #endregion
-
     let isMounted = true;
 
     const loadData = async () => {
@@ -83,14 +79,8 @@ export const useLotteryGridData = (options?: UseLotteryGridDataOptions) => {
         if (winningResponse.ok) {
           const winningData = await winningResponse.json();
           setWinningByDraw(winningData);
-          // #region agent log
-          fetch('http://127.0.0.1:7362/ingest/abffb62d-8118-4522-ba11-17c2ce3f222c',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'66d4be'},body:JSON.stringify({sessionId:'66d4be',runId:'pre-fix',hypothesisId:'H3',location:'features/home/components/hooks/useLotteryGridData.ts:85',message:'winning numbers fetch success',data:{drawNo:winningData?.draw_no ?? null,hasNums:Boolean(winningData?.num1)},timestamp:Date.now()})}).catch(()=>{});
-          // #endregion
         } else {
           setWinningByDraw(null);
-          // #region agent log
-          fetch('http://127.0.0.1:7362/ingest/abffb62d-8118-4522-ba11-17c2ce3f222c',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'66d4be'},body:JSON.stringify({sessionId:'66d4be',runId:'pre-fix',hypothesisId:'H3',location:'features/home/components/hooks/useLotteryGridData.ts:89',message:'winning numbers fetch failed',data:{status:winningResponse.status},timestamp:Date.now()})}).catch(()=>{});
-          // #endregion
         }
       } catch (error) {
         console.error('Error loading draw data:', error);
