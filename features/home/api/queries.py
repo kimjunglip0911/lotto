@@ -9,4 +9,8 @@ GET_DISTINCT_DRAW_NOS = """
         SELECT draw_no FROM lotto_drawings WHERE draw_no IS NOT NULL
     ) ORDER BY draw_no DESC
 """
+UPSERT_WINNING = """
+    INSERT OR REPLACE INTO lotto_winners (draw_no, num1, num2, num3, num4, num5, num6, bonus_num)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+"""
 

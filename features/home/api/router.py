@@ -4,6 +4,7 @@ from typing import List, Optional
 from fastapi import APIRouter, HTTPException, Query
 
 from backend.database import get_connection
+from backend.domain.models.schemas import SaveWinningRequest
 from features.home.api import queries
 
 router = APIRouter(tags=["drawings"])
@@ -130,6 +131,31 @@ def get_winning_by_no(draw_no: int):
         return dict(row)
     except HTTPException:
         raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/api/drawings/save-winning", response_model=dict)
+def save_winning(request: SaveWinningRequest):
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            queries.UPSERT_WINNING,
+            (
+                request.draw_no,
+                request.num1,
+                request.num2,
+                request.num3,
+                request.num4,
+                request.num5,
+                request.num6,
+                request.bonus_num,
+            ),
+        )
+        conn.commit()
+        conn.close()
+        return {"message": f"{request.draw_no}회 당첨번호가 저장되었습니다."}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
