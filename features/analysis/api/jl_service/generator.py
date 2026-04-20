@@ -46,6 +46,16 @@ from .start_numbers import (
 
 _PROJECT_ROOT = Path(__file__).resolve().parents[4]
 _ACTIVE_PICK_PATH = _PROJECT_ROOT / "pick.json"
+SQL_WINNER_MAIN_BY_DRAW = """
+SELECT num1, num2, num3, num4, num5, num6
+FROM lotto_winners
+WHERE draw_no = ?
+""".strip()
+
+SQL_NEXT_DRAW_NO_FROM_WINNERS = """
+SELECT COALESCE(MAX(draw_no), 0) + 1
+FROM lotto_winners
+""".strip()
 
 
 # ── 헬퍼 ─────────────────────────────────────────────────────
@@ -112,14 +122,7 @@ def _fetch_previous_draw_winning_ordered(draw_no: int) -> List[int]:
         return get_previous_draw_winning_starts(draw_no)
     with get_connection() as conn:
         cur = conn.cursor()
-        cur.execute(
-            """
-            SELECT num1, num2, num3, num4, num5, num6
-            FROM lotto_winners
-            WHERE draw_no = ?
-            """,
-            (draw_no - 1,),
-        )
+        cur.execute(SQL_WINNER_MAIN_BY_DRAW, (draw_no - 1,))
         row = cur.fetchone()
     if row is None:
         return get_previous_draw_winning_starts(draw_no)
@@ -435,7 +438,7 @@ def generate_wheel_sets(
     if draw_no is None:
         conn = get_connection()
         cur = conn.cursor()
-        cur.execute("SELECT COALESCE(MAX(draw_no), 0) + 1 FROM lotto_winners")
+        cur.execute(SQL_NEXT_DRAW_NO_FROM_WINNERS)
         draw_no = int(cur.fetchone()[0])
         conn.close()
     c = min(20, max(1, count))

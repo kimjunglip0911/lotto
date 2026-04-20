@@ -17,7 +17,7 @@ backend/
 - **공통 Pydantic**: [`domain/models/schemas.py`](domain/models/schemas.py)는 [`models.py`](models.py)를 통해 노출되며, 현재는 `MessageResponse`, `GenerateSaveRequest`만 둡니다.
 - **API 추가/수정** → `features/<feature>/api/router.py`
 - **JL 휠 로직/속도 프로파일** → `features/analysis/api/jl_service/`
-- **52회 테스트 스크립트/이력** → `features/analysis/scripts/`
+- **JL 분석 엔진** → `features/analysis/api/jl_service/`
 
 ## __pycache__ 사용 안 함
 
@@ -31,7 +31,7 @@ backend/
 - 로또 당첨 정보 조회/저장/수정/삭제
 - 추첨 세트 조회/추천/저장
 - 분석·생성 API: JL 휠(`GET /api/analysis/generate/wheel`), JL 휠 저장(`POST /api/analysis/generate-and-save`)
-- JL 휠 관련 요약·이력은 `features/analysis/scripts/당첨 이력.md` 참고
+- JL 휠 관련 로직은 `features/analysis/api/jl_service/`에서 확인할 수 있습니다.
 
 ## 기술 스택
 

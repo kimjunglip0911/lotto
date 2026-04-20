@@ -3,8 +3,7 @@
 JL 휠 — 설정 상수.
 
 모든 튜닝 파라미터(오프셋, 휠 스텝 등)를 한곳에서 관리한다.
-`features.analysis.scripts.jl_wheel_batch_eval.persist_offset_speed_update` 등이
-이 파일을 AST/정규식으로 갱신할 수 있다.
+분석/운영 도구에서 이 파일을 AST/정규식으로 갱신할 수 있다.
 """
 from __future__ import annotations
 

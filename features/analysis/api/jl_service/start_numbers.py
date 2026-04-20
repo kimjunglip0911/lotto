@@ -12,6 +12,18 @@ from typing import List, Optional, Tuple
 
 from backend.database import get_connection
 
+SQL_WINNER_MAIN_NUMBERS_UP_TO_DRAW = """
+SELECT num1, num2, num3, num4, num5, num6
+FROM lotto_winners
+WHERE draw_no <= ?
+""".strip()
+
+SQL_WINNER_TOP7_BY_DRAW = """
+SELECT num1, num2, num3, num4, num5, num6, bonus_num
+FROM lotto_winners
+WHERE draw_no = ?
+""".strip()
+
 
 # ── 세트별 시작번호 순열 (6개 번호의 배치 순서) ───────────────
 # 인덱스 0~5는 정렬된 시작번호[0]~[5]에 대응.
@@ -50,14 +62,7 @@ def _get_number_frequency_counter(up_to_draw_inclusive: int) -> Counter[int]:
     conn = get_connection()
     conn.row_factory = None
     cur = conn.cursor()
-    cur.execute(
-        """
-        SELECT num1, num2, num3, num4, num5, num6
-        FROM lotto_winners
-        WHERE draw_no >= 1 AND draw_no <= ?
-        """,
-        (up_to_draw_inclusive,),
-    )
+    cur.execute(SQL_WINNER_MAIN_NUMBERS_UP_TO_DRAW, (up_to_draw_inclusive,))
     freq: Counter[int] = Counter()
     for row in cur.fetchall():
         for n in row:
@@ -74,14 +79,7 @@ def _fetch_winner_for_draw(draw_no: int) -> Optional[Tuple[set[int], int]]:
     conn = get_connection()
     conn.row_factory = None
     cur = conn.cursor()
-    cur.execute(
-        """
-        SELECT num1, num2, num3, num4, num5, num6, bonus_num
-        FROM lotto_winners
-        WHERE draw_no = ?
-        """,
-        (draw_no,),
-    )
+    cur.execute(SQL_WINNER_TOP7_BY_DRAW, (draw_no,))
     row = cur.fetchone()
     conn.close()
     if row is None:

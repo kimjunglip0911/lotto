@@ -58,7 +58,7 @@ def recommend_drawings(draw_no: Optional[int] = Query(None)):
         if draw_no:
             target_draw_no = draw_no
         else:
-            cursor.execute("SELECT MAX(draw_no) FROM lotto_drawings")
+            cursor.execute(queries.GET_MAX_DRAW_NO)
             latest_row = cursor.fetchone()
             target_draw_no = latest_row[0] if latest_row and latest_row[0] is not None else None
 
@@ -66,7 +66,7 @@ def recommend_drawings(draw_no: Optional[int] = Query(None)):
             conn.close()
             return []
 
-        cursor.execute("SELECT * FROM lotto_drawings WHERE draw_no = ?", (target_draw_no,))
+        cursor.execute(queries.GET_DRAWINGS_BY_NO, (target_draw_no,))
         rows = cursor.fetchall()
         conn.close()
 
