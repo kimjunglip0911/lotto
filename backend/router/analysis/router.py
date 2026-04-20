@@ -6,15 +6,25 @@ from fastapi import APIRouter, HTTPException, Query
 from backend.database import get_connection
 from backend.models import GenerateSaveRequest
 from backend.sql.analysis import queries
-from features.analysis.api.jl_service import (
-    analyze_draw_duplicate_sets,
-    generate_jl_wheel_sets,
-    generate_wheel_sets,
-)
 
 router = APIRouter(tags=["analysis"])
 
 METHOD_JL_SAVED = "JL Wheel Method"
+
+
+def _load_jl_service():
+    try:
+        from features.analysis.api.jl_service import (  # type: ignore
+            analyze_draw_duplicate_sets,
+            generate_jl_wheel_sets,
+            generate_wheel_sets,
+        )
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"JL service import failed: {exc}",
+        ) from exc
+    return analyze_draw_duplicate_sets, generate_jl_wheel_sets, generate_wheel_sets
 
 
 @router.get("/api/analysis/generate/wheel", response_model=List[dict])
@@ -26,9 +36,12 @@ def generate_wheel_drawings(
     try:
         import random as _random
 
+        _, _, generate_wheel_sets = _load_jl_service()
         if seed is not None:
             _random.seed(seed)
         return generate_wheel_sets(count=count, start_index=0, draw_no=draw_no)
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -36,6 +49,7 @@ def generate_wheel_drawings(
 @router.post("/api/analysis/generate-and-save", response_model=List[dict])
 def generate_and_save_drawings(request: GenerateSaveRequest):
     try:
+        _, generate_jl_wheel_sets, _ = _load_jl_service()
         draw_no = int(request.draw_no)
         rows = generate_jl_wheel_sets(draw_no, count=20, start_index=0)
         conn = get_connection()
@@ -85,9 +99,11 @@ def get_draw_duplicate_insight(
     count: int = Query(20, ge=1, le=20, description="생성 세트 수"),
 ):
     try:
+        analyze_draw_duplicate_sets, _, _ = _load_jl_service()
         return analyze_draw_duplicate_sets(draw_no=draw_no, count=count)
+    except HTTPException:
+        raise
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-

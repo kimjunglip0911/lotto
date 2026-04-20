@@ -1,0 +1,1 @@
+"""Analysis SQL query constants."""

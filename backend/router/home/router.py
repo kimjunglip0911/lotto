@@ -5,7 +5,7 @@ from fastapi import APIRouter, HTTPException, Query
 
 from backend.database import get_connection
 from backend.domain.models.schemas import SaveWinningRequest
-from features.home.api import queries
+from backend.sql.home import queries
 
 router = APIRouter(tags=["drawings"])
 
@@ -158,4 +158,3 @@ def save_winning(request: SaveWinningRequest):
         return {"message": f"{request.draw_no}회 당첨번호가 저장되었습니다."}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-

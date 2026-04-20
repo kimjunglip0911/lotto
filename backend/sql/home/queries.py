@@ -45,4 +45,3 @@ GET_MAX_DRAW_NO = """
 SELECT MAX(draw_no)
 FROM lotto_drawings
 """.strip()
-
