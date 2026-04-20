@@ -1,11 +1,11 @@
 'use client';
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { SimulationStats } from '@features/home/components/SimulationStats';
-import { LotteryGridControls } from '@features/home/components/LotteryGridControls';
-import { LotterySetList } from '@features/home/components/LotterySetList';
-import { useLotteryGridData } from '@features/home/components/hooks/useLotteryGridData';
-import { useWinningNumbersInput } from '@features/home/components/hooks/useWinningNumbersInput';
+import { SimulationStats } from '@/page/home/components/SimulationStats';
+import { LotteryGridControls } from '@/page/home/components/LotteryGridControls';
+import { LotterySetList } from '@/page/home/components/LotterySetList';
+import { useLotteryGridData } from '@/page/home/components/hooks/useLotteryGridData';
+import { useWinningNumbersInput } from '@/page/home/components/hooks/useWinningNumbersInput';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? '';
 

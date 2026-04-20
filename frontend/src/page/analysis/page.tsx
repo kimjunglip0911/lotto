@@ -3,8 +3,8 @@
 import React, { useEffect, useState } from 'react';
 import { Header } from '@/components/common/Header';
 import { Sidebar } from '@/components/common/Sidebar';
-import { AnalysisController } from '@features/analysis/components/AnalysisController';
-import { AnalysisResultList } from '@features/analysis/components/AnalysisResultList';
+import { AnalysisController } from './components/AnalysisController';
+import { AnalysisResultList } from './components/AnalysisResultList';
 
 function errorMessage(err: unknown): string {
   return err instanceof Error ? err.message : String(err);

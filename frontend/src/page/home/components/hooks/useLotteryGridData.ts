@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 export interface LotterySet {
   id?: number;
@@ -34,25 +34,25 @@ export const useLotteryGridData = (options?: UseLotteryGridDataOptions) => {
   const [availableDraws, setAvailableDraws] = useState<number[]>([]);
   const [selectedDraw, setSelectedDraw] = useState<number | string>('');
 
-  const fetchAvailableDraws = useCallback(async () => {
-    try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
-      const response = await fetch(`${apiUrl}/api/drawings/draw-numbers`);
-      if (response.ok) {
-        const data = await response.json();
-        setAvailableDraws(data);
-        if (data.length > 0 && !selectedDraw) {
-          setSelectedDraw(data[0]);
-        }
-      }
-    } catch (error) {
-      console.error('Error fetching draw numbers:', error);
-    }
-  }, [selectedDraw]);
-
   useEffect(() => {
-    fetchAvailableDraws();
-  }, [fetchAvailableDraws]);
+    const timer = setTimeout(() => {
+      void (async () => {
+        try {
+          const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+          const response = await fetch(`${apiUrl}/api/drawings/draw-numbers`);
+          if (!response.ok) return;
+
+          const data = await response.json();
+          setAvailableDraws(data);
+          setSelectedDraw((prev) => (prev || data.length === 0 ? prev : data[0]));
+        } catch (error) {
+          console.error('Error fetching draw numbers:', error);
+        }
+      })();
+    }, 0);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     if (!selectedDraw) return;
@@ -103,3 +103,4 @@ export const useLotteryGridData = (options?: UseLotteryGridDataOptions) => {
     setSelectedDraw,
   };
 };
+

@@ -1,6 +1,8 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
+@source "../home/**/*.{ts,tsx}";
+@source "../page/**/*.{ts,tsx}";
 @source "../../../features/**/*.{ts,tsx}";
 
 @custom-variant dark (&:is(.dark *));

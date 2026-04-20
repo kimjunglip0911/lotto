@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { Header } from '@/components/common/Header';
 import { Sidebar } from '@/components/common/Sidebar';
-import { LotteryGrid } from '@features/home/components/LotteryGrid';
+import { LotteryGrid } from '@/page/home/components/LotteryGrid';
 
 export default function HomePage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);

@@ -30,3 +30,4 @@ export function LotteryCard({ setIndex, drawNo, numbers, method }: LotteryCardPr
     </div>
   );
 }
+
