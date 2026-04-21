@@ -7,10 +7,10 @@ FastAPI 기반 백엔드 공통 계층입니다. 실제 기능 라우터는 `fea
 ```
 backend/
 ├── main.py                 # FastAPI 앱 진입점
-├── router/analysis/router.py # Analysis API 라우터
+├── router/recommend/router.py # Recommend API 라우터
 ├── router/home/router.py   # Home API 라우터
 ├── router_loader.py        # (레거시) features 라우터 동적 로더
-├── sql/analysis/queries.py # Analysis SQL 쿼리 상수
+├── sql/recommend/queries.py # Recommend SQL 쿼리 상수
 ├── sql/home/queries.py     # Home SQL 쿼리 상수
 ├── models.py               # 공통 Pydantic 모델 export
 ├── database.py             # 공통 DB 연결
@@ -21,8 +21,8 @@ backend/
 - **공통 Pydantic**: [`domain/models/schemas.py`](domain/models/schemas.py)는 [`models.py`](models.py)를 통해 노출되며, 현재는 `MessageResponse`, `GenerateSaveRequest`만 둡니다.
 - **Home API 추가/수정** → `backend/router/home/router.py`
 - **Home SQL 쿼리 수정** → `backend/sql/home/queries.py`
-- **Analysis API 추가/수정** → `backend/router/analysis/router.py`
-- **Analysis SQL 쿼리 수정** → `backend/sql/analysis/queries.py`
+- **Recommend API 추가/수정** → `backend/router/recommend/router.py`
+- **Recommend SQL 쿼리 수정** → `backend/sql/recommend/queries.py`
 - **JL 휠 로직/속도 프로파일** → `features/analysis/api/jl_service/`
 - **JL 분석 엔진** → `features/analysis/api/jl_service/`
 
@@ -48,7 +48,7 @@ npm run check:no-init
 
 - 로또 당첨 정보 조회/저장/수정/삭제
 - 추첨 세트 조회/추천/저장
-- 분석·생성 API: JL 휠(`GET /api/analysis/generate/wheel`), JL 휠 저장(`POST /api/analysis/generate-and-save`)
+- 추천·생성 API: JL 휠(`GET /api/recommend/generate/wheel`), JL 휠 저장(`POST /api/recommend/generate-and-save`)
 - JL 휠 관련 로직은 `features/analysis/api/jl_service/`에서 확인할 수 있습니다.
 
 ## 기술 스택

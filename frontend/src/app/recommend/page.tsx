@@ -1,20 +1,38 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Header } from '@/components/common/Header';
 import { Sidebar } from '@/components/common/Sidebar';
-import { AnalysisController } from './components/AnalysisController';
-import { AnalysisResultList } from './components/AnalysisResultList';
+import { AnalysisController } from '@/app/recommend/components/AnalysisController';
+import { AnalysisResultList } from '@/app/recommend/components/AnalysisResultList';
 
 function errorMessage(err: unknown): string {
   return err instanceof Error ? err.message : String(err);
 }
 
-export default function AnalysisPage() {
+export default function RecommendPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>('신규 추천 번호 추출 로직 연결을 준비 중입니다.');
   const [error, setError] = useState<string | null>(null);
+
+  // #region agent log
+  useEffect(() => {
+    fetch('http://127.0.0.1:7362/ingest/abffb62d-8118-4522-ba11-17c2ce3f222c', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '3e606a' },
+      body: JSON.stringify({
+        sessionId: '3e606a',
+        runId: 'ts-diagnostic-investigation',
+        hypothesisId: 'H2',
+        location: 'src/app/recommend/page.tsx:21',
+        message: 'Recommend page mounted from current app route tree',
+        data: { route: '/recommend', routeFile: 'src/app/recommend/page.tsx' },
+        timestamp: Date.now(),
+      }),
+    }).catch(() => {});
+  }, []);
+  // #endregion
 
   const handleGenerateAndSave = async () => {
     setIsGenerating(true);
@@ -38,8 +56,8 @@ export default function AnalysisPage() {
         <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
         <main className="flex-1 overflow-y-auto pb-12 px-4 pt-6 space-y-6">
           <div className="flex flex-col gap-2 mb-4">
-            <h2 className="text-3xl font-bold text-white tracking-tight">로또 분석 및 번호 추천</h2>
-            <p className="text-slate-400 text-sm">기존 분석 흐름을 정리하고 신규 추천 번호 생성 로직 연결을 준비하는 화면입니다.</p>
+            <h2 className="text-3xl font-bold text-white tracking-tight">로또 번호 추천</h2>
+            <p className="text-slate-400 text-sm">신규 추천 번호 생성 로직 연결을 준비하는 화면입니다.</p>
           </div>
           <AnalysisController
             onGenerateAndSave={handleGenerateAndSave}
@@ -52,4 +70,3 @@ export default function AnalysisPage() {
     </div>
   );
 }
-

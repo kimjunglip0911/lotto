@@ -32,7 +32,7 @@ lotto/
 │   ├── requirements.txt
 │   ├── README.md
 │   ├── domain/
-│   │   ├── analysis/
+│   │   ├── recommend/
 │   │   │   └── lotto_rank.py          # 당첨 등수 계산 도메인 로직
 │   │   └── models/
 │   │       └── schemas.py
@@ -43,12 +43,12 @@ lotto/
 │   ├── router/
 │   │   ├── home/
 │   │   │   └── router.py
-│   │   └── analysis/
+│   │   └── recommend/
 │   │       └── router.py
 │   └── sql/
 │       ├── home/
 │       │   └── queries.py
-│       └── analysis/
+│       └── recommend/
 │           └── queries.py
 │
 ├── frontend/
@@ -62,13 +62,22 @@ lotto/
 │   └── src/
 │       ├── app/                       # App Router 엔트리
 │       │   ├── page.tsx
-│       │   └── analysis/
-│       │       ├── page.tsx
-│       │       └── cdm/
-│       │           └── page.tsx
-│       ├── page/                      # 도메인 UI 레이어
 │       │   ├── home/
-│       │   └── analysis/
+│       │   │   ├── page.tsx
+│       │   │   └── components/
+│       │   │       ├── hooks/
+│       │   │       │   ├── useLotteryGridData.ts
+│       │   │       │   └── useWinningNumbersInput.ts
+│       │   │       ├── LotteryGrid.tsx
+│       │   │       ├── LotteryGridControls.tsx
+│       │   │       ├── LotterySetList.tsx
+│       │   │       ├── LotteryCard.tsx
+│       │   │       └── SimulationStats.tsx
+│       │   └── recommend/
+│       │       ├── page.tsx
+│       │       └── components/
+│       │           ├── AnalysisController.tsx
+│       │           └── AnalysisResultList.tsx
 │       ├── components/
 │       │   ├── ui/
 │       │   └── common/

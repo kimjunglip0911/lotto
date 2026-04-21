@@ -38,3 +38,4 @@ def rank_lotto_ticket(
     if matched == 3:
         return 5
     return None
+

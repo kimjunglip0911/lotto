@@ -30,10 +30,7 @@ export function LotteryGridControls({
   isSaving,
   saveStatus,
 }: LotteryGridControlsProps) {
-  const canSave =
-    !isSaving &&
-    winningNumbers.every(isValidLottoNumber) &&
-    isValidLottoNumber(winningBonus);
+  const canSave = !isSaving && winningNumbers.every(isValidLottoNumber) && isValidLottoNumber(winningBonus);
 
   return (
     <div className="flex flex-col xl:flex-row xl:justify-between items-center gap-4 xl:gap-8 mb-8 z-10 w-full bg-white/5 p-4 sm:p-5 rounded-2xl border border-white/10 backdrop-blur-md">

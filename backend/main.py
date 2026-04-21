@@ -5,7 +5,7 @@ sys.dont_write_bytecode = True
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from backend.models import MessageResponse
-from backend.router.analysis.router import router as analysis_router
+from backend.router.recommend.router import router as recommend_router
 from backend.router.home.router import router as home_router
 
 app = FastAPI()
@@ -19,7 +19,7 @@ app.add_middleware(
 )
 
 app.include_router(home_router)
-app.include_router(analysis_router)
+app.include_router(recommend_router)
 
 @app.get("/", response_model=MessageResponse)
 def read_root():

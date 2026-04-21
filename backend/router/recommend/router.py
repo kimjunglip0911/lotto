@@ -5,9 +5,9 @@ from fastapi import APIRouter, HTTPException, Query
 
 from backend.database import get_connection
 from backend.models import GenerateSaveRequest
-from backend.sql.analysis import queries
+from backend.sql.recommend import queries
 
-router = APIRouter(tags=["analysis"])
+router = APIRouter(tags=["recommend"])
 
 METHOD_JL_SAVED = "JL Wheel Method"
 
@@ -27,7 +27,7 @@ def _load_jl_service():
     return analyze_draw_duplicate_sets, generate_jl_wheel_sets, generate_wheel_sets
 
 
-@router.get("/api/analysis/generate/wheel", response_model=List[dict])
+@router.get("/api/recommend/generate/wheel", response_model=List[dict])
 def generate_wheel_drawings(
     count: int = Query(20, ge=1, le=20, description="1~20세트 (JL 프로파일 개수)"),
     draw_no: Optional[int] = Query(None, description="기준 회차(미지정 시 당첨 DB 최대+1)"),
@@ -46,7 +46,7 @@ def generate_wheel_drawings(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post("/api/analysis/generate-and-save", response_model=List[dict])
+@router.post("/api/recommend/generate-and-save", response_model=List[dict])
 def generate_and_save_drawings(request: GenerateSaveRequest):
     try:
         _, generate_jl_wheel_sets, _ = _load_jl_service()
@@ -93,9 +93,9 @@ def generate_and_save_drawings(request: GenerateSaveRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/api/analysis/draw-duplicate-insight")
+@router.get("/api/recommend/draw-duplicate-insight")
 def get_draw_duplicate_insight(
-    draw_no: int = Query(..., ge=1, description="분석 대상 회차"),
+    draw_no: int = Query(..., ge=1, description="추천 대상 회차"),
     count: int = Query(20, ge=1, le=20, description="생성 세트 수"),
 ):
     try:
@@ -107,3 +107,4 @@ def get_draw_duplicate_insight(
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+

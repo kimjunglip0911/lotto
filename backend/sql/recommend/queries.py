@@ -18,3 +18,4 @@ INSERT INTO lotto_drawings (
     draw_no
 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 """.strip()
+

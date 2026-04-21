@@ -1,5 +1,5 @@
 import React from 'react';
-import { LotteryCard } from '@/page/home/components/LotteryCard';
+import { LotteryCard } from '@/app/home/components/LotteryCard';
 
 interface LotterySetViewModel {
   numbers: number[];

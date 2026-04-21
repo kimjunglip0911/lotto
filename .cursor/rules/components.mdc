@@ -33,7 +33,7 @@ alwaysApply: false
 | 위치 | 설명 |
 |:---|:---|
 | `page/home/components/` | 홈 화면 전용 UI (`LotteryGrid`, `SimulationStats`, `LotterySetList` 등) |
-| `page/analysis/components/` | 분석 화면 전용 UI (`AnalysisController`, `AnalysisResultList`) |
+| `page/recommend/components/` | 추천 화면 전용 UI (`AnalysisController`, `AnalysisResultList`) |
 
 ## 계층 규칙
 
