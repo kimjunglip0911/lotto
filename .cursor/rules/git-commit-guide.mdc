@@ -1,0 +1,52 @@
+---
+description: git commit, 커밋 메시지, 스테이징, amend, merge, rebase, COMMIT_EDITMSG 편집, Signed-off-by, 훅
+alwaysApply: false
+---
+> **적용 시점**: Cursor가 규칙의 `description`과 대화·작업 맥락을 보고 **관련 있을 때** 붙인다(커밋·메시지·스테이징·amend·merge·rebase 등). 필요하면 채팅에서 커밋을 명시하거나 이 규칙을 수동으로 연다.
+
+# Git 커밋 요약 (명령 위주)
+
+## 설명 언어 (필수)
+
+- **이 규칙 안의 설명**, 에이전트가 커밋을 돕거나 생성하는 **모든 설명·주석·커밋 메시지 본문 가이드**는 **항상 한국어**로 쓴다.
+- 명령 이름·옵션·파일 경로·브랜치명 등 **Git이 요구하는 그대로의 기술 표기**(예: `git commit`, `-m`, `.git/COMMIT_EDITMSG`)는 영어 그대로 둔다.
+
+## 공식 문서 (동작·옵션 정본)
+
+- [git-commit](https://git-scm.com/docs/git-commit) · [git-add](https://git-scm.com/docs/git-add) · [githooks](https://git-scm.com/docs/githooks) · [git-interpret-trailers](https://git-scm.com/docs/git-interpret-trailers) · [git-rebase](https://git-scm.com/docs/git-rebase) · [Pro Git — Recording Changes](https://git-scm.com/book/en/v2/Git-Basics-Recording-Changes-to-the-Repository)
+
+## 상태·스테이징·스테이징 확인
+
+```bash
+git status
+git add <경로>
+git add -p
+git restore --staged <경로>
+git diff
+git diff --cached
+```
+
+- **한 줄 요약**: 변경 확인 → 스테이징 →(필요 시) 스테이징만 되돌리기 → 인덱스와 작업 트리 비교.
+
+## 커밋·메시지
+
+```bash
+git commit
+git commit -m "첫 단락" -m "둘째 단락"
+git commit -F 메시지.txt
+git commit --amend
+git commit --amend --no-edit
+git commit -t 커밋메시지_힌트.txt
+git commit --cleanup=strip
+git commit --cleanup=verbatim
+git commit -s
+git commit --trailer "Helped-by:이름 <메일>"
+git commit --no-verify
+```
+
+- **한 줄 요약**: `-m` 여러 번이면 단락이 이어 붙는다. `--cleanup`은 메시지 정리 방식. `-s`는 `Signed-off-by` 트레일러 추가. `--no-verify`는 훅 생략(팀 허용 시에만).
+
+## 이 레포와 맞추기
+
+- `.cursor/rules/rules.mdc`와 같이 **커밋 제목·본문도 한국어**로, 한 커밋은 한 가지 논리 변경·제목은 짧게.
+- 세부 동작·모드별 의미는 위 **공식 문서**를 연다(본 파일은 명령·흐름만 적는다).

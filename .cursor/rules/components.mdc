@@ -1,0 +1,51 @@
+---
+globs: frontend/src/components/**/*.tsx,frontend/src/page/**/components/**/*.tsx
+alwaysApply: false
+---
+# 공통 컴포넌트 레지스트리
+
+**적용 시점**: 위 glob 경로에서 컴포넌트 `.tsx`를 만들거나 수정할 때 이 규칙을 따른다(항상 전역 로드 아님).
+
+새 UI를 만들기 전에 이 목록을 확인하고 공통 컴포넌트 재사용 여부를 먼저 판단한다.
+
+## 이 파일(`components.mdc`) 최신화(필수)
+
+`frontend/src/components/ui/`, `frontend/src/components/common/`, `frontend/src/page/**/components/` 구조가 바뀌면 같은 작업에서 본 문서 표와 계층 규칙을 함께 갱신한다.
+
+## 1계층: Primitive UI (`frontend/src/components/ui/`)
+
+| 컴포넌트 | 경로 | 설명 |
+|:---|:---|:---|
+| **LotteryBall** | `ui/LotteryBall.tsx` | 번호 공 렌더링(숫자/보너스/placeholder 색상 처리) |
+| **LotteryCard** | `ui/LotteryCard.tsx` | 번호 세트 카드 기본 표시 UI |
+
+> 현재 `frontend/src/components/ui/index.ts` barrel export는 사용하지 않는다. 필요한 컴포넌트를 파일 경로로 직접 import 한다.
+
+## 2계층: Shared Components (`frontend/src/components/common/`)
+
+| 컴포넌트 | 경로 | 설명 |
+|:---|:---|:---|
+| **Header** | `common/Header.tsx` | 상단 헤더(메뉴 버튼/타이틀/알림 버튼) |
+| **Sidebar** | `common/Sidebar.tsx` | 좌측 내비게이션 사이드바(현재 경로 활성화 포함) |
+
+## 3계층: Page Components (`frontend/src/page/**/components/`)
+
+| 위치 | 설명 |
+|:---|:---|
+| `page/home/components/` | 홈 화면 전용 UI (`LotteryGrid`, `SimulationStats`, `LotterySetList` 등) |
+| `page/analysis/components/` | 분석 화면 전용 UI (`AnalysisController`, `AnalysisResultList`) |
+
+## 계층 규칙
+
+```text
+frontend/src/components/ui/              ← 1계층: Primitive
+frontend/src/components/common/          ← 2계층: Shared
+frontend/src/page/**/components/         ← 3계층: Page-specific
+```
+
+> `frontend/src/app/**/components/` 경로는 기본적으로 사용하지 않는다.
+> 페이지 전용 컴포넌트는 `frontend/src/page/<page>/components/`에 둔다.
+
+1. **상위 계층 우선**: `ui`/`common`에 같은 패턴이 있으면 우선 재사용한다.
+2. **반복 시 승격**: 페이지 전용 컴포넌트가 2곳 이상에서 반복되면 `common/`으로 이동한다.
+3. **의존 방향**: `3계층 → 2계층 → 1계층`만 허용하고 역방향 의존은 금지한다.

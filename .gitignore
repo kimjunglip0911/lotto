@@ -2,8 +2,11 @@ node_modules
 
 # Python
 __pycache__/
+**/__pycache__/
 *.pyc
+**/*.pyc
 *.pyo
+**/*.pyo
 
 # pytest (로컬 캐시 — 버전 관리 제외)
 .pytest_cache/

@@ -1,64 +1,63 @@
 ---
+description: Lotto 프로젝트 핵심 헌법 — 스택·언어·포트·문서 원칙
 alwaysApply: true
-trigger: always_on
 ---
 
-# Antigravity Agent Core Constitution v3.0
+# Lotto Agent Core Constitution
 
-이 규칙은 모든 워크플로우(버그 수정, 코드 수정, 리팩토링, 신규 개발)에 **예외 없이 적용**되는 불변 원칙입니다.
+> **실행 맥락**: 로컬 개발 PC 기준으로 작업하며, 현재 저장소 구조와 실행 스크립트를 단일 정본으로 삼는다.
 
-## 1. 커뮤니케이션 원칙
+---
 
-### 전면 한글화 (Korean Only)
-- Task, Implementation Plan, Progress Report 등 모든 생성 문서는 **반드시 한국어**로 작성하세요.
-- 코드 내의 변수명, 함수명, 기술 용어는 프로젝트 표준(영어)을 따르되, **설명은 한글**로 제공하세요.
-- 아티팩트 생성 시 마크다운 헤더를 적절히 사용하여 진행 상황을 한눈에 파악할 수 있게 하세요.
+## 1. 핵심 기술 스택과 준수
 
-## 2. 클린 아키텍처 (Clean Architecture) 원칙
+**버전/의존성 정본**(단일 출처): 루트 `package-lock.json`, 루트 `package.json`, `frontend/package.json`, `backend/requirements.txt`. 의존성을 바꾸면 이 파일들과 린트·빌드·관련 `README`를 함께 맞춘다.
 
-### 계층 분리 및 의존성 규칙
-- **Domain**: 핵심 비즈니스 로직과 엔티티. 외부 의존성 없음.
-- **Application**: 유스케이스, 서비스. 도메인에만 의존.
-- **Infrastructure**: DB, API 클라이언트, 외부 라이브러리 연동.
-- **Interface/Presentation**: UI 컴포넌트, 컨트롤러.
-- **의존성 방향**: 의존성은 항상 고수준 정책(안쪽)으로 향해야 하며, 외부 프레임워크 변경이 비즈니스 로직에 영향을 주어서는 안 됩니다.
+**메이저 요약**: Node **20 계열 이상** · 프론트 **Next.js 16**(App Router) · **React 19** · **TypeScript 5** · **Tailwind 4** · **ESLint 9**(`eslint-config-next` 16 계열) · 백엔드 **FastAPI** / **Pydantic** / **Uvicorn**. Python 의존성은 `backend/requirements.txt`의 실제 선언을 정본으로 본다.
 
-## 3. 기술 스택 (Tech Stack) 및 스킬 활용 가이드
+**준수**: 해당 메이저의 공식 API와 본 레포 관례를 따른다(App Router·RSC 경계, `fetch`/캐시 의미). Tailwind는 **v4 전제**만 사용한다. `any`·린트 무시 남용 금지. 새 라이브러리는 **npm/pip으로 레포에만** 추가하고, 브라우저가 외부 CDN에서 JS/CSS/폰트를 직접 받게 하지 않는다.
 
-기획 및 개발 시 현재 프로젝트에 설치된 아래의 기술 세팅 및 버전을 반드시 준수해야 합니다.
+---
 
-### 🏛️ 프론트엔드 (Frontend) - `frontend/`
-- **Framework**: `Next.js 16.1.6` (App Router 권장)
-- **Library**: `React 19` (19.2.3), `react-dom 19`
-- **Styling**: `Tailwind CSS v4` (`@tailwindcss/postcss` 기반)
-- **UI Components**: `shadcn/ui` (3.8.5), `radix-ui`, `lucide-react` (0.575.0)
-- **State/Fetching**: `swr` (2.4.0), `react-hook-form`
-- **Charts/Vis**: `apexcharts` (5.6.0)
+## 2. 언어·문서·코드 표기
 
-### ⚙️ 백엔드 (Backend) - `backend/`
-- **Framework**: `FastAPI` (w/ Uvicorn)
-- **Data Processing**: `pandas`, `openpyxl`
-- **Validation**: `pydantic`
+- **플랜·구현 계획**(Cursor Plan 본문, `.cursor/plans/**/*.md`)을 새로 쓰거나 목차·표 구조를 바꿀 때: **`.cursor/rules/01.plan-document-form.mdc`를 먼저 확인**하고 해당 템플릿의 `## 1.`~`## 6.` 제목·순서·구분선·표 열을 그대로 따른다.
+- **산출 문서**(Task, 구현 계획, PR 설명, 사용자 안내, 이슈 요약 등): **항상 한국어**로 작성한다.
+- **코드·파일명·변수·함수·타입·API 경로**: **영어**를 사용한다.
+- **주석**: **한국어**로 작성한다(모듈·비즈니스 의도가 드러나게).
 
-## 4. 문서 동기화
+---
 
-- 코드 변경 시 해당 기능 폴더의 `README.md`를 반드시 최신화하여 변경 사항과 구조를 설명하세요.
+## 3. 실행 주소·포트
 
-## 5. 표준 개발 워크플로우 헌법 (The Workflow Law)
+| 구분 | 값 |
+|:---|:---|
+| **프론트엔드(Next.js 기본 개발 포트)** | **3010** |
+| **백엔드(FastAPI / Uvicorn 개발 포트)** | **8010** |
 
-에이전트와 사용자는 프로젝트의 품질과 안정성을 위해 **아래 워크플로우**를 준수합니다. 단일 파일의 단순 수정이 아닌 이상, 파이프라인 우회는 금지됩니다. 플랜 문서는 **Cursor Plan 모드에서 자동 생성**되며, 별도 `implementation-plan.md` 파일을 생성하지 않습니다.
+현재 저장소의 실행 스크립트(`npm run dev`, `npm run dev:backend`)와 프록시 설정(`frontend/next.config.ts`) 기준으로 **3010(프론트), 8010(백엔드)**를 정본으로 한다.
 
-### [Phase 1] `/01-plan` (통합 기획·검증·가이드)
-- **개념**: 요구사항 분석 → 기획 요약 → 사전 검증 → Step-by-Step 개발 가이드 작성. Cursor Plan 모드 사용.
-- **산출물**: Cursor Plan이 자동 생성하는 플랜 문서(요약형).
-- **핵심 스킬**: `project-planner`, `code-reviewer`, `tailwind-component-architect`, `orpc-contract-first`, `python-expert`
+---
 
-### [Phase 2] `/02-develop` (구현 및 수정)
-- **개념**: **Cursor Plan에서 자동 생성된 플랜 문서**를 확인하고, 그 안의 Step-by-Step 가이드에 따라 코드를 구현합니다.
-- **산출물**: 코딩 완료된 파일들, `README.md` 업데이트, 테스트 통과 증명.
-- **핵심 스킬**: `fullstack-developer`, `python-expert`, `frontend-testing`, `fix`
+## 4. 네트워크(서버 vs 사용자)
 
-### [긴급] `/03-bug-fix` (버그 수정)
-- **개념**: 발생한 오류에 대해 가설 수립 → 검증 → 최소 범위 수정의 체계적 디버깅. Phase 1~2 파이프라인과 독립적으로 즉시 실행 가능.
-- **산출물**: 근본 원인 분석 보고서, 최소 범위 코드 수정, 회귀 테스트 결과.
-- **핵심 스킬**: `debugger`, `frontend-code-review`, `fix`, `frontend-testing`
+- 개발 PC와 운영 서버(호스트)는 외부 인터넷 접근 가능 환경을 전제로 한다(`npm install`, `pip install`, 보안 패치, 아티팩트 수신 등).
+- 사용자 런타임(브라우저) 기준에서는 배포 안정성·보안·성능을 위해 CDN·외부 URL의 JS/CSS/폰트/이미지 직접 로드를 기본적으로 피하고, 필요한 자산은 레포 의존성으로 관리하거나 자체 호스팅을 우선한다.
+- 외부 리소스가 필요하면 npm/pip으로 받아 번들하거나 자체 호스팅한다.
+
+---
+
+## 5. Python 패키지 정책 (`__pycache__`, `__init__.py`)
+
+- 이 저장소는 **PEP 420 네임스페이스 패키지 정책**을 사용하므로 `__init__.py`를 생성하지 않는다.
+- Python 실행은 바이트코드 생성을 막는 방식을 유지한다(예: `python -B ...`, `sys.dont_write_bytecode = True`).
+- `__pycache__`, `*.pyc`는 생성되더라도 버전 관리 대상에서 제외한다(`.gitignore` 기준).
+- 재도입 방지를 위해 필요 시 루트에서 `npm run check:no-init` 검증을 수행한다.
+
+---
+
+## 6. README 및 규칙 우선순위
+
+- 코드나 동작을 바꾼 경우, 해당 기능 모듈의 `README.md`를 최신 상태로 유지한다(목적, 실행 방법, 환경 변수, 주의사항).
+- 버그·재발 방지 요약은 `.cursor/rules/bug-lessons.mdc` 한 파일(하단 표)에만 기록한다.
+- 본 헌법(§1~§6)과 다른 규칙이 충돌하면 **본 헌법을 우선**한다.

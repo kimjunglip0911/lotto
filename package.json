@@ -6,7 +6,8 @@
     ],
     "scripts": {
         "dev": "concurrently \"npm run dev -w frontend\" \"npm run dev:backend\"",
-        "dev:backend": "python -m uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload --reload-dir backend --reload-dir features",
+        "dev:backend": "python -B -m uvicorn backend.main:app --host 0.0.0.0 --port 8010 --reload --reload-dir backend --reload-dir features",
+        "check:no-init": "python scripts/check_no_init.py",
         "build": "npm run build -w frontend",
         "start": "npm run start -w frontend",
         "lint": "npm run lint -w frontend"

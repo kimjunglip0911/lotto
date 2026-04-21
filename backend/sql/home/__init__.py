@@ -1,1 +1,0 @@
-"""Home SQL query constants."""

@@ -1,0 +1,97 @@
+---
+description: 신규 기능 개발, 기존 코드 수정(버그픽스 포함), 리팩터링 시 현재 레포 구조를 확인하거나 트리 문서를 갱신할 때.
+alwaysApply: false
+---
+> **위치·최신화**: 본문은 `lotto` 저장소의 디렉터리 트리 정본이다. 구조가 바뀌면 같은 작업에서 반드시 갱신한다.
+
+# Lotto 프로젝트 구조
+
+> Next.js 16 + FastAPI 기반 로또 서비스 (2026-04 기준)
+
+---
+
+```text
+lotto/
+├── .cursor/
+│   ├── rules/
+│   │   ├── rules.mdc
+│   │   ├── 01.plan-document-form.mdc
+│   │   ├── project-structure.mdc
+│   │   ├── components.mdc
+│   │   ├── refactoring-guide.mdc
+│   │   ├── skill-list.mdc
+│   │   ├── bug-lessons.mdc
+│   │   └── git-commit-guide.mdc
+│   └── skills/
+│
+├── backend/
+│   ├── main.py                        # FastAPI 앱 진입점
+│   ├── database.py                    # SQLite 연결/경로
+│   ├── models.py                      # 공통 모델 export
+│   ├── router_loader.py               # features 라우터 동적 로드(레거시 호환)
+│   ├── requirements.txt
+│   ├── README.md
+│   ├── domain/
+│   │   ├── analysis/
+│   │   │   └── lotto_rank.py          # 당첨 등수 계산 도메인 로직
+│   │   └── models/
+│   │       └── schemas.py
+│   ├── infrastructure/
+│   │   └── persistence/
+│   │       ├── init_db.py
+│   │       └── README.md
+│   ├── router/
+│   │   ├── home/
+│   │   │   └── router.py
+│   │   └── analysis/
+│   │       └── router.py
+│   └── sql/
+│       ├── home/
+│       │   └── queries.py
+│       └── analysis/
+│           └── queries.py
+│
+├── frontend/
+│   ├── package.json
+│   ├── next.config.ts
+│   ├── eslint.config.mjs
+│   ├── postcss.config.mjs
+│   ├── components.json
+│   ├── .env.local
+│   ├── README.md
+│   └── src/
+│       ├── app/                       # App Router 엔트리
+│       │   ├── page.tsx
+│       │   └── analysis/
+│       │       ├── page.tsx
+│       │       └── cdm/
+│       │           └── page.tsx
+│       ├── page/                      # 도메인 UI 레이어
+│       │   ├── home/
+│       │   └── analysis/
+│       ├── components/
+│       │   ├── ui/
+│       │   └── common/
+│       └── lib/                       # 공통 유틸(예: lotteryUtils)
+│
+├── docs/
+├── .gitignore
+├── package.json                       # 루트 스크립트 (npm run dev)
+├── package-lock.json
+├── tsconfig.json
+├── 로직.md
+├── 작업지시.md
+└── 리팩토링지시서.md
+```
+
+---
+
+## 운영 기준 메모
+
+- 개발 포트: 프론트 `3010`, 백엔드 `8010`
+- Python 패키지 정책: `__init__.py` 미사용, `__pycache__` 생성 방지/제외
+- 구조 변경 시 함께 갱신: `backend/README.md`, 기능별 `README.md`, 본 파일
+
+---
+
+*Last Updated: 2026-04-21*

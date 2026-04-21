@@ -31,7 +31,7 @@ export default function CdmAnalysisPage() {
     const fetchInitialData = async () => {
       try {
         setLoading(true);
-        const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+        const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8010';
         const drawsRes = await fetch(`${baseUrl}/api/drawings/draw-numbers`);
         if (!drawsRes.ok) throw new Error('회차 목록을 불러오는데 실패했습니다.');
         const draws: number[] = await drawsRes.json();
@@ -50,7 +50,7 @@ export default function CdmAnalysisPage() {
     setIsGenerating(true);
     setError(null);
     try {
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8010';
       const targetDraw =
         selectedDraw === 'new' ? (availableDraws.length > 0 ? availableDraws[0] + 1 : 1) : selectedDraw;
 
