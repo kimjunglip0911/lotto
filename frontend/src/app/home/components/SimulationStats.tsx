@@ -74,7 +74,7 @@ export function SimulationStats({ sets, winningNumbers, bonusNumber }: Simulatio
     <div className="mt-2 bg-card/50 border border-card-border/50 rounded-3xl p-6 md:p-7 relative overflow-hidden">
       <h3 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
         <span className="material-symbols-outlined text-primary">analytics</span>
-        현재 조회된 20세트 분석 결과
+        현재 조회된 {stats.totalSets}세트 분석 결과
       </h3>
 
       {!stats.canCalculate ? (

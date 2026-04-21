@@ -75,7 +75,7 @@ export function LotteryGrid() {
     }
   }, [selectedDraw, winningNumbers, winningBonus]);
 
-  const mappedSets = useMemo(
+  const displaySets = useMemo(
     () =>
       sets.map((set) => ({
         numbers: [set.num1, set.num2, set.num3, set.num4, set.num5, set.num6],
@@ -102,11 +102,11 @@ export function LotteryGrid() {
           saveStatus={saveStatus}
         />
         <SimulationStats
-          sets={mappedSets}
+          sets={displaySets}
           winningNumbers={winningNumbers as number[]}
           bonusNumber={winningBonus as number}
         />
-        <LotterySetList sets={mappedSets} />
+        <LotterySetList sets={displaySets} />
       </div>
     </section>
   );

@@ -28,6 +28,7 @@ interface UseLotteryGridDataOptions {
 }
 
 export const useLotteryGridData = (options?: UseLotteryGridDataOptions) => {
+  const MAX_SETS_PER_DRAW = 20;
   const onDrawChange = options?.onDrawChange;
   const [sets, setSets] = useState<LotterySet[]>([]);
   const [winningByDraw, setWinningByDraw] = useState<WinningNumbersByDraw | null>(null);
@@ -71,7 +72,8 @@ export const useLotteryGridData = (options?: UseLotteryGridDataOptions) => {
 
         if (setsResponse.ok) {
           const setsData = await setsResponse.json();
-          setSets(setsData);
+          const limitedSets = Array.isArray(setsData) ? setsData.slice(0, MAX_SETS_PER_DRAW) : [];
+          setSets(limitedSets);
         } else {
           setSets([]);
         }
