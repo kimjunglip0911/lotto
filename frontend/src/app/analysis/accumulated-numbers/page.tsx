@@ -16,6 +16,8 @@ type WinningNumberRow = {
 };
 
 const EMPTY_COUNTS = Array.from({ length: 45 }, () => 0);
+const THIRTY_DAY_WINDOW_DRAWS = 4;
+const NINETY_DAY_WINDOW_DRAWS = 12;
 
 const isWinningNumberRow = (value: unknown): value is WinningNumberRow => {
   if (typeof value !== 'object' || value === null) {
@@ -62,6 +64,10 @@ export default function AccumulatedNumbersPage() {
   const [searchError, setSearchError] = useState<string | null>(null);
   const [numberCounts, setNumberCounts] = useState<number[]>([...EMPTY_COUNTS]);
   const [analyzedDrawCount, setAnalyzedDrawCount] = useState(0);
+  const [thirtyDayCounts, setThirtyDayCounts] = useState<number[]>([...EMPTY_COUNTS]);
+  const [thirtyDayAnalyzedDrawCount, setThirtyDayAnalyzedDrawCount] = useState(0);
+  const [ninetyDayCounts, setNinetyDayCounts] = useState<number[]>([...EMPTY_COUNTS]);
+  const [ninetyDayAnalyzedDrawCount, setNinetyDayAnalyzedDrawCount] = useState(0);
 
   useEffect(() => {
     let isMounted = true;
@@ -149,6 +155,24 @@ export default function AccumulatedNumbersPage() {
     return data.filter(isWinningNumberRow);
   };
 
+  const fetchWinningNumbersWindow = async (drawNo: number, windowSize: number) => {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+    const response = await fetch(
+      `${apiUrl}/api/analysis/accumulated-numbers/winning-numbers-window?draw_no=${drawNo}&window_size=${windowSize}`
+    );
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch winning numbers window: ${response.status}`);
+    }
+
+    const data: unknown = await response.json();
+    if (!Array.isArray(data)) {
+      throw new Error('Winning numbers window response is not an array');
+    }
+
+    return data.filter(isWinningNumberRow);
+  };
+
   const handleSearch = async () => {
     if (!selectedDraw) {
       return;
@@ -160,6 +184,10 @@ export default function AccumulatedNumbersPage() {
       setSearchedDraw('');
       setNumberCounts([...EMPTY_COUNTS]);
       setAnalyzedDrawCount(0);
+      setThirtyDayCounts([...EMPTY_COUNTS]);
+      setThirtyDayAnalyzedDrawCount(0);
+      setNinetyDayCounts([...EMPTY_COUNTS]);
+      setNinetyDayAnalyzedDrawCount(0);
       return;
     }
 
@@ -175,22 +203,36 @@ export default function AccumulatedNumbersPage() {
         setSelectedWinningNumber(winningNumber);
         setNumberCounts([...EMPTY_COUNTS]);
         setAnalyzedDrawCount(0);
+        setThirtyDayCounts([...EMPTY_COUNTS]);
+        setThirtyDayAnalyzedDrawCount(0);
+        setNinetyDayCounts([...EMPTY_COUNTS]);
+        setNinetyDayAnalyzedDrawCount(0);
         return;
       }
 
-      const [rows, winningNumber] = await Promise.all([
+      const [rows, winningNumber, thirtyDayRows, ninetyDayRows] = await Promise.all([
         fetchWinningNumbersRange(selectedDrawNo),
         fetchWinningNumberByDraw(selectedDrawNo),
+        fetchWinningNumbersWindow(selectedDrawNo, THIRTY_DAY_WINDOW_DRAWS),
+        fetchWinningNumbersWindow(selectedDrawNo, NINETY_DAY_WINDOW_DRAWS),
       ]);
 
       setNumberCounts(buildNumberCounts(rows));
       setAnalyzedDrawCount(rows.length);
+      setThirtyDayCounts(buildNumberCounts(thirtyDayRows));
+      setThirtyDayAnalyzedDrawCount(thirtyDayRows.length);
+      setNinetyDayCounts(buildNumberCounts(ninetyDayRows));
+      setNinetyDayAnalyzedDrawCount(ninetyDayRows.length);
       setSelectedWinningNumber(winningNumber);
     } catch (error) {
       console.error('Error fetching accumulated numbers search data:', error);
       setSearchError('조회 데이터를 불러오지 못했습니다.');
       setNumberCounts([...EMPTY_COUNTS]);
       setAnalyzedDrawCount(0);
+      setThirtyDayCounts([...EMPTY_COUNTS]);
+      setThirtyDayAnalyzedDrawCount(0);
+      setNinetyDayCounts([...EMPTY_COUNTS]);
+      setNinetyDayAnalyzedDrawCount(0);
       setSelectedWinningNumber(null);
       setSelectedWinningNumberError('선택한 회차의 당첨번호를 불러오지 못했습니다.');
     } finally {
@@ -199,22 +241,8 @@ export default function AccumulatedNumbersPage() {
     }
   };
 
-  const maxCount = Math.max(...numberCounts, 0);
   const hasSearched = searchedDraw !== '';
-  const hasAnalysisData = analyzedDrawCount > 0;
-  const totalCount = numberCounts.reduce((sum, count) => sum + count, 0);
-  const averageCount = hasAnalysisData ? totalCount / numberCounts.length : 0;
-  const averageRatio = maxCount > 0 ? (averageCount / maxCount) * 100 : 0;
-  const clampedAverageRatio = Math.min(100, Math.max(0, averageRatio));
-  const chartBarHeightPx = 250;
-  const chartBottomLabelOffsetPx = 20;
-  const averageLineBottomPx = chartBottomLabelOffsetPx + (clampedAverageRatio / 100) * chartBarHeightPx;
   const selectedSearchDrawNo = Number(searchedDraw);
-  const chartRows = numberCounts.map((count, index) => ({
-    number: index + 1,
-    count,
-    ratio: maxCount > 0 ? (count / maxCount) * 100 : 0,
-  }));
   const selectedMainNumbers = selectedWinningNumber
     ? [
         selectedWinningNumber.num1,
@@ -241,6 +269,73 @@ export default function AccumulatedNumbersPage() {
             : searchedDraw
               ? null
               : '회차를 선택한 뒤 조회 버튼을 누르면 해당 회차 기준 분석을 시작합니다.';
+
+  const renderAccumulatedChart = (
+    title: string,
+    counts: number[],
+    analyzedCountForChart: number,
+    noDataMessage: string
+  ) => {
+    const maxCount = Math.max(...counts, 0);
+    const totalCount = counts.reduce((sum, count) => sum + count, 0);
+    const averageCount = analyzedCountForChart > 0 ? totalCount / counts.length : 0;
+    const averageRatio = maxCount > 0 ? (averageCount / maxCount) * 100 : 0;
+    const clampedAverageRatio = Math.min(100, Math.max(0, averageRatio));
+    const chartBarHeightPx = 250;
+    const chartBottomLabelOffsetPx = 20;
+    const averageLineBottomPx = chartBottomLabelOffsetPx + (clampedAverageRatio / 100) * chartBarHeightPx;
+    const chartRows = counts.map((count, index) => ({
+      number: index + 1,
+      count,
+      ratio: maxCount > 0 ? (count / maxCount) * 100 : 0,
+    }));
+
+    return (
+      <section className="rounded-2xl border border-card-border/30 bg-card-bg/60 p-6 space-y-4">
+        <h3 className="text-xl font-semibold text-white">{title}</h3>
+        {hasSearched && selectedSearchDrawNo <= 1 ? (
+          <p className="text-sm text-slate-300">1회는 이전 회차가 없어 집계할 데이터가 없습니다.</p>
+        ) : !hasSearched ? (
+          <p className="text-sm text-slate-300">조회를 실행하면 번호별 누적 막대 차트가 표시됩니다.</p>
+        ) : isSearching ? (
+          <p className="text-sm text-slate-300">차트 데이터를 계산하는 중입니다...</p>
+        ) : searchError ? (
+          <p className="text-sm text-rose-300">{searchError}</p>
+        ) : analyzedCountForChart <= 0 ? (
+          <p className="text-sm text-slate-300">{noDataMessage}</p>
+        ) : (
+          <div className="overflow-x-auto pb-2">
+            <div className="relative w-max">
+              <div className="pointer-events-none absolute inset-x-0" style={{ bottom: `${averageLineBottomPx}px` }}>
+                <div className="w-full border-t-[3px] border-rose-400/90" />
+                <span className="absolute -top-5 right-0 rounded bg-rose-500/20 px-2 py-0.5 text-[11px] font-medium text-rose-300">
+                  평균 {averageCount.toFixed(1)}회
+                </span>
+              </div>
+              <ul className="w-max flex items-end gap-1.5 h-[320px]">
+                {chartRows.map((item) => {
+                  const isHighlighted = selectedHighlightNumbers?.has(item.number) ?? false;
+
+                  return (
+                    <li key={`${title}-${item.number}`} className="w-8 shrink-0 flex flex-col items-center gap-2">
+                      <span className="text-[11px] text-slate-100 tabular-nums leading-none">{item.count}</span>
+                      <div className="w-full h-[250px] rounded-md border border-white/10 bg-slate-900/70 flex items-end overflow-hidden">
+                        <div
+                          className={`w-full ${isHighlighted ? 'bg-rose-500/90' : 'bg-primary/80'}`}
+                          style={{ height: `${Math.max(item.ratio, item.count > 0 ? 2 : 0)}%` }}
+                        />
+                      </div>
+                      <span className="text-[11px] text-slate-300 font-medium leading-none">{item.number}</span>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          </div>
+        )}
+      </section>
+    );
+  };
 
   return (
     <div className="bg-background min-h-screen flex justify-center w-full overflow-x-hidden">
@@ -315,58 +410,27 @@ export default function AccumulatedNumbersPage() {
             {statusMessage && <p className="text-slate-300 text-sm leading-relaxed">{statusMessage}</p>}
           </section>
 
-          <section className="rounded-2xl border border-card-border/30 bg-card-bg/60 p-6 space-y-4">
-            <h3 className="text-xl font-semibold text-white">번호별 누적 출현 횟수</h3>
-            {hasSearched && selectedSearchDrawNo <= 1 ? (
-              <p className="text-sm text-slate-300">1회는 이전 회차가 없어 집계할 데이터가 없습니다.</p>
-            ) : !hasSearched ? (
-              <p className="text-sm text-slate-300">조회를 실행하면 번호별 누적 막대 차트가 표시됩니다.</p>
-            ) : isSearching ? (
-              <p className="text-sm text-slate-300">차트 데이터를 계산하는 중입니다...</p>
-            ) : searchError ? (
-              <p className="text-sm text-rose-300">{searchError}</p>
-            ) : !hasAnalysisData ? (
-              <p className="text-sm text-slate-300">
-                저장된 당첨번호 기준으로 집계 가능한 이전 회차 데이터가 없습니다.
-              </p>
-            ) : (
-              <>
-                <div className="overflow-x-auto pb-2">
-                  <div className="relative w-max">
-                    {hasAnalysisData && (
-                      <div
-                        className="pointer-events-none absolute inset-x-0"
-                        style={{ bottom: `${averageLineBottomPx}px` }}
-                      >
-                        <div className="w-full border-t-[3px] border-rose-400/90" />
-                        <span className="absolute -top-5 right-0 rounded bg-rose-500/20 px-2 py-0.5 text-[11px] font-medium text-rose-300">
-                          평균 {averageCount.toFixed(1)}회
-                        </span>
-                      </div>
-                    )}
-                    <ul className="w-max flex items-end gap-1.5 h-[320px]">
-                      {chartRows.map((item) => {
-                        const isHighlighted = selectedHighlightNumbers?.has(item.number) ?? false;
+          {renderAccumulatedChart(
+            '번호별 누적 출현 횟수',
+            numberCounts,
+            analyzedDrawCount,
+            '저장된 당첨번호 기준으로 집계 가능한 이전 회차 데이터가 없습니다.'
+          )}
 
-                        return (
-                          <li key={item.number} className="w-8 shrink-0 flex flex-col items-center gap-2">
-                            <span className="text-[11px] text-slate-100 tabular-nums leading-none">{item.count}</span>
-                            <div className="w-full h-[250px] rounded-md border border-white/10 bg-slate-900/70 flex items-end overflow-hidden">
-                              <div
-                                className={`w-full ${isHighlighted ? 'bg-rose-500/90' : 'bg-primary/80'}`}
-                                style={{ height: `${Math.max(item.ratio, item.count > 0 ? 2 : 0)}%` }}
-                              />
-                            </div>
-                            <span className="text-[11px] text-slate-300 font-medium leading-none">{item.number}</span>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  </div>
-                </div>
-              </>
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+            {renderAccumulatedChart(
+              '30일 누적 출현 횟수 (이전 4회차)',
+              thirtyDayCounts,
+              thirtyDayAnalyzedDrawCount,
+              '선택 회차 기준 이전 4회차 데이터가 부족해 집계할 수 없습니다.'
             )}
-          </section>
+            {renderAccumulatedChart(
+              '90일 누적 출현 횟수 (이전 12회차)',
+              ninetyDayCounts,
+              ninetyDayAnalyzedDrawCount,
+              '선택 회차 기준 이전 12회차 데이터가 부족해 집계할 수 없습니다.'
+            )}
+          </div>
         </main>
       </div>
     </div>
