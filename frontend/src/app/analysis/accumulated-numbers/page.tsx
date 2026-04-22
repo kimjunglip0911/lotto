@@ -18,6 +18,11 @@ type WinningNumberRow = {
 const EMPTY_COUNTS = Array.from({ length: 45 }, () => 0);
 const THIRTY_DAY_WINDOW_DRAWS = 4;
 const NINETY_DAY_WINDOW_DRAWS = 12;
+const SIX_MONTH_WINDOW_DRAWS = 26;
+const ONE_YEAR_WINDOW_DRAWS = 52;
+const THREE_YEAR_WINDOW_DRAWS = 156;
+const FIVE_YEAR_WINDOW_DRAWS = 260;
+const TEN_YEAR_WINDOW_DRAWS = 520;
 
 const isWinningNumberRow = (value: unknown): value is WinningNumberRow => {
   if (typeof value !== 'object' || value === null) {
@@ -68,6 +73,16 @@ export default function AccumulatedNumbersPage() {
   const [thirtyDayAnalyzedDrawCount, setThirtyDayAnalyzedDrawCount] = useState(0);
   const [ninetyDayCounts, setNinetyDayCounts] = useState<number[]>([...EMPTY_COUNTS]);
   const [ninetyDayAnalyzedDrawCount, setNinetyDayAnalyzedDrawCount] = useState(0);
+  const [sixMonthCounts, setSixMonthCounts] = useState<number[]>([...EMPTY_COUNTS]);
+  const [sixMonthAnalyzedDrawCount, setSixMonthAnalyzedDrawCount] = useState(0);
+  const [oneYearCounts, setOneYearCounts] = useState<number[]>([...EMPTY_COUNTS]);
+  const [oneYearAnalyzedDrawCount, setOneYearAnalyzedDrawCount] = useState(0);
+  const [threeYearCounts, setThreeYearCounts] = useState<number[]>([...EMPTY_COUNTS]);
+  const [threeYearAnalyzedDrawCount, setThreeYearAnalyzedDrawCount] = useState(0);
+  const [fiveYearCounts, setFiveYearCounts] = useState<number[]>([...EMPTY_COUNTS]);
+  const [fiveYearAnalyzedDrawCount, setFiveYearAnalyzedDrawCount] = useState(0);
+  const [tenYearCounts, setTenYearCounts] = useState<number[]>([...EMPTY_COUNTS]);
+  const [tenYearAnalyzedDrawCount, setTenYearAnalyzedDrawCount] = useState(0);
 
   useEffect(() => {
     let isMounted = true;
@@ -188,6 +203,16 @@ export default function AccumulatedNumbersPage() {
       setThirtyDayAnalyzedDrawCount(0);
       setNinetyDayCounts([...EMPTY_COUNTS]);
       setNinetyDayAnalyzedDrawCount(0);
+      setSixMonthCounts([...EMPTY_COUNTS]);
+      setSixMonthAnalyzedDrawCount(0);
+      setOneYearCounts([...EMPTY_COUNTS]);
+      setOneYearAnalyzedDrawCount(0);
+      setThreeYearCounts([...EMPTY_COUNTS]);
+      setThreeYearAnalyzedDrawCount(0);
+      setFiveYearCounts([...EMPTY_COUNTS]);
+      setFiveYearAnalyzedDrawCount(0);
+      setTenYearCounts([...EMPTY_COUNTS]);
+      setTenYearAnalyzedDrawCount(0);
       return;
     }
 
@@ -207,14 +232,30 @@ export default function AccumulatedNumbersPage() {
         setThirtyDayAnalyzedDrawCount(0);
         setNinetyDayCounts([...EMPTY_COUNTS]);
         setNinetyDayAnalyzedDrawCount(0);
+        setSixMonthCounts([...EMPTY_COUNTS]);
+        setSixMonthAnalyzedDrawCount(0);
+        setOneYearCounts([...EMPTY_COUNTS]);
+        setOneYearAnalyzedDrawCount(0);
+        setThreeYearCounts([...EMPTY_COUNTS]);
+        setThreeYearAnalyzedDrawCount(0);
+        setFiveYearCounts([...EMPTY_COUNTS]);
+        setFiveYearAnalyzedDrawCount(0);
+        setTenYearCounts([...EMPTY_COUNTS]);
+        setTenYearAnalyzedDrawCount(0);
         return;
       }
 
-      const [rows, winningNumber, thirtyDayRows, ninetyDayRows] = await Promise.all([
+      const [rows, winningNumber, thirtyDayRows, ninetyDayRows, sixMonthRows, oneYearRows, threeYearRows, fiveYearRows, tenYearRows] =
+        await Promise.all([
         fetchWinningNumbersRange(selectedDrawNo),
         fetchWinningNumberByDraw(selectedDrawNo),
         fetchWinningNumbersWindow(selectedDrawNo, THIRTY_DAY_WINDOW_DRAWS),
         fetchWinningNumbersWindow(selectedDrawNo, NINETY_DAY_WINDOW_DRAWS),
+        fetchWinningNumbersWindow(selectedDrawNo, SIX_MONTH_WINDOW_DRAWS),
+        fetchWinningNumbersWindow(selectedDrawNo, ONE_YEAR_WINDOW_DRAWS),
+        fetchWinningNumbersWindow(selectedDrawNo, THREE_YEAR_WINDOW_DRAWS),
+        fetchWinningNumbersWindow(selectedDrawNo, FIVE_YEAR_WINDOW_DRAWS),
+        fetchWinningNumbersWindow(selectedDrawNo, TEN_YEAR_WINDOW_DRAWS),
       ]);
 
       setNumberCounts(buildNumberCounts(rows));
@@ -223,6 +264,16 @@ export default function AccumulatedNumbersPage() {
       setThirtyDayAnalyzedDrawCount(thirtyDayRows.length);
       setNinetyDayCounts(buildNumberCounts(ninetyDayRows));
       setNinetyDayAnalyzedDrawCount(ninetyDayRows.length);
+      setSixMonthCounts(buildNumberCounts(sixMonthRows));
+      setSixMonthAnalyzedDrawCount(sixMonthRows.length);
+      setOneYearCounts(buildNumberCounts(oneYearRows));
+      setOneYearAnalyzedDrawCount(oneYearRows.length);
+      setThreeYearCounts(buildNumberCounts(threeYearRows));
+      setThreeYearAnalyzedDrawCount(threeYearRows.length);
+      setFiveYearCounts(buildNumberCounts(fiveYearRows));
+      setFiveYearAnalyzedDrawCount(fiveYearRows.length);
+      setTenYearCounts(buildNumberCounts(tenYearRows));
+      setTenYearAnalyzedDrawCount(tenYearRows.length);
       setSelectedWinningNumber(winningNumber);
     } catch (error) {
       console.error('Error fetching accumulated numbers search data:', error);
@@ -233,6 +284,16 @@ export default function AccumulatedNumbersPage() {
       setThirtyDayAnalyzedDrawCount(0);
       setNinetyDayCounts([...EMPTY_COUNTS]);
       setNinetyDayAnalyzedDrawCount(0);
+      setSixMonthCounts([...EMPTY_COUNTS]);
+      setSixMonthAnalyzedDrawCount(0);
+      setOneYearCounts([...EMPTY_COUNTS]);
+      setOneYearAnalyzedDrawCount(0);
+      setThreeYearCounts([...EMPTY_COUNTS]);
+      setThreeYearAnalyzedDrawCount(0);
+      setFiveYearCounts([...EMPTY_COUNTS]);
+      setFiveYearAnalyzedDrawCount(0);
+      setTenYearCounts([...EMPTY_COUNTS]);
+      setTenYearAnalyzedDrawCount(0);
       setSelectedWinningNumber(null);
       setSelectedWinningNumberError('선택한 회차의 당첨번호를 불러오지 못했습니다.');
     } finally {
@@ -428,6 +489,36 @@ export default function AccumulatedNumbersPage() {
             ninetyDayCounts,
             ninetyDayAnalyzedDrawCount,
             '선택 회차 기준 이전 12회차 데이터가 부족해 집계할 수 없습니다.'
+          )}
+          {renderAccumulatedChart(
+            '6개월 누적 출현 횟수 (이전 26회차)',
+            sixMonthCounts,
+            sixMonthAnalyzedDrawCount,
+            '선택 회차 기준 이전 26회차 데이터가 부족해 집계할 수 없습니다.'
+          )}
+          {renderAccumulatedChart(
+            '1년 누적 출현 횟수 (이전 52회차)',
+            oneYearCounts,
+            oneYearAnalyzedDrawCount,
+            '선택 회차 기준 이전 52회차 데이터가 부족해 집계할 수 없습니다.'
+          )}
+          {renderAccumulatedChart(
+            '3년 누적 출현 횟수 (이전 156회차)',
+            threeYearCounts,
+            threeYearAnalyzedDrawCount,
+            '선택 회차 기준 이전 156회차 데이터가 부족해 집계할 수 없습니다.'
+          )}
+          {renderAccumulatedChart(
+            '5년 누적 출현 횟수 (이전 260회차)',
+            fiveYearCounts,
+            fiveYearAnalyzedDrawCount,
+            '선택 회차 기준 이전 260회차 데이터가 부족해 집계할 수 없습니다.'
+          )}
+          {renderAccumulatedChart(
+            '10년 누적 출현 횟수 (이전 520회차)',
+            tenYearCounts,
+            tenYearAnalyzedDrawCount,
+            '선택 회차 기준 이전 520회차 데이터가 부족해 집계할 수 없습니다.'
           )}
         </main>
       </div>
