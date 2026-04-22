@@ -1,5 +1,5 @@
 ---
-description: git commit, 커밋 메시지, 스테이징, amend, merge, rebase, COMMIT_EDITMSG 편집, Signed-off-by, 훅
+description: git commit, 커밋 메시지, 스테이징, amend, merge, rebase, COMMIT_EDITMSG 편집, Signed-off-by, 훅, 커밋
 alwaysApply: false
 ---
 > **적용 시점**: Cursor가 규칙의 `description`과 대화·작업 맥락을 보고 **관련 있을 때** 붙인다(커밋·메시지·스테이징·amend·merge·rebase 등). 필요하면 채팅에서 커밋을 명시하거나 이 규칙을 수동으로 연다.
