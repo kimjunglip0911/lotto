@@ -256,20 +256,22 @@ export default function AccumulatedNumbersPage() {
                 <p className="text-sm text-slate-300">
                   {searchedDraw}회 이전 {analyzedDrawCount}개 회차의 당첨번호(보너스 제외)를 집계했습니다.
                 </p>
-                <ul className="space-y-2">
-                  {chartRows.map((item) => (
-                    <li key={item.number} className="grid grid-cols-[56px_1fr_44px] items-center gap-3">
-                      <span className="text-xs text-slate-200 font-medium">{item.number}번</span>
-                      <div className="h-5 rounded bg-slate-800/80 border border-white/10 overflow-hidden">
-                        <div
-                          className="h-full bg-primary/80"
-                          style={{ width: `${Math.max(item.ratio, item.count > 0 ? 2 : 0)}%` }}
-                        />
-                      </div>
-                      <span className="text-xs text-slate-100 text-right tabular-nums">{item.count}회</span>
-                    </li>
-                  ))}
-                </ul>
+                <div className="overflow-x-auto pb-2">
+                  <ul className="w-max min-w-full flex items-end gap-2 h-[320px]">
+                    {chartRows.map((item) => (
+                      <li key={item.number} className="w-8 shrink-0 flex flex-col items-center gap-2">
+                        <span className="text-[11px] text-slate-100 tabular-nums leading-none">{item.count}</span>
+                        <div className="w-full h-[250px] rounded-md border border-white/10 bg-slate-900/70 flex items-end overflow-hidden">
+                          <div
+                            className="w-full bg-primary/80"
+                            style={{ height: `${Math.max(item.ratio, item.count > 0 ? 2 : 0)}%` }}
+                          />
+                        </div>
+                        <span className="text-[11px] text-slate-300 font-medium leading-none">{item.number}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               </>
             )}
           </section>
