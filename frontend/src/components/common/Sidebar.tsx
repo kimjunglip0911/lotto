@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
@@ -9,12 +9,29 @@ interface SidebarProps {
   onClose: () => void;
 }
 
+interface SidebarMenuItem {
+  title: string;
+  icon: string;
+  href?: string;
+  children?: { title: string; href: string }[];
+}
+
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const pathname = usePathname();
+  const [isAnalysisExpanded, setIsAnalysisExpanded] = useState(
+    pathname.startsWith('/analysis'),
+  );
 
-  const menuItems = [
+  const menuItems: SidebarMenuItem[] = [
     { title: '로또 번호 생성기', icon: 'casino', href: '/' },
     { title: '번호 추천', icon: 'analytics', href: '/recommend' },
+    {
+      title: '분석',
+      icon: 'query_stats',
+      children: [
+        { title: '누적 번호 분석', href: '/analysis/accumulated-numbers' },
+      ],
+    },
   ];
 
   return (
@@ -47,11 +64,60 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           {/* Menu Items */}
           <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
             {menuItems.map((item) => {
-              const isActive = pathname === item.href;
+              const isGeneratorActive = item.href === '/' && (pathname === '/' || pathname === '/home');
+              const isParentActive = item.children?.some((child) => pathname === child.href) ?? false;
+              const isActive = item.href ? pathname === item.href || isGeneratorActive : isParentActive;
+
+              if (item.children) {
+                return (
+                  <div key={item.title} className="space-y-1">
+                    <button
+                      type="button"
+                      onClick={() => setIsAnalysisExpanded((prev) => !prev)}
+                      className={`w-full flex items-center gap-4 p-4 rounded-xl transition-all duration-200 group cursor-pointer ${isActive
+                        ? 'bg-primary/20 text-white'
+                        : 'text-slate-400 hover:bg-white/5 hover:text-white'
+                        }`}
+                    >
+                      <span className={`material-symbols-outlined ${isActive ? 'text-primary' : 'group-hover:text-primary'}`}>
+                        {item.icon}
+                      </span>
+                      <span className="font-medium">{item.title}</span>
+                      <span className={`material-symbols-outlined ml-auto transition-transform duration-200 ${isAnalysisExpanded ? 'rotate-180' : ''}`}>
+                        expand_more
+                      </span>
+                    </button>
+
+                    {isAnalysisExpanded && (
+                      <div className="ml-6 pl-4 border-l border-card-border/40 space-y-1">
+                        {item.children.map((child) => {
+                          const isChildActive = pathname === child.href;
+
+                          return (
+                            <Link
+                              key={child.href}
+                              href={child.href}
+                              onClick={onClose}
+                              className={`flex items-center gap-3 p-3 rounded-lg transition-all duration-200 text-sm ${isChildActive
+                                ? 'bg-primary/15 text-white'
+                                : 'text-slate-400 hover:bg-white/5 hover:text-white'
+                                }`}
+                            >
+                              <span className={`w-1.5 h-1.5 rounded-full ${isChildActive ? 'bg-primary' : 'bg-slate-500'}`} />
+                              <span>{child.title}</span>
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              }
+
               return (
                 <Link
-                  key={item.href}
-                  href={item.href}
+                  key={item.href ?? item.title}
+                  href={item.href ?? '#'}
                   onClick={onClose}
                   className={`flex items-center gap-4 p-4 rounded-xl transition-all duration-200 group cursor-pointer ${isActive
                     ? 'bg-primary/20 text-white'
