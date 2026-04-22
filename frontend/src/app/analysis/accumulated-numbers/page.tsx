@@ -168,12 +168,32 @@ export default function AccumulatedNumbersPage() {
   const maxCount = Math.max(...numberCounts, 0);
   const hasSearched = searchedDraw !== '';
   const hasAnalysisData = analyzedDrawCount > 0;
+  const totalCount = numberCounts.reduce((sum, count) => sum + count, 0);
+  const averageCount = hasAnalysisData ? totalCount / numberCounts.length : 0;
+  const averageRatio = maxCount > 0 ? (averageCount / maxCount) * 100 : 0;
+  const clampedAverageRatio = Math.min(100, Math.max(0, averageRatio));
+  const chartBarHeightPx = 250;
+  const chartBottomLabelOffsetPx = 20;
+  const averageLineBottomPx = chartBottomLabelOffsetPx + (clampedAverageRatio / 100) * chartBarHeightPx;
   const selectedSearchDrawNo = Number(searchedDraw);
   const chartRows = numberCounts.map((count, index) => ({
     number: index + 1,
     count,
     ratio: maxCount > 0 ? (count / maxCount) * 100 : 0,
   }));
+  const statusMessage = isLoadingDraws
+    ? '회차 정보를 불러오는 중입니다.'
+    : drawLoadError
+      ? `${drawLoadError} 잠시 후 다시 시도해 주세요.`
+      : availableDraws.length === 0
+        ? '조회 가능한 회차 정보가 없습니다.'
+        : isSearching
+          ? `${selectedDraw}회 기준 누적 당첨번호를 집계하고 있습니다.`
+          : searchError
+            ? `${searchError} 잠시 후 다시 시도해 주세요.`
+            : searchedDraw
+              ? null
+              : '회차를 선택한 뒤 조회 버튼을 누르면 해당 회차 기준 분석을 시작합니다.';
 
   return (
     <div className="bg-background min-h-screen flex justify-center w-full overflow-x-hidden">
@@ -184,10 +204,9 @@ export default function AccumulatedNumbersPage() {
         <main className="flex-1 overflow-y-auto pb-12 px-4 pt-6 space-y-6">
           <div className="flex flex-col gap-2 mb-4">
             <h2 className="text-3xl font-bold text-white tracking-tight">누적 번호 분석</h2>
-            <p className="text-slate-400 text-sm">회차 누적 데이터를 기반으로 번호 패턴을 분석하는 화면입니다.</p>
           </div>
 
-          <section className="rounded-2xl border border-card-border/30 bg-card-bg/60 p-6 space-y-5">
+          <section className="rounded-2xl border border-card-border/30 bg-card-bg/60 p-4 space-y-3">
             <div className="flex flex-col sm:flex-row sm:items-end gap-3">
               <label className="flex flex-col gap-2 text-sm text-slate-300 min-w-[180px]">
                 <span className="font-medium">회차 선택</span>
@@ -220,21 +239,7 @@ export default function AccumulatedNumbersPage() {
               </button>
             </div>
 
-            <p className="text-slate-300 text-sm leading-relaxed">
-              {isLoadingDraws
-                ? '회차 정보를 불러오는 중입니다.'
-                : drawLoadError
-                  ? `${drawLoadError} 잠시 후 다시 시도해 주세요.`
-                  : availableDraws.length === 0
-                    ? '조회 가능한 회차 정보가 없습니다.'
-                    : isSearching
-                      ? `${selectedDraw}회 기준 누적 당첨번호를 집계하고 있습니다.`
-                      : searchError
-                        ? `${searchError} 잠시 후 다시 시도해 주세요.`
-                        : searchedDraw
-                          ? `${searchedDraw}회 이전 누적 당첨번호를 집계했습니다.`
-                          : '회차를 선택한 뒤 조회 버튼을 누르면 해당 회차 기준 분석을 시작합니다.'}
-            </p>
+            {statusMessage && <p className="text-slate-300 text-sm leading-relaxed">{statusMessage}</p>}
           </section>
 
           <section className="rounded-2xl border border-card-border/30 bg-card-bg/60 p-6 space-y-4">
@@ -257,20 +262,33 @@ export default function AccumulatedNumbersPage() {
                   {searchedDraw}회 이전 {analyzedDrawCount}개 회차의 당첨번호(보너스 제외)를 집계했습니다.
                 </p>
                 <div className="overflow-x-auto pb-2">
-                  <ul className="w-max min-w-full flex items-end gap-2 h-[320px]">
-                    {chartRows.map((item) => (
-                      <li key={item.number} className="w-8 shrink-0 flex flex-col items-center gap-2">
-                        <span className="text-[11px] text-slate-100 tabular-nums leading-none">{item.count}</span>
-                        <div className="w-full h-[250px] rounded-md border border-white/10 bg-slate-900/70 flex items-end overflow-hidden">
-                          <div
-                            className="w-full bg-primary/80"
-                            style={{ height: `${Math.max(item.ratio, item.count > 0 ? 2 : 0)}%` }}
-                          />
-                        </div>
-                        <span className="text-[11px] text-slate-300 font-medium leading-none">{item.number}</span>
-                      </li>
-                    ))}
-                  </ul>
+                  <div className="relative w-max">
+                    {hasAnalysisData && (
+                      <div
+                        className="pointer-events-none absolute inset-x-0"
+                        style={{ bottom: `${averageLineBottomPx}px` }}
+                      >
+                        <div className="w-full border-t-[3px] border-rose-400/90" />
+                        <span className="absolute -top-5 right-0 rounded bg-rose-500/20 px-2 py-0.5 text-[11px] font-medium text-rose-300">
+                          평균 {averageCount.toFixed(1)}회
+                        </span>
+                      </div>
+                    )}
+                    <ul className="w-max flex items-end gap-1.5 h-[320px]">
+                      {chartRows.map((item) => (
+                        <li key={item.number} className="w-8 shrink-0 flex flex-col items-center gap-2">
+                          <span className="text-[11px] text-slate-100 tabular-nums leading-none">{item.count}</span>
+                          <div className="w-full h-[250px] rounded-md border border-white/10 bg-slate-900/70 flex items-end overflow-hidden">
+                            <div
+                              className="w-full bg-primary/80"
+                              style={{ height: `${Math.max(item.ratio, item.count > 0 ? 2 : 0)}%` }}
+                            />
+                          </div>
+                          <span className="text-[11px] text-slate-300 font-medium leading-none">{item.number}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 </div>
               </>
             )}
