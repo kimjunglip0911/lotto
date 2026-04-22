@@ -108,7 +108,6 @@ export default function AccumulatedNumbersPage() {
 
     return () => {
       isMounted = false;
-      abortController.abort();
     };
   }, []);
 
@@ -201,11 +200,7 @@ export default function AccumulatedNumbersPage() {
         <Header onMenuClick={() => setIsSidebarOpen(true)} />
         <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
-        <main className="flex-1 overflow-y-auto pb-12 px-4 pt-6 space-y-6">
-          <div className="flex flex-col gap-2 mb-4">
-            <h2 className="text-3xl font-bold text-white tracking-tight">누적 번호 분석</h2>
-          </div>
-
+        <main className="flex-1 overflow-y-auto pb-12 px-4 pt-4 space-y-6">
           <section className="rounded-2xl border border-card-border/30 bg-card-bg/60 p-4 space-y-3">
             <div className="flex flex-col sm:flex-row sm:items-end gap-3">
               <label className="flex flex-col gap-2 text-sm text-slate-300 min-w-[180px]">
