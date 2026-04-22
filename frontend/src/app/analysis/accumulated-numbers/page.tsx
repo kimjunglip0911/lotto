@@ -38,7 +38,7 @@ const isWinningNumberRow = (value: unknown): value is WinningNumberRow => {
 const buildNumberCounts = (rows: WinningNumberRow[]) => {
   const counts = [...EMPTY_COUNTS];
   for (const row of rows) {
-    const winningNumbers = [row.num1, row.num2, row.num3, row.num4, row.num5, row.num6];
+    const winningNumbers = [row.num1, row.num2, row.num3, row.num4, row.num5, row.num6, row.bonus_num];
     for (const num of winningNumbers) {
       if (num >= 1 && num <= 45) {
         counts[num - 1] += 1;
@@ -253,9 +253,6 @@ export default function AccumulatedNumbersPage() {
               </p>
             ) : (
               <>
-                <p className="text-sm text-slate-300">
-                  {searchedDraw}회 이전 {analyzedDrawCount}개 회차의 당첨번호(보너스 제외)를 집계했습니다.
-                </p>
                 <div className="overflow-x-auto pb-2">
                   <div className="relative w-max">
                     {hasAnalysisData && (
