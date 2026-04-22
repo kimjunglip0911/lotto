@@ -259,6 +259,9 @@ export default function AccumulatedNumbersPage() {
         selectedWinningNumber.num6,
       ]
     : [];
+  const selectedHighlightNumbers = selectedWinningNumber
+    ? new Set([...selectedMainNumbers, selectedWinningNumber.bonus_num])
+    : null;
   const statusMessage = isLoadingDraws
     ? '회차 정보를 불러오는 중입니다.'
     : drawLoadError
@@ -374,18 +377,22 @@ export default function AccumulatedNumbersPage() {
                       </div>
                     )}
                     <ul className="w-max flex items-end gap-1.5 h-[320px]">
-                      {chartRows.map((item) => (
-                        <li key={item.number} className="w-8 shrink-0 flex flex-col items-center gap-2">
-                          <span className="text-[11px] text-slate-100 tabular-nums leading-none">{item.count}</span>
-                          <div className="w-full h-[250px] rounded-md border border-white/10 bg-slate-900/70 flex items-end overflow-hidden">
-                            <div
-                              className="w-full bg-primary/80"
-                              style={{ height: `${Math.max(item.ratio, item.count > 0 ? 2 : 0)}%` }}
-                            />
-                          </div>
-                          <span className="text-[11px] text-slate-300 font-medium leading-none">{item.number}</span>
-                        </li>
-                      ))}
+                      {chartRows.map((item) => {
+                        const isHighlighted = selectedHighlightNumbers?.has(item.number) ?? false;
+
+                        return (
+                          <li key={item.number} className="w-8 shrink-0 flex flex-col items-center gap-2">
+                            <span className="text-[11px] text-slate-100 tabular-nums leading-none">{item.count}</span>
+                            <div className="w-full h-[250px] rounded-md border border-white/10 bg-slate-900/70 flex items-end overflow-hidden">
+                              <div
+                                className={`w-full ${isHighlighted ? 'bg-rose-500/90' : 'bg-primary/80'}`}
+                                style={{ height: `${Math.max(item.ratio, item.count > 0 ? 2 : 0)}%` }}
+                              />
+                            </div>
+                            <span className="text-[11px] text-slate-300 font-medium leading-none">{item.number}</span>
+                          </li>
+                        );
+                      })}
                     </ul>
                   </div>
                 </div>
