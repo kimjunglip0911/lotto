@@ -114,71 +114,40 @@ export default function AccumulatedNumbersPage() {
     };
   }, []);
 
-  useEffect(() => {
-    let isMounted = true;
-    const abortController = new AbortController();
+  const fetchWinningNumberByDraw = async (drawNo: number) => {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+    const response = await fetch(`${apiUrl}/api/analysis/accumulated-numbers/winning-number?draw_no=${drawNo}`);
 
-    const loadSelectedWinningNumber = async () => {
-      if (!selectedDraw || isLoadingDraws || availableDraws.length === 0) {
-        setSelectedWinningNumber(null);
-        setSelectedWinningNumberError(null);
-        setIsLoadingSelectedWinningNumber(false);
-        return;
+    if (!response.ok) {
+      if (response.status === 404) {
+        throw new Error('선택한 회차의 당첨번호를 찾을 수 없습니다.');
       }
+      throw new Error(`Failed to fetch selected winning number: ${response.status}`);
+    }
 
-      const selectedDrawNo = Number(selectedDraw);
-      if (!Number.isInteger(selectedDrawNo) || selectedDrawNo < 1) {
-        setSelectedWinningNumber(null);
-        setSelectedWinningNumberError('유효한 회차를 선택해 주세요.');
-        setIsLoadingSelectedWinningNumber(false);
-        return;
-      }
+    const data: unknown = await response.json();
+    if (!isWinningNumberRow(data)) {
+      throw new Error('Selected winning number response is invalid');
+    }
 
-      setIsLoadingSelectedWinningNumber(true);
-      setSelectedWinningNumberError(null);
+    return data;
+  };
 
-      try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
-        const response = await fetch(
-          `${apiUrl}/api/analysis/accumulated-numbers/winning-number?draw_no=${selectedDrawNo}`,
-          { signal: abortController.signal }
-        );
+  const fetchWinningNumbersRange = async (drawNo: number) => {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+    const response = await fetch(`${apiUrl}/api/analysis/accumulated-numbers/winning-numbers-range?draw_no=${drawNo}`);
 
-        if (!response.ok) {
-          if (response.status === 404) {
-            throw new Error('선택한 회차의 당첨번호를 찾을 수 없습니다.');
-          }
-          throw new Error(`Failed to fetch selected winning number: ${response.status}`);
-        }
+    if (!response.ok) {
+      throw new Error(`Failed to fetch winning numbers range: ${response.status}`);
+    }
 
-        const data: unknown = await response.json();
-        if (!isWinningNumberRow(data)) {
-          throw new Error('Selected winning number response is invalid');
-        }
+    const data: unknown = await response.json();
+    if (!Array.isArray(data)) {
+      throw new Error('Winning numbers range response is not an array');
+    }
 
-        if (!isMounted) return;
-        setSelectedWinningNumber(data);
-      } catch (error) {
-        if (abortController.signal.aborted || !isMounted) {
-          return;
-        }
-        console.error('Error fetching selected winning number:', error);
-        setSelectedWinningNumber(null);
-        setSelectedWinningNumberError('선택한 회차의 당첨번호를 불러오지 못했습니다.');
-      } finally {
-        if (isMounted) {
-          setIsLoadingSelectedWinningNumber(false);
-        }
-      }
-    };
-
-    void loadSelectedWinningNumber();
-
-    return () => {
-      isMounted = false;
-      abortController.abort();
-    };
-  }, [selectedDraw, isLoadingDraws, availableDraws.length]);
+    return data.filter(isWinningNumberRow);
+  };
 
   const handleSearch = async () => {
     if (!selectedDraw) {
@@ -195,41 +164,38 @@ export default function AccumulatedNumbersPage() {
     }
 
     setIsSearching(true);
+    setIsLoadingSelectedWinningNumber(true);
     setSearchError(null);
+    setSelectedWinningNumberError(null);
     setSearchedDraw(selectedDraw);
 
-    if (selectedDrawNo === 1) {
-      setNumberCounts([...EMPTY_COUNTS]);
-      setAnalyzedDrawCount(0);
-      setIsSearching(false);
-      return;
-    }
-
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
-      const response = await fetch(
-        `${apiUrl}/api/analysis/accumulated-numbers/winning-numbers-range?draw_no=${selectedDrawNo}`
-      );
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch winning numbers range: ${response.status}`);
+      if (selectedDrawNo === 1) {
+        const winningNumber = await fetchWinningNumberByDraw(selectedDrawNo);
+        setSelectedWinningNumber(winningNumber);
+        setNumberCounts([...EMPTY_COUNTS]);
+        setAnalyzedDrawCount(0);
+        return;
       }
 
-      const data: unknown = await response.json();
-      if (!Array.isArray(data)) {
-        throw new Error('Winning numbers range response is not an array');
-      }
+      const [rows, winningNumber] = await Promise.all([
+        fetchWinningNumbersRange(selectedDrawNo),
+        fetchWinningNumberByDraw(selectedDrawNo),
+      ]);
 
-      const rows = data.filter(isWinningNumberRow);
       setNumberCounts(buildNumberCounts(rows));
       setAnalyzedDrawCount(rows.length);
+      setSelectedWinningNumber(winningNumber);
     } catch (error) {
-      console.error('Error fetching winning numbers range:', error);
-      setSearchError('누적 당첨번호 데이터를 불러오지 못했습니다.');
+      console.error('Error fetching accumulated numbers search data:', error);
+      setSearchError('조회 데이터를 불러오지 못했습니다.');
       setNumberCounts([...EMPTY_COUNTS]);
       setAnalyzedDrawCount(0);
+      setSelectedWinningNumber(null);
+      setSelectedWinningNumberError('선택한 회차의 당첨번호를 불러오지 못했습니다.');
     } finally {
       setIsSearching(false);
+      setIsLoadingSelectedWinningNumber(false);
     }
   };
 
@@ -339,7 +305,9 @@ export default function AccumulatedNumbersPage() {
                     <span className="text-xs text-amber-300 font-medium">보너스</span>
                   </div>
                 ) : (
-                  <p className="text-sm text-slate-300">회차를 선택하면 당첨번호가 표시됩니다.</p>
+                  <p className="text-sm text-slate-300">
+                    회차를 선택한 뒤 조회 버튼을 누르면 당첨번호가 표시됩니다.
+                  </p>
                 )}
               </div>
             </div>
