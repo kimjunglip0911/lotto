@@ -281,8 +281,8 @@ export default function AccumulatedNumbersPage() {
     const averageCount = analyzedCountForChart > 0 ? totalCount / counts.length : 0;
     const averageRatio = maxCount > 0 ? (averageCount / maxCount) * 100 : 0;
     const clampedAverageRatio = Math.min(100, Math.max(0, averageRatio));
-    const chartBarHeightPx = 250;
-    const chartBottomLabelOffsetPx = 20;
+    const chartBarHeightPx = 145;
+    const chartBottomLabelOffsetPx = 14;
     const averageLineBottomPx = chartBottomLabelOffsetPx + (clampedAverageRatio / 100) * chartBarHeightPx;
     const chartRows = counts.map((count, index) => ({
       number: index + 1,
@@ -291,7 +291,7 @@ export default function AccumulatedNumbersPage() {
     }));
 
     return (
-      <section className="rounded-2xl border border-card-border/30 bg-card-bg/60 p-6 space-y-4">
+      <section className="rounded-2xl border border-card-border/30 bg-card-bg/60 p-3 space-y-2.5">
         <h3 className="text-xl font-semibold text-white">{title}</h3>
         {hasSearched && selectedSearchDrawNo <= 1 ? (
           <p className="text-sm text-slate-300">1회는 이전 회차가 없어 집계할 데이터가 없습니다.</p>
@@ -304,7 +304,7 @@ export default function AccumulatedNumbersPage() {
         ) : analyzedCountForChart <= 0 ? (
           <p className="text-sm text-slate-300">{noDataMessage}</p>
         ) : (
-          <div className="overflow-x-auto pb-2">
+          <div className="overflow-x-auto pb-0.5">
             <div className="relative w-max">
               <div className="pointer-events-none absolute inset-x-0" style={{ bottom: `${averageLineBottomPx}px` }}>
                 <div className="w-full border-t-[3px] border-rose-400/90" />
@@ -312,14 +312,14 @@ export default function AccumulatedNumbersPage() {
                   평균 {averageCount.toFixed(1)}회
                 </span>
               </div>
-              <ul className="w-max flex items-end gap-1.5 h-[320px]">
+              <ul className="w-max flex items-end gap-1 h-[200px]">
                 {chartRows.map((item) => {
                   const isHighlighted = selectedHighlightNumbers?.has(item.number) ?? false;
 
                   return (
-                    <li key={`${title}-${item.number}`} className="w-8 shrink-0 flex flex-col items-center gap-2">
+                    <li key={`${title}-${item.number}`} className="w-8 shrink-0 flex flex-col items-center gap-1">
                       <span className="text-[11px] text-slate-100 tabular-nums leading-none">{item.count}</span>
-                      <div className="w-full h-[250px] rounded-md border border-white/10 bg-slate-900/70 flex items-end overflow-hidden">
+                      <div className="w-full h-[145px] rounded-md border border-white/10 bg-slate-900/70 flex items-end overflow-hidden">
                         <div
                           className={`w-full ${isHighlighted ? 'bg-rose-500/90' : 'bg-primary/80'}`}
                           style={{ height: `${Math.max(item.ratio, item.count > 0 ? 2 : 0)}%` }}
@@ -417,20 +417,18 @@ export default function AccumulatedNumbersPage() {
             '저장된 당첨번호 기준으로 집계 가능한 이전 회차 데이터가 없습니다.'
           )}
 
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-            {renderAccumulatedChart(
-              '30일 누적 출현 횟수 (이전 4회차)',
-              thirtyDayCounts,
-              thirtyDayAnalyzedDrawCount,
-              '선택 회차 기준 이전 4회차 데이터가 부족해 집계할 수 없습니다.'
-            )}
-            {renderAccumulatedChart(
-              '90일 누적 출현 횟수 (이전 12회차)',
-              ninetyDayCounts,
-              ninetyDayAnalyzedDrawCount,
-              '선택 회차 기준 이전 12회차 데이터가 부족해 집계할 수 없습니다.'
-            )}
-          </div>
+          {renderAccumulatedChart(
+            '30일 누적 출현 횟수 (이전 4회차)',
+            thirtyDayCounts,
+            thirtyDayAnalyzedDrawCount,
+            '선택 회차 기준 이전 4회차 데이터가 부족해 집계할 수 없습니다.'
+          )}
+          {renderAccumulatedChart(
+            '90일 누적 출현 횟수 (이전 12회차)',
+            ninetyDayCounts,
+            ninetyDayAnalyzedDrawCount,
+            '선택 회차 기준 이전 12회차 데이터가 부족해 집계할 수 없습니다.'
+          )}
         </main>
       </div>
     </div>
