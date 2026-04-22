@@ -32,20 +32,25 @@ lotto/
 │   ├── requirements.txt
 │   ├── README.md
 │   ├── domain/
+│   │   ├── analysis/                  # 분석 도메인 확장 자리(현재 비어 있음)
+│   │   ├── models/
+│   │   │   └── schemas.py
 │   │   ├── recommend/
 │   │   │   └── lotto_rank.py          # 당첨 등수 계산 도메인 로직
-│   │   └── models/
-│   │       └── schemas.py
 │   ├── infrastructure/
 │   │   └── persistence/
 │   │       ├── init_db.py
+│   │       ├── schema.sql
+│   │       ├── lotto.db               # 로컬 SQLite 파일
 │   │       └── README.md
 │   ├── router/
+│   │   ├── analysis/                  # 분석 API 라우터 확장 자리(현재 비어 있음)
 │   │   ├── home/
 │   │   │   └── router.py
 │   │   └── recommend/
 │   │       └── router.py
 │   └── sql/
+│       ├── analysis/                  # 분석 SQL 확장 자리(현재 비어 있음)
 │       ├── home/
 │       │   └── queries.py
 │       └── recommend/
@@ -57,11 +62,21 @@ lotto/
 │   ├── eslint.config.mjs
 │   ├── postcss.config.mjs
 │   ├── components.json
+│   ├── components.md
 │   ├── .env.local
+│   ├── next-env.d.ts
+│   ├── tsconfig.json
+│   ├── tsconfig.tsbuildinfo
 │   ├── README.md
 │   └── src/
 │       ├── app/                       # App Router 엔트리
+│       │   ├── layout.tsx
+│       │   ├── globals.css
+│       │   ├── favicon.ico
 │       │   ├── page.tsx
+│       │   ├── analysis/
+│       │   │   └── accumulated-numbers/
+│       │   │       └── page.tsx
 │       │   ├── home/
 │       │   │   ├── page.tsx
 │       │   │   └── components/
@@ -79,14 +94,21 @@ lotto/
 │       │           ├── AnalysisController.tsx
 │       │           └── AnalysisResultList.tsx
 │       ├── components/
-│       │   ├── ui/
-│       │   └── common/
-│       └── lib/                       # 공통 유틸(예: lotteryUtils)
+│       │   ├── common/
+│       │   │   ├── Header.tsx
+│       │   │   └── Sidebar.tsx
+│       │   └── ui/
+│       │       ├── LotteryBall.tsx
+│       │       └── LotteryCard.tsx
+│       └── lib/
+│           ├── utils.ts
+│           └── utils/
+│               └── lotteryUtils.ts
 │
-├── docs/
 ├── .gitignore
 ├── package.json                       # 루트 스크립트 (npm run dev)
 ├── package-lock.json
+├── pick.json
 ├── tsconfig.json
 ├── 로직.md
 ├── 작업지시.md
@@ -103,4 +125,4 @@ lotto/
 
 ---
 
-*Last Updated: 2026-04-21*
+*Last Updated: 2026-04-22*

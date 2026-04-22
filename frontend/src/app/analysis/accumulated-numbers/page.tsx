@@ -1,14 +1,68 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Header } from '@/components/common/Header';
 import { Sidebar } from '@/components/common/Sidebar';
 
 export default function AccumulatedNumbersPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const availableDraws = Array.from({ length: 20 }, (_, index) => 1180 - index);
-  const [selectedDraw, setSelectedDraw] = useState<string>(String(availableDraws[0] ?? ''));
+  const [availableDraws, setAvailableDraws] = useState<number[]>([]);
+  const [selectedDraw, setSelectedDraw] = useState<string>('');
   const [searchedDraw, setSearchedDraw] = useState<string>('');
+  const [isLoadingDraws, setIsLoadingDraws] = useState(true);
+  const [drawLoadError, setDrawLoadError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    const abortController = new AbortController();
+
+    const loadDrawNumbers = async () => {
+      setIsLoadingDraws(true);
+      setDrawLoadError(null);
+
+      try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+        const response = await fetch(`${apiUrl}/api/drawings/draw-numbers`, {
+          signal: abortController.signal,
+        });
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch draw numbers: ${response.status}`);
+        }
+
+        const data: unknown = await response.json();
+        if (!Array.isArray(data)) {
+          throw new Error('Draw numbers response is not an array');
+        }
+
+        const draws = data.filter((item): item is number => typeof item === 'number');
+        if (!isMounted) return;
+
+        setAvailableDraws(draws);
+        setSelectedDraw((prev) => (prev || draws.length === 0 ? prev : String(draws[0])));
+      } catch (error) {
+        if (abortController.signal.aborted || !isMounted) {
+          return;
+        }
+
+        console.error('Error fetching draw numbers:', error);
+        setAvailableDraws([]);
+        setSelectedDraw('');
+        setDrawLoadError('회차 정보를 불러오지 못했습니다.');
+      } finally {
+        if (isMounted) {
+          setIsLoadingDraws(false);
+        }
+      }
+    };
+
+    void loadDrawNumbers();
+
+    return () => {
+      isMounted = false;
+      abortController.abort();
+    };
+  }, []);
 
   const handleSearch = () => {
     if (!selectedDraw) {
@@ -36,8 +90,11 @@ export default function AccumulatedNumbersPage() {
                 <select
                   value={selectedDraw}
                   onChange={(e) => setSelectedDraw(e.target.value)}
+                  disabled={isLoadingDraws || availableDraws.length === 0}
                   className="bg-slate-900 border border-white/20 rounded-xl px-4 py-2.5 text-white font-semibold focus:border-primary outline-none transition-all cursor-pointer shadow-inner"
                 >
+                  {isLoadingDraws && <option value="">회차 정보를 불러오는 중...</option>}
+                  {!isLoadingDraws && availableDraws.length === 0 && <option value="">조회 가능한 회차 없음</option>}
                   {availableDraws.map((drawNo) => (
                     <option key={drawNo} value={drawNo}>
                       {drawNo}회
@@ -48,9 +105,9 @@ export default function AccumulatedNumbersPage() {
               <button
                 type="button"
                 onClick={handleSearch}
-                disabled={!selectedDraw}
+                disabled={!selectedDraw || isLoadingDraws || availableDraws.length === 0}
                 className={`h-[44px] px-5 rounded-xl font-semibold text-sm transition-all ${
-                  selectedDraw
+                  selectedDraw && !isLoadingDraws && availableDraws.length > 0
                     ? 'bg-primary/20 text-primary border border-primary/40 hover:bg-primary/30 hover:border-primary/60 cursor-pointer'
                     : 'bg-white/5 text-white/30 border border-white/10 cursor-not-allowed'
                 }`}
@@ -60,9 +117,15 @@ export default function AccumulatedNumbersPage() {
             </div>
 
             <p className="text-slate-300 text-sm leading-relaxed">
-              {searchedDraw
-                ? `${searchedDraw}회 기준 누적 번호 분석 조회를 준비 중입니다. 다음 단계에서 결과 데이터가 연결됩니다.`
-                : '회차를 선택한 뒤 조회 버튼을 누르면 해당 회차 기준 분석을 시작합니다.'}
+              {isLoadingDraws
+                ? '회차 정보를 불러오는 중입니다.'
+                : drawLoadError
+                  ? `${drawLoadError} 잠시 후 다시 시도해 주세요.`
+                  : availableDraws.length === 0
+                    ? '조회 가능한 회차 정보가 없습니다.'
+                    : searchedDraw
+                      ? `${searchedDraw}회 기준 누적 번호 분석 조회를 준비 중입니다. 다음 단계에서 결과 데이터가 연결됩니다.`
+                      : '회차를 선택한 뒤 조회 버튼을 누르면 해당 회차 기준 분석을 시작합니다.'}
             </p>
           </section>
         </main>

@@ -9,7 +9,25 @@ alwaysApply: true
 
 ---
 
-## 1. 핵심 기술 스택과 준수
+## 1. `.cursor/rules` 주제별 로딩 매핑
+
+- 에이전트는 작업을 시작하거나 사용자 요청을 해석할 때, 아래 주제 매핑에 따라 해당 규칙 파일을 **반드시 우선 로딩**한다.
+- 여러 주제가 동시에 해당되면 관련 규칙을 **모두 로딩**하고, 충돌 시 §7의 우선순위를 따른다.
+- 명시되지 않은 일반 구현/수정 작업은 본 파일(`.cursor/rules/rules.mdc`)을 기본 헌법으로 적용한다.
+
+| 작업 주제 | 우선 로딩 규칙 파일 | 적용 기준 |
+|:---|:---|:---|
+| 플랜 문서 작성/수정 | `.cursor/rules/01.plan-document-form.mdc` | Cursor Plan 본문 또는 `.cursor/plans/**/*.md`의 구조(목차/표/섹션) 변경 |
+| 커밋 수행/메시지 작성 | `.cursor/rules/git-commit-guide.mdc` | `git add/commit` 포함 스테이징 판단, 커밋 메시지 생성/수정 |
+| 컴포넌트 개발/리팩토링 | `.cursor/rules/components.mdc` | `frontend/src/components/**` 변경, UI 컴포넌트 설계/분리/구조화 |
+| 구조/경로 탐색 및 파일 배치 | `.cursor/rules/project-structure.mdc` | 새 파일 생성 위치 결정, 디렉터리 구조 준수 필요 시 |
+| 리팩토링 원칙 적용 | `.cursor/rules/refactoring-guide.mdc` | 동작 보존 전제의 구조 개선, 복잡도 감소, 책임 분리 |
+| 버그 재발 방지 기록 | `.cursor/rules/bug-lessons.mdc` | 수정 완료 후 재발 방지 규칙/사례를 표에 누적 |
+| 스킬 선택/호출 기준 확인 | `.cursor/rules/skill-list.mdc` | 작업 성격에 맞는 스킬 탐색 또는 스킬 적용 여부 판단 |
+
+---
+
+## 2. 핵심 기술 스택과 준수
 
 **버전/의존성 정본**(단일 출처): 루트 `package-lock.json`, 루트 `package.json`, `frontend/package.json`, `backend/requirements.txt`. 의존성을 바꾸면 이 파일들과 린트·빌드·관련 `README`를 함께 맞춘다.
 
@@ -19,7 +37,7 @@ alwaysApply: true
 
 ---
 
-## 2. 언어·문서·코드 표기
+## 3. 언어·문서·코드 표기
 
 - **플랜·구현 계획**(Cursor Plan 본문, `.cursor/plans/**/*.md`)을 새로 쓰거나 목차·표 구조를 바꿀 때: **`.cursor/rules/01.plan-document-form.mdc`를 먼저 확인**하고 해당 템플릿의 `## 1.`~`## 6.` 제목·순서·구분선·표 열을 그대로 따른다.
 - **커밋 작업**(`git commit`, 커밋 메시지 작성/수정, 스테이징 판단 포함)을 수행할 때: **`.cursor/rules/git-commit-guide.mdc`를 반드시 먼저 확인하고 그 규칙을 따른다.**
@@ -29,7 +47,7 @@ alwaysApply: true
 
 ---
 
-## 3. 실행 주소·포트
+## 4. 실행 주소·포트
 
 | 구분 | 값 |
 |:---|:---|
@@ -40,7 +58,7 @@ alwaysApply: true
 
 ---
 
-## 4. 네트워크(서버 vs 사용자)
+## 5. 네트워크(서버 vs 사용자)
 
 - 개발 PC와 운영 서버(호스트)는 외부 인터넷 접근 가능 환경을 전제로 한다(`npm install`, `pip install`, 보안 패치, 아티팩트 수신 등).
 - 사용자 런타임(브라우저) 기준에서는 배포 안정성·보안·성능을 위해 CDN·외부 URL의 JS/CSS/폰트/이미지 직접 로드를 기본적으로 피하고, 필요한 자산은 레포 의존성으로 관리하거나 자체 호스팅을 우선한다.
@@ -48,7 +66,7 @@ alwaysApply: true
 
 ---
 
-## 5. Python 패키지 정책 (`__pycache__`, `__init__.py`)
+## 6. Python 패키지 정책 (`__pycache__`, `__init__.py`)
 
 - 이 저장소는 **PEP 420 네임스페이스 패키지 정책**을 사용하므로 `__init__.py`를 생성하지 않는다.
 - Python 실행은 바이트코드 생성을 막는 방식을 유지한다(예: `python -B ...`, `sys.dont_write_bytecode = True`).
@@ -57,8 +75,9 @@ alwaysApply: true
 
 ---
 
-## 6. README 및 규칙 우선순위
+## 7. README 및 규칙 우선순위
 
 - 코드나 동작을 바꾼 경우, 해당 기능 모듈의 `README.md`를 최신 상태로 유지한다(목적, 실행 방법, 환경 변수, 주의사항).
 - 버그·재발 방지 요약은 `.cursor/rules/bug-lessons.mdc` 한 파일(하단 표)에만 기록한다.
-- 본 헌법(§1~§6)과 다른 규칙이 충돌하면 **본 헌법을 우선**한다.
+- 본 헌법(§1~§7)과 다른 규칙이 충돌하면 **본 헌법을 우선**한다.
+- 단, **플랜 문서 양식**(Cursor Plan 본문, `.cursor/plans/**/*.md`)에 한해서는 `.cursor/rules/01.plan-document-form.mdc`를 **어떠한 규칙보다도 최우선**으로 적용한다.
