@@ -213,6 +213,28 @@ def generate_wheel_drawings(
         raise HTTPException(status_code=500, detail=str(e))
 
 
+def _replace_excluded_in_rows(rows: List[dict], excluded_set: set) -> List[dict]:
+    """제외 번호가 포함된 세트를 남은 번호 풀에서 무작위 재추출로 교체한다."""
+    if not excluded_set:
+        return rows
+    available_pool = [n for n in range(1, 46) if n not in excluded_set]
+    if len(available_pool) < 6:
+        return rows
+    result = []
+    for row in rows:
+        nums = {int(row["num1"]), int(row["num2"]), int(row["num3"]),
+                int(row["num4"]), int(row["num5"]), int(row["num6"])}
+        if nums & excluded_set:
+            new_nums = sorted(random.sample(available_pool, 6))
+            result.append({
+                "num1": new_nums[0], "num2": new_nums[1], "num3": new_nums[2],
+                "num4": new_nums[3], "num5": new_nums[4], "num6": new_nums[5],
+            })
+        else:
+            result.append(row)
+    return result
+
+
 @router.post("/api/recommend/generate-and-save", response_model=List[dict])
 def generate_and_save_drawings(request: GenerateSaveRequest):
     try:
@@ -220,7 +242,11 @@ def generate_and_save_drawings(request: GenerateSaveRequest):
         draw_no = int(request.draw_no)
         applied_rule_ids = request.applied_rule_ids or []
         excluded_numbers = sorted(set(request.excluded_numbers or []))
-        rows = generate_jl_wheel_sets(draw_no, count=20, start_index=0)
+        excluded_set = set(excluded_numbers)
+        rows = _replace_excluded_in_rows(
+            generate_jl_wheel_sets(draw_no, count=20, start_index=0),
+            excluded_set,
+        )
         conn = get_connection()
         cursor = conn.cursor()
         cursor.execute(queries.DELETE_DRAWINGS_BY_NO_AND_METHOD, (draw_no, METHOD_JL_SAVED))
@@ -258,6 +284,23 @@ def generate_and_save_drawings(request: GenerateSaveRequest):
         conn.commit()
         conn.close()
         return out
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/api/recommend/drawings", response_model=List[dict])
+def get_drawings(
+    draw_no: int = Query(..., ge=1, description="조회할 회차"),
+):
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute(queries.GET_DRAWINGS_BY_DRAW_NO_AND_METHOD, (draw_no, METHOD_JL_SAVED))
+        rows = cursor.fetchall()
+        conn.close()
+        return [dict(row) for row in rows]
     except HTTPException:
         raise
     except Exception as e:

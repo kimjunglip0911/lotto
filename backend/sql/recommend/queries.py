@@ -3,6 +3,13 @@ DELETE FROM lotto_drawings
 WHERE draw_no = ? AND method = ?
 """.strip()
 
+GET_DRAWINGS_BY_DRAW_NO_AND_METHOD = """
+SELECT num1, num2, num3, num4, num5, num6, method
+FROM lotto_drawings
+WHERE draw_no = ? AND method = ?
+ORDER BY rowid ASC
+""".strip()
+
 GET_MAX_WINNER_DRAW_NO = """
 SELECT MAX(draw_no)
 FROM lotto_winners

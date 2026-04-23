@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Header } from '@/components/common/Header';
 import { Sidebar } from '@/components/common/Sidebar';
 import { AnalysisController } from '@/app/recommend/components/AnalysisController';
@@ -62,11 +62,132 @@ export default function RecommendPage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>('생성 및 저장 실행 버튼을 누르면 추천 로직을 적용합니다.');
   const [error, setError] = useState<string | null>(null);
-  const [targetDrawNo, setTargetDrawNo] = useState<number | null>(null);
   const [pipelineResult, setPipelineResult] = useState<RecommendPipelineResult | null>(null);
   const [generatedSets, setGeneratedSets] = useState<GeneratedSet[]>([]);
 
+  const [availableDraws, setAvailableDraws] = useState<number[]>([]);
+  const [selectedDraw, setSelectedDraw] = useState<number | null>(null);
+  const [isLoadingDraws, setIsLoadingDraws] = useState(true);
+  const [drawLoadError, setDrawLoadError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadDrawNumbers = async () => {
+      setIsLoadingDraws(true);
+      setDrawLoadError(null);
+
+      try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+        const response = await fetch(`${apiUrl}/api/analysis/accumulated-numbers/draw-numbers`);
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch draw numbers: ${response.status}`);
+        }
+
+        const data: unknown = await response.json();
+        if (!Array.isArray(data)) {
+          throw new Error('Draw numbers response is not an array');
+        }
+
+        const draws = data.filter((item): item is number => typeof item === 'number');
+        if (!isMounted) return;
+
+        const nextDraw = draws.length > 0 ? draws[0] + 1 : 1;
+        setAvailableDraws([nextDraw, ...draws]);
+        setSelectedDraw(nextDraw);
+      } catch (err) {
+        if (!isMounted) return;
+        console.error('Error fetching draw numbers:', err);
+        setAvailableDraws([]);
+        setDrawLoadError('회차 정보를 불러오지 못했습니다.');
+      } finally {
+        if (isMounted) {
+          setIsLoadingDraws(false);
+        }
+      }
+    };
+
+    void loadDrawNumbers();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!selectedDraw || isLoadingDraws) return;
+
+    let isMounted = true;
+
+    const loadSavedSets = async () => {
+      setPipelineResult(null);
+      setGeneratedSets([]);
+      setError(null);
+      setStatusMessage(`${selectedDraw}회차 저장된 추천 세트를 불러오는 중입니다...`);
+
+      try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+
+        const [drawingsResponse, exclusionResponse] = await Promise.all([
+          fetch(`${apiUrl}/api/recommend/drawings?draw_no=${selectedDraw}`),
+          fetch(`${apiUrl}/api/recommend/exclusion-candidates?draw_no=${selectedDraw}`),
+        ]);
+
+        if (!drawingsResponse.ok) {
+          throw new Error(`Failed to fetch drawings: ${drawingsResponse.status}`);
+        }
+        if (!exclusionResponse.ok) {
+          throw new Error(`Failed to fetch exclusion candidates: ${exclusionResponse.status}`);
+        }
+
+        const [drawingsData, exclusionData]: [unknown, unknown] = await Promise.all([
+          drawingsResponse.json(),
+          exclusionResponse.json(),
+        ]);
+
+        if (!Array.isArray(drawingsData)) {
+          throw new Error('Drawings response is not an array');
+        }
+        if (!isExclusionCandidatesResponse(exclusionData)) {
+          throw new Error('Exclusion candidates response is invalid');
+        }
+
+        const sets = drawingsData.filter(isGeneratedSet);
+        const pipeline = runRecommendPipeline(
+          { exclusionCandidates: exclusionData },
+          [excludeTopRankFromWindowsRule]
+        );
+
+        if (!isMounted) return;
+
+        setGeneratedSets(sets);
+        setPipelineResult(pipeline);
+
+        if (sets.length > 0) {
+          setStatusMessage(`${selectedDraw}회차 기준 저장된 ${sets.length}개 추천 세트를 불러왔습니다.`);
+        } else {
+          setStatusMessage(`${selectedDraw}회차 기준 저장된 추천 세트가 없습니다. 생성 및 저장 실행 버튼을 눌러 생성하세요.`);
+        }
+      } catch (err) {
+        if (!isMounted) return;
+        setGeneratedSets([]);
+        setPipelineResult(null);
+        setStatusMessage(`${selectedDraw}회차 세트 조회 중 오류가 발생했습니다.`);
+        console.error('Error fetching saved drawings:', err);
+      }
+    };
+
+    void loadSavedSets();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [selectedDraw, isLoadingDraws]);
+
   const handleGenerateAndSave = async () => {
+    if (!selectedDraw) return;
+
     setIsGenerating(true);
     setError(null);
     setStatusMessage('분석 기반 제외 후보를 조회하는 중입니다...');
@@ -74,7 +195,7 @@ export default function RecommendPage() {
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
 
-      const exclusionResponse = await fetch(`${apiUrl}/api/recommend/exclusion-candidates`);
+      const exclusionResponse = await fetch(`${apiUrl}/api/recommend/exclusion-candidates?draw_no=${selectedDraw}`);
       if (!exclusionResponse.ok) {
         throw new Error(`Failed to fetch exclusion candidates: ${exclusionResponse.status}`);
       }
@@ -89,7 +210,6 @@ export default function RecommendPage() {
         [excludeTopRankFromWindowsRule]
       );
       setPipelineResult(nextPipelineResult);
-      setTargetDrawNo(exclusionData.drawNo);
 
       setStatusMessage('추천 번호를 생성하고 저장하는 중입니다...');
       const generateResponse = await fetch(`${apiUrl}/api/recommend/generate-and-save`, {
@@ -117,7 +237,6 @@ export default function RecommendPage() {
       setError(msg);
       setPipelineResult(null);
       setGeneratedSets([]);
-      setTargetDrawNo(null);
       setStatusMessage(null);
     } finally {
       setIsGenerating(false);
@@ -130,19 +249,19 @@ export default function RecommendPage() {
         <Header onMenuClick={() => setIsSidebarOpen(true)} />
         <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
         <main className="flex-1 overflow-y-auto pb-12 px-4 pt-6 space-y-6">
-          <div className="flex flex-col gap-2 mb-4">
-            <h2 className="text-3xl font-bold text-white tracking-tight">로또 번호 추천</h2>
-            <p className="text-slate-400 text-sm">제외 로직 파이프라인을 적용해 추천 번호를 생성하고 저장합니다.</p>
-          </div>
           <AnalysisController
             onGenerateAndSave={handleGenerateAndSave}
             isGenerating={isGenerating}
-            targetDrawNo={targetDrawNo}
+            availableDraws={availableDraws}
+            selectedDraw={selectedDraw}
+            onDrawChange={setSelectedDraw}
+            isLoadingDraws={isLoadingDraws}
           />
+          {drawLoadError ? <div className="text-red-400 py-4 text-center border border-red-900/50 rounded-lg bg-red-950/20 mt-4">회차 로드 오류: {drawLoadError}</div> : null}
           {error ? <div className="text-red-400 py-4 text-center border border-red-900/50 rounded-lg bg-red-950/20 mt-4">데이터 통신 오류: {error}</div> : null}
           <AnalysisResultList
             statusMessage={statusMessage}
-            targetDrawNo={targetDrawNo}
+            targetDrawNo={selectedDraw}
             appliedRules={pipelineResult?.appliedRules ?? []}
             excludedNumbers={pipelineResult?.excludedNumbers ?? []}
             sets={generatedSets}
