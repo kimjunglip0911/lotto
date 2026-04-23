@@ -6,7 +6,6 @@ import { Sidebar } from '@/components/common/Sidebar';
 import { AnalysisController } from '@/app/recommend/components/AnalysisController';
 import { AnalysisResultList } from '@/app/recommend/components/AnalysisResultList';
 import { runRecommendPipeline } from '@/app/recommend/logic/pipeline';
-import { excludeLeastFrequentOverallRule } from '@/app/recommend/logic/rules/excludeLeastFrequentOverall';
 import { excludeTopRankFromWindowsRule } from '@/app/recommend/logic/rules/excludeTopRankFromWindows';
 import { ExclusionCandidatesResponse, GeneratedSet, RecommendPipelineResult } from '@/app/recommend/logic/types';
 
@@ -87,7 +86,7 @@ export default function RecommendPage() {
 
       const nextPipelineResult = runRecommendPipeline(
         { exclusionCandidates: exclusionData },
-        [excludeLeastFrequentOverallRule, excludeTopRankFromWindowsRule]
+        [excludeTopRankFromWindowsRule]
       );
       setPipelineResult(nextPipelineResult);
       setTargetDrawNo(exclusionData.drawNo);
