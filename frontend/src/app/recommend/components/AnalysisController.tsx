@@ -5,17 +5,22 @@ import React from 'react';
 interface AnalysisControllerProps {
   onGenerateAndSave: () => void;
   isGenerating: boolean;
+  targetDrawNo?: number | null;
 }
 
 export function AnalysisController({
   onGenerateAndSave,
   isGenerating,
+  targetDrawNo,
 }: AnalysisControllerProps) {
   return (
     <div className="bg-card/40 border border-card-border/50 rounded-2xl p-6 backdrop-blur-sm shadow-xl flex flex-col sm:flex-row items-center justify-between gap-4 mt-8">
       <div className="flex flex-col gap-1">
-        <h3 className="text-lg font-semibold text-white">신규 생성 로직 연결 준비</h3>
-        <p className="text-sm text-slate-400">기존 분석/조회 로직은 제거되었으며, 아래 버튼은 신규 생성 및 저장 흐름 연결용 진입점입니다.</p>
+        <h3 className="text-lg font-semibold text-white">추천 생성 및 저장 실행</h3>
+        <p className="text-sm text-slate-400">
+          누적 최저 출현 번호 제외 + 기간별 1등 번호 집합 제외 규칙을 순차 적용합니다.
+          {targetDrawNo ? ` (기준 회차: ${targetDrawNo}회)` : ''}
+        </p>
       </div>
 
       <div className="w-full sm:w-auto">
@@ -30,7 +35,7 @@ export function AnalysisController({
           ) : (
             <span className="material-symbols-outlined text-[22px] text-yellow-300">auto_awesome</span>
           )}
-          {isGenerating ? '생성 및 저장 연결 처리 중...' : '생성 및 저장 실행'}
+          {isGenerating ? '생성 및 저장 처리 중...' : '생성 및 저장 실행'}
         </button>
       </div>
     </div>

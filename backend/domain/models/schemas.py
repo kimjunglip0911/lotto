@@ -1,3 +1,5 @@
+from typing import List, Optional
+
 from pydantic import BaseModel, Field
 
 
@@ -7,6 +9,8 @@ class MessageResponse(BaseModel):
 
 class GenerateSaveRequest(BaseModel):
     draw_no: int
+    applied_rule_ids: Optional[List[str]] = None
+    excluded_numbers: Optional[List[int]] = None
 
 
 class SaveWinningRequest(BaseModel):

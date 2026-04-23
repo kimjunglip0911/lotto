@@ -49,6 +49,9 @@ npm run check:no-init
 - 로또 당첨 정보 조회/저장/수정/삭제
 - 추첨 세트 조회/추천/저장
 - 추천·생성 API: JL 휠(`GET /api/recommend/generate/wheel`), JL 휠 저장(`POST /api/recommend/generate-and-save`)
+- 추천 제외 후보 API: `GET /api/recommend/exclusion-candidates` (전체/기간별 번호 빈도 기반 제외 후보 계산)
+- `POST /api/recommend/generate-and-save` 요청 본문은 `draw_no` 외에 `applied_rule_ids`, `excluded_numbers`를 선택적으로 받을 수 있습니다.
+- `features` 기반 JL 서비스가 없는 환경에서는 추천 생성 API가 fallback 랜덤 생성 로직으로 동작합니다.
 - JL 휠 관련 로직은 `features/analysis/api/jl_service/`에서 확인할 수 있습니다.
 
 ## 기술 스택
