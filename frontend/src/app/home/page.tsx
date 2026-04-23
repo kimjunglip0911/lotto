@@ -1,30 +1,12 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Header } from '@/components/common/Header';
 import { Sidebar } from '@/components/common/Sidebar';
 import { LotteryGrid } from '@/app/home/components/LotteryGrid';
 
 export default function HomePage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-
-  // #region agent log
-  useEffect(() => {
-    fetch('http://127.0.0.1:7362/ingest/abffb62d-8118-4522-ba11-17c2ce3f222c', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '3e606a' },
-      body: JSON.stringify({
-        sessionId: '3e606a',
-        runId: 'ts-diagnostic-investigation',
-        hypothesisId: 'H1',
-        location: 'src/app/home/page.tsx:11',
-        message: 'Home page mounted from current app route tree',
-        data: { route: '/', routeFile: 'src/app/home/page.tsx' },
-        timestamp: Date.now(),
-      }),
-    }).catch(() => {});
-  }, []);
-  // #endregion
 
   return (
     <div className="bg-background min-h-screen flex justify-center w-full overflow-x-hidden">
