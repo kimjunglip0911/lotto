@@ -62,44 +62,39 @@ function isChiSquareHistoryRow(value: unknown): value is ChiSquareHistoryRow {
 }
 
 const TOTAL_NUMBERS = 45;
-const TREND_WINDOW_SIZES = [4, 8, 16, 64] as const;
+const K_CONFIG = { fast: 0.05, slow: 0.02 } as const;
+// 기댓값: 주번호 6개 / 45개 번호 (보너스 제외)
+const TREND_BASELINE = 6 / 45;
 
 type WinningRow = { num1: number; num2: number; num3: number; num4: number; num5: number; num6: number; bonus_num: number };
 
-function buildEmaRate(rows: WinningRow[], numberIndex: number, windowSize: number): number {
+function buildFixedKEma(rows: WinningRow[], num: number, k: number): number {
   if (rows.length === 0) return 0;
-  const k = Math.min(2 / (windowSize + 1), 1);
   let ema = 0;
   for (const row of rows) {
     const nums = [row.num1, row.num2, row.num3, row.num4, row.num5, row.num6, row.bonus_num];
-    const signal = nums.includes(numberIndex + 1) ? 1 : 0;
+    const signal = nums.includes(num) ? 1 : 0;
     ema = signal * k + ema * (1 - k);
   }
   return ema;
 }
 
-function buildTrendResults(windowDataMap: Map<number, WinningRow[]>): TrendNumberResult[] {
+function buildTrendResults(allRows: WinningRow[]): TrendNumberResult[] {
   return Array.from({ length: TOTAL_NUMBERS }, (_, i) => {
-    const rows4  = windowDataMap.get(4)  ?? [];
-    const rows8  = windowDataMap.get(8)  ?? [];
-    const rows16 = windowDataMap.get(16) ?? [];
-    const rows64 = windowDataMap.get(64) ?? [];
+    const num = i + 1;
+    const emaFast = buildFixedKEma(allRows, num, K_CONFIG.fast);
+    const emaSlow = buildFixedKEma(allRows, num, K_CONFIG.slow);
 
-    const ema4  = buildEmaRate(rows4,  i, 4);
-    const ema8  = buildEmaRate(rows8,  i, 8);
-    const ema16 = buildEmaRate(rows16, i, 16);
-    const ema64 = buildEmaRate(rows64, i, 64);
+    const shortTermUp = emaFast > emaSlow;
+    const longTermUp  = emaSlow > TREND_BASELINE;
 
     const trend: TrendNumberResult['trend'] =
-      ema4 === 0 && ema8 === 0
-        ? 'hold'
-        : ema8 >= ema64 || ema16 >= ema64
-          ? 'up'
-          : ema8 < ema64 && ema16 < ema64
-            ? 'down'
-            : 'neutral';
+      shortTermUp && longTermUp   ? 'up_cont'    :
+      !shortTermUp && longTermUp  ? 'topping'    :
+      shortTermUp && !longTermUp  ? 'recovering' :
+                                    'down_cont';
 
-    return { number: i + 1, trend };
+    return { number: num, trend };
   });
 }
 
@@ -206,17 +201,13 @@ export default function RecommendPage() {
       try {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
 
-        const trendFetches = TREND_WINDOW_SIZES.map((ws) =>
-          fetch(`${apiUrl}/api/analysis/trend/winning-numbers-window?draw_no=${selectedDraw}&window_size=${ws}`),
-        );
-
-        const [drawingsResponse, exclusionResponse, chiSquareRangeResponse, absenceStreakRangeResponse, winningNumberResponse, ...trendResponses] = await Promise.all([
+        const [drawingsResponse, exclusionResponse, chiSquareRangeResponse, absenceStreakRangeResponse, winningNumberResponse, allHistoryResponse] = await Promise.all([
           fetch(`${apiUrl}/api/recommend/drawings?draw_no=${selectedDraw}`),
           fetch(`${apiUrl}/api/recommend/exclusion-candidates?draw_no=${selectedDraw}`),
           fetch(`${apiUrl}/api/analysis/chi-square/winning-numbers-range?draw_no=${selectedDraw}`),
           fetch(`${apiUrl}/api/analysis/absence-streak/winning-numbers-range?draw_no=${selectedDraw}`),
           fetch(`${apiUrl}/api/analysis/accumulated-numbers/winning-number?draw_no=${selectedDraw}`),
-          ...trendFetches,
+          fetch(`${apiUrl}/api/analysis/trend/all-history?draw_no=${selectedDraw}`),
         ]);
 
         if (!drawingsResponse.ok) {
@@ -226,13 +217,13 @@ export default function RecommendPage() {
           throw new Error(`Failed to fetch exclusion candidates: ${exclusionResponse.status}`);
         }
 
-        const [drawingsData, exclusionData, chiSquareRangeData, absenceStreakRangeData, winningNumberData, ...trendDataList]: [unknown, unknown, unknown, unknown, unknown, ...unknown[]] = await Promise.all([
+        const [drawingsData, exclusionData, chiSquareRangeData, absenceStreakRangeData, winningNumberData, allHistoryData]: [unknown, unknown, unknown, unknown, unknown, unknown] = await Promise.all([
           drawingsResponse.json(),
           exclusionResponse.json(),
           chiSquareRangeResponse.ok ? chiSquareRangeResponse.json() : Promise.resolve([]),
           absenceStreakRangeResponse.ok ? absenceStreakRangeResponse.json() : Promise.resolve([]),
           winningNumberResponse.ok ? winningNumberResponse.json() : Promise.resolve(null),
-          ...trendResponses.map((r) => (r.ok ? r.json() : Promise.resolve([]))),
+          allHistoryResponse.ok ? allHistoryResponse.json() : Promise.resolve([]),
         ]);
 
         if (!Array.isArray(drawingsData)) {
@@ -250,13 +241,10 @@ export default function RecommendPage() {
           ? absenceStreakRangeData.filter(isChiSquareHistoryRow)
           : [];
 
-        const windowDataMap = new Map(
-          TREND_WINDOW_SIZES.map((ws, idx) => [
-            ws,
-            Array.isArray(trendDataList[idx]) ? (trendDataList[idx] as unknown[]).filter(isWinningRow) : [],
-          ]),
-        );
-        const trendResults = buildTrendResults(windowDataMap);
+        const allHistoryRows = Array.isArray(allHistoryData)
+          ? (allHistoryData as unknown[]).filter(isWinningRow)
+          : [];
+        const trendResults = buildTrendResults(allHistoryRows);
 
         const sets = drawingsData.filter(isGeneratedSet);
         const pipeline = runRecommendPipeline(
@@ -305,25 +293,21 @@ export default function RecommendPage() {
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
 
-      const trendFetches = TREND_WINDOW_SIZES.map((ws) =>
-        fetch(`${apiUrl}/api/analysis/trend/winning-numbers-window?draw_no=${selectedDraw}&window_size=${ws}`),
-      );
-
-      const [exclusionResponse, chiSquareRangeResponse, absenceStreakRangeResponse, ...trendResponses] = await Promise.all([
+      const [exclusionResponse, chiSquareRangeResponse, absenceStreakRangeResponse, allHistoryResponse] = await Promise.all([
         fetch(`${apiUrl}/api/recommend/exclusion-candidates?draw_no=${selectedDraw}`),
         fetch(`${apiUrl}/api/analysis/chi-square/winning-numbers-range?draw_no=${selectedDraw}`),
         fetch(`${apiUrl}/api/analysis/absence-streak/winning-numbers-range?draw_no=${selectedDraw}`),
-        ...trendFetches,
+        fetch(`${apiUrl}/api/analysis/trend/all-history?draw_no=${selectedDraw}`),
       ]);
       if (!exclusionResponse.ok) {
         throw new Error(`Failed to fetch exclusion candidates: ${exclusionResponse.status}`);
       }
 
-      const [exclusionData, chiSquareRangeData, absenceStreakRangeData, ...trendDataList]: [unknown, unknown, unknown, ...unknown[]] = await Promise.all([
+      const [exclusionData, chiSquareRangeData, absenceStreakRangeData, allHistoryData]: [unknown, unknown, unknown, unknown] = await Promise.all([
         exclusionResponse.json(),
         chiSquareRangeResponse.ok ? chiSquareRangeResponse.json() : Promise.resolve([]),
         absenceStreakRangeResponse.ok ? absenceStreakRangeResponse.json() : Promise.resolve([]),
-        ...trendResponses.map((r) => (r.ok ? r.json() : Promise.resolve([]))),
+        allHistoryResponse.ok ? allHistoryResponse.json() : Promise.resolve([]),
       ]);
       if (!isExclusionCandidatesResponse(exclusionData)) {
         throw new Error('Exclusion candidates response is invalid');
@@ -337,13 +321,10 @@ export default function RecommendPage() {
         ? absenceStreakRangeData.filter(isChiSquareHistoryRow)
         : [];
 
-      const windowDataMap = new Map(
-        TREND_WINDOW_SIZES.map((ws, idx) => [
-          ws,
-          Array.isArray(trendDataList[idx]) ? (trendDataList[idx] as unknown[]).filter(isWinningRow) : [],
-        ]),
-      );
-      const trendResults = buildTrendResults(windowDataMap);
+      const allHistoryRows = Array.isArray(allHistoryData)
+        ? (allHistoryData as unknown[]).filter(isWinningRow)
+        : [];
+      const trendResults = buildTrendResults(allHistoryRows);
 
       const nextPipelineResult = runRecommendPipeline(
         { exclusionCandidates: exclusionData, chiSquareRows, trendResults, absenceStreakRows },

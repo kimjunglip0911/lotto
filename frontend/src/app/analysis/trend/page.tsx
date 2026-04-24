@@ -15,32 +15,30 @@ type WinningNumberRow = {
   bonus_num: number;
 };
 
-type MaWindowData = {
-  windowSize: number;
-  label: string;
-  color: string;
-  rows: WinningNumberRow[];
-};
+// 4국면: 상승지속 / 하락전환 / 회복중 / 하락지속
+type TrendPhase = 'up_cont' | 'topping' | 'recovering' | 'down_cont';
 
 type NumberTrendResult = {
   number: number;
-  rates: Record<number, number>;
-  trend: 'down' | 'up' | 'hold' | 'neutral';
+  emaFast: number;
+  emaSlow: number;
+  phase: TrendPhase;
 };
 
-const MA_WINDOWS = [
-  { windowSize: 4,   label: 'EMA4',   color: '#f87171' },
-  { windowSize: 8,   label: 'EMA8',   color: '#facc15' },
-  { windowSize: 16,  label: 'EMA16',  color: '#4ade80' },
-  { windowSize: 32,  label: 'EMA32',  color: '#38bdf8' },
-  { windowSize: 64,  label: 'EMA64',  color: '#60a5fa' },
-  { windowSize: 128, label: 'EMA128', color: '#fb923c' },
-  { windowSize: 256, label: 'EMA256', color: '#c084fc' },
-  { windowSize: 512, label: 'EMA512', color: '#94a3b8' },
-] as const;
+// 고정 k EMA 설정
+const K_CONFIG = { fast: 0.05, slow: 0.02 } as const;
+
+// 기댓값: 주번호 6개 / 45개 번호 (보너스 제외)
+const BASELINE = 6 / 45;
 
 const TOTAL_NUMBERS = 45;
-const EXPECTED_RATE = 7 / TOTAL_NUMBERS;
+
+const PHASE_META: Record<TrendPhase, { label: string; color: string; bgClass: string; borderClass: string; textClass: string; badgeClass: string }> = {
+  up_cont:    { label: '상승지속',  color: '#4ade80', bgClass: 'bg-emerald-500/8',  borderClass: 'border-emerald-500/30', textClass: 'text-emerald-300', badgeClass: 'bg-emerald-500/25 text-emerald-200' },
+  topping:    { label: '하락전환',  color: '#c084fc', bgClass: 'bg-violet-500/8',   borderClass: 'border-violet-500/30',  textClass: 'text-violet-300',  badgeClass: 'bg-violet-500/25 text-violet-200'  },
+  recovering: { label: '회복중',    color: '#38bdf8', bgClass: 'bg-sky-500/8',      borderClass: 'border-sky-500/30',     textClass: 'text-sky-300',     badgeClass: 'bg-sky-500/25 text-sky-200'        },
+  down_cont:  { label: '하락지속',  color: '#f87171', bgClass: 'bg-rose-500/8',     borderClass: 'border-rose-500/30',    textClass: 'text-rose-300',    badgeClass: 'bg-rose-500/25 text-rose-200'      },
+};
 
 const isWinningNumberRow = (value: unknown): value is WinningNumberRow => {
   if (typeof value !== 'object' || value === null) return false;
@@ -57,40 +55,35 @@ const isWinningNumberRow = (value: unknown): value is WinningNumberRow => {
   );
 };
 
-const buildEmaRate = (rows: WinningNumberRow[], numberIndex: number, windowSize: number): number => {
+// 전체 이력을 순회하며 고정 k EMA 계산
+const buildFixedKEma = (rows: WinningNumberRow[], num: number, k: number): number => {
   if (rows.length === 0) return 0;
-  const k = Math.min(2 / (windowSize + 1), 1);
   let ema = 0;
   for (const row of rows) {
     const nums = [row.num1, row.num2, row.num3, row.num4, row.num5, row.num6, row.bonus_num];
-    const signal = nums.includes(numberIndex + 1) ? 1 : 0;
+    const signal = nums.includes(num) ? 1 : 0;
     ema = signal * k + ema * (1 - k);
   }
   return ema;
 };
 
-const buildTrendResults = (windowDataList: MaWindowData[]): NumberTrendResult[] => {
+// fast/slow EMA와 baseline으로 4국면 판정
+const classifyPhase = (emaFast: number, emaSlow: number): TrendPhase => {
+  const shortTermUp = emaFast > emaSlow;
+  const longTermUp = emaSlow > BASELINE;
+  if (shortTermUp && longTermUp) return 'up_cont';
+  if (!shortTermUp && longTermUp) return 'topping';
+  if (shortTermUp && !longTermUp) return 'recovering';
+  return 'down_cont';
+};
+
+const buildTrendResults = (allRows: WinningNumberRow[]): NumberTrendResult[] => {
   return Array.from({ length: TOTAL_NUMBERS }, (_, i) => {
     const number = i + 1;
-    const rates: Record<number, number> = {};
-    for (const wd of windowDataList) {
-      rates[wd.windowSize] = buildEmaRate(wd.rows, i, wd.windowSize);
-    }
-
-    const ema4 = rates[4] ?? 0;
-    const ema8 = rates[8] ?? 0;
-    const ema16 = rates[16] ?? 0;
-    const ema64 = rates[64] ?? 0;
-    const trend: 'down' | 'up' | 'hold' | 'neutral' =
-      ema4 === 0 && ema8 === 0
-        ? 'hold'
-        : ema8 >= ema64 || ema16 >= ema64
-          ? 'up'
-          : ema8 < ema64 && ema16 < ema64
-            ? 'down'
-            : 'neutral';
-
-    return { number, rates, trend };
+    const emaFast = buildFixedKEma(allRows, number, K_CONFIG.fast);
+    const emaSlow = buildFixedKEma(allRows, number, K_CONFIG.slow);
+    const phase = classifyPhase(emaFast, emaSlow);
+    return { number, emaFast, emaSlow, phase };
   });
 };
 
@@ -121,9 +114,8 @@ export default function TrendPage() {
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
 
-  const [windowDataList, setWindowDataList] = useState<MaWindowData[]>([]);
   const [trendResults, setTrendResults] = useState<NumberTrendResult[]>([]);
-  const [windowDrawCounts, setWindowDrawCounts] = useState<Record<number, number>>({});
+  const [historyCount, setHistoryCount] = useState<number>(0);
 
   useEffect(() => {
     let isMounted = true;
@@ -160,9 +152,8 @@ export default function TrendPage() {
   }, []);
 
   const resetResults = () => {
-    setWindowDataList([]);
     setTrendResults([]);
-    setWindowDrawCounts({});
+    setHistoryCount(0);
     setSelectedWinningNumber(null);
     setWinningNumberError(null);
   };
@@ -196,39 +187,29 @@ export default function TrendPage() {
         return;
       }
 
-      const [winningNumberRes, ...windowResponses] = await Promise.all([
+      const [winningNumberRes, allHistoryRes] = await Promise.all([
         fetch(`${apiUrl}/api/analysis/trend/winning-number?draw_no=${drawNo}`),
-        ...MA_WINDOWS.map((w) =>
-          fetch(`${apiUrl}/api/analysis/trend/winning-numbers-window?draw_no=${drawNo}&window_size=${w.windowSize}`)
-        ),
+        fetch(`${apiUrl}/api/analysis/trend/all-history?draw_no=${drawNo}`),
       ]);
 
       if (!winningNumberRes.ok) {
         if (winningNumberRes.status === 404) throw new Error('선택한 회차의 당첨번호를 찾을 수 없습니다.');
         throw new Error(`Failed to fetch winning number: ${winningNumberRes.status}`);
       }
+      if (!allHistoryRes.ok) {
+        throw new Error(`Failed to fetch all history: ${allHistoryRes.status}`);
+      }
 
       const winningData: unknown = await winningNumberRes.json();
       if (!isWinningNumberRow(winningData)) throw new Error('Winning number response is invalid');
 
-      const parsedWindowDataList: MaWindowData[] = [];
-      const newWindowDrawCounts: Record<number, number> = {};
-
-      for (let i = 0; i < MA_WINDOWS.length; i++) {
-        const w = MA_WINDOWS[i];
-        const res = windowResponses[i];
-        if (!res.ok) throw new Error(`Failed to fetch window data for MA${w.windowSize}: ${res.status}`);
-        const data: unknown = await res.json();
-        if (!Array.isArray(data)) throw new Error(`Window data for MA${w.windowSize} is not an array`);
-        const rows = data.filter(isWinningNumberRow);
-        parsedWindowDataList.push({ windowSize: w.windowSize, label: w.label, color: w.color, rows });
-        newWindowDrawCounts[w.windowSize] = rows.length;
-      }
+      const historyData: unknown = await allHistoryRes.json();
+      if (!Array.isArray(historyData)) throw new Error('All history response is not an array');
+      const allRows = historyData.filter(isWinningNumberRow);
 
       setSelectedWinningNumber(winningData);
-      setWindowDataList(parsedWindowDataList);
-      setWindowDrawCounts(newWindowDrawCounts);
-      setTrendResults(buildTrendResults(parsedWindowDataList));
+      setHistoryCount(allRows.length);
+      setTrendResults(buildTrendResults(allRows));
     } catch (error) {
       console.error('Error fetching trend data:', error);
       setSearchError('조회 데이터를 불러오지 못했습니다.');
@@ -268,15 +249,20 @@ export default function TrendPage() {
       ])
     : null;
 
-  const downTrendNumbers = trendResults.filter((r) => r.trend === 'down');
-  const upTrendNumbers = trendResults.filter((r) => r.trend === 'up');
-  const holdNumbers = trendResults.filter((r) => r.trend === 'hold');
+  // 국면별 번호 분류
+  const phaseGroups: Record<TrendPhase, NumberTrendResult[]> = {
+    up_cont: trendResults.filter((r) => r.phase === 'up_cont'),
+    topping: trendResults.filter((r) => r.phase === 'topping'),
+    recovering: trendResults.filter((r) => r.phase === 'recovering'),
+    down_cont: trendResults.filter((r) => r.phase === 'down_cont'),
+  };
 
-  const allRates = trendResults.flatMap((r) => Object.values(r.rates));
-  const maxRate = allRates.length > 0 ? Math.max(...allRates, EXPECTED_RATE * 1.5) : EXPECTED_RATE * 2;
+  // 차트 maxRate 계산
+  const allEmaValues = trendResults.flatMap((r) => [r.emaFast, r.emaSlow]);
+  const maxRate = allEmaValues.length > 0 ? Math.max(...allEmaValues, BASELINE * 1.5) : BASELINE * 2;
 
   const chartTotalW = TOTAL_NUMBERS * CHART_W_PER_NUM;
-  const expectedY = rateToY(EXPECTED_RATE, maxRate);
+  const baselineY = rateToY(BASELINE, maxRate);
 
   const statusMessage = isLoadingDraws
     ? '회차 정보를 불러오는 중입니다.'
@@ -367,31 +353,46 @@ export default function TrendPage() {
             {statusMessage && <p className="text-slate-300 text-sm leading-relaxed">{statusMessage}</p>}
           </section>
 
-          {/* 요약 카드: MA 기간별 실제 분석 회차 수 */}
+          {/* 분석 회차 수 요약 */}
           {hasSearched && !noHistory && !isSearching && !searchError && hasResults && (
-            <section className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-7 gap-3">
-              {MA_WINDOWS.map((w) => (
-                <div key={w.windowSize} className="rounded-2xl border border-card-border/30 bg-card-bg/60 p-3 flex flex-col gap-1">
-                  <span className="text-xs font-semibold" style={{ color: w.color }}>{w.label}</span>
-                  <span className="text-lg font-bold text-white">{windowDrawCounts[w.windowSize] ?? 0}회</span>
-                  <span className="text-[10px] text-slate-500">분석 회차</span>
-                </div>
-              ))}
+            <section className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="rounded-2xl border border-card-border/30 bg-card-bg/60 p-3 flex flex-col gap-1">
+                <span className="text-xs font-semibold text-slate-400">분석 회차 수</span>
+                <span className="text-lg font-bold text-white">{historyCount}회</span>
+                <span className="text-[10px] text-slate-500">전체 이력</span>
+              </div>
+              <div className="rounded-2xl border border-card-border/30 bg-card-bg/60 p-3 flex flex-col gap-1">
+                <span className="text-xs font-semibold text-emerald-400">Fast EMA</span>
+                <span className="text-lg font-bold text-white">k = {K_CONFIG.fast}</span>
+                <span className="text-[10px] text-slate-500">~90회 유효</span>
+              </div>
+              <div className="rounded-2xl border border-card-border/30 bg-card-bg/60 p-3 flex flex-col gap-1">
+                <span className="text-xs font-semibold text-sky-400">Slow EMA</span>
+                <span className="text-lg font-bold text-white">k = {K_CONFIG.slow}</span>
+                <span className="text-[10px] text-slate-500">~228회 유효</span>
+              </div>
+              <div className="rounded-2xl border border-card-border/30 bg-card-bg/60 p-3 flex flex-col gap-1">
+                <span className="text-xs font-semibold text-slate-400">기댓값</span>
+                <span className="text-lg font-bold text-white">{(BASELINE * 100).toFixed(1)}%</span>
+                <span className="text-[10px] text-slate-500">6/45 (주번호 기준)</span>
+              </div>
             </section>
           )}
 
-          {/* 이동평균 꺾은선 차트 */}
+          {/* EMA 꺾은선 차트 */}
           <section className="rounded-2xl border border-card-border/30 bg-card-bg/60 p-3 space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <h3 className="text-xl font-semibold text-white">번호별 지수이동평균(EMA) 출현율</h3>
               {hasResults && (
                 <div className="flex flex-wrap gap-3">
-                  {MA_WINDOWS.map((w) => (
-                    <span key={w.windowSize} className="flex items-center gap-1.5 text-xs text-slate-400">
-                      <span className="inline-block w-5 h-[2px] rounded" style={{ backgroundColor: w.color }} />
-                      {w.label}
-                    </span>
-                  ))}
+                  <span className="flex items-center gap-1.5 text-xs text-slate-400">
+                    <span className="inline-block w-5 h-[2px] rounded" style={{ backgroundColor: '#4ade80' }} />
+                    Fast EMA (k={K_CONFIG.fast})
+                  </span>
+                  <span className="flex items-center gap-1.5 text-xs text-slate-400">
+                    <span className="inline-block w-5 h-[2px] rounded" style={{ backgroundColor: '#38bdf8' }} />
+                    Slow EMA (k={K_CONFIG.slow})
+                  </span>
                   <span className="flex items-center gap-1.5 text-xs text-slate-400">
                     <span className="inline-block w-5 h-[2px] rounded border-t-2 border-dashed border-emerald-400/80" />
                     기댓값
@@ -420,37 +421,42 @@ export default function TrendPage() {
                 >
                   {/* 기댓값 기준선 */}
                   <line
-                    x1={0} y1={expectedY}
-                    x2={chartTotalW} y2={expectedY}
+                    x1={0} y1={baselineY}
+                    x2={chartTotalW} y2={baselineY}
                     stroke="#34d399"
                     strokeWidth={1.5}
                     strokeDasharray="6 4"
                     opacity={0.7}
                   />
-                  <text x={chartTotalW - 4} y={expectedY - 4} fill="#34d399" fontSize={10} textAnchor="end" opacity={0.9}>
-                    기댓값 {(EXPECTED_RATE * 100).toFixed(1)}%
+                  <text x={chartTotalW - 4} y={baselineY - 4} fill="#34d399" fontSize={10} textAnchor="end" opacity={0.9}>
+                    기댓값 {(BASELINE * 100).toFixed(1)}%
                   </text>
 
-                  {/* MA 꺾은선 */}
-                  {MA_WINDOWS.map((w) => {
-                    const points = trendResults
-                      .map((r, i) => {
-                        const x = i * CHART_W_PER_NUM + CHART_W_PER_NUM / 2;
-                        const y = rateToY(r.rates[w.windowSize] ?? 0, maxRate);
-                        return `${x},${y}`;
-                      })
-                      .join(' ');
-                    return (
-                      <polyline
-                        key={w.windowSize}
-                        points={points}
-                        fill="none"
-                        stroke={w.color}
-                        strokeWidth={1.5}
-                        opacity={0.85}
-                      />
-                    );
-                  })}
+                  {/* Slow EMA 꺾은선 */}
+                  <polyline
+                    points={trendResults.map((r, i) => {
+                      const x = i * CHART_W_PER_NUM + CHART_W_PER_NUM / 2;
+                      const y = rateToY(r.emaSlow, maxRate);
+                      return `${x},${y}`;
+                    }).join(' ')}
+                    fill="none"
+                    stroke="#38bdf8"
+                    strokeWidth={1.5}
+                    opacity={0.8}
+                  />
+
+                  {/* Fast EMA 꺾은선 */}
+                  <polyline
+                    points={trendResults.map((r, i) => {
+                      const x = i * CHART_W_PER_NUM + CHART_W_PER_NUM / 2;
+                      const y = rateToY(r.emaFast, maxRate);
+                      return `${x},${y}`;
+                    }).join(' ')}
+                    fill="none"
+                    stroke="#4ade80"
+                    strokeWidth={1.5}
+                    opacity={0.85}
+                  />
 
                   {/* 당첨번호 수직선 */}
                   {selectedWinningNumberSet && trendResults.map((r, i) => {
@@ -492,75 +498,39 @@ export default function TrendPage() {
             )}
           </section>
 
-          {/* 감소 추세 / 증가 추세 / 보류 번호 요약 */}
+          {/* 4국면 요약 카드 */}
           {hasSearched && !noHistory && !isSearching && !searchError && hasResults && (
-            <section className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="rounded-2xl border border-rose-500/30 bg-rose-500/5 p-4 space-y-2">
-                <h4 className="text-sm font-semibold text-rose-300">
-                  감소 추세 번호 ({downTrendNumbers.length}개)
-                  <span className="ml-2 text-xs font-normal text-slate-400">EMA16 &lt; EMA64</span>
-                </h4>
-                {downTrendNumbers.length === 0 ? (
-                  <p className="text-xs text-slate-400">감소 추세 번호가 없습니다.</p>
-                ) : (
-                  <div className="flex flex-wrap gap-2">
-                    {downTrendNumbers.map((r) => (
-                      <span
-                        key={r.number}
-                        className="inline-flex h-8 min-w-8 items-center justify-center rounded-full bg-rose-500/25 px-2 text-sm font-bold text-rose-200"
-                      >
-                        {r.number}
-                      </span>
-                    ))}
+            <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+              {(Object.entries(phaseGroups) as [TrendPhase, NumberTrendResult[]][]).map(([phase, numbers]) => {
+                const meta = PHASE_META[phase];
+                return (
+                  <div key={phase} className={`rounded-2xl border ${meta.borderClass} ${meta.bgClass} p-4 space-y-2`}>
+                    <h4 className={`text-sm font-semibold ${meta.textClass}`}>
+                      {meta.label} ({numbers.length}개)
+                    </h4>
+                    {numbers.length === 0 ? (
+                      <p className="text-xs text-slate-400">{meta.label} 번호가 없습니다.</p>
+                    ) : (
+                      <div className="flex flex-wrap gap-2">
+                        {numbers.map((r) => (
+                          <span
+                            key={r.number}
+                            className={`inline-flex h-8 min-w-8 items-center justify-center rounded-full px-2 text-sm font-bold ${meta.badgeClass}`}
+                          >
+                            {r.number}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-              <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-4 space-y-2">
-                <h4 className="text-sm font-semibold text-emerald-300">
-                  증가 추세 번호 ({upTrendNumbers.length}개)
-                  <span className="ml-2 text-xs font-normal text-slate-400">EMA8 또는 EMA16 &gt; EMA64</span>
-                </h4>
-                {upTrendNumbers.length === 0 ? (
-                  <p className="text-xs text-slate-400">증가 추세 번호가 없습니다.</p>
-                ) : (
-                  <div className="flex flex-wrap gap-2">
-                    {upTrendNumbers.map((r) => (
-                      <span
-                        key={r.number}
-                        className="inline-flex h-8 min-w-8 items-center justify-center rounded-full bg-emerald-500/25 px-2 text-sm font-bold text-emerald-200"
-                      >
-                        {r.number}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
-              <div className="rounded-2xl border border-indigo-500/30 bg-indigo-500/5 p-4 space-y-2">
-                <h4 className="text-sm font-semibold text-indigo-300">
-                  보류 번호 ({holdNumbers.length}개)
-                  <span className="ml-2 text-xs font-normal text-slate-400">EMA4 = EMA8 = 0%</span>
-                </h4>
-                {holdNumbers.length === 0 ? (
-                  <p className="text-xs text-slate-400">보류 번호가 없습니다.</p>
-                ) : (
-                  <div className="flex flex-wrap gap-2">
-                    {holdNumbers.map((r) => (
-                      <span
-                        key={r.number}
-                        className="inline-flex h-8 min-w-8 items-center justify-center rounded-full bg-indigo-500/25 px-2 text-sm font-bold text-indigo-200"
-                      >
-                        {r.number}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
+                );
+              })}
             </section>
           )}
 
-          {/* 번호별 MA 비율 테이블 */}
+          {/* 번호별 EMA 상세 테이블 */}
           <section className="rounded-2xl border border-card-border/30 bg-card-bg/60 p-4 space-y-3">
-            <h3 className="text-xl font-semibold text-white">번호별 지수이동평균(EMA) 출현율 상세</h3>
+            <h3 className="text-xl font-semibold text-white">번호별 EMA 출현율 상세</h3>
 
             {noHistory ? (
               <p className="text-sm text-slate-300">1회는 이전 회차가 없어 집계할 데이터가 없습니다.</p>
@@ -574,76 +544,49 @@ export default function TrendPage() {
               <p className="text-sm text-slate-300">집계할 이전 회차 데이터가 없습니다.</p>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full text-sm text-left" style={{ minWidth: 680 }}>
+                <table className="w-full text-sm text-left" style={{ minWidth: 480 }}>
                   <thead>
                     <tr className="border-b border-white/10 text-xs text-slate-400">
                       <th className="py-2 pr-3 font-medium w-12">번호</th>
-                      {MA_WINDOWS.map((w) => (
-                        <th key={w.windowSize} className="py-2 pr-2 font-medium text-right">
-                          <span style={{ color: w.color }}>{w.label}</span>
-                        </th>
-                      ))}
-                      <th className="py-2 font-medium text-center">추세</th>
+                      <th className="py-2 pr-2 font-medium text-right" style={{ color: '#4ade80' }}>Fast EMA</th>
+                      <th className="py-2 pr-2 font-medium text-right" style={{ color: '#38bdf8' }}>Slow EMA</th>
+                      <th className="py-2 pr-2 font-medium text-right text-slate-400">기댓값 대비</th>
+                      <th className="py-2 font-medium text-center">국면</th>
                     </tr>
                   </thead>
                   <tbody>
                     {trendResults.map((row) => {
                       const isWinning = selectedWinningNumberSet?.has(row.number) ?? false;
+                      const meta = PHASE_META[row.phase];
+                      const fastPct = (row.emaFast * 100).toFixed(1);
+                      const slowPct = (row.emaSlow * 100).toFixed(1);
+                      const diffPct = ((row.emaSlow - BASELINE) * 100).toFixed(1);
+                      const diffPositive = row.emaSlow >= BASELINE;
                       return (
                         <tr
                           key={row.number}
-                          className={`border-b border-white/5 transition-colors ${
-                            row.trend === 'down'
-                              ? 'bg-rose-500/8 hover:bg-rose-500/12'
-                              : row.trend === 'up'
-                                ? 'bg-emerald-500/8 hover:bg-emerald-500/12'
-                                : row.trend === 'hold'
-                                  ? 'bg-indigo-500/8 hover:bg-indigo-500/12'
-                                  : 'hover:bg-white/3'
-                          }`}
+                          className={`border-b border-white/5 transition-colors ${meta.bgClass} hover:brightness-110`}
                         >
                           <td className="py-1.5 pr-3">
                             <span
                               className={`inline-flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold ${
                                 isWinning
                                   ? 'bg-amber-400/30 text-amber-200'
-                                  : row.trend === 'down'
-                                    ? 'bg-rose-500/30 text-rose-200'
-                                    : row.trend === 'up'
-                                      ? 'bg-emerald-500/30 text-emerald-200'
-                                      : row.trend === 'hold'
-                                        ? 'bg-indigo-500/30 text-indigo-200'
-                                        : 'bg-white/10 text-white'
+                                  : `${meta.badgeClass}`
                               }`}
                             >
                               {row.number}
                             </span>
                           </td>
-                          {MA_WINDOWS.map((w) => {
-                            const rate = row.rates[w.windowSize] ?? 0;
-                            const pct = (rate * 100).toFixed(1);
-                            const isAboveExpected = rate > EXPECTED_RATE;
-                            return (
-                              <td
-                                key={w.windowSize}
-                                className={`py-1.5 pr-2 text-right tabular-nums text-xs ${
-                                  isAboveExpected ? 'text-blue-300' : 'text-slate-400'
-                                }`}
-                              >
-                                {pct}%
-                              </td>
-                            );
-                          })}
+                          <td className="py-1.5 pr-2 text-right tabular-nums text-xs text-emerald-300">{fastPct}%</td>
+                          <td className="py-1.5 pr-2 text-right tabular-nums text-xs text-sky-300">{slowPct}%</td>
+                          <td className={`py-1.5 pr-2 text-right tabular-nums text-xs ${diffPositive ? 'text-blue-300' : 'text-rose-400'}`}>
+                            {diffPositive ? '+' : ''}{diffPct}%
+                          </td>
                           <td className="py-1.5 text-center">
-                            {row.trend === 'down' ? (
-                              <span className="text-xs font-semibold text-rose-300 bg-rose-500/20 rounded-md px-2 py-0.5">감소</span>
-                            ) : row.trend === 'up' ? (
-                              <span className="text-xs font-semibold text-emerald-300 bg-emerald-500/20 rounded-md px-2 py-0.5">증가</span>
-                            ) : row.trend === 'hold' ? (
-                              <span className="text-xs font-semibold text-indigo-300 bg-indigo-500/20 rounded-md px-2 py-0.5">보류</span>
-                            ) : (
-                              <span className="text-xs text-slate-500">-</span>
-                            )}
+                            <span className={`text-xs font-semibold rounded-md px-2 py-0.5 ${meta.badgeClass}`}>
+                              {meta.label}
+                            </span>
                           </td>
                         </tr>
                       );
@@ -657,11 +600,12 @@ export default function TrendPage() {
           {/* 통계적 주의사항 */}
           <section className="rounded-2xl border border-white/10 bg-slate-900/40 p-4">
             <p className="text-xs text-slate-400 leading-relaxed">
-              <span className="font-semibold text-slate-300">통계적 주의사항:</span>{' '}
-              지수이동평균(EMA) 출현율은 최근 회차일수록 더 높은 가중치를 부여하여 번호의 출현 빈도를 계산합니다 (가중치 k = 2 / (N+1)).
-              증가 추세(EMA8 또는 EMA16 &gt; EMA64)는 단기 출현율이 중장기 평균보다 높은 번호이며,
-              감소 추세(EMA8 AND EMA16 &lt; EMA64)는 두 단기 EMA 모두 중장기 평균보다 낮음을 의미합니다.
-              보류(EMA8 = EMA16 = 0%)는 최근 구간에서 전혀 출현하지 않아 EMA가 0에 수렴한 번호입니다.
+              <span className="font-semibold text-slate-300">분석 방식:</span>{' '}
+              전체 회차 이력을 입력으로 사용하며, 최근 회차일수록 더 높은 가중치를 부여합니다 (지수 감쇠).
+              Fast EMA(k={K_CONFIG.fast}, 유효범위 약 90회)가 Slow EMA(k={K_CONFIG.slow}, 유효범위 약 228회)를 웃돌고 Slow EMA가 기댓값({(BASELINE * 100).toFixed(1)}%) 이상이면 <span className="text-emerald-300">상승지속</span>,
+              Fast EMA가 Slow EMA 아래이고 Slow EMA가 기댓값 이상이면 <span className="text-violet-300">하락전환</span>,
+              Fast EMA가 Slow EMA 위이고 Slow EMA가 기댓값 미만이면 <span className="text-sky-300">회복중</span>,
+              모두 기댓값 미만이면 <span className="text-rose-300">하락지속</span>으로 분류합니다.
               로또는 매 회 독립 시행이므로 과거 추세가 미래 결과를 보장하지 않습니다. 참고 지표로만 활용하세요.
             </p>
           </section>

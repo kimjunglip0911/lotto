@@ -30,7 +30,6 @@ def _load_queries_module():
 
 
 queries = _load_queries_module()
-ALLOWED_WINDOW_SIZES = {4, 8, 16, 32, 64, 128, 256, 512}
 
 
 @router.get("/api/analysis/trend/draw-numbers", response_model=List[int])
@@ -65,27 +64,17 @@ def get_winning_number(draw_no: int = Query(..., ge=1, description="선택 회�
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/api/analysis/trend/winning-numbers-window", response_model=List[dict])
-def get_winning_numbers_window(
-    draw_no: int = Query(..., ge=1, description="선택 회차"),
-    window_size: int = Query(..., description="이전 회차 개수 (허용값: 4, 8, 16, 32, 64, 128, 256, 512)"),
-):
+@router.get("/api/analysis/trend/all-history", response_model=List[dict])
+def get_all_history(draw_no: int = Query(..., ge=1, description="선택 회차 (이 회차 이전 전체 이력 반환)")):
     try:
         if draw_no <= 1:
             return []
-        if window_size not in ALLOWED_WINDOW_SIZES:
-            raise HTTPException(
-                status_code=400,
-                detail="window_size는 4, 8, 16, 32, 64, 128, 256, 512만 허용됩니다.",
-            )
 
         conn = get_connection()
         cursor = conn.cursor()
-        cursor.execute(queries.GET_WINNING_NUMBERS_BEFORE_DRAW_LIMITED, (draw_no, window_size))
+        cursor.execute(queries.GET_ALL_HISTORY_BEFORE_DRAW, (draw_no,))
         rows = cursor.fetchall()
         conn.close()
         return [dict(row) for row in rows]
-    except HTTPException:
-        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

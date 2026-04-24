@@ -14,15 +14,16 @@ export const excludeTrendDownRule: RecommendRule = {
       }
     }
 
+    // 하락지속(down_cont): Fast/Slow EMA 모두 기댓값 미만 — 완전한 하락 국면
     const excludedNumbers = trendResults
-      .filter((r) => r.trend === 'down')
+      .filter((r) => r.trend === 'down_cont')
       .map((r) => r.number)
       .sort((a, b) => a - b)
 
     const reason =
       excludedNumbers.length > 0
-        ? `감소 추세 번호 ${excludedNumbers.length}개(${excludedNumbers.join(', ')})를 제외합니다.`
-        : '추세 감소 번호가 없습니다.'
+        ? `하락지속 번호 ${excludedNumbers.length}개(${excludedNumbers.join(', ')})를 제외합니다.`
+        : '하락지속 번호가 없습니다.'
 
     return {
       ruleId: 'exclude-trend-down',

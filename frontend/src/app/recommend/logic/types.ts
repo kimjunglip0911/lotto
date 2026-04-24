@@ -1,6 +1,7 @@
 export type WindowKey = 'overall' | 'sixMonth' | 'oneYear' | 'threeYear' | 'fiveYear' | 'tenYear'
 
-export type TrendDirection = 'down' | 'up' | 'hold' | 'neutral'
+// 4국면: 상승지속 / 하락전환(정점통과) / 회복중(바닥통과) / 하락지속
+export type TrendDirection = 'up_cont' | 'topping' | 'recovering' | 'down_cont'
 
 export interface TrendNumberResult {
   number: number
