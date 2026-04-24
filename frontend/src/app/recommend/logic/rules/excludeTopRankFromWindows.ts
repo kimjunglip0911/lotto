@@ -15,10 +15,13 @@ export const excludeTopRankFromWindowsRule: RecommendRule = {
   apply: ({ exclusionCandidates }) => {
     const ranked = exclusionCandidates.windowTopNumbers
     const windowOrder: (keyof typeof ranked)[] = ['overall', 'sixMonth', 'oneYear', 'threeYear', 'fiveYear', 'tenYear']
-    const excludedNumbers = windowOrder
-      .flatMap((key) => ranked[key]?.candidates ?? [])
-      .filter((value): value is number => typeof value === 'number')
-      .sort((a, b) => a - b)
+    const excludedNumbers = [
+      ...new Set(
+        windowOrder
+          .flatMap((key) => ranked[key]?.candidates ?? [])
+          .filter((value): value is number => typeof value === 'number'),
+      ),
+    ].sort((a, b) => a - b)
     const detail = windowOrder
       .map((key) => `${WINDOW_LABELS[key]} [${(ranked[key]?.candidates ?? []).join(', ')}]번`)
       .join(', ')

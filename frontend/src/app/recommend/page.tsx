@@ -7,7 +7,8 @@ import { AnalysisController } from '@/app/recommend/components/AnalysisControlle
 import { AnalysisResultList } from '@/app/recommend/components/AnalysisResultList';
 import { runRecommendPipeline } from '@/app/recommend/logic/pipeline';
 import { excludeTopRankFromWindowsRule } from '@/app/recommend/logic/rules/excludeTopRankFromWindows';
-import { ExclusionCandidatesResponse, GeneratedSet, RecommendPipelineResult } from '@/app/recommend/logic/types';
+import { excludeChiSquareHighDeviationRule } from '@/app/recommend/logic/rules/excludeChiSquareHighDeviation';
+import { ChiSquareHistoryRow, ExclusionCandidatesResponse, GeneratedSet, RecommendPipelineResult } from '@/app/recommend/logic/types';
 
 function errorMessage(err: unknown): string {
   return err instanceof Error ? err.message : String(err);
@@ -40,6 +41,21 @@ function isExclusionCandidatesResponse(value: unknown): value is ExclusionCandid
     windows !== null &&
     ['overall', 'sixMonth', 'oneYear', 'threeYear', 'fiveYear', 'tenYear'].every((key) => isRankedNumberInfo(windows[key])) &&
     Array.isArray(data.excludedNumbersUnion)
+  );
+}
+
+function isChiSquareHistoryRow(value: unknown): value is ChiSquareHistoryRow {
+  if (typeof value !== 'object' || value === null) return false;
+  const row = value as Record<string, unknown>;
+  return (
+    typeof row.draw_no === 'number' &&
+    typeof row.num1 === 'number' &&
+    typeof row.num2 === 'number' &&
+    typeof row.num3 === 'number' &&
+    typeof row.num4 === 'number' &&
+    typeof row.num5 === 'number' &&
+    typeof row.num6 === 'number' &&
+    typeof row.bonus_num === 'number'
   );
 }
 
@@ -129,9 +145,10 @@ export default function RecommendPage() {
       try {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
 
-        const [drawingsResponse, exclusionResponse] = await Promise.all([
+        const [drawingsResponse, exclusionResponse, chiSquareRangeResponse] = await Promise.all([
           fetch(`${apiUrl}/api/recommend/drawings?draw_no=${selectedDraw}`),
           fetch(`${apiUrl}/api/recommend/exclusion-candidates?draw_no=${selectedDraw}`),
+          fetch(`${apiUrl}/api/analysis/chi-square/winning-numbers-range?draw_no=${selectedDraw}`),
         ]);
 
         if (!drawingsResponse.ok) {
@@ -141,9 +158,11 @@ export default function RecommendPage() {
           throw new Error(`Failed to fetch exclusion candidates: ${exclusionResponse.status}`);
         }
 
-        const [drawingsData, exclusionData]: [unknown, unknown] = await Promise.all([
+        const [drawingsData, exclusionData, chiSquareRangeData]: [unknown, unknown, unknown] = await Promise.all([
           drawingsResponse.json(),
           exclusionResponse.json(),
+          // 카이제곱 이력 fetch 실패 시 빈 배열로 graceful fallback
+          chiSquareRangeResponse.ok ? chiSquareRangeResponse.json() : Promise.resolve([]),
         ]);
 
         if (!Array.isArray(drawingsData)) {
@@ -153,10 +172,14 @@ export default function RecommendPage() {
           throw new Error('Exclusion candidates response is invalid');
         }
 
+        const chiSquareRows = Array.isArray(chiSquareRangeData)
+          ? chiSquareRangeData.filter(isChiSquareHistoryRow)
+          : [];
+
         const sets = drawingsData.filter(isGeneratedSet);
         const pipeline = runRecommendPipeline(
-          { exclusionCandidates: exclusionData },
-          [excludeTopRankFromWindowsRule]
+          { exclusionCandidates: exclusionData, chiSquareRows },
+          [excludeTopRankFromWindowsRule, excludeChiSquareHighDeviationRule]
         );
 
         if (!isMounted) return;
@@ -195,19 +218,29 @@ export default function RecommendPage() {
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
 
-      const exclusionResponse = await fetch(`${apiUrl}/api/recommend/exclusion-candidates?draw_no=${selectedDraw}`);
+      const [exclusionResponse, chiSquareRangeResponse] = await Promise.all([
+        fetch(`${apiUrl}/api/recommend/exclusion-candidates?draw_no=${selectedDraw}`),
+        fetch(`${apiUrl}/api/analysis/chi-square/winning-numbers-range?draw_no=${selectedDraw}`),
+      ]);
       if (!exclusionResponse.ok) {
         throw new Error(`Failed to fetch exclusion candidates: ${exclusionResponse.status}`);
       }
 
-      const exclusionData: unknown = await exclusionResponse.json();
+      const [exclusionData, chiSquareRangeData]: [unknown, unknown] = await Promise.all([
+        exclusionResponse.json(),
+        chiSquareRangeResponse.ok ? chiSquareRangeResponse.json() : Promise.resolve([]),
+      ]);
       if (!isExclusionCandidatesResponse(exclusionData)) {
         throw new Error('Exclusion candidates response is invalid');
       }
 
+      const chiSquareRows = Array.isArray(chiSquareRangeData)
+        ? chiSquareRangeData.filter(isChiSquareHistoryRow)
+        : [];
+
       const nextPipelineResult = runRecommendPipeline(
-        { exclusionCandidates: exclusionData },
-        [excludeTopRankFromWindowsRule]
+        { exclusionCandidates: exclusionData, chiSquareRows },
+        [excludeTopRankFromWindowsRule, excludeChiSquareHighDeviationRule]
       );
       setPipelineResult(nextPipelineResult);
 
