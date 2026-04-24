@@ -23,6 +23,11 @@ const RULE_DISPLAY: Record<string, { label: string; badgeClass: string; headerCl
     badgeClass: 'bg-blue-500/20 text-blue-200 border border-blue-500/40',
     headerClass: 'text-blue-300',
   },
+  'exclude-trend-down': {
+    label: '추세 감소 번호 제외',
+    badgeClass: 'bg-purple-500/20 text-purple-200 border border-purple-500/40',
+    headerClass: 'text-purple-300',
+  },
 };
 
 const DEFAULT_RULE_DISPLAY = {
@@ -38,6 +43,11 @@ export const AnalysisResultList: React.FC<AnalysisResultListProps> = ({
   excludedNumbers = [],
   sets = [],
 }) => {
+  /** 모든 규칙에서 복원된 번호의 합집합 - 어느 규칙 카드에서도 제외 번호로 표시하지 않는다 */
+  const globalRestoredSet = new Set(
+    appliedRules.flatMap((r) => r.restoredNumbers ?? []),
+  );
+
   return (
     <div className="mt-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className="rounded-xl border border-card-border/60 bg-card/30 px-5 py-6 text-sm text-slate-300 space-y-4">
@@ -52,6 +62,13 @@ export const AnalysisResultList: React.FC<AnalysisResultListProps> = ({
             <p className="text-slate-100 font-semibold">적용된 로직</p>
             {appliedRules.map((rule) => {
               const display = RULE_DISPLAY[rule.ruleId] ?? DEFAULT_RULE_DISPLAY;
+              /**
+               * 누적 규칙은 복원 대상이 아니므로 필터 없이 그대로 표시.
+               * 나머지 규칙은 복원된 번호를 제거한다.
+               */
+              const displayExcluded = [...new Set(rule.excludedNumbers)]
+                .filter((n) => rule.ruleId === 'exclude-top-rank-from-windows' || !globalRestoredSet.has(n))
+                .sort((a, b) => a - b);
               return (
                 <div
                   key={rule.ruleId}
@@ -64,9 +81,9 @@ export const AnalysisResultList: React.FC<AnalysisResultListProps> = ({
                     <span className="text-xs text-slate-500">({rule.ruleName})</span>
                   </div>
                   <p className="text-xs text-slate-400">{rule.reason}</p>
-                  {rule.excludedNumbers.length > 0 ? (
+                  {displayExcluded.length > 0 ? (
                     <div className="flex flex-wrap gap-1.5">
-                      {[...new Set(rule.excludedNumbers)].sort((a, b) => a - b).map((num) => (
+                      {displayExcluded.map((num) => (
                         <span
                           key={`${rule.ruleId}-${num}`}
                           className={`inline-flex h-7 min-w-7 items-center justify-center rounded-full px-2 text-xs font-bold ${display.badgeClass}`}
@@ -78,6 +95,21 @@ export const AnalysisResultList: React.FC<AnalysisResultListProps> = ({
                   ) : (
                     <p className="text-xs text-slate-500">해당 없음</p>
                   )}
+                  {rule.restoredNumbers && rule.restoredNumbers.length > 0 ? (
+                    <div className="mt-2 space-y-1">
+                      <p className="text-xs font-semibold text-emerald-400">추세 복원 번호 (제외 목록에서 제거)</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {[...new Set(rule.restoredNumbers)].sort((a, b) => a - b).map((num) => (
+                          <span
+                            key={`${rule.ruleId}-restored-${num}`}
+                            className="inline-flex h-7 min-w-7 items-center justify-center rounded-full px-2 text-xs font-bold bg-emerald-500/20 text-emerald-200 border border-emerald-500/40"
+                          >
+                            {num}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
                 </div>
               );
             })}

@@ -1,5 +1,12 @@
 export type WindowKey = 'overall' | 'sixMonth' | 'oneYear' | 'threeYear' | 'fiveYear' | 'tenYear'
 
+export type TrendDirection = 'down' | 'up' | 'hold' | 'neutral'
+
+export interface TrendNumberResult {
+  number: number
+  trend: TrendDirection
+}
+
 export interface RankedNumberInfo {
   number: number
   count: number
@@ -35,18 +42,23 @@ export interface RecommendRuleContext {
   exclusionCandidates: ExclusionCandidatesResponse
   currentExcludedNumbers: number[]
   chiSquareRows?: ChiSquareHistoryRow[]
+  trendResults?: TrendNumberResult[]
+  appliedRuleResults?: RecommendRuleResult[]
 }
 
 export interface RecommendRuleResult {
   ruleId: string
   ruleName: string
   excludedNumbers: number[]
+  restoredNumbers?: number[]
   reason: string
 }
 
 export interface RecommendRule {
   id: string
   name: string
+  /** true이면 이 규칙이 제외한 번호는 이후 규칙의 restoredNumbers에 의해서도 복원되지 않는다 */
+  isIrreversible?: boolean
   apply: (context: RecommendRuleContext) => RecommendRuleResult
 }
 

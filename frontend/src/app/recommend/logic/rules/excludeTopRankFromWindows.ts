@@ -12,6 +12,7 @@ const WINDOW_LABELS: Record<string, string> = {
 export const excludeTopRankFromWindowsRule: RecommendRule = {
   id: 'exclude-top-rank-from-windows',
   name: '기간별 1등 번호 집합 제외',
+  isIrreversible: true,
   apply: ({ exclusionCandidates }) => {
     const ranked = exclusionCandidates.windowTopNumbers
     const windowOrder: (keyof typeof ranked)[] = ['overall', 'sixMonth', 'oneYear', 'threeYear', 'fiveYear', 'tenYear']

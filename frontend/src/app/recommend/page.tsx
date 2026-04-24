@@ -8,7 +8,8 @@ import { AnalysisResultList } from '@/app/recommend/components/AnalysisResultLis
 import { runRecommendPipeline } from '@/app/recommend/logic/pipeline';
 import { excludeTopRankFromWindowsRule } from '@/app/recommend/logic/rules/excludeTopRankFromWindows';
 import { excludeChiSquareHighDeviationRule } from '@/app/recommend/logic/rules/excludeChiSquareHighDeviation';
-import { ChiSquareHistoryRow, ExclusionCandidatesResponse, GeneratedSet, RecommendPipelineResult } from '@/app/recommend/logic/types';
+import { excludeTrendDownRule } from '@/app/recommend/logic/rules/excludeTrendDown';
+import { ChiSquareHistoryRow, ExclusionCandidatesResponse, GeneratedSet, RecommendPipelineResult, TrendNumberResult } from '@/app/recommend/logic/types';
 
 function errorMessage(err: unknown): string {
   return err instanceof Error ? err.message : String(err);
@@ -56,6 +57,63 @@ function isChiSquareHistoryRow(value: unknown): value is ChiSquareHistoryRow {
     typeof row.num5 === 'number' &&
     typeof row.num6 === 'number' &&
     typeof row.bonus_num === 'number'
+  );
+}
+
+const TOTAL_NUMBERS = 45;
+const TREND_WINDOW_SIZES = [4, 12, 52] as const;
+
+function buildCountsFromRows(rows: { num1: number; num2: number; num3: number; num4: number; num5: number; num6: number; bonus_num: number }[]): number[] {
+  const counts = Array.from({ length: TOTAL_NUMBERS }, () => 0);
+  for (const row of rows) {
+    const nums = [row.num1, row.num2, row.num3, row.num4, row.num5, row.num6, row.bonus_num];
+    for (const num of nums) {
+      if (num >= 1 && num <= TOTAL_NUMBERS) counts[num - 1] += 1;
+    }
+  }
+  return counts;
+}
+
+function buildTrendResults(
+  windowDataMap: Map<number, { num1: number; num2: number; num3: number; num4: number; num5: number; num6: number; bonus_num: number }[]>,
+): TrendNumberResult[] {
+  return Array.from({ length: TOTAL_NUMBERS }, (_, i) => {
+    const rows4 = windowDataMap.get(4) ?? [];
+    const rows12 = windowDataMap.get(12) ?? [];
+    const rows52 = windowDataMap.get(52) ?? [];
+
+    const rate = (rows: typeof rows4) =>
+      rows.length === 0 ? 0 : buildCountsFromRows(rows)[i] / rows.length;
+
+    const ma4 = rate(rows4);
+    const ma12 = rate(rows12);
+    const ma52 = rate(rows52);
+
+    const trend: TrendNumberResult['trend'] =
+      ma4 === 0 && ma12 === 0
+        ? 'hold'
+        : ma4 >= ma52 || ma12 >= ma52
+          ? 'up'
+          : ma4 < ma52 && ma12 < ma52
+            ? 'down'
+            : 'neutral';
+
+    return { number: i + 1, trend };
+  });
+}
+
+function isWinningRow(value: unknown): value is { draw_no: number; num1: number; num2: number; num3: number; num4: number; num5: number; num6: number; bonus_num: number } {
+  if (typeof value !== 'object' || value === null) return false;
+  const r = value as Record<string, unknown>;
+  return (
+    typeof r.draw_no === 'number' &&
+    typeof r.num1 === 'number' &&
+    typeof r.num2 === 'number' &&
+    typeof r.num3 === 'number' &&
+    typeof r.num4 === 'number' &&
+    typeof r.num5 === 'number' &&
+    typeof r.num6 === 'number' &&
+    typeof r.bonus_num === 'number'
   );
 }
 
@@ -145,10 +203,15 @@ export default function RecommendPage() {
       try {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
 
-        const [drawingsResponse, exclusionResponse, chiSquareRangeResponse] = await Promise.all([
+        const trendFetches = TREND_WINDOW_SIZES.map((ws) =>
+          fetch(`${apiUrl}/api/analysis/trend/winning-numbers-window?draw_no=${selectedDraw}&window_size=${ws}`),
+        );
+
+        const [drawingsResponse, exclusionResponse, chiSquareRangeResponse, ...trendResponses] = await Promise.all([
           fetch(`${apiUrl}/api/recommend/drawings?draw_no=${selectedDraw}`),
           fetch(`${apiUrl}/api/recommend/exclusion-candidates?draw_no=${selectedDraw}`),
           fetch(`${apiUrl}/api/analysis/chi-square/winning-numbers-range?draw_no=${selectedDraw}`),
+          ...trendFetches,
         ]);
 
         if (!drawingsResponse.ok) {
@@ -158,11 +221,12 @@ export default function RecommendPage() {
           throw new Error(`Failed to fetch exclusion candidates: ${exclusionResponse.status}`);
         }
 
-        const [drawingsData, exclusionData, chiSquareRangeData]: [unknown, unknown, unknown] = await Promise.all([
+        const [drawingsData, exclusionData, chiSquareRangeData, ...trendDataList]: [unknown, unknown, unknown, ...unknown[]] = await Promise.all([
           drawingsResponse.json(),
           exclusionResponse.json(),
           // 카이제곱 이력 fetch 실패 시 빈 배열로 graceful fallback
           chiSquareRangeResponse.ok ? chiSquareRangeResponse.json() : Promise.resolve([]),
+          ...trendResponses.map((r) => (r.ok ? r.json() : Promise.resolve([]))),
         ]);
 
         if (!Array.isArray(drawingsData)) {
@@ -176,10 +240,18 @@ export default function RecommendPage() {
           ? chiSquareRangeData.filter(isChiSquareHistoryRow)
           : [];
 
+        const windowDataMap = new Map(
+          TREND_WINDOW_SIZES.map((ws, idx) => [
+            ws,
+            Array.isArray(trendDataList[idx]) ? (trendDataList[idx] as unknown[]).filter(isWinningRow) : [],
+          ]),
+        );
+        const trendResults = buildTrendResults(windowDataMap);
+
         const sets = drawingsData.filter(isGeneratedSet);
         const pipeline = runRecommendPipeline(
-          { exclusionCandidates: exclusionData, chiSquareRows },
-          [excludeTopRankFromWindowsRule, excludeChiSquareHighDeviationRule]
+          { exclusionCandidates: exclusionData, chiSquareRows, trendResults },
+          [excludeTopRankFromWindowsRule, excludeChiSquareHighDeviationRule, excludeTrendDownRule]
         );
 
         if (!isMounted) return;
@@ -218,17 +290,23 @@ export default function RecommendPage() {
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
 
-      const [exclusionResponse, chiSquareRangeResponse] = await Promise.all([
+      const trendFetches = TREND_WINDOW_SIZES.map((ws) =>
+        fetch(`${apiUrl}/api/analysis/trend/winning-numbers-window?draw_no=${selectedDraw}&window_size=${ws}`),
+      );
+
+      const [exclusionResponse, chiSquareRangeResponse, ...trendResponses] = await Promise.all([
         fetch(`${apiUrl}/api/recommend/exclusion-candidates?draw_no=${selectedDraw}`),
         fetch(`${apiUrl}/api/analysis/chi-square/winning-numbers-range?draw_no=${selectedDraw}`),
+        ...trendFetches,
       ]);
       if (!exclusionResponse.ok) {
         throw new Error(`Failed to fetch exclusion candidates: ${exclusionResponse.status}`);
       }
 
-      const [exclusionData, chiSquareRangeData]: [unknown, unknown] = await Promise.all([
+      const [exclusionData, chiSquareRangeData, ...trendDataList]: [unknown, unknown, ...unknown[]] = await Promise.all([
         exclusionResponse.json(),
         chiSquareRangeResponse.ok ? chiSquareRangeResponse.json() : Promise.resolve([]),
+        ...trendResponses.map((r) => (r.ok ? r.json() : Promise.resolve([]))),
       ]);
       if (!isExclusionCandidatesResponse(exclusionData)) {
         throw new Error('Exclusion candidates response is invalid');
@@ -238,9 +316,17 @@ export default function RecommendPage() {
         ? chiSquareRangeData.filter(isChiSquareHistoryRow)
         : [];
 
+      const windowDataMap = new Map(
+        TREND_WINDOW_SIZES.map((ws, idx) => [
+          ws,
+          Array.isArray(trendDataList[idx]) ? (trendDataList[idx] as unknown[]).filter(isWinningRow) : [],
+        ]),
+      );
+      const trendResults = buildTrendResults(windowDataMap);
+
       const nextPipelineResult = runRecommendPipeline(
-        { exclusionCandidates: exclusionData, chiSquareRows },
-        [excludeTopRankFromWindowsRule, excludeChiSquareHighDeviationRule]
+        { exclusionCandidates: exclusionData, chiSquareRows, trendResults },
+        [excludeTopRankFromWindowsRule, excludeChiSquareHighDeviationRule, excludeTrendDownRule]
       );
       setPipelineResult(nextPipelineResult);
 
