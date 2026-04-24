@@ -30,7 +30,7 @@ def _load_queries_module():
 
 
 queries = _load_queries_module()
-ALLOWED_WINDOW_SIZES = {4, 12, 24, 52, 156, 312, 520}
+ALLOWED_WINDOW_SIZES = {4, 8, 16, 32, 64, 128, 256, 512}
 
 
 @router.get("/api/analysis/trend/draw-numbers", response_model=List[int])
@@ -68,7 +68,7 @@ def get_winning_number(draw_no: int = Query(..., ge=1, description="선택 회�
 @router.get("/api/analysis/trend/winning-numbers-window", response_model=List[dict])
 def get_winning_numbers_window(
     draw_no: int = Query(..., ge=1, description="선택 회차"),
-    window_size: int = Query(..., description="이전 회차 개수 (허용값: 4, 12, 24, 52, 156, 312, 520)"),
+    window_size: int = Query(..., description="이전 회차 개수 (허용값: 4, 8, 16, 32, 64, 128, 256, 512)"),
 ):
     try:
         if draw_no <= 1:
@@ -76,7 +76,7 @@ def get_winning_numbers_window(
         if window_size not in ALLOWED_WINDOW_SIZES:
             raise HTTPException(
                 status_code=400,
-                detail="window_size는 4, 12, 24, 52, 156, 312, 520만 허용됩니다.",
+                detail="window_size는 4, 8, 16, 32, 64, 128, 256, 512만 허용됩니다.",
             )
 
         conn = get_connection()

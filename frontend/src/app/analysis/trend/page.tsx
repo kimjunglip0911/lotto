@@ -29,13 +29,14 @@ type NumberTrendResult = {
 };
 
 const MA_WINDOWS = [
-  { windowSize: 4,   label: 'MA4',   color: '#facc15' },
-  { windowSize: 12,  label: 'MA12',  color: '#4ade80' },
-  { windowSize: 24,  label: 'MA24',  color: '#38bdf8' },
-  { windowSize: 52,  label: 'MA52',  color: '#60a5fa' },
-  { windowSize: 156, label: 'MA156', color: '#fb923c' },
-  { windowSize: 312, label: 'MA312', color: '#c084fc' },
-  { windowSize: 520, label: 'MA520', color: '#94a3b8' },
+  { windowSize: 4,   label: 'EMA4',   color: '#f87171' },
+  { windowSize: 8,   label: 'EMA8',   color: '#facc15' },
+  { windowSize: 16,  label: 'EMA16',  color: '#4ade80' },
+  { windowSize: 32,  label: 'EMA32',  color: '#38bdf8' },
+  { windowSize: 64,  label: 'EMA64',  color: '#60a5fa' },
+  { windowSize: 128, label: 'EMA128', color: '#fb923c' },
+  { windowSize: 256, label: 'EMA256', color: '#c084fc' },
+  { windowSize: 512, label: 'EMA512', color: '#94a3b8' },
 ] as const;
 
 const TOTAL_NUMBERS = 45;
@@ -56,15 +57,16 @@ const isWinningNumberRow = (value: unknown): value is WinningNumberRow => {
   );
 };
 
-const buildCountsFromRows = (rows: WinningNumberRow[]): number[] => {
-  const counts = Array.from({ length: TOTAL_NUMBERS }, () => 0);
+const buildEmaRate = (rows: WinningNumberRow[], numberIndex: number, windowSize: number): number => {
+  if (rows.length === 0) return 0;
+  const k = Math.min(2 / (windowSize + 1), 1);
+  let ema = 0;
   for (const row of rows) {
     const nums = [row.num1, row.num2, row.num3, row.num4, row.num5, row.num6, row.bonus_num];
-    for (const num of nums) {
-      if (num >= 1 && num <= TOTAL_NUMBERS) counts[num - 1] += 1;
-    }
+    const signal = nums.includes(numberIndex + 1) ? 1 : 0;
+    ema = signal * k + ema * (1 - k);
   }
-  return counts;
+  return ema;
 };
 
 const buildTrendResults = (windowDataList: MaWindowData[]): NumberTrendResult[] => {
@@ -72,23 +74,19 @@ const buildTrendResults = (windowDataList: MaWindowData[]): NumberTrendResult[] 
     const number = i + 1;
     const rates: Record<number, number> = {};
     for (const wd of windowDataList) {
-      if (wd.rows.length === 0) {
-        rates[wd.windowSize] = 0;
-        continue;
-      }
-      const counts = buildCountsFromRows(wd.rows);
-      rates[wd.windowSize] = counts[i] / wd.rows.length;
+      rates[wd.windowSize] = buildEmaRate(wd.rows, i, wd.windowSize);
     }
 
-    const ma4 = rates[4] ?? 0;
-    const ma12 = rates[12] ?? 0;
-    const ma52 = rates[52] ?? 0;
+    const ema4 = rates[4] ?? 0;
+    const ema8 = rates[8] ?? 0;
+    const ema16 = rates[16] ?? 0;
+    const ema64 = rates[64] ?? 0;
     const trend: 'down' | 'up' | 'hold' | 'neutral' =
-      ma4 === 0 && ma12 === 0
+      ema4 === 0 && ema8 === 0
         ? 'hold'
-        : ma4 >= ma52 || ma12 >= ma52
+        : ema8 >= ema64 || ema16 >= ema64
           ? 'up'
-          : ma4 < ma52 && ma12 < ma52
+          : ema8 < ema64 && ema16 < ema64
             ? 'down'
             : 'neutral';
 
@@ -385,7 +383,7 @@ export default function TrendPage() {
           {/* 이동평균 꺾은선 차트 */}
           <section className="rounded-2xl border border-card-border/30 bg-card-bg/60 p-3 space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <h3 className="text-xl font-semibold text-white">번호별 이동평균 출현율</h3>
+              <h3 className="text-xl font-semibold text-white">번호별 지수이동평균(EMA) 출현율</h3>
               {hasResults && (
                 <div className="flex flex-wrap gap-3">
                   {MA_WINDOWS.map((w) => (
@@ -405,7 +403,7 @@ export default function TrendPage() {
             {noHistory ? (
               <p className="text-sm text-slate-300">1회는 이전 회차가 없어 집계할 데이터가 없습니다.</p>
             ) : !hasSearched ? (
-              <p className="text-sm text-slate-300">조회를 실행하면 번호별 이동평균 꺾은선 차트가 표시됩니다.</p>
+              <p className="text-sm text-slate-300">조회를 실행하면 번호별 지수이동평균(EMA) 꺾은선 차트가 표시됩니다.</p>
             ) : isSearching ? (
               <p className="text-sm text-slate-300">차트 데이터를 계산하는 중입니다...</p>
             ) : searchError ? (
@@ -500,7 +498,7 @@ export default function TrendPage() {
               <div className="rounded-2xl border border-rose-500/30 bg-rose-500/5 p-4 space-y-2">
                 <h4 className="text-sm font-semibold text-rose-300">
                   감소 추세 번호 ({downTrendNumbers.length}개)
-                  <span className="ml-2 text-xs font-normal text-slate-400">MA12 &lt; MA52</span>
+                  <span className="ml-2 text-xs font-normal text-slate-400">EMA16 &lt; EMA64</span>
                 </h4>
                 {downTrendNumbers.length === 0 ? (
                   <p className="text-xs text-slate-400">감소 추세 번호가 없습니다.</p>
@@ -520,7 +518,7 @@ export default function TrendPage() {
               <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-4 space-y-2">
                 <h4 className="text-sm font-semibold text-emerald-300">
                   증가 추세 번호 ({upTrendNumbers.length}개)
-                  <span className="ml-2 text-xs font-normal text-slate-400">MA4 또는 MA12 &gt; MA52</span>
+                  <span className="ml-2 text-xs font-normal text-slate-400">EMA8 또는 EMA16 &gt; EMA64</span>
                 </h4>
                 {upTrendNumbers.length === 0 ? (
                   <p className="text-xs text-slate-400">증가 추세 번호가 없습니다.</p>
@@ -540,7 +538,7 @@ export default function TrendPage() {
               <div className="rounded-2xl border border-indigo-500/30 bg-indigo-500/5 p-4 space-y-2">
                 <h4 className="text-sm font-semibold text-indigo-300">
                   보류 번호 ({holdNumbers.length}개)
-                  <span className="ml-2 text-xs font-normal text-slate-400">MA4 = MA12 = 0%</span>
+                  <span className="ml-2 text-xs font-normal text-slate-400">EMA4 = EMA8 = 0%</span>
                 </h4>
                 {holdNumbers.length === 0 ? (
                   <p className="text-xs text-slate-400">보류 번호가 없습니다.</p>
@@ -562,12 +560,12 @@ export default function TrendPage() {
 
           {/* 번호별 MA 비율 테이블 */}
           <section className="rounded-2xl border border-card-border/30 bg-card-bg/60 p-4 space-y-3">
-            <h3 className="text-xl font-semibold text-white">번호별 이동평균 출현율 상세</h3>
+            <h3 className="text-xl font-semibold text-white">번호별 지수이동평균(EMA) 출현율 상세</h3>
 
             {noHistory ? (
               <p className="text-sm text-slate-300">1회는 이전 회차가 없어 집계할 데이터가 없습니다.</p>
             ) : !hasSearched ? (
-              <p className="text-sm text-slate-300">조회를 실행하면 번호별 MA 출현율 테이블이 표시됩니다.</p>
+              <p className="text-sm text-slate-300">조회를 실행하면 번호별 EMA 출현율 테이블이 표시됩니다.</p>
             ) : isSearching ? (
               <p className="text-sm text-slate-300">데이터를 계산하는 중입니다...</p>
             ) : searchError ? (
@@ -660,11 +658,11 @@ export default function TrendPage() {
           <section className="rounded-2xl border border-white/10 bg-slate-900/40 p-4">
             <p className="text-xs text-slate-400 leading-relaxed">
               <span className="font-semibold text-slate-300">통계적 주의사항:</span>{' '}
-              이동평균(MA) 출현율은 각 기간 동안 번호가 나온 빈도를 나타냅니다. 증가 추세(MA4 또는 MA12 &gt; MA52)는 최근 1개월 또는 3개월 출현율이 1년 평균을 넘은 번호이며,
-              감소 추세(MA4 AND MA12 &lt; MA52)는 두 단기 평균 모두 1년 평균보다 낮음을 의미합니다.
-              보류(MA4 = MA12 = 0%)는 최근 3개월간 전혀 출현하지 않은 번호로, 상대적으로 출현 가능성이 열려 있는 번호입니다.
-              단기 추세는 노이즈에 민감하며, 로또는 매 회 독립 시행이므로 과거 추세가 미래 결과를 보장하지 않습니다.
-              참고 지표로만 활용하세요.
+              지수이동평균(EMA) 출현율은 최근 회차일수록 더 높은 가중치를 부여하여 번호의 출현 빈도를 계산합니다 (가중치 k = 2 / (N+1)).
+              증가 추세(EMA8 또는 EMA16 &gt; EMA64)는 단기 출현율이 중장기 평균보다 높은 번호이며,
+              감소 추세(EMA8 AND EMA16 &lt; EMA64)는 두 단기 EMA 모두 중장기 평균보다 낮음을 의미합니다.
+              보류(EMA8 = EMA16 = 0%)는 최근 구간에서 전혀 출현하지 않아 EMA가 0에 수렴한 번호입니다.
+              로또는 매 회 독립 시행이므로 과거 추세가 미래 결과를 보장하지 않습니다. 참고 지표로만 활용하세요.
             </p>
           </section>
 
