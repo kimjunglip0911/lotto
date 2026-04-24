@@ -32,6 +32,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         { title: '누적 번호 분석', href: '/analysis/accumulated-numbers' },
         { title: '카이제곱 검정', href: '/analysis/chi-square' },
         { title: '추세 분석', href: '/analysis/trend' },
+        { title: '연속 미출현 분석', href: '/analysis/absence-streak' },
       ],
     },
   ];

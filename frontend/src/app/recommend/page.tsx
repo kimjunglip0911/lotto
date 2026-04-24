@@ -9,6 +9,7 @@ import { runRecommendPipeline } from '@/app/recommend/logic/pipeline';
 import { excludeTopRankFromWindowsRule } from '@/app/recommend/logic/rules/excludeTopRankFromWindows';
 import { excludeChiSquareHighDeviationRule } from '@/app/recommend/logic/rules/excludeChiSquareHighDeviation';
 import { excludeTrendDownRule } from '@/app/recommend/logic/rules/excludeTrendDown';
+import { excludeAbsenceStreakTop5Rule } from '@/app/recommend/logic/rules/excludeAbsenceStreakTop5';
 import { ChiSquareHistoryRow, ExclusionCandidatesResponse, GeneratedSet, RecommendPipelineResult, TrendNumberResult } from '@/app/recommend/logic/types';
 
 function errorMessage(err: unknown): string {
@@ -209,10 +210,11 @@ export default function RecommendPage() {
           fetch(`${apiUrl}/api/analysis/trend/winning-numbers-window?draw_no=${selectedDraw}&window_size=${ws}`),
         );
 
-        const [drawingsResponse, exclusionResponse, chiSquareRangeResponse, winningNumberResponse, ...trendResponses] = await Promise.all([
+        const [drawingsResponse, exclusionResponse, chiSquareRangeResponse, absenceStreakRangeResponse, winningNumberResponse, ...trendResponses] = await Promise.all([
           fetch(`${apiUrl}/api/recommend/drawings?draw_no=${selectedDraw}`),
           fetch(`${apiUrl}/api/recommend/exclusion-candidates?draw_no=${selectedDraw}`),
           fetch(`${apiUrl}/api/analysis/chi-square/winning-numbers-range?draw_no=${selectedDraw}`),
+          fetch(`${apiUrl}/api/analysis/absence-streak/winning-numbers-range?draw_no=${selectedDraw}`),
           fetch(`${apiUrl}/api/analysis/accumulated-numbers/winning-number?draw_no=${selectedDraw}`),
           ...trendFetches,
         ]);
@@ -224,11 +226,11 @@ export default function RecommendPage() {
           throw new Error(`Failed to fetch exclusion candidates: ${exclusionResponse.status}`);
         }
 
-        const [drawingsData, exclusionData, chiSquareRangeData, winningNumberData, ...trendDataList]: [unknown, unknown, unknown, unknown, ...unknown[]] = await Promise.all([
+        const [drawingsData, exclusionData, chiSquareRangeData, absenceStreakRangeData, winningNumberData, ...trendDataList]: [unknown, unknown, unknown, unknown, unknown, ...unknown[]] = await Promise.all([
           drawingsResponse.json(),
           exclusionResponse.json(),
-          // 카이제곱 이력 fetch 실패 시 빈 배열로 graceful fallback
           chiSquareRangeResponse.ok ? chiSquareRangeResponse.json() : Promise.resolve([]),
+          absenceStreakRangeResponse.ok ? absenceStreakRangeResponse.json() : Promise.resolve([]),
           winningNumberResponse.ok ? winningNumberResponse.json() : Promise.resolve(null),
           ...trendResponses.map((r) => (r.ok ? r.json() : Promise.resolve([]))),
         ]);
@@ -244,6 +246,10 @@ export default function RecommendPage() {
           ? chiSquareRangeData.filter(isChiSquareHistoryRow)
           : [];
 
+        const absenceStreakRows = Array.isArray(absenceStreakRangeData)
+          ? absenceStreakRangeData.filter(isChiSquareHistoryRow)
+          : [];
+
         const windowDataMap = new Map(
           TREND_WINDOW_SIZES.map((ws, idx) => [
             ws,
@@ -254,8 +260,8 @@ export default function RecommendPage() {
 
         const sets = drawingsData.filter(isGeneratedSet);
         const pipeline = runRecommendPipeline(
-          { exclusionCandidates: exclusionData, chiSquareRows, trendResults },
-          [excludeTopRankFromWindowsRule, excludeChiSquareHighDeviationRule, excludeTrendDownRule]
+          { exclusionCandidates: exclusionData, chiSquareRows, trendResults, absenceStreakRows },
+          [excludeTopRankFromWindowsRule, excludeChiSquareHighDeviationRule, excludeTrendDownRule, excludeAbsenceStreakTop5Rule]
         );
 
         const parsedWinning = isWinningRow(winningNumberData)
@@ -303,18 +309,20 @@ export default function RecommendPage() {
         fetch(`${apiUrl}/api/analysis/trend/winning-numbers-window?draw_no=${selectedDraw}&window_size=${ws}`),
       );
 
-      const [exclusionResponse, chiSquareRangeResponse, ...trendResponses] = await Promise.all([
+      const [exclusionResponse, chiSquareRangeResponse, absenceStreakRangeResponse, ...trendResponses] = await Promise.all([
         fetch(`${apiUrl}/api/recommend/exclusion-candidates?draw_no=${selectedDraw}`),
         fetch(`${apiUrl}/api/analysis/chi-square/winning-numbers-range?draw_no=${selectedDraw}`),
+        fetch(`${apiUrl}/api/analysis/absence-streak/winning-numbers-range?draw_no=${selectedDraw}`),
         ...trendFetches,
       ]);
       if (!exclusionResponse.ok) {
         throw new Error(`Failed to fetch exclusion candidates: ${exclusionResponse.status}`);
       }
 
-      const [exclusionData, chiSquareRangeData, ...trendDataList]: [unknown, unknown, ...unknown[]] = await Promise.all([
+      const [exclusionData, chiSquareRangeData, absenceStreakRangeData, ...trendDataList]: [unknown, unknown, unknown, ...unknown[]] = await Promise.all([
         exclusionResponse.json(),
         chiSquareRangeResponse.ok ? chiSquareRangeResponse.json() : Promise.resolve([]),
+        absenceStreakRangeResponse.ok ? absenceStreakRangeResponse.json() : Promise.resolve([]),
         ...trendResponses.map((r) => (r.ok ? r.json() : Promise.resolve([]))),
       ]);
       if (!isExclusionCandidatesResponse(exclusionData)) {
@@ -323,6 +331,10 @@ export default function RecommendPage() {
 
       const chiSquareRows = Array.isArray(chiSquareRangeData)
         ? chiSquareRangeData.filter(isChiSquareHistoryRow)
+        : [];
+
+      const absenceStreakRows = Array.isArray(absenceStreakRangeData)
+        ? absenceStreakRangeData.filter(isChiSquareHistoryRow)
         : [];
 
       const windowDataMap = new Map(
@@ -334,8 +346,8 @@ export default function RecommendPage() {
       const trendResults = buildTrendResults(windowDataMap);
 
       const nextPipelineResult = runRecommendPipeline(
-        { exclusionCandidates: exclusionData, chiSquareRows, trendResults },
-        [excludeTopRankFromWindowsRule, excludeChiSquareHighDeviationRule, excludeTrendDownRule]
+        { exclusionCandidates: exclusionData, chiSquareRows, trendResults, absenceStreakRows },
+        [excludeTopRankFromWindowsRule, excludeChiSquareHighDeviationRule, excludeTrendDownRule, excludeAbsenceStreakTop5Rule]
       );
       setPipelineResult(nextPipelineResult);
 
