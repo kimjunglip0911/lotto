@@ -26,7 +26,8 @@ function computeDeviations(rows: ChiSquareHistoryRow[]): { number: number; devia
 
 export const excludeChiSquareHighDeviationRule: RecommendRule = {
   id: 'exclude-chi-square-high-deviation',
-  name: '카이제곱 +편차 평균 초과 번호 제외',
+  name: '카이제곱 +편차 상위 5% 번호 제외',
+  isIrreversible: true,
   apply: ({ chiSquareRows }) => {
     const rows = chiSquareRows ?? []
 
@@ -34,7 +35,7 @@ export const excludeChiSquareHighDeviationRule: RecommendRule = {
     if (rows.length === 0) {
       return {
         ruleId: 'exclude-chi-square-high-deviation',
-        ruleName: '카이제곱 +편차 평균 초과 번호 제외',
+        ruleName: '카이제곱 +편차 상위 5% 번호 제외',
         excludedNumbers: [],
         reason: '분석할 이전 회차 데이터가 없어 카이제곱 제외를 적용하지 않습니다.',
       }
@@ -47,25 +48,26 @@ export const excludeChiSquareHighDeviationRule: RecommendRule = {
     if (positiveDeviations.length === 0) {
       return {
         ruleId: 'exclude-chi-square-high-deviation',
-        ruleName: '카이제곱 +편차 평균 초과 번호 제외',
+        ruleName: '카이제곱 +편차 상위 5% 번호 제외',
         excludedNumbers: [],
         reason: '+편차 번호가 없어 카이제곱 제외를 적용하지 않습니다.',
       }
     }
 
-    const avgPositiveDeviation =
-      positiveDeviations.reduce((sum, d) => sum + d, 0) / positiveDeviations.length + 1
+    const sorted = [...positiveDeviations].sort((a, b) => a - b)
+    const idx = Math.min(Math.ceil(sorted.length * 0.95) - 1, sorted.length - 1)
+    const top5PctThreshold = sorted[idx]
 
     const excludedNumbers = deviations
-      .filter((d) => d.deviation > avgPositiveDeviation)
+      .filter((d) => d.deviation >= top5PctThreshold)
       .map((d) => d.number)
       .sort((a, b) => a - b)
 
     return {
       ruleId: 'exclude-chi-square-high-deviation',
-      ruleName: '카이제곱 +편차 평균 초과 번호 제외',
+      ruleName: '카이제곱 +편차 상위 5% 번호 제외',
       excludedNumbers,
-      reason: `+편차 평균(${avgPositiveDeviation.toFixed(2)})을 초과하는 번호 ${excludedNumbers.length}개를 제외합니다.`,
+      reason: `+편차 상위 5% 임계값(${top5PctThreshold.toFixed(2)}) 이상인 번호 ${excludedNumbers.length}개를 제외합니다.`,
     }
   },
 }
