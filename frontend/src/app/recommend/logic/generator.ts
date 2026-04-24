@@ -1,4 +1,4 @@
-import { GeneratedSet, TrendNumberResult } from '@/app/recommend/logic/types'
+import { ChiSquareHistoryRow, GeneratedSet, TrendNumberResult } from '@/app/recommend/logic/types'
 
 /**
  * 추세 국면별 가산점.
@@ -9,6 +9,61 @@ const TREND_BONUS: Record<string, number> = {
   up_cont: 1,
   topping: 0,
   down_cont: -1,
+}
+
+/**
+ * 핫 풀 필터 기준.
+ * - MIN_STREAK: 최근 N회 이상 미출현한 번호만 포함 (너무 자주 나온 번호 제외)
+ * - MIN_FREQ52: 최근 52회 내 출현 횟수가 이 값 이상인 번호만 포함 (통계적으로 무의미한 번호 제외)
+ * - MIN_POOL_SIZE: 핫 풀 크기가 이 값 미만이면 필터를 적용하지 않고 전체 풀 사용
+ */
+const HOT_POOL_MIN_STREAK = 3
+const HOT_POOL_MIN_FREQ52 = 7
+const HOT_POOL_MIN_SIZE   = 12
+
+type HistoryRow = Pick<ChiSquareHistoryRow, 'draw_no' | 'num1' | 'num2' | 'num3' | 'num4' | 'num5' | 'num6' | 'bonus_num'>
+
+/**
+ * 사용 가능 번호 풀에 핫 풀 필터를 적용한다.
+ * streak >= MIN_STREAK AND freq52 >= MIN_FREQ52 조건을 만족하는 번호만 남긴다.
+ * 결과가 MIN_POOL_SIZE 미만이면 원래 풀을 그대로 반환한다.
+ */
+export function applyHotPoolFilter(
+  available: number[],
+  allHistoryRows: HistoryRow[],
+  drawNo: number,
+): number[] {
+  if (allHistoryRows.length === 0) return available
+
+  const allNums = (r: HistoryRow) => [r.num1, r.num2, r.num3, r.num4, r.num5, r.num6, r.bonus_num]
+
+  // 미출현 기간 계산
+  const lastSeen = new Map<number, number>()
+  for (const r of allHistoryRows) {
+    for (const n of allNums(r)) {
+      if (n >= 1 && n <= 45) {
+        const prev = lastSeen.get(n) ?? 0
+        if (r.draw_no > prev) lastSeen.set(n, r.draw_no)
+      }
+    }
+  }
+  const streak = (n: number) => drawNo - (lastSeen.get(n) ?? 0)
+
+  // 최근 52회 출현 빈도
+  const recent52 = allHistoryRows.slice(-52)
+  const freq52Map = new Map<number, number>()
+  for (const r of recent52) {
+    for (const n of allNums(r)) {
+      if (n >= 1 && n <= 45) freq52Map.set(n, (freq52Map.get(n) ?? 0) + 1)
+    }
+  }
+  const freq52 = (n: number) => freq52Map.get(n) ?? 0
+
+  const hotPool = available.filter(
+    (n) => streak(n) >= HOT_POOL_MIN_STREAK && freq52(n) >= HOT_POOL_MIN_FREQ52,
+  )
+
+  return hotPool.length >= HOT_POOL_MIN_SIZE ? hotPool : available
 }
 
 function mkPairKey(a: number, b: number): string {
@@ -133,6 +188,9 @@ export function generateDeterministicSets(
 export function generate20Sets(
   available: number[],
   trendResults: TrendNumberResult[],
+  allHistoryRows: HistoryRow[] = [],
+  drawNo: number = 0,
 ): GeneratedSet[] {
-  return generateDeterministicSets(available, trendResults, 20)
+  const pool = applyHotPoolFilter(available, allHistoryRows, drawNo)
+  return generateDeterministicSets(pool, trendResults, 20)
 }
