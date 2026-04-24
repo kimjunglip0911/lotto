@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "hooks": {
+    "preToolUse": [
+      {
+        "matcher": "CreatePlan",
+        "type": "command",
+        "command": ".cursor/hooks/block-create-plan.ps1",
+        "failClosed": false
+      }
+    ]
+  }
+}
