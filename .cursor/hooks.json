@@ -5,7 +5,7 @@
       {
         "matcher": "CreatePlan",
         "type": "command",
-        "command": ".cursor/hooks/block-create-plan.ps1",
+        "command": ".cursor/hooks/inject-plan-format.ps1",
         "failClosed": false
       }
     ]

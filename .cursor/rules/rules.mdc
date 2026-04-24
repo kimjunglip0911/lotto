@@ -17,7 +17,7 @@ alwaysApply: true
 
 | 작업 주제 | 우선 로딩 규칙 파일 | 적용 기준 |
 |:---|:---|:---|
-| 플랜 문서 작성/수정 | `.cursor/rules/01.plan-document-form.mdc` | 플랜 작성 시 항상 `.cursor/plans/개발설계서.md`에 덮어쓰고 `## 1.`~`## 6.` 양식 준수. CreatePlan 도구 사용 시 훅이 차단하고 양식 전문을 제공함 |
+| 플랜 문서 작성/수정 | `.cursor/rules/01.plan-document-form.mdc` | CreatePlan 도구 사용 시 훅이 양식 전문을 자동 주입함. `## 1.`~`## 6.` 구조 준수 |
 | 커밋 수행/메시지 작성 | `.cursor/rules/git-commit-guide.mdc` | `git add/commit` 포함 스테이징 판단, 커밋 메시지 생성/수정 |
 | 컴포넌트 개발/리팩토링 | `.cursor/rules/components.mdc` | `frontend/src/components/**` 변경, UI 컴포넌트 설계/분리/구조화 |
 | 구조/경로 탐색 및 파일 배치 | `.cursor/rules/project-structure.mdc` | 새 파일 생성 위치 결정, 디렉터리 구조 준수 필요 시 |
@@ -39,7 +39,7 @@ alwaysApply: true
 
 ## 3. 언어·문서·코드 표기
 
-- **플랜·구현 계획**을 새로 쓰거나 목차·표 구조를 바꿀 때: **`.cursor/rules/01.plan-document-form.mdc`를 먼저 확인**하고, 플랜은 반드시 **`.cursor/plans/개발설계서.md` 한 파일에 덮어쓴다**(`CreatePlan` 도구 사용 금지, 별도 파일 생성 금지). 해당 템플릿의 `## 1.`~`## 6.` 제목·순서·구분선·표 열을 그대로 따른다.
+- **플랜·구현 계획**을 새로 쓰거나 목차·표 구조를 바꿀 때: `CreatePlan` 도구를 사용하면 훅이 **`.cursor/rules/01.plan-document-form.mdc`** 양식 전문을 자동 주입한다. 해당 템플릿의 `## 1.`~`## 6.` 제목·순서·구분선·표 열을 그대로 따른다.
 - **커밋 작업**(`git commit`, 커밋 메시지 작성/수정, 스테이징 판단 포함)을 수행할 때: **`.cursor/rules/git-commit-guide.mdc`를 반드시 먼저 확인하고 그 규칙을 따른다.**
 - **산출 문서**(Task, 구현 계획, PR 설명, 사용자 안내, 이슈 요약 등): **항상 한국어**로 작성한다.
 - **코드·파일명·변수·함수·타입·API 경로**: **영어**를 사용한다.
