@@ -40,10 +40,12 @@ const DEFAULT_RULE_DISPLAY = {
 /** 세트 생성 전략 배지 */
 const STRATEGY_LABEL: Record<string, string> = {
   deterministic: '최적 커버리지',
+  'range-coverage': '범위 전수 커버',
 }
 
 const STRATEGY_BADGE: Record<string, string> = {
   deterministic: 'bg-emerald-500/20 text-emerald-200 border-emerald-500/40',
+  'range-coverage': 'bg-amber-500/20 text-amber-200 border-amber-500/40',
 }
 
 const STRATEGY_BADGE_DEFAULT = 'bg-white/10 text-slate-300 border-white/20';
