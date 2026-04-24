@@ -185,105 +185,110 @@ export function generateDeterministicSets(
   return sets
 }
 
-// ─── 범위 기반 커버리지 알고리즘 ──────────────────────────────────────────────
+// ─── 위치별 빈도 다양성 알고리즘 ─────────────────────────────────────────────
 
 /**
- * 핫 풀 내 번호 쌍의 공동출현 횟수 계산 (최근 N회 기준).
+ * 과거 데이터에서 위치별(num1~num6) 번호 출현 빈도 행렬을 계산한다.
+ * posFreq[slot].get(num) = num이 slot 위치에 나타난 횟수
  */
-function computePairCooccurrence(hotPool: number[], rows: HistoryRow[]): Map<string, number> {
-  const cooccur = new Map<string, number>()
-  const hotSet = new Set(hotPool)
-  const allNums = (r: HistoryRow) => [r.num1, r.num2, r.num3, r.num4, r.num5, r.num6, r.bonus_num]
+function computePositionFrequency(rows: HistoryRow[]): Map<number, number>[] {
+  const posFreq: Map<number, number>[] = Array.from({ length: 6 }, () => new Map())
   for (const r of rows) {
-    const nums = allNums(r).filter((n) => hotSet.has(n))
-    for (let i = 0; i < nums.length; i++) {
-      for (let j = i + 1; j < nums.length; j++) {
-        const key = mkPairKey(nums[i], nums[j])
-        cooccur.set(key, (cooccur.get(key) ?? 0) + 1)
-      }
-    }
+    const nums = [r.num1, r.num2, r.num3, r.num4, r.num5, r.num6].sort((a, b) => a - b)
+    nums.forEach((n, pos) => posFreq[pos].set(n, (posFreq[pos].get(n) ?? 0) + 1))
   }
-  return cooccur
-}
-
-function cTripleScore(triple: [number, number, number], cooccur: Map<string, number>): number {
-  const [a, b, c] = triple
-  return (cooccur.get(mkPairKey(a, b)) ?? 0) + (cooccur.get(mkPairKey(a, c)) ?? 0) + (cooccur.get(mkPairKey(b, c)) ?? 0)
+  return posFreq
 }
 
 /**
- * 범위 기반 20세트 생성 알고리즘.
- *
- * 적용 조건:
- *   - 핫 풀에서 31-45 범위 번호(C구간)가 정확히 6개 → C(6,3) = 20 트리플 전수 커버
- *   - 핫 풀에서 16-20 범위 번호(B구간)가 정확히 2개 → 모든 세트에 고정
+ * 값 범위 6등분 버킷 + 위치 빈도 정렬 + 3진법 조합으로 20세트를 생성한다.
  *
  * 알고리즘:
- *   1. B(16-20) 2개를 모든 세트에 고정
- *   2. C(31-45) 6개의 트리플 20가지를 공동출현 점수 내림차순으로 정렬
- *   3. A(1-15) 번호를 미출현 기간(streak) 내림차순으로 순환 배정
- *   → 각 세트: 1A + 2B + 3C = 6개
+ *   1. 핫 풀을 값 크기 기준으로 6개 버킷에 고르게 분배
+ *      → 버킷 0은 가장 작은 번호들(num1 후보), 버킷 5는 가장 큰 번호들(num6 후보)
+ *   2. 각 버킷을 "해당 위치에서의 과거 출현 횟수" 오름차순 정렬(저빈도 번호 우선)
+ *   3. 20세트 조합 = 3진법 독립 3자리(d0, d1, d2)에서 파생한 6자리 조합
+ *      picks = [d0, d1, d2, (d0+d1)%3, (d1+d2)%3, (d0+d2)%3]
+ *      → 20세트가 모두 다르고, 각 버킷의 모든 번호가 균등 사용
  *
- * 이 조건을 만족하지 않으면 null 반환 (greedy 폴백).
+ * 효과:
+ *   - 모든 세트가 저구간~고구간을 균형 있게 포함 → 범위 다양성
+ *   - 위치별 저빈도 번호 우선 선택 → 위치 특이성 반영
+ *   - 핫 풀 번호 전체를 고르게 활용 → 중복 최소화
+ *
+ * 20세트 미달 시 탐욕 알고리즘으로 부족분 보충.
  */
-function generateRangeBasedSets(
-  hotPool: number[],
+export function generatePositionDiverseSets(
+  pool: number[],
   allHistoryRows: HistoryRow[],
-  drawNo: number,
-  count: number,
-): GeneratedSet[] | null {
-  const A = hotPool.filter((n) => n >= 1 && n <= 15).sort((a, b) => a - b)
-  const B = hotPool.filter((n) => n >= 16 && n <= 20).sort((a, b) => a - b)
-  const C = hotPool.filter((n) => n >= 31 && n <= 45).sort((a, b) => a - b)
+  trendResults: TrendNumberResult[],
+  count: number = 20,
+): GeneratedSet[] {
+  const posFreq = computePositionFrequency(allHistoryRows)
+  const sorted = [...pool].sort((a, b) => a - b)
+  const N = sorted.length
 
-  if (C.length !== 6 || B.length !== 2 || A.length === 0) return null
+  if (N < 6) return generateDeterministicSets(pool, trendResults, count)
 
-  const allNums = (r: HistoryRow) => [r.num1, r.num2, r.num3, r.num4, r.num5, r.num6, r.bonus_num]
+  // 6 버킷으로 값 범위 분할 (크기 순 등분)
+  const baseSize = Math.floor(N / 6)
+  const remainder = N % 6
+  const sortedBuckets: number[][] = []
+  let idx = 0
+  for (let g = 0; g < 6; g++) {
+    const size = baseSize + (g < remainder ? 1 : 0)
+    const bucket = sorted.slice(idx, idx + size)
+    // 위치 g에서의 과거 빈도 오름차순 정렬 (저빈도 우선)
+    bucket.sort((a, b) => {
+      const fa = posFreq[g].get(a) ?? 0
+      const fb = posFreq[g].get(b) ?? 0
+      return fa !== fb ? fa - fb : a - b
+    })
+    sortedBuckets.push(bucket)
+    idx += size
+  }
 
-  // A 번호별 미출현 기간 계산 (streak DESC → 가장 오래 쉰 번호부터)
-  const lastSeen = new Map<number, number>()
-  for (const r of allHistoryRows) {
-    for (const n of allNums(r)) {
-      if (n >= 1 && n <= 45) {
-        const prev = lastSeen.get(n) ?? 0
-        if (r.draw_no > prev) lastSeen.set(n, r.draw_no)
+  const sets: GeneratedSet[] = []
+  const usedKeys = new Set<string>()
+
+  // 3진법 독립 3자리(d0, d1, d2)에서 파생한 6자리 조합으로 20세트 생성
+  for (let i = 0; i < count * 3 && sets.length < count; i++) {
+    const d0 = i % 3
+    const d1 = Math.floor(i / 3) % 3
+    const d2 = Math.floor(i / 9) % 3
+    const rawPicks = [d0, d1, d2, (d0 + d1) % 3, (d1 + d2) % 3, (d0 + d2) % 3]
+    const picks = rawPicks.map((p, g) => p % sortedBuckets[g].length)
+
+    const combo = sortedBuckets.map((bucket, g) => bucket[picks[g]]).sort((a, b) => a - b)
+    const key = combo.join(',')
+    if (!usedKeys.has(key)) {
+      usedKeys.add(key)
+      sets.push({
+        num1: combo[0],
+        num2: combo[1],
+        num3: combo[2],
+        num4: combo[3],
+        num5: combo[4],
+        num6: combo[5],
+        method: 'JL Wheel Method',
+        strategy: 'position-diversity',
+      })
+    }
+  }
+
+  // 부족 시 탐욕 알고리즘으로 보충
+  if (sets.length < count) {
+    const extra = generateDeterministicSets(pool, trendResults, count - sets.length)
+    for (const s of extra) {
+      const key = [s.num1, s.num2, s.num3, s.num4, s.num5, s.num6].join(',')
+      if (!usedKeys.has(key) && sets.length < count) {
+        usedKeys.add(key)
+        sets.push(s)
       }
     }
   }
-  const streak = (n: number) => drawNo - (lastSeen.get(n) ?? 0)
-  const A_sorted = [...A].sort((a, b) => {
-    const ds = streak(b) - streak(a)
-    return ds !== 0 ? ds : a - b
-  })
 
-  // C 트리플 20가지를 공동출현 점수 내림차순 정렬
-  const recent200 = allHistoryRows.slice(-200)
-  const cooccur = computePairCooccurrence(hotPool, recent200)
-  const cTriples: [number, number, number][] = []
-  for (let i = 0; i < C.length; i++)
-    for (let j = i + 1; j < C.length; j++)
-      for (let k = j + 1; k < C.length; k++)
-        cTriples.push([C[i], C[j], C[k]])
-  cTriples.sort((x, y) => cTripleScore(y, cooccur) - cTripleScore(x, cooccur))
-
-  const sets: GeneratedSet[] = []
-  for (let i = 0; i < Math.min(count, cTriples.length); i++) {
-    const triple = cTriples[i]
-    const aNum = A_sorted[i % A_sorted.length]
-    const combo = [...[aNum], ...B, ...triple].sort((a, b) => a - b)
-    sets.push({
-      num1: combo[0],
-      num2: combo[1],
-      num3: combo[2],
-      num4: combo[3],
-      num5: combo[4],
-      num6: combo[5],
-      method: 'JL Wheel Method',
-      strategy: 'range-coverage',
-    })
-  }
-
-  return sets.length === count ? sets : null
+  return sets
 }
 
 export function generate20Sets(
@@ -293,13 +298,5 @@ export function generate20Sets(
   drawNo: number = 0,
 ): GeneratedSet[] {
   const pool = applyHotPoolFilter(available, allHistoryRows, drawNo)
-
-  // 범위 기반 알고리즘 우선 시도 (|C|=6, |B|=2 조건)
-  if (allHistoryRows.length > 0 && drawNo > 0) {
-    const rangeSets = generateRangeBasedSets(pool, allHistoryRows, drawNo, 20)
-    if (rangeSets !== null) return rangeSets
-  }
-
-  // 폴백: 탐욕 트리플 커버리지 알고리즘
-  return generateDeterministicSets(pool, trendResults, 20)
+  return generatePositionDiverseSets(pool, allHistoryRows, trendResults, 20)
 }
