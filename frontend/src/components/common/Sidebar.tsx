@@ -30,6 +30,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       icon: 'query_stats',
       children: [
         { title: '누적 번호 분석', href: '/analysis/accumulated-numbers' },
+        { title: '카이제곱 검정', href: '/analysis/chi-square' },
       ],
     },
   ];

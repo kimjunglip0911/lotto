@@ -43,6 +43,16 @@ app.include_router(
         / "router.py",
     )
 )
+app.include_router(
+    load_router_from_file(
+        "backend.router.analysis.chi_square.router",
+        Path(__file__).resolve().parent
+        / "router"
+        / "analysis"
+        / "chi-square"
+        / "router.py",
+    )
+)
 
 @app.get("/", response_model=MessageResponse)
 def read_root():
