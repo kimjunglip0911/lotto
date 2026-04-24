@@ -39,15 +39,11 @@ const DEFAULT_RULE_DISPLAY = {
 
 /** 세트 생성 전략 배지 */
 const STRATEGY_LABEL: Record<string, string> = {
-  coverage: '커버리지',
-  'stat-match': '통계 패턴',
-  'trend-weighted': '추세 가중',
+  deterministic: '최적 커버리지',
 }
 
 const STRATEGY_BADGE: Record<string, string> = {
-  coverage: 'bg-sky-500/20 text-sky-200 border-sky-500/40',
-  'stat-match': 'bg-violet-500/20 text-violet-200 border-violet-500/40',
-  'trend-weighted': 'bg-orange-500/20 text-orange-200 border-orange-500/40',
+  deterministic: 'bg-emerald-500/20 text-emerald-200 border-emerald-500/40',
 }
 
 const STRATEGY_BADGE_DEFAULT = 'bg-white/10 text-slate-300 border-white/20';
