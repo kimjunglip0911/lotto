@@ -374,6 +374,48 @@ function buildThemeSet(
   return null
 }
 
+function buildSetFromIndices(pool: number[], indices: number[]): number[] | null {
+  const picked = indices.map((idx) => pool[idx])
+  const uniq = [...new Set(picked)].sort((a, b) => a - b)
+  if (uniq.length !== 6) return null
+  return uniq
+}
+
+function topUpWithRotatingPatterns(
+  pool: number[],
+  trendMap: Map<number, string>,
+  usageCount: Map<number, number>,
+  usedSetKeys: Set<string>,
+  targetCount: number,
+  sets: GeneratedSet[],
+): void {
+  const N = pool.length
+  if (N < 6) return
+
+  for (let step = 1; step < N && sets.length < targetCount; step++) {
+    for (let start = 0; start < N && sets.length < targetCount; start++) {
+      const indices = Array.from({ length: 6 }, (_, k) => (start + k * step) % N)
+      const nums = buildSetFromIndices(pool, indices)
+      if (!nums) continue
+      const key = nums.join(',')
+      if (usedSetKeys.has(key)) continue
+
+      usedSetKeys.add(key)
+      for (const n of nums) usageCount.set(n, (usageCount.get(n) ?? 0) + 1)
+      sets.push({
+        num1: nums[0],
+        num2: nums[1],
+        num3: nums[2],
+        num4: nums[3],
+        num5: nums[4],
+        num6: nums[5],
+        method: 'JL Wheel Method',
+        strategy: 'deterministic',
+      })
+    }
+  }
+}
+
 function relaxThemeSpec(spec: ThemeSpec): ThemeSpec {
   return {
     ...spec,
@@ -446,6 +488,40 @@ export function generateThemeDiverseSets(
         usedSetKeys.add(key)
         sets.push(s)
       }
+    }
+  }
+
+  // 안전장치: 어떤 경우에도 목표 개수(기본 20개)를 채우도록 회전 패턴으로 추가 보충.
+  if (sets.length < count) {
+    topUpWithRotatingPatterns(pool, trendMap, usageCount, usedSetKeys, count, sets)
+  }
+
+  // 최종 안전장치: 조합 공간이 너무 작아 유니크 20세트가 불가능한 경우에도
+  // UI/저장 일관성을 위해 20개를 강제로 채운다(필요 시 중복 허용).
+  if (sets.length < count) {
+    const N = pool.length
+    const stride = Math.max(1, Math.floor(N / 3))
+    for (let i = 0; sets.length < count && i < count * 10; i++) {
+      const indices = [
+        i % N,
+        (i + 1) % N,
+        (i + stride) % N,
+        (i + stride + 1) % N,
+        (i + 2 * stride) % N,
+        (i + 2 * stride + 1) % N,
+      ]
+      const nums = buildSetFromIndices(pool, indices)
+      if (!nums) continue
+      sets.push({
+        num1: nums[0],
+        num2: nums[1],
+        num3: nums[2],
+        num4: nums[3],
+        num5: nums[4],
+        num6: nums[5],
+        method: 'JL Wheel Method',
+        strategy: 'deterministic',
+      })
     }
   }
 
