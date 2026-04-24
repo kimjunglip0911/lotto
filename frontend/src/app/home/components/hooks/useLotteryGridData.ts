@@ -28,7 +28,6 @@ interface UseLotteryGridDataOptions {
 }
 
 export const useLotteryGridData = (options?: UseLotteryGridDataOptions) => {
-  const MAX_SETS_PER_DRAW = 20;
   const onDrawChange = options?.onDrawChange;
   const [sets, setSets] = useState<LotterySet[]>([]);
   const [winningByDraw, setWinningByDraw] = useState<WinningNumbersByDraw | null>(null);
@@ -40,12 +39,16 @@ export const useLotteryGridData = (options?: UseLotteryGridDataOptions) => {
       void (async () => {
         try {
           const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
-          const response = await fetch(`${apiUrl}/api/drawings/draw-numbers`);
+          const response = await fetch(`${apiUrl}/api/analysis/accumulated-numbers/draw-numbers`);
           if (!response.ok) return;
 
           const data = await response.json();
-          setAvailableDraws(data);
-          setSelectedDraw((prev) => (prev || data.length === 0 ? prev : data[0]));
+          if (!Array.isArray(data) || data.length === 0) return;
+
+          const nextDraw = data[0] + 1;
+          const draws = [nextDraw, ...data];
+          setAvailableDraws(draws);
+          setSelectedDraw((prev) => (prev || draws.length === 0 ? prev : draws[0]));
         } catch (error) {
           console.error('Error fetching draw numbers:', error);
         }
@@ -63,7 +66,7 @@ export const useLotteryGridData = (options?: UseLotteryGridDataOptions) => {
     const loadData = async () => {
       try {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
-        const setsResponse = await fetch(`${apiUrl}/api/drawings/by-no?draw_no=${selectedDraw}`);
+        const setsResponse = await fetch(`${apiUrl}/api/recommend/drawings?draw_no=${selectedDraw}`);
         const winningResponse = await fetch(`${apiUrl}/api/drawings/winning-by-no?draw_no=${selectedDraw}`);
 
         if (!isMounted) return;
@@ -72,8 +75,7 @@ export const useLotteryGridData = (options?: UseLotteryGridDataOptions) => {
 
         if (setsResponse.ok) {
           const setsData = await setsResponse.json();
-          const limitedSets = Array.isArray(setsData) ? setsData.slice(0, MAX_SETS_PER_DRAW) : [];
-          setSets(limitedSets);
+          setSets(Array.isArray(setsData) ? setsData : []);
         } else {
           setSets([]);
         }
