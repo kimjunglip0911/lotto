@@ -337,7 +337,7 @@ export default function RecommendPage() {
 
       const excludedSet = new Set(nextPipelineResult.excludedNumbers);
       const availableNumbers = Array.from({ length: 45 }, (_, i) => i + 1).filter((n) => !excludedSet.has(n));
-      const generatedSetsPayload = generate20Sets(availableNumbers, trendResults, allHistoryRows, exclusionData.drawNo).map((s) => ({
+      const generatedSetsPayload = generate20Sets(availableNumbers, trendResults, allHistoryRows).map((s) => ({
         ...s,
         applied_rule_ids: nextPipelineResult.appliedRules.map((rule) => rule.ruleId),
         excluded_numbers: nextPipelineResult.excludedNumbers,

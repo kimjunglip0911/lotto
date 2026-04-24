@@ -40,17 +40,31 @@ const DEFAULT_RULE_DISPLAY = {
 /** 세트 생성 전략 배지 */
 const STRATEGY_LABEL: Record<string, string> = {
   deterministic: '최적 커버리지',
-  'range-coverage': '범위 전수 커버',
   'position-diversity': '위치별 다양성',
+  'theme-diversity': '주제별 다양성',
 }
 
 const STRATEGY_BADGE: Record<string, string> = {
   deterministic: 'bg-emerald-500/20 text-emerald-200 border-emerald-500/40',
-  'range-coverage': 'bg-amber-500/20 text-amber-200 border-amber-500/40',
   'position-diversity': 'bg-sky-500/20 text-sky-200 border-sky-500/40',
+  'theme-diversity': 'bg-fuchsia-500/20 text-fuchsia-200 border-fuchsia-500/40',
 }
 
 const STRATEGY_BADGE_DEFAULT = 'bg-white/10 text-slate-300 border-white/20';
+
+function getStrategyLabel(strategy: string): string {
+  if (strategy.startsWith('theme:')) {
+    return strategy.replace('theme:', '')
+  }
+  return STRATEGY_LABEL[strategy] ?? strategy
+}
+
+function getStrategyBadge(strategy: string): string {
+  if (strategy.startsWith('theme:')) {
+    return STRATEGY_BADGE['theme-diversity']
+  }
+  return STRATEGY_BADGE[strategy] ?? STRATEGY_BADGE_DEFAULT
+}
 
 export const AnalysisResultList: React.FC<AnalysisResultListProps> = ({
   statusMessage,
@@ -169,8 +183,8 @@ export const AnalysisResultList: React.FC<AnalysisResultListProps> = ({
                   <span className="w-6 text-right text-xs text-slate-500 shrink-0">{index + 1}.</span>
                   <span>{set.num1}, {set.num2}, {set.num3}, {set.num4}, {set.num5}, {set.num6}</span>
                   {set.strategy ? (
-                    <span className={`ml-auto shrink-0 inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-semibold border ${STRATEGY_BADGE[set.strategy] ?? STRATEGY_BADGE_DEFAULT}`}>
-                      {STRATEGY_LABEL[set.strategy] ?? set.strategy}
+                    <span className={`ml-auto shrink-0 inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-semibold border ${getStrategyBadge(set.strategy)}`}>
+                      {getStrategyLabel(set.strategy)}
                     </span>
                   ) : null}
                 </li>

@@ -11,60 +11,7 @@ const TREND_BONUS: Record<string, number> = {
   down_cont: -1,
 }
 
-/**
- * 핫 풀 필터 기준.
- * - MIN_STREAK: 최근 N회 이상 미출현한 번호만 포함 (너무 자주 나온 번호 제외)
- * - MIN_FREQ52: 최근 52회 내 출현 횟수가 이 값 이상인 번호만 포함 (통계적으로 무의미한 번호 제외)
- * - MIN_POOL_SIZE: 핫 풀 크기가 이 값 미만이면 필터를 적용하지 않고 전체 풀 사용
- */
-const HOT_POOL_MIN_STREAK = 3
-const HOT_POOL_MIN_FREQ52 = 7
-const HOT_POOL_MIN_SIZE   = 12
-
 type HistoryRow = Pick<ChiSquareHistoryRow, 'draw_no' | 'num1' | 'num2' | 'num3' | 'num4' | 'num5' | 'num6' | 'bonus_num'>
-
-/**
- * 사용 가능 번호 풀에 핫 풀 필터를 적용한다.
- * streak >= MIN_STREAK AND freq52 >= MIN_FREQ52 조건을 만족하는 번호만 남긴다.
- * 결과가 MIN_POOL_SIZE 미만이면 원래 풀을 그대로 반환한다.
- */
-export function applyHotPoolFilter(
-  available: number[],
-  allHistoryRows: HistoryRow[],
-  drawNo: number,
-): number[] {
-  if (allHistoryRows.length === 0) return available
-
-  const allNums = (r: HistoryRow) => [r.num1, r.num2, r.num3, r.num4, r.num5, r.num6, r.bonus_num]
-
-  // 미출현 기간 계산
-  const lastSeen = new Map<number, number>()
-  for (const r of allHistoryRows) {
-    for (const n of allNums(r)) {
-      if (n >= 1 && n <= 45) {
-        const prev = lastSeen.get(n) ?? 0
-        if (r.draw_no > prev) lastSeen.set(n, r.draw_no)
-      }
-    }
-  }
-  const streak = (n: number) => drawNo - (lastSeen.get(n) ?? 0)
-
-  // 최근 52회 출현 빈도
-  const recent52 = allHistoryRows.slice(-52)
-  const freq52Map = new Map<number, number>()
-  for (const r of recent52) {
-    for (const n of allNums(r)) {
-      if (n >= 1 && n <= 45) freq52Map.set(n, (freq52Map.get(n) ?? 0) + 1)
-    }
-  }
-  const freq52 = (n: number) => freq52Map.get(n) ?? 0
-
-  const hotPool = available.filter(
-    (n) => streak(n) >= HOT_POOL_MIN_STREAK && freq52(n) >= HOT_POOL_MIN_FREQ52,
-  )
-
-  return hotPool.length >= HOT_POOL_MIN_SIZE ? hotPool : available
-}
 
 function mkPairKey(a: number, b: number): string {
   return a < b ? `${a},${b}` : `${b},${a}`
@@ -185,104 +132,318 @@ export function generateDeterministicSets(
   return sets
 }
 
-// ─── 위치별 빈도 다양성 알고리즘 ─────────────────────────────────────────────
+type Band = 'front' | 'middle' | 'back'
 
-/**
- * 과거 데이터에서 위치별(num1~num6) 번호 출현 빈도 행렬을 계산한다.
- * posFreq[slot].get(num) = num이 slot 위치에 나타난 횟수
- */
-function computePositionFrequency(rows: HistoryRow[]): Map<number, number>[] {
-  const posFreq: Map<number, number>[] = Array.from({ length: 6 }, () => new Map())
-  for (const r of rows) {
-    const nums = [r.num1, r.num2, r.num3, r.num4, r.num5, r.num6].sort((a, b) => a - b)
-    nums.forEach((n, pos) => posFreq[pos].set(n, (posFreq[pos].get(n) ?? 0) + 1))
-  }
-  return posFreq
+interface ThemeSpec {
+  label: string
+  pairInBand?: Band
+  tripleInBand?: Band
+  pairCountMin?: number
+  noConsecutive?: boolean
+  oddMin?: number
+  oddMax?: number
+  bandMin?: Partial<Record<Band, number>>
+  bandMax?: Partial<Record<Band, number>>
+  sumMin?: number
+  sumMax?: number
+  uniqueLastDigit?: boolean
+  primeMin?: number
+  primeMax?: number
+  preferLow?: boolean
+  preferHigh?: boolean
+  preferOdd?: boolean
+  preferEven?: boolean
+  preferPrime?: boolean
+  preferBand?: Band
 }
 
-/**
- * 값 범위 6등분 버킷 + 위치 빈도 정렬 + 3진법 조합으로 20세트를 생성한다.
- *
- * 알고리즘:
- *   1. 핫 풀을 값 크기 기준으로 6개 버킷에 고르게 분배
- *      → 버킷 0은 가장 작은 번호들(num1 후보), 버킷 5는 가장 큰 번호들(num6 후보)
- *   2. 각 버킷을 "해당 위치에서의 과거 출현 횟수" 오름차순 정렬(저빈도 번호 우선)
- *   3. 20세트 조합 = 3진법 독립 3자리(d0, d1, d2)에서 파생한 6자리 조합
- *      picks = [d0, d1, d2, (d0+d1)%3, (d1+d2)%3, (d0+d2)%3]
- *      → 20세트가 모두 다르고, 각 버킷의 모든 번호가 균등 사용
- *
- * 효과:
- *   - 모든 세트가 저구간~고구간을 균형 있게 포함 → 범위 다양성
- *   - 위치별 저빈도 번호 우선 선택 → 위치 특이성 반영
- *   - 핫 풀 번호 전체를 고르게 활용 → 중복 최소화
- *
- * 20세트 미달 시 탐욕 알고리즘으로 부족분 보충.
- */
-export function generatePositionDiverseSets(
-  pool: number[],
-  allHistoryRows: HistoryRow[],
+const PRIME_NUMBERS = new Set([2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43])
+
+const THEME_SPECS: ThemeSpec[] = [
+  { label: '앞번호 연속 2개', pairInBand: 'front', preferBand: 'front', preferLow: true },
+  { label: '뒷번호 연속 2개', pairInBand: 'back', preferBand: 'back', preferHigh: true },
+  { label: '중간번호 연속 2개', pairInBand: 'middle', preferBand: 'middle' },
+  { label: '연속 숫자 없음', noConsecutive: true },
+  { label: '앞번호 연속 3개', tripleInBand: 'front', preferBand: 'front', preferLow: true },
+  { label: '뒷번호 연속 3개', tripleInBand: 'back', preferBand: 'back', preferHigh: true },
+  { label: '중간번호 연속 3개', tripleInBand: 'middle', preferBand: 'middle' },
+  { label: '연속 2쌍', pairCountMin: 2 },
+  { label: '홀수 강세', oddMin: 4, oddMax: 5, preferOdd: true },
+  { label: '짝수 강세', oddMin: 1, oddMax: 2, preferEven: true },
+  { label: '홀짝 균형', oddMin: 3, oddMax: 3 },
+  { label: '저구간 강세', bandMin: { front: 3 }, bandMax: { back: 2 }, preferLow: true, preferBand: 'front' },
+  { label: '중구간 강세', bandMin: { middle: 3 }, bandMax: { back: 2 }, preferBand: 'middle' },
+  { label: '고구간 강세', bandMin: { back: 3 }, bandMax: { front: 2 }, preferHigh: true, preferBand: 'back' },
+  { label: '저중고 균형', bandMin: { front: 2, middle: 2, back: 2 }, bandMax: { front: 2, middle: 2, back: 2 } },
+  { label: '합계 낮은 조합', sumMax: 130, preferLow: true },
+  { label: '합계 높은 조합', sumMin: 160, preferHigh: true },
+  { label: '끝수 분산 조합', uniqueLastDigit: true },
+  { label: '소수 중심 조합', primeMin: 3, primeMax: 4, preferPrime: true },
+  { label: '합성수 중심 조합', primeMin: 1, primeMax: 2, preferEven: true },
+]
+
+function getBand(n: number): Band {
+  if (n <= 15) return 'front'
+  if (n <= 30) return 'middle'
+  return 'back'
+}
+
+function isInBand(n: number, band: Band): boolean {
+  return getBand(n) === band
+}
+
+function countConsecutivePairs(nums: number[]): number {
+  let count = 0
+  for (let i = 0; i < nums.length - 1; i++) {
+    if (nums[i + 1] - nums[i] === 1) count++
+  }
+  return count
+}
+
+function hasConsecutiveRunInBand(nums: number[], runLength: number, band: Band): boolean {
+  for (let i = 0; i <= nums.length - runLength; i++) {
+    let ok = true
+    for (let j = i; j < i + runLength - 1; j++) {
+      if (nums[j + 1] - nums[j] !== 1) {
+        ok = false
+        break
+      }
+    }
+    if (!ok) continue
+    for (let j = i; j < i + runLength; j++) {
+      if (!isInBand(nums[j], band)) {
+        ok = false
+        break
+      }
+    }
+    if (ok) return true
+  }
+  return false
+}
+
+function countNonOverlappingPairRuns(nums: number[]): number {
+  let count = 0
+  let i = 0
+  while (i < nums.length - 1) {
+    if (nums[i + 1] - nums[i] === 1) {
+      count++
+      i += 2
+      continue
+    }
+    i++
+  }
+  return count
+}
+
+function countByBand(nums: number[]): Record<Band, number> {
+  const out: Record<Band, number> = { front: 0, middle: 0, back: 0 }
+  for (const n of nums) out[getBand(n)]++
+  return out
+}
+
+function countOdd(nums: number[]): number {
+  return nums.filter((n) => n % 2 !== 0).length
+}
+
+function countPrime(nums: number[]): number {
+  return nums.filter((n) => PRIME_NUMBERS.has(n)).length
+}
+
+function hasUniqueLastDigit(nums: number[]): boolean {
+  return new Set(nums.map((n) => n % 10)).size === nums.length
+}
+
+function satisfyTheme(nums: number[], spec: ThemeSpec): boolean {
+  const oddCount = countOdd(nums)
+  const sum = nums.reduce((acc, cur) => acc + cur, 0)
+  const bandCount = countByBand(nums)
+  const primeCount = countPrime(nums)
+
+  if (spec.noConsecutive && countConsecutivePairs(nums) > 0) return false
+  if (spec.pairInBand && !hasConsecutiveRunInBand(nums, 2, spec.pairInBand)) return false
+  if (spec.tripleInBand && !hasConsecutiveRunInBand(nums, 3, spec.tripleInBand)) return false
+  if ((spec.pairCountMin ?? 0) > 0 && countNonOverlappingPairRuns(nums) < (spec.pairCountMin ?? 0)) return false
+  if ((spec.oddMin ?? 0) > oddCount) return false
+  if ((spec.oddMax ?? 6) < oddCount) return false
+  if ((spec.sumMin ?? 0) > sum) return false
+  if ((spec.sumMax ?? 300) < sum) return false
+  if (spec.uniqueLastDigit && !hasUniqueLastDigit(nums)) return false
+  if ((spec.primeMin ?? 0) > primeCount) return false
+  if ((spec.primeMax ?? 6) < primeCount) return false
+
+  for (const band of ['front', 'middle', 'back'] as const) {
+    if ((spec.bandMin?.[band] ?? 0) > bandCount[band]) return false
+    if ((spec.bandMax?.[band] ?? 6) < bandCount[band]) return false
+  }
+
+  return true
+}
+
+function scoreNumberForTheme(
+  n: number,
+  spec: ThemeSpec,
+  trendMap: Map<number, string>,
+  usageCount: Map<number, number>,
+): number {
+  let score = (TREND_BONUS[trendMap.get(n) ?? 'topping'] ?? 0) * 2
+  score -= (usageCount.get(n) ?? 0) * 2
+
+  if (spec.preferLow) score += (46 - n) * 0.08
+  if (spec.preferHigh) score += n * 0.08
+  if (spec.preferBand && isInBand(n, spec.preferBand)) score += 1.25
+  if (spec.preferOdd && n % 2 !== 0) score += 0.8
+  if (spec.preferEven && n % 2 === 0) score += 0.8
+  if (spec.preferPrime && PRIME_NUMBERS.has(n)) score += 1
+
+  return score
+}
+
+function scoreSet(
+  nums: number[],
+  trendMap: Map<number, string>,
+  usageCount: Map<number, number>,
+): number {
+  let score = 0
+  for (const n of nums) {
+    score += (TREND_BONUS[trendMap.get(n) ?? 'topping'] ?? 0) * 2
+    score -= (usageCount.get(n) ?? 0) * 1.8
+    if ((usageCount.get(n) ?? 0) === 0) score += 2.5
+  }
+  score += (nums[5] - nums[0]) * 0.08
+  return score
+}
+
+function combinations(
+  nums: number[],
+  pick: number,
+  onPick: (combo: number[]) => void,
+): void {
+  const selected: number[] = []
+  const dfs = (start: number) => {
+    if (selected.length === pick) {
+      onPick([...selected])
+      return
+    }
+    const remain = pick - selected.length
+    for (let i = start; i <= nums.length - remain; i++) {
+      selected.push(nums[i])
+      dfs(i + 1)
+      selected.pop()
+    }
+  }
+  dfs(0)
+}
+
+function buildThemeSet(
+  available: number[],
+  spec: ThemeSpec,
+  trendMap: Map<number, string>,
+  usageCount: Map<number, number>,
+  usedSetKeys: Set<string>,
+): number[] | null {
+  const ranked = [...available].sort((a, b) => {
+    const sa = scoreNumberForTheme(a, spec, trendMap, usageCount)
+    const sb = scoreNumberForTheme(b, spec, trendMap, usageCount)
+    if (sa !== sb) return sb - sa
+    return a - b
+  })
+
+  const poolSizes = [18, 24, Math.min(30, available.length), available.length]
+
+  for (const poolSize of poolSizes) {
+    const pool = ranked.slice(0, poolSize).sort((a, b) => a - b)
+    let best: number[] | null = null
+    let bestScore = -Infinity
+
+    combinations(pool, 6, (combo) => {
+      const nums = [...combo].sort((a, b) => a - b)
+      const key = nums.join(',')
+      if (usedSetKeys.has(key)) return
+      if (!satisfyTheme(nums, spec)) return
+
+      const score = scoreSet(nums, trendMap, usageCount)
+      if (score > bestScore) {
+        bestScore = score
+        best = nums
+      }
+    })
+
+    if (best) return best
+  }
+
+  return null
+}
+
+function relaxThemeSpec(spec: ThemeSpec): ThemeSpec {
+  return {
+    ...spec,
+    // 핵심 테마 조건은 유지하고, 생성 실패를 일으키기 쉬운 제한만 완화한다.
+    pairCountMin: spec.pairCountMin ? Math.max(1, spec.pairCountMin - 1) : spec.pairCountMin,
+    oddMin: spec.oddMin ? Math.max(0, spec.oddMin - 1) : spec.oddMin,
+    oddMax: spec.oddMax ? Math.min(6, spec.oddMax + 1) : spec.oddMax,
+    sumMin: spec.sumMin ? Math.max(21, spec.sumMin - 10) : spec.sumMin,
+    sumMax: spec.sumMax ? Math.min(255, spec.sumMax + 10) : spec.sumMax,
+    primeMin: spec.primeMin ? Math.max(0, spec.primeMin - 1) : spec.primeMin,
+    primeMax: spec.primeMax ? Math.min(6, spec.primeMax + 1) : spec.primeMax,
+    bandMin: spec.bandMin
+      ? {
+          front: spec.bandMin.front ? Math.max(0, spec.bandMin.front - 1) : spec.bandMin.front,
+          middle: spec.bandMin.middle ? Math.max(0, spec.bandMin.middle - 1) : spec.bandMin.middle,
+          back: spec.bandMin.back ? Math.max(0, spec.bandMin.back - 1) : spec.bandMin.back,
+        }
+      : spec.bandMin,
+    bandMax: spec.bandMax
+      ? {
+          front: spec.bandMax.front ? Math.min(6, spec.bandMax.front + 1) : spec.bandMax.front,
+          middle: spec.bandMax.middle ? Math.min(6, spec.bandMax.middle + 1) : spec.bandMax.middle,
+          back: spec.bandMax.back ? Math.min(6, spec.bandMax.back + 1) : spec.bandMax.back,
+        }
+      : spec.bandMax,
+  }
+}
+
+export function generateThemeDiverseSets(
+  available: number[],
   trendResults: TrendNumberResult[],
   count: number = 20,
 ): GeneratedSet[] {
-  const posFreq = computePositionFrequency(allHistoryRows)
-  const sorted = [...pool].sort((a, b) => a - b)
-  const N = sorted.length
+  if (available.length < 6) return []
 
-  if (N < 6) return generateDeterministicSets(pool, trendResults, count)
-
-  // 6 버킷으로 값 범위 분할 (크기 순 등분)
-  const baseSize = Math.floor(N / 6)
-  const remainder = N % 6
-  const sortedBuckets: number[][] = []
-  let idx = 0
-  for (let g = 0; g < 6; g++) {
-    const size = baseSize + (g < remainder ? 1 : 0)
-    const bucket = sorted.slice(idx, idx + size)
-    // 위치 g에서의 과거 빈도 오름차순 정렬 (저빈도 우선)
-    bucket.sort((a, b) => {
-      const fa = posFreq[g].get(a) ?? 0
-      const fb = posFreq[g].get(b) ?? 0
-      return fa !== fb ? fa - fb : a - b
-    })
-    sortedBuckets.push(bucket)
-    idx += size
-  }
-
+  const pool = [...new Set(available)].sort((a, b) => a - b)
+  const trendMap = new Map<number, string>(trendResults.map((t) => [t.number, t.trend]))
+  const usageCount = new Map<number, number>(pool.map((n) => [n, 0]))
+  const usedSetKeys = new Set<string>()
   const sets: GeneratedSet[] = []
-  const usedKeys = new Set<string>()
 
-  // 3진법 독립 3자리(d0, d1, d2)에서 파생한 6자리 조합으로 20세트 생성
-  for (let i = 0; i < count * 3 && sets.length < count; i++) {
-    const d0 = i % 3
-    const d1 = Math.floor(i / 3) % 3
-    const d2 = Math.floor(i / 9) % 3
-    const rawPicks = [d0, d1, d2, (d0 + d1) % 3, (d1 + d2) % 3, (d0 + d2) % 3]
-    const picks = rawPicks.map((p, g) => p % sortedBuckets[g].length)
-
-    const combo = sortedBuckets.map((bucket, g) => bucket[picks[g]]).sort((a, b) => a - b)
-    const key = combo.join(',')
-    if (!usedKeys.has(key)) {
-      usedKeys.add(key)
-      sets.push({
-        num1: combo[0],
-        num2: combo[1],
-        num3: combo[2],
-        num4: combo[3],
-        num5: combo[4],
-        num6: combo[5],
-        method: 'JL Wheel Method',
-        strategy: 'position-diversity',
-      })
+  for (let i = 0; i < Math.min(count, THEME_SPECS.length); i++) {
+    const spec = THEME_SPECS[i]
+    let nums = buildThemeSet(pool, spec, trendMap, usageCount, usedSetKeys)
+    if (!nums) {
+      nums = buildThemeSet(pool, relaxThemeSpec(spec), trendMap, usageCount, usedSetKeys)
     }
+    if (!nums) continue
+
+    usedSetKeys.add(nums.join(','))
+    for (const n of nums) usageCount.set(n, (usageCount.get(n) ?? 0) + 1)
+
+    sets.push({
+      num1: nums[0],
+      num2: nums[1],
+      num3: nums[2],
+      num4: nums[3],
+      num5: nums[4],
+      num6: nums[5],
+      method: 'JL Wheel Method',
+      strategy: `theme:${spec.label}`,
+    })
   }
 
-  // 부족 시 탐욕 알고리즘으로 보충
   if (sets.length < count) {
     const extra = generateDeterministicSets(pool, trendResults, count - sets.length)
     for (const s of extra) {
       const key = [s.num1, s.num2, s.num3, s.num4, s.num5, s.num6].join(',')
-      if (!usedKeys.has(key) && sets.length < count) {
-        usedKeys.add(key)
+      if (!usedSetKeys.has(key) && sets.length < count) {
+        usedSetKeys.add(key)
         sets.push(s)
       }
     }
@@ -294,9 +455,7 @@ export function generatePositionDiverseSets(
 export function generate20Sets(
   available: number[],
   trendResults: TrendNumberResult[],
-  allHistoryRows: HistoryRow[] = [],
-  drawNo: number = 0,
+  _allHistoryRows: HistoryRow[] = [],
 ): GeneratedSet[] {
-  const pool = applyHotPoolFilter(available, allHistoryRows, drawNo)
-  return generatePositionDiverseSets(pool, allHistoryRows, trendResults, 20)
+  return generateThemeDiverseSets(available, trendResults, 20)
 }
