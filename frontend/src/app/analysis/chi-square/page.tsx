@@ -231,10 +231,17 @@ export default function ChiSquarePage() {
     : 1;
 
   const positiveDeviations = chiSquareResults.filter((r) => r.deviation > 0).map((r) => r.deviation);
-  const avgPositiveDeviation = positiveDeviations.length > 0
-    ? positiveDeviations.reduce((sum, d) => sum + d, 0) / positiveDeviations.length + 1
-    : 0;
-  const avgLinePx = Math.round(CHART_HALF_H - (avgPositiveDeviation / maxAbsDeviation) * CHART_HALF_H);
+  const top5PctThreshold = (() => {
+    if (positiveDeviations.length === 0) return 0;
+    const sorted = [...positiveDeviations].sort((a, b) => a - b);
+    const idx = Math.min(Math.ceil(sorted.length * 0.95) - 1, sorted.length - 1);
+    return sorted[idx];
+  })();
+  const avgLinePx = Math.round(CHART_HALF_H - (top5PctThreshold / maxAbsDeviation) * CHART_HALF_H);
+
+  const excludedNumbers = top5PctThreshold > 0
+    ? chiSquareResults.filter((r) => r.deviation >= top5PctThreshold)
+    : [];
 
   const statusMessage = isLoadingDraws
     ? '회차 정보를 불러오는 중입니다.'
@@ -332,8 +339,8 @@ export default function ChiSquarePage() {
                 { label: '분석 회차 수 (N)', value: `${analyzedDrawCount}회` },
                 { label: '기대 출현 횟수 (E)', value: expected.toFixed(2) },
                 { label: '유의 임계값 (χ²)', value: CHI_SQUARE_THRESHOLD.toFixed(2) },
-                { label: '+편차 평균', value: avgPositiveDeviation > 0 ? `+${avgPositiveDeviation.toFixed(2)}` : '-' },
-                { label: '저빈도 판정 번호', value: `${lowFreqNumbers.length}개` },
+                { label: '+편차 상위5% 임계값', value: top5PctThreshold > 0 ? `+${top5PctThreshold.toFixed(2)}` : '-' },
+                { label: '제외 번호 (상위5%)', value: `${excludedNumbers.length}개` },
               ].map(({ label, value }) => (
                 <div key={label} className="rounded-2xl border border-card-border/30 bg-card-bg/60 p-4 flex flex-col gap-1">
                   <span className="text-xs text-slate-400">{label}</span>
@@ -352,6 +359,10 @@ export default function ChiSquarePage() {
                   <span className="flex items-center gap-1.5">
                     <span className="inline-block w-3 h-3 rounded bg-amber-400/50 border border-amber-400/70" />
                     선택 회차 당첨번호
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <span className="inline-block w-3 h-3 rounded bg-orange-500/70 border border-orange-500/90" />
+                    제외 번호 (상위 5%)
                   </span>
                   <span className="flex items-center gap-1.5">
                     <span className="inline-block w-3 h-3 rounded bg-blue-500/60 border border-blue-500/80" />
@@ -377,14 +388,14 @@ export default function ChiSquarePage() {
             ) : (
               <div className="overflow-x-auto pb-0.5">
                 <div className="relative w-max">
-                  {avgPositiveDeviation > 0 && (
+                  {top5PctThreshold > 0 && (
                     <div
                       className="pointer-events-none absolute inset-x-0 z-10"
                       style={{ top: avgLinePx }}
                     >
                       <div className="w-full border-t-2 border-dashed border-emerald-400/80" />
                       <span className="absolute -top-5 right-0 rounded bg-emerald-500/20 px-2 py-0.5 text-[11px] font-medium text-emerald-300 whitespace-nowrap">
-                        +편차 평균 +{avgPositiveDeviation.toFixed(2)}
+                        +편차 상위5% +{top5PctThreshold.toFixed(2)}
                       </span>
                     </div>
                   )}
@@ -398,9 +409,10 @@ export default function ChiSquarePage() {
                       ? Math.max((Math.abs(item.deviation) / maxAbsDeviation) * CHART_HALF_H, 2)
                       : 0;
 
-                    const posColor = isWinningNum ? 'bg-amber-400/90' : item.isHighFreq ? 'bg-blue-500/90' : 'bg-blue-400/50';
+                    const isExcluded = top5PctThreshold > 0 && item.deviation >= top5PctThreshold;
+                    const posColor = isWinningNum ? 'bg-amber-400/90' : isExcluded ? 'bg-orange-500/90' : item.isHighFreq ? 'bg-blue-500/90' : 'bg-blue-400/50';
                     const negColor = isWinningNum ? 'bg-amber-400/90' : item.isLowFreq ? 'bg-rose-500/90' : 'bg-rose-400/50';
-                    const numColor = isWinningNum ? 'text-amber-300 font-bold' : 'text-slate-300 font-medium';
+                    const numColor = isWinningNum ? 'text-amber-300 font-bold' : isExcluded ? 'text-orange-300 font-bold' : 'text-slate-300 font-medium';
 
                     return (
                       <li key={item.number} className="w-8 shrink-0 flex flex-col items-center">
@@ -448,9 +460,9 @@ export default function ChiSquarePage() {
             )}
           </section>
 
-          {/* 저빈도 / 고빈도 번호 요약 */}
+          {/* 저빈도 / 고빈도 / 제외 번호 요약 */}
           {hasSearched && !noHistory && !isSearching && !searchError && chiSquareResults.length > 0 && (
-            <section className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <section className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="rounded-2xl border border-rose-500/30 bg-rose-500/5 p-4 space-y-2">
                 <h4 className="text-sm font-semibold text-rose-300">저빈도 판정 번호 ({lowFreqNumbers.length}개)</h4>
                 {lowFreqNumbers.length === 0 ? (
@@ -478,6 +490,24 @@ export default function ChiSquarePage() {
                       <span
                         key={r.number}
                         className="inline-flex h-8 min-w-8 items-center justify-center rounded-full bg-blue-500/25 px-2 text-sm font-bold text-blue-200"
+                      >
+                        {r.number}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div className="rounded-2xl border border-orange-500/30 bg-orange-500/5 p-4 space-y-2">
+                <h4 className="text-sm font-semibold text-orange-300">제외 번호 — 상위 5% ({excludedNumbers.length}개)</h4>
+                <p className="text-[11px] text-slate-500 leading-snug">편차 상위 5% 이상으로 과출현한 번호입니다.</p>
+                {excludedNumbers.length === 0 ? (
+                  <p className="text-xs text-slate-400">해당 번호가 없습니다.</p>
+                ) : (
+                  <div className="flex flex-wrap gap-2">
+                    {excludedNumbers.map((r) => (
+                      <span
+                        key={r.number}
+                        className="inline-flex h-8 min-w-8 items-center justify-center rounded-full bg-orange-500/25 px-2 text-sm font-bold text-orange-200"
                       >
                         {r.number}
                       </span>
@@ -546,47 +576,56 @@ export default function ChiSquarePage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {chiSquareResults.map((row) => (
-                        <tr
-                          key={row.number}
-                          className={`border-b border-white/5 transition-colors ${
-                            row.isLowFreq
-                              ? 'bg-rose-500/10 hover:bg-rose-500/15'
-                              : row.isHighFreq
-                                ? 'bg-blue-500/10 hover:bg-blue-500/15'
-                                : 'hover:bg-white/3'
-                          }`}
-                        >
-                          <td className="py-2 pr-3">
-                            <span
-                              className={`inline-flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold ${
-                                row.isLowFreq
-                                  ? 'bg-rose-500/30 text-rose-200'
+                      {chiSquareResults.map((row) => {
+                        const isRowExcluded = top5PctThreshold > 0 && row.deviation >= top5PctThreshold;
+                        return (
+                          <tr
+                            key={row.number}
+                            className={`border-b border-white/5 transition-colors ${
+                              isRowExcluded
+                                ? 'bg-orange-500/10 hover:bg-orange-500/15'
+                                : row.isLowFreq
+                                  ? 'bg-rose-500/10 hover:bg-rose-500/15'
                                   : row.isHighFreq
-                                    ? 'bg-blue-500/30 text-blue-200'
-                                    : 'bg-white/10 text-white'
-                              }`}
-                            >
-                              {row.number}
-                            </span>
-                          </td>
-                          <td className="py-2 pr-3 text-right tabular-nums text-white font-medium">{row.observed}</td>
-                          <td className="py-2 pr-3 text-right tabular-nums text-slate-400">{row.expected.toFixed(2)}</td>
-                          <td className={`py-2 pr-3 text-right tabular-nums font-medium ${row.deviation < 0 ? 'text-rose-300' : row.deviation > 0 ? 'text-blue-300' : 'text-slate-400'}`}>
-                            {row.deviation > 0 ? '+' : ''}{row.deviation.toFixed(2)}
-                          </td>
-                          <td className="py-2 pr-3 text-right tabular-nums text-slate-300">{row.chiSquare.toFixed(4)}</td>
-                          <td className="py-2 text-center">
-                            {row.isLowFreq ? (
-                              <span className="text-xs font-semibold text-rose-300 bg-rose-500/20 rounded-md px-2 py-0.5">저빈도</span>
-                            ) : row.isHighFreq ? (
-                              <span className="text-xs font-semibold text-blue-300 bg-blue-500/20 rounded-md px-2 py-0.5">고빈도</span>
-                            ) : (
-                              <span className="text-xs text-slate-500">-</span>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
+                                    ? 'bg-blue-500/10 hover:bg-blue-500/15'
+                                    : 'hover:bg-white/3'
+                            }`}
+                          >
+                            <td className="py-2 pr-3">
+                              <span
+                                className={`inline-flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold ${
+                                  isRowExcluded
+                                    ? 'bg-orange-500/30 text-orange-200'
+                                    : row.isLowFreq
+                                      ? 'bg-rose-500/30 text-rose-200'
+                                      : row.isHighFreq
+                                        ? 'bg-blue-500/30 text-blue-200'
+                                        : 'bg-white/10 text-white'
+                                }`}
+                              >
+                                {row.number}
+                              </span>
+                            </td>
+                            <td className="py-2 pr-3 text-right tabular-nums text-white font-medium">{row.observed}</td>
+                            <td className="py-2 pr-3 text-right tabular-nums text-slate-400">{row.expected.toFixed(2)}</td>
+                            <td className={`py-2 pr-3 text-right tabular-nums font-medium ${row.deviation < 0 ? 'text-rose-300' : row.deviation > 0 ? 'text-blue-300' : 'text-slate-400'}`}>
+                              {row.deviation > 0 ? '+' : ''}{row.deviation.toFixed(2)}
+                            </td>
+                            <td className="py-2 pr-3 text-right tabular-nums text-slate-300">{row.chiSquare.toFixed(4)}</td>
+                            <td className="py-2 text-center">
+                              {isRowExcluded ? (
+                                <span className="text-xs font-semibold text-orange-300 bg-orange-500/20 rounded-md px-2 py-0.5">제외</span>
+                              ) : row.isLowFreq ? (
+                                <span className="text-xs font-semibold text-rose-300 bg-rose-500/20 rounded-md px-2 py-0.5">저빈도</span>
+                              ) : row.isHighFreq ? (
+                                <span className="text-xs font-semibold text-blue-300 bg-blue-500/20 rounded-md px-2 py-0.5">고빈도</span>
+                              ) : (
+                                <span className="text-xs text-slate-500">-</span>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
