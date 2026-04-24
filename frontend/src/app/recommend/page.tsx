@@ -61,40 +61,40 @@ function isChiSquareHistoryRow(value: unknown): value is ChiSquareHistoryRow {
 }
 
 const TOTAL_NUMBERS = 45;
-const TREND_WINDOW_SIZES = [4, 12, 52] as const;
+const TREND_WINDOW_SIZES = [4, 8, 16, 64] as const;
 
-function buildCountsFromRows(rows: { num1: number; num2: number; num3: number; num4: number; num5: number; num6: number; bonus_num: number }[]): number[] {
-  const counts = Array.from({ length: TOTAL_NUMBERS }, () => 0);
+type WinningRow = { num1: number; num2: number; num3: number; num4: number; num5: number; num6: number; bonus_num: number };
+
+function buildEmaRate(rows: WinningRow[], numberIndex: number, windowSize: number): number {
+  if (rows.length === 0) return 0;
+  const k = Math.min(2 / (windowSize + 1), 1);
+  let ema = 0;
   for (const row of rows) {
     const nums = [row.num1, row.num2, row.num3, row.num4, row.num5, row.num6, row.bonus_num];
-    for (const num of nums) {
-      if (num >= 1 && num <= TOTAL_NUMBERS) counts[num - 1] += 1;
-    }
+    const signal = nums.includes(numberIndex + 1) ? 1 : 0;
+    ema = signal * k + ema * (1 - k);
   }
-  return counts;
+  return ema;
 }
 
-function buildTrendResults(
-  windowDataMap: Map<number, { num1: number; num2: number; num3: number; num4: number; num5: number; num6: number; bonus_num: number }[]>,
-): TrendNumberResult[] {
+function buildTrendResults(windowDataMap: Map<number, WinningRow[]>): TrendNumberResult[] {
   return Array.from({ length: TOTAL_NUMBERS }, (_, i) => {
-    const rows4 = windowDataMap.get(4) ?? [];
-    const rows12 = windowDataMap.get(12) ?? [];
-    const rows52 = windowDataMap.get(52) ?? [];
+    const rows4  = windowDataMap.get(4)  ?? [];
+    const rows8  = windowDataMap.get(8)  ?? [];
+    const rows16 = windowDataMap.get(16) ?? [];
+    const rows64 = windowDataMap.get(64) ?? [];
 
-    const rate = (rows: typeof rows4) =>
-      rows.length === 0 ? 0 : buildCountsFromRows(rows)[i] / rows.length;
-
-    const ma4 = rate(rows4);
-    const ma12 = rate(rows12);
-    const ma52 = rate(rows52);
+    const ema4  = buildEmaRate(rows4,  i, 4);
+    const ema8  = buildEmaRate(rows8,  i, 8);
+    const ema16 = buildEmaRate(rows16, i, 16);
+    const ema64 = buildEmaRate(rows64, i, 64);
 
     const trend: TrendNumberResult['trend'] =
-      ma4 === 0 && ma12 === 0
+      ema4 === 0 && ema8 === 0
         ? 'hold'
-        : ma4 >= ma52 || ma12 >= ma52
+        : ema8 >= ema64 || ema16 >= ema64
           ? 'up'
-          : ma4 < ma52 && ma12 < ma52
+          : ema8 < ema64 && ema16 < ema64
             ? 'down'
             : 'neutral';
 
