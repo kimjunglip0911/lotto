@@ -9,6 +9,7 @@ interface AnalysisResultListProps {
   appliedRules?: RecommendRuleResult[];
   excludedNumbers?: number[];
   sets?: GeneratedSet[];
+  winningNumbers?: number[];
 }
 
 /** 규칙 ID별 표시 설정 */
@@ -42,11 +43,13 @@ export const AnalysisResultList: React.FC<AnalysisResultListProps> = ({
   appliedRules = [],
   excludedNumbers = [],
   sets = [],
+  winningNumbers,
 }) => {
   /** 모든 규칙에서 복원된 번호의 합집합 - 어느 규칙 카드에서도 제외 번호로 표시하지 않는다 */
   const globalRestoredSet = new Set(
     appliedRules.flatMap((r) => r.restoredNumbers ?? []),
   );
+  const winningSet = new Set(winningNumbers ?? []);
 
   return (
     <div className="mt-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -86,7 +89,7 @@ export const AnalysisResultList: React.FC<AnalysisResultListProps> = ({
                       {displayExcluded.map((num) => (
                         <span
                           key={`${rule.ruleId}-${num}`}
-                          className={`inline-flex h-7 min-w-7 items-center justify-center rounded-full px-2 text-xs font-bold ${display.badgeClass}`}
+                          className={`inline-flex h-7 min-w-7 items-center justify-center rounded-full px-2 text-xs font-bold ${winningSet.has(num) ? 'bg-red-600/80 text-white border border-red-400' : display.badgeClass}`}
                         >
                           {num}
                         </span>
@@ -128,7 +131,7 @@ export const AnalysisResultList: React.FC<AnalysisResultListProps> = ({
                   {availableNumbers.map((num) => (
                     <span
                       key={`available-${num}`}
-                      className="inline-flex h-7 min-w-7 items-center justify-center rounded-full bg-emerald-500/25 px-2 text-xs font-bold text-emerald-200 border border-emerald-500/40"
+                      className={`inline-flex h-7 min-w-7 items-center justify-center rounded-full px-2 text-xs font-bold ${winningSet.has(num) ? 'bg-red-600/80 text-white border border-red-400' : 'bg-emerald-500/25 text-emerald-200 border border-emerald-500/40'}`}
                     >
                       {num}
                     </span>

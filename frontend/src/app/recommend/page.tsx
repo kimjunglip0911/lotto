@@ -143,6 +143,7 @@ export default function RecommendPage() {
   const [selectedDraw, setSelectedDraw] = useState<number | null>(null);
   const [isLoadingDraws, setIsLoadingDraws] = useState(true);
   const [drawLoadError, setDrawLoadError] = useState<string | null>(null);
+  const [winningNumbers, setWinningNumbers] = useState<number[] | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -197,6 +198,7 @@ export default function RecommendPage() {
     const loadSavedSets = async () => {
       setPipelineResult(null);
       setGeneratedSets([]);
+      setWinningNumbers(null);
       setError(null);
       setStatusMessage(`${selectedDraw}회차 저장된 추천 세트를 불러오는 중입니다...`);
 
@@ -207,10 +209,11 @@ export default function RecommendPage() {
           fetch(`${apiUrl}/api/analysis/trend/winning-numbers-window?draw_no=${selectedDraw}&window_size=${ws}`),
         );
 
-        const [drawingsResponse, exclusionResponse, chiSquareRangeResponse, ...trendResponses] = await Promise.all([
+        const [drawingsResponse, exclusionResponse, chiSquareRangeResponse, winningNumberResponse, ...trendResponses] = await Promise.all([
           fetch(`${apiUrl}/api/recommend/drawings?draw_no=${selectedDraw}`),
           fetch(`${apiUrl}/api/recommend/exclusion-candidates?draw_no=${selectedDraw}`),
           fetch(`${apiUrl}/api/analysis/chi-square/winning-numbers-range?draw_no=${selectedDraw}`),
+          fetch(`${apiUrl}/api/analysis/accumulated-numbers/winning-number?draw_no=${selectedDraw}`),
           ...trendFetches,
         ]);
 
@@ -221,11 +224,12 @@ export default function RecommendPage() {
           throw new Error(`Failed to fetch exclusion candidates: ${exclusionResponse.status}`);
         }
 
-        const [drawingsData, exclusionData, chiSquareRangeData, ...trendDataList]: [unknown, unknown, unknown, ...unknown[]] = await Promise.all([
+        const [drawingsData, exclusionData, chiSquareRangeData, winningNumberData, ...trendDataList]: [unknown, unknown, unknown, unknown, ...unknown[]] = await Promise.all([
           drawingsResponse.json(),
           exclusionResponse.json(),
           // 카이제곱 이력 fetch 실패 시 빈 배열로 graceful fallback
           chiSquareRangeResponse.ok ? chiSquareRangeResponse.json() : Promise.resolve([]),
+          winningNumberResponse.ok ? winningNumberResponse.json() : Promise.resolve(null),
           ...trendResponses.map((r) => (r.ok ? r.json() : Promise.resolve([]))),
         ]);
 
@@ -254,8 +258,13 @@ export default function RecommendPage() {
           [excludeTopRankFromWindowsRule, excludeChiSquareHighDeviationRule, excludeTrendDownRule]
         );
 
+        const parsedWinning = isWinningRow(winningNumberData)
+          ? [winningNumberData.num1, winningNumberData.num2, winningNumberData.num3, winningNumberData.num4, winningNumberData.num5, winningNumberData.num6]
+          : null;
+
         if (!isMounted) return;
 
+        setWinningNumbers(parsedWinning);
         setGeneratedSets(sets);
         setPipelineResult(pipeline);
 
@@ -375,6 +384,7 @@ export default function RecommendPage() {
             selectedDraw={selectedDraw}
             onDrawChange={setSelectedDraw}
             isLoadingDraws={isLoadingDraws}
+            winningNumbers={winningNumbers}
           />
           {drawLoadError ? <div className="text-red-400 py-4 text-center border border-red-900/50 rounded-lg bg-red-950/20 mt-4">회차 로드 오류: {drawLoadError}</div> : null}
           {error ? <div className="text-red-400 py-4 text-center border border-red-900/50 rounded-lg bg-red-950/20 mt-4">데이터 통신 오류: {error}</div> : null}
@@ -384,6 +394,7 @@ export default function RecommendPage() {
             appliedRules={pipelineResult?.appliedRules ?? []}
             excludedNumbers={pipelineResult?.excludedNumbers ?? []}
             sets={generatedSets}
+            winningNumbers={winningNumbers ?? undefined}
           />
         </main>
       </div>
