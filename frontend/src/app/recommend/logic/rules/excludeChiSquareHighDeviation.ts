@@ -54,7 +54,7 @@ export const excludeChiSquareHighDeviationRule: RecommendRule = {
     }
 
     const avgPositiveDeviation =
-      positiveDeviations.reduce((sum, d) => sum + d, 0) / positiveDeviations.length
+      positiveDeviations.reduce((sum, d) => sum + d, 0) / positiveDeviations.length + 1
 
     const excludedNumbers = deviations
       .filter((d) => d.deviation > avgPositiveDeviation)

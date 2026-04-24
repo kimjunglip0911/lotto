@@ -84,22 +84,30 @@ export const AnalysisResultList: React.FC<AnalysisResultListProps> = ({
           </div>
         ) : null}
 
-        {/* 전체 제외 번호 합집합 */}
-        {excludedNumbers.length > 0 ? (
-          <div className="rounded-lg border border-rose-500/30 bg-rose-500/5 px-4 py-3 space-y-2">
-            <p className="text-sm font-semibold text-rose-300">전체 제외 번호 (합집합)</p>
-            <div className="flex flex-wrap gap-1.5">
-              {[...new Set(excludedNumbers)].sort((a, b) => a - b).map((num) => (
-                <span
-                  key={`union-${num}`}
-                  className="inline-flex h-7 min-w-7 items-center justify-center rounded-full bg-rose-500/25 px-2 text-xs font-bold text-rose-200 border border-rose-500/40"
-                >
-                  {num}
-                </span>
-              ))}
+        {/* 전체 사용 가능 번호 */}
+        {(() => {
+          const excludedSet = new Set(excludedNumbers);
+          const availableNumbers = Array.from({ length: 45 }, (_, i) => i + 1).filter((n) => !excludedSet.has(n));
+          return (
+            <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 px-4 py-3 space-y-2">
+              <p className="text-sm font-semibold text-emerald-300">전체 사용 가능 번호</p>
+              {availableNumbers.length > 0 ? (
+                <div className="flex flex-wrap gap-1.5">
+                  {availableNumbers.map((num) => (
+                    <span
+                      key={`available-${num}`}
+                      className="inline-flex h-7 min-w-7 items-center justify-center rounded-full bg-emerald-500/25 px-2 text-xs font-bold text-emerald-200 border border-emerald-500/40"
+                    >
+                      {num}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs text-slate-500">해당 없음</p>
+              )}
             </div>
-          </div>
-        ) : null}
+          );
+        })()}
 
         {/* 생성된 추천 세트 */}
         {sets.length > 0 ? (

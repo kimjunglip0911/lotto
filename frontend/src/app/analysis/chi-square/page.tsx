@@ -232,7 +232,7 @@ export default function ChiSquarePage() {
 
   const positiveDeviations = chiSquareResults.filter((r) => r.deviation > 0).map((r) => r.deviation);
   const avgPositiveDeviation = positiveDeviations.length > 0
-    ? positiveDeviations.reduce((sum, d) => sum + d, 0) / positiveDeviations.length
+    ? positiveDeviations.reduce((sum, d) => sum + d, 0) / positiveDeviations.length + 1
     : 0;
   const avgLinePx = Math.round(CHART_HALF_H - (avgPositiveDeviation / maxAbsDeviation) * CHART_HALF_H);
 
