@@ -77,6 +77,7 @@ export interface GeneratedSet {
   num5: number
   num6: number
   method: string
+  strategy?: string
   applied_rule_ids?: string[]
   excluded_numbers?: number[]
 }

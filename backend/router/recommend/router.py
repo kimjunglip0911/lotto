@@ -238,15 +238,32 @@ def _replace_excluded_in_rows(rows: List[dict], excluded_set: set) -> List[dict]
 @router.post("/api/recommend/generate-and-save", response_model=List[dict])
 def generate_and_save_drawings(request: GenerateSaveRequest):
     try:
-        _, generate_jl_wheel_sets, _ = _load_jl_service()
         draw_no = int(request.draw_no)
         applied_rule_ids = request.applied_rule_ids or []
         excluded_numbers = sorted(set(request.excluded_numbers or []))
-        excluded_set = set(excluded_numbers)
-        rows = _replace_excluded_in_rows(
-            generate_jl_wheel_sets(draw_no, count=20, start_index=0),
-            excluded_set,
-        )
+
+        # 프론트엔드에서 세트를 직접 전달한 경우 그대로 사용, 없으면 기존 방식으로 생성
+        if request.sets:
+            rows = [
+                {
+                    "num1": s.num1,
+                    "num2": s.num2,
+                    "num3": s.num3,
+                    "num4": s.num4,
+                    "num5": s.num5,
+                    "num6": s.num6,
+                    "strategy": s.strategy,
+                }
+                for s in request.sets
+            ]
+        else:
+            _, generate_jl_wheel_sets, _ = _load_jl_service()
+            excluded_set = set(excluded_numbers)
+            rows = _replace_excluded_in_rows(
+                generate_jl_wheel_sets(draw_no, count=20, start_index=0),
+                excluded_set,
+            )
+
         conn = get_connection()
         cursor = conn.cursor()
         cursor.execute(queries.DELETE_DRAWINGS_BY_NO_AND_METHOD, (draw_no, METHOD_JL_SAVED))
@@ -266,6 +283,7 @@ def generate_and_save_drawings(request: GenerateSaveRequest):
                     0,
                     METHOD_JL_SAVED,
                     draw_no,
+                    row.get("strategy"),
                 ),
             )
             out.append(
@@ -277,6 +295,7 @@ def generate_and_save_drawings(request: GenerateSaveRequest):
                     "num5": row["num5"],
                     "num6": row["num6"],
                     "method": METHOD_JL_SAVED,
+                    "strategy": row.get("strategy"),
                     "applied_rule_ids": applied_rule_ids,
                     "excluded_numbers": excluded_numbers,
                 }

@@ -10,7 +10,8 @@ import { excludeTopRankFromWindowsRule } from '@/app/recommend/logic/rules/exclu
 import { excludeChiSquareHighDeviationRule } from '@/app/recommend/logic/rules/excludeChiSquareHighDeviation';
 import { excludeTrendDownRule } from '@/app/recommend/logic/rules/excludeTrendDown';
 import { excludeAbsenceStreakTop5Rule } from '@/app/recommend/logic/rules/excludeAbsenceStreakTop5';
-import { ChiSquareHistoryRow, ExclusionCandidatesResponse, GeneratedSet, RecommendPipelineResult, TrendNumberResult } from '@/app/recommend/logic/types';
+import { ChiSquareHistoryRow, ExclusionCandidatesResponse, GeneratedSet, RecommendPipelineResult, TrendNumberResult } from '@/app/recommend/logic/types'
+import { generate20Sets } from '@/app/recommend/logic/generator';
 
 function errorMessage(err: unknown): string {
   return err instanceof Error ? err.message : String(err);
@@ -333,6 +334,15 @@ export default function RecommendPage() {
       setPipelineResult(nextPipelineResult);
 
       setStatusMessage('추천 번호를 생성하고 저장하는 중입니다...');
+
+      const excludedSet = new Set(nextPipelineResult.excludedNumbers);
+      const availableNumbers = Array.from({ length: 45 }, (_, i) => i + 1).filter((n) => !excludedSet.has(n));
+      const generatedSetsPayload = generate20Sets(availableNumbers, trendResults).map((s) => ({
+        ...s,
+        applied_rule_ids: nextPipelineResult.appliedRules.map((rule) => rule.ruleId),
+        excluded_numbers: nextPipelineResult.excludedNumbers,
+      }));
+
       const generateResponse = await fetch(`${apiUrl}/api/recommend/generate-and-save`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -340,6 +350,7 @@ export default function RecommendPage() {
           draw_no: exclusionData.drawNo,
           applied_rule_ids: nextPipelineResult.appliedRules.map((rule) => rule.ruleId),
           excluded_numbers: nextPipelineResult.excludedNumbers,
+          sets: generatedSetsPayload,
         }),
       });
       if (!generateResponse.ok) {

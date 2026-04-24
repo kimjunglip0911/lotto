@@ -7,10 +7,24 @@ class MessageResponse(BaseModel):
     message: str
 
 
+class GenerateSetItem(BaseModel):
+    num1: int = Field(ge=1, le=45)
+    num2: int = Field(ge=1, le=45)
+    num3: int = Field(ge=1, le=45)
+    num4: int = Field(ge=1, le=45)
+    num5: int = Field(ge=1, le=45)
+    num6: int = Field(ge=1, le=45)
+    method: str = "JL Wheel Method"
+    strategy: Optional[str] = None
+    applied_rule_ids: Optional[List[str]] = None
+    excluded_numbers: Optional[List[int]] = None
+
+
 class GenerateSaveRequest(BaseModel):
     draw_no: int
     applied_rule_ids: Optional[List[str]] = None
     excluded_numbers: Optional[List[int]] = None
+    sets: Optional[List[GenerateSetItem]] = None
 
 
 class SaveWinningRequest(BaseModel):

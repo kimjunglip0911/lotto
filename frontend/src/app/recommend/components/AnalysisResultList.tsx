@@ -35,7 +35,22 @@ const DEFAULT_RULE_DISPLAY = {
   label: '제외 번호',
   badgeClass: 'bg-white/10 text-slate-200 border border-white/20',
   headerClass: 'text-slate-300',
-};
+}
+
+/** 세트 생성 전략 배지 */
+const STRATEGY_LABEL: Record<string, string> = {
+  coverage: '커버리지',
+  'stat-match': '통계 패턴',
+  'trend-weighted': '추세 가중',
+}
+
+const STRATEGY_BADGE: Record<string, string> = {
+  coverage: 'bg-sky-500/20 text-sky-200 border-sky-500/40',
+  'stat-match': 'bg-violet-500/20 text-violet-200 border-violet-500/40',
+  'trend-weighted': 'bg-orange-500/20 text-orange-200 border-orange-500/40',
+}
+
+const STRATEGY_BADGE_DEFAULT = 'bg-white/10 text-slate-300 border-white/20';
 
 export const AnalysisResultList: React.FC<AnalysisResultListProps> = ({
   statusMessage,
@@ -146,12 +161,18 @@ export const AnalysisResultList: React.FC<AnalysisResultListProps> = ({
 
         {/* 생성된 추천 세트 */}
         {sets.length > 0 ? (
-          <div className="pt-1 space-y-1">
+          <div className="pt-1 space-y-2">
             <p className="text-slate-100 font-semibold">생성된 추천 세트</p>
-            <ul className="space-y-1">
+            <ul className="space-y-1.5">
               {sets.map((set, index) => (
-                <li key={`${set.method}-${index}`} className="text-slate-200">
-                  {index + 1}. {set.num1}, {set.num2}, {set.num3}, {set.num4}, {set.num5}, {set.num6}
+                <li key={`${set.method}-${index}`} className="flex items-center gap-2 text-slate-200">
+                  <span className="w-6 text-right text-xs text-slate-500 shrink-0">{index + 1}.</span>
+                  <span>{set.num1}, {set.num2}, {set.num3}, {set.num4}, {set.num5}, {set.num6}</span>
+                  {set.strategy ? (
+                    <span className={`ml-auto shrink-0 inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-semibold border ${STRATEGY_BADGE[set.strategy] ?? STRATEGY_BADGE_DEFAULT}`}>
+                      {STRATEGY_LABEL[set.strategy] ?? set.strategy}
+                    </span>
+                  ) : null}
                 </li>
               ))}
             </ul>

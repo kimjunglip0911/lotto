@@ -4,7 +4,7 @@ WHERE draw_no = ? AND method = ?
 """.strip()
 
 GET_DRAWINGS_BY_DRAW_NO_AND_METHOD = """
-SELECT num1, num2, num3, num4, num5, num6, method
+SELECT num1, num2, num3, num4, num5, num6, method, strategy
 FROM lotto_drawings
 WHERE draw_no = ? AND method = ?
 ORDER BY rowid ASC
@@ -46,7 +46,8 @@ INSERT INTO lotto_drawings (
     bonus_num,
     draw_count,
     method,
-    draw_no
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    draw_no,
+    strategy
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 """.strip()
 
