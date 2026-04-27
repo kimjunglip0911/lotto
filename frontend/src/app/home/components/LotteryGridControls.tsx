@@ -1,17 +1,18 @@
 import React from 'react';
 import { Save, Loader2, Check } from 'lucide-react';
+import type { InputNumber, SaveStatus } from '@/app/home/components/types';
 
 interface LotteryGridControlsProps {
   selectedDraw: number | null;
   availableDraws: number[];
-  winningNumbers: (number | '')[];
-  winningBonus: number | '';
+  winningNumbers: InputNumber[];
+  winningBonus: InputNumber;
   onSelectDraw: (value: number | null) => void;
   onWinningNumberChange: (index: number, value: string) => void;
   onBonusNumberChange: (value: string) => void;
   onSaveWinning: () => void;
   isSaving: boolean;
-  saveStatus: 'idle' | 'success' | 'error';
+  saveStatus: SaveStatus;
 }
 
 function isValidLottoNumber(n: number | ''): n is number {

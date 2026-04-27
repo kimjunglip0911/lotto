@@ -1,17 +1,7 @@
 import { useCallback, useState } from 'react';
+import type { InputNumber, WinningNumbersByDraw } from '@/app/home/components/types';
 
-export type InputNumber = number | '';
 const EMPTY_WINNING_NUMBERS: InputNumber[] = Array(6).fill('');
-
-interface WinningNumbersSource {
-  num1: number;
-  num2: number;
-  num3: number;
-  num4: number;
-  num5: number;
-  num6: number;
-  bonus_num: number;
-}
 
 export const useWinningNumbersInput = () => {
   const [winningNumbers, setWinningNumbers] = useState<InputNumber[]>(EMPTY_WINNING_NUMBERS);
@@ -41,7 +31,7 @@ export const useWinningNumbersInput = () => {
     setWinningBonus('');
   }, []);
 
-  const setWinningNumbersFromDraw = useCallback((data: WinningNumbersSource | null) => {
+  const setWinningNumbersFromDraw = useCallback((data: WinningNumbersByDraw | null) => {
     if (!data) {
       setWinningNumbers(EMPTY_WINNING_NUMBERS);
       setWinningBonus('');

@@ -1,27 +1,5 @@
 import { useEffect, useState } from 'react';
-
-export interface LotterySet {
-  id?: number;
-  draw_no?: number;
-  method?: string;
-  num1: number;
-  num2: number;
-  num3: number;
-  num4: number;
-  num5: number;
-  num6: number;
-}
-
-export interface WinningNumbersByDraw {
-  draw_no: number;
-  num1: number;
-  num2: number;
-  num3: number;
-  num4: number;
-  num5: number;
-  num6: number;
-  bonus_num: number;
-}
+import type { LotterySetData, WinningNumbersByDraw } from '@/app/home/components/types';
 
 interface UseLotteryGridDataOptions {
   onDrawChange?: () => void;
@@ -31,7 +9,7 @@ type SelectedDraw = number | null;
 
 export const useLotteryGridData = (options?: UseLotteryGridDataOptions) => {
   const onDrawChange = options?.onDrawChange;
-  const [sets, setSets] = useState<LotterySet[]>([]);
+  const [sets, setSets] = useState<LotterySetData[]>([]);
   const [winningByDraw, setWinningByDraw] = useState<WinningNumbersByDraw | null>(null);
   const [availableDraws, setAvailableDraws] = useState<number[]>([]);
   const [selectedDraw, setSelectedDraw] = useState<SelectedDraw>(null);

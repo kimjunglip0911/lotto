@@ -1,72 +1,17 @@
 'use client';
 
 import React, { useMemo } from 'react';
-
-interface LotterySet {
-  numbers: number[];
-  method?: string;
-}
-
-interface SetRanking {
-  setNumber: number;
-  rank: number;
-}
+import { calculateSimulationStats } from '@/app/home/components/utils/calculateSimulationStats';
+import type { LotterySetViewModel } from '@/app/home/components/types';
 
 interface SimulationStatsProps {
-  sets: LotterySet[];
+  sets: LotterySetViewModel[];
   winningNumbers: number[];
   bonusNumber: number;
 }
 
 export function SimulationStats({ sets, winningNumbers, bonusNumber }: SimulationStatsProps) {
-  const stats = useMemo(() => {
-    if (!sets || sets.length === 0) return null;
-
-    const rankCounts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, fail: 0 };
-    const setRankings: SetRanking[] = [];
-
-    const winNums = winningNumbers.map((number) => parseInt(String(number), 10)).filter((number) => !isNaN(number));
-    const winBonus = parseInt(String(bonusNumber), 10);
-    const canCalculate = winNums.length === 6 && !winNums.some((number) => number === 0);
-
-    sets.forEach((setInfo, index) => {
-      if (canCalculate) {
-        const setNumbers = setInfo.numbers.map((number) => parseInt(String(number), 10));
-        const matchCount = setNumbers.filter((number) => winNums.includes(number)).length;
-        const isBonusMatched = setNumbers.includes(winBonus);
-
-        let rank = 0;
-        if (matchCount === 6) rank = 1;
-        else if (matchCount === 5 && isBonusMatched) rank = 2;
-        else if (matchCount === 5) rank = 3;
-        else if (matchCount === 4) rank = 4;
-        else if (matchCount === 3) rank = 5;
-
-        if (rank > 0) {
-          rankCounts[rank as keyof typeof rankCounts]++;
-          setRankings.push({
-            setNumber: index + 1,
-            rank,
-          });
-        } else {
-          rankCounts.fail++;
-        }
-      }
-    });
-
-    const totalSets = sets.length;
-    setRankings.sort((a, b) => {
-      if (a.rank !== b.rank) return a.rank - b.rank;
-      return a.setNumber - b.setNumber;
-    });
-
-    return {
-      canCalculate,
-      totalSets,
-      rankCounts,
-      setRankings,
-    };
-  }, [sets, winningNumbers, bonusNumber]);
+  const stats = useMemo(() => calculateSimulationStats(sets, winningNumbers, bonusNumber), [sets, winningNumbers, bonusNumber]);
 
   if (!stats || stats.totalSets === 0) return null;
 

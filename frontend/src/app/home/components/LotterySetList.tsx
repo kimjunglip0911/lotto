@@ -1,12 +1,6 @@
 import React from 'react';
 import { LotteryCard } from '@/app/home/components/LotteryCard';
-
-interface LotterySetViewModel {
-  id?: number;
-  numbers: number[];
-  method?: string;
-  drawNo: number;
-}
+import type { LotterySetViewModel } from '@/app/home/components/types';
 
 interface LotterySetListProps {
   sets: LotterySetViewModel[];
