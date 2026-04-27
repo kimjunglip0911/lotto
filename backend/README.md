@@ -29,9 +29,9 @@ backend/
 ## Analysis 라우터 구현 관례
 
 - `backend/router/analysis/*/router.py`는 `backend/router/analysis/_shared.py`를 통해 SQL 모듈을 동적으로 로드하고, `backend/sql/analysis/*/queries.py` 상수를 사용합니다.
-- DB 실행은 `fetch_all`, `fetch_one` 공통 헬퍼를 우선 사용해 연결 종료를 일관되게 보장합니다.
-- 라우터는 엔드포인트 계약(파라미터 검증, 404/400 분기, 응답 shape)에 집중하고, 인프라성 중복(로딩/조회/500 변환)은 공통 유틸로 유지합니다.
-- 예외 처리 시 `HTTPException`은 의미를 보존해 그대로 재전파하고, 일반 예외만 500으로 변환합니다.
+- DB 실행은 `fetch_all`, `fetch_one` 기반 공통 헬퍼(`fetch_draw_numbers`, `fetch_dict_or_404`, `fetch_dict_rows`)를 우선 사용해 연결 종료와 응답 변환을 일관되게 유지합니다.
+- 라우터는 엔드포인트 계약(파라미터 검증, 404/400 분기, 응답 shape)에 집중하고, 인프라성 중복(로딩/조회/500 변환)은 `_shared.py`로 유지합니다.
+- 예외 처리 시 `HTTPException`은 의미를 보존해 그대로 재전파하고, 일반 예외만 `run_with_http_500` 경유로 500으로 변환합니다.
 
 ## __pycache__ 사용 안 함
 
