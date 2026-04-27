@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useMemo } from 'react';
-import { calculateSimulationStats } from '@/app/home/components/utils/calculateSimulationStats';
+import { calculateSimulationStats } from '@/app/home/utils/calculateSimulationStats';
 import type { InputNumber, LotterySetViewModel } from '@/app/home/components/types';
 
 interface SimulationStatsProps {

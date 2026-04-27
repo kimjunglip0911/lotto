@@ -4,9 +4,9 @@ import React, { useEffect, useMemo } from 'react';
 import { SimulationStats } from '@/app/home/components/SimulationStats';
 import { LotteryGridControls } from '@/app/home/components/LotteryGridControls';
 import { LotterySetList } from '@/app/home/components/LotterySetList';
-import { useLotteryGridData } from '@/app/home/components/hooks/useLotteryGridData';
-import { useSaveWinningNumbers } from '@/app/home/components/hooks/useSaveWinningNumbers';
-import { useWinningNumbersInput } from '@/app/home/components/hooks/useWinningNumbersInput';
+import { useLotteryGridData } from '@/app/home/hooks/useLotteryGridData';
+import { useSaveWinningNumbers } from '@/app/home/hooks/useSaveWinningNumbers';
+import { useWinningNumbersInput } from '@/app/home/hooks/useWinningNumbersInput';
 import type { LotterySetViewModel } from '@/app/home/components/types';
 
 export function LotteryGrid() {

@@ -79,15 +79,18 @@ lotto/
 │       │   │       └── page.tsx
 │       │   ├── home/
 │       │   │   ├── page.tsx
-│       │   │   └── components/
-│       │   │       ├── hooks/
-│       │   │       │   ├── useLotteryGridData.ts
-│       │   │       │   └── useWinningNumbersInput.ts
-│       │   │       ├── LotteryGrid.tsx
-│       │   │       ├── LotteryGridControls.tsx
-│       │   │       ├── LotterySetList.tsx
-│       │   │       ├── LotteryCard.tsx
-│       │   │       └── SimulationStats.tsx
+│       │   │   ├── hooks/
+│       │   │   │   ├── useLotteryGridData.ts
+│       │   │   │   ├── useSaveWinningNumbers.ts
+│       │   │   │   └── useWinningNumbersInput.ts
+│       │   │   ├── components/
+│       │   │   │   ├── LotteryGrid.tsx
+│       │   │   │   ├── LotteryGridControls.tsx
+│       │   │   │   ├── LotterySetList.tsx
+│       │   │   │   ├── LotteryCard.tsx
+│       │   │   │   └── SimulationStats.tsx
+│       │   │   └── utils/
+│       │   │       └── calculateSimulationStats.ts
 │       │   └── recommend/
 │       │       ├── page.tsx
 │       │       ├── hooks/
