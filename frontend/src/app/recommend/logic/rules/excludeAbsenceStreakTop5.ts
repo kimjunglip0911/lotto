@@ -1,6 +1,9 @@
 import { ChiSquareHistoryRow, RecommendRule } from '@/app/recommend/logic/types'
+import { getTopPercentileThreshold, normalizeNumberList } from '@/app/recommend/logic/rules/common'
 
 const TOTAL_NUMBERS = 45
+const RULE_ID = 'exclude-absence-streak-top5'
+const RULE_NAME = '연속 미출현 상위 5% 번호 제외'
 
 function buildStreaks(rows: ChiSquareHistoryRow[], drawNo: number): { number: number; streak: number }[] {
   const lastSeen: (number | null)[] = Array.from({ length: TOTAL_NUMBERS }, () => null)
@@ -24,8 +27,8 @@ function buildStreaks(rows: ChiSquareHistoryRow[], drawNo: number): { number: nu
 }
 
 export const excludeAbsenceStreakTop5Rule: RecommendRule = {
-  id: 'exclude-absence-streak-top5',
-  name: '연속 미출현 상위 5% 번호 제외',
+  id: RULE_ID,
+  name: RULE_NAME,
   isIrreversible: true,
   apply: ({ absenceStreakRows, exclusionCandidates }) => {
     const rows = absenceStreakRows ?? []
@@ -33,8 +36,8 @@ export const excludeAbsenceStreakTop5Rule: RecommendRule = {
 
     if (rows.length === 0) {
       return {
-        ruleId: 'exclude-absence-streak-top5',
-        ruleName: '연속 미출현 상위 5% 번호 제외',
+        ruleId: RULE_ID,
+        ruleName: RULE_NAME,
         excludedNumbers: [],
         reason: '분석할 이전 회차 데이터가 없어 연속 미출현 제외를 적용하지 않습니다.',
       }
@@ -42,18 +45,17 @@ export const excludeAbsenceStreakTop5Rule: RecommendRule = {
 
     const streaks = buildStreaks(rows, drawNo)
     const allStreakValues = streaks.map((s) => s.streak)
-    const sorted = [...allStreakValues].sort((a, b) => a - b)
-    const idx = Math.min(Math.ceil(sorted.length * 0.95) - 1, sorted.length - 1)
-    const top5PctThreshold = sorted[idx]
+    const top5PctThreshold = getTopPercentileThreshold(allStreakValues, 0.95)
 
-    const excludedNumbers = streaks
+    const excludedNumbers = normalizeNumberList(
+      streaks
       .filter((s) => s.streak >= top5PctThreshold)
-      .map((s) => s.number)
-      .sort((a, b) => a - b)
+      .map((s) => s.number),
+    )
 
     return {
-      ruleId: 'exclude-absence-streak-top5',
-      ruleName: '연속 미출현 상위 5% 번호 제외',
+      ruleId: RULE_ID,
+      ruleName: RULE_NAME,
       excludedNumbers,
       reason: `연속 미출현 상위 5% 임계값(${top5PctThreshold}회차) 이상인 번호 ${excludedNumbers.length}개를 제외합니다.`,
     }
