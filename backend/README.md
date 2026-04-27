@@ -7,7 +7,11 @@ FastAPI 기반 백엔드 공통 계층입니다. 실제 기능 라우터는 `fea
 ```
 backend/
 ├── main.py                 # FastAPI 앱 진입점
-├── router/recommend/router.py # Recommend API 라우터
+├── router/recommend/
+│   ├── router.py             # Recommend API 엔드포인트 조립
+│   ├── repository.py         # Recommend DB 접근 레이어
+│   ├── helpers.py            # Recommend 순수 계산/변환 로직
+│   └── jl_loader.py          # JL 서비스 로더 + fallback
 ├── router/home/router.py   # Home API 라우터
 ├── router_loader.py        # (레거시) features 라우터 동적 로더
 ├── sql/recommend/queries.py # Recommend SQL 쿼리 상수
@@ -22,6 +26,10 @@ backend/
 - **Home API 추가/수정** → `backend/router/home/router.py`
 - **Home SQL 쿼리 수정** → `backend/sql/home/queries.py`
 - **Recommend API 추가/수정** → `backend/router/recommend/router.py`
+- **Recommend 내부 로직 분리**
+  - DB 접근/트랜잭션 → `backend/router/recommend/repository.py`
+  - 번호 계산/치환 로직 → `backend/router/recommend/helpers.py`
+  - JL 서비스 로더/fallback → `backend/router/recommend/jl_loader.py`
 - **Recommend SQL 쿼리 수정** → `backend/sql/recommend/queries.py`
 - **JL 휠 로직/속도 프로파일** → `features/analysis/api/jl_service/`
 - **JL 분석 엔진** → `features/analysis/api/jl_service/`
