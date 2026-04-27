@@ -56,7 +56,11 @@ def run_with_http_500(action: Callable[[], T]) -> T:
 
 
 def fetch_draw_numbers(sql: str, params: tuple[Any, ...] = ()) -> list[int]:
-    return run_with_http_500(lambda: [row[0] for row in fetch_all(sql, params)])
+    def _fetch() -> list[int]:
+        rows = fetch_all(sql, params)
+        return [row[0] for row in rows]
+
+    return run_with_http_500(_fetch)
 
 
 def fetch_dict_or_404(sql: str, params: tuple[Any, ...], not_found_detail: str) -> dict[str, Any]:
@@ -70,4 +74,8 @@ def fetch_dict_or_404(sql: str, params: tuple[Any, ...], not_found_detail: str) 
 
 
 def fetch_dict_rows(sql: str, params: tuple[Any, ...] = ()) -> list[dict[str, Any]]:
-    return run_with_http_500(lambda: [dict(row) for row in fetch_all(sql, params)])
+    def _fetch() -> list[dict[str, Any]]:
+        rows = fetch_all(sql, params)
+        return [dict(row) for row in rows]
+
+    return run_with_http_500(_fetch)

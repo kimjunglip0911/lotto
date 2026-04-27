@@ -25,6 +25,16 @@ def _load_queries_module():
 queries = _load_queries_module()
 
 
+def _has_no_history(draw_no: int) -> bool:
+    return draw_no <= 1
+
+
+def _fetch_history_before_draw(draw_no: int) -> List[dict]:
+    if _has_no_history(draw_no):
+        return []
+    return fetch_dict_rows(queries.GET_ALL_HISTORY_BEFORE_DRAW, (draw_no,))
+
+
 @router.get("/api/analysis/trend/draw-numbers", response_model=List[int])
 def get_draw_numbers():
     return fetch_draw_numbers(queries.GET_AVAILABLE_DRAW_NOS)
@@ -41,6 +51,4 @@ def get_winning_number(draw_no: int = Query(..., ge=1, description="선택 회�
 
 @router.get("/api/analysis/trend/all-history", response_model=List[dict])
 def get_all_history(draw_no: int = Query(..., ge=1, description="선택 회차 (이 회차 이전 전체 이력 반환)")):
-    if draw_no <= 1:
-        return []
-    return fetch_dict_rows(queries.GET_ALL_HISTORY_BEFORE_DRAW, (draw_no,))
+    return _fetch_history_before_draw(draw_no)
