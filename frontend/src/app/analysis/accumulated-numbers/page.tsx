@@ -1,306 +1,30 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Header } from '@/components/common/Header';
 import { Sidebar } from '@/components/common/Sidebar';
-
-type WinningNumberRow = {
-  draw_no: number;
-  num1: number;
-  num2: number;
-  num3: number;
-  num4: number;
-  num5: number;
-  num6: number;
-  bonus_num: number;
-};
-
-const EMPTY_COUNTS = Array.from({ length: 45 }, () => 0);
-const THIRTY_DAY_WINDOW_DRAWS = 4;
-const NINETY_DAY_WINDOW_DRAWS = 12;
-const SIX_MONTH_WINDOW_DRAWS = 26;
-const ONE_YEAR_WINDOW_DRAWS = 52;
-const THREE_YEAR_WINDOW_DRAWS = 156;
-const FIVE_YEAR_WINDOW_DRAWS = 260;
-const TEN_YEAR_WINDOW_DRAWS = 520;
-
-const isWinningNumberRow = (value: unknown): value is WinningNumberRow => {
-  if (typeof value !== 'object' || value === null) {
-    return false;
-  }
-
-  const candidate = value as Partial<WinningNumberRow>;
-  return (
-    typeof candidate.draw_no === 'number' &&
-    typeof candidate.num1 === 'number' &&
-    typeof candidate.num2 === 'number' &&
-    typeof candidate.num3 === 'number' &&
-    typeof candidate.num4 === 'number' &&
-    typeof candidate.num5 === 'number' &&
-    typeof candidate.num6 === 'number' &&
-    typeof candidate.bonus_num === 'number'
-  );
-};
-
-const buildNumberCounts = (rows: WinningNumberRow[]) => {
-  const counts = [...EMPTY_COUNTS];
-  for (const row of rows) {
-    const winningNumbers = [row.num1, row.num2, row.num3, row.num4, row.num5, row.num6, row.bonus_num];
-    for (const num of winningNumbers) {
-      if (num >= 1 && num <= 45) {
-        counts[num - 1] += 1;
-      }
-    }
-  }
-  return counts;
-};
+import { AccumulatedChartSection } from './components/AccumulatedChartSection';
+import { SearchPanel } from './components/SearchPanel';
+import { useAccumulatedNumbersData } from './hooks/useAccumulatedNumbersData';
 
 export default function AccumulatedNumbersPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [availableDraws, setAvailableDraws] = useState<number[]>([]);
-  const [selectedDraw, setSelectedDraw] = useState<string>('');
-  const [selectedWinningNumber, setSelectedWinningNumber] = useState<WinningNumberRow | null>(null);
-  const [isLoadingSelectedWinningNumber, setIsLoadingSelectedWinningNumber] = useState(false);
-  const [selectedWinningNumberError, setSelectedWinningNumberError] = useState<string | null>(null);
-  const [searchedDraw, setSearchedDraw] = useState<string>('');
-  const [isLoadingDraws, setIsLoadingDraws] = useState(true);
-  const [drawLoadError, setDrawLoadError] = useState<string | null>(null);
-  const [isSearching, setIsSearching] = useState(false);
-  const [searchError, setSearchError] = useState<string | null>(null);
-  const [numberCounts, setNumberCounts] = useState<number[]>([...EMPTY_COUNTS]);
-  const [analyzedDrawCount, setAnalyzedDrawCount] = useState(0);
-  const [thirtyDayCounts, setThirtyDayCounts] = useState<number[]>([...EMPTY_COUNTS]);
-  const [thirtyDayAnalyzedDrawCount, setThirtyDayAnalyzedDrawCount] = useState(0);
-  const [ninetyDayCounts, setNinetyDayCounts] = useState<number[]>([...EMPTY_COUNTS]);
-  const [ninetyDayAnalyzedDrawCount, setNinetyDayAnalyzedDrawCount] = useState(0);
-  const [sixMonthCounts, setSixMonthCounts] = useState<number[]>([...EMPTY_COUNTS]);
-  const [sixMonthAnalyzedDrawCount, setSixMonthAnalyzedDrawCount] = useState(0);
-  const [oneYearCounts, setOneYearCounts] = useState<number[]>([...EMPTY_COUNTS]);
-  const [oneYearAnalyzedDrawCount, setOneYearAnalyzedDrawCount] = useState(0);
-  const [threeYearCounts, setThreeYearCounts] = useState<number[]>([...EMPTY_COUNTS]);
-  const [threeYearAnalyzedDrawCount, setThreeYearAnalyzedDrawCount] = useState(0);
-  const [fiveYearCounts, setFiveYearCounts] = useState<number[]>([...EMPTY_COUNTS]);
-  const [fiveYearAnalyzedDrawCount, setFiveYearAnalyzedDrawCount] = useState(0);
-  const [tenYearCounts, setTenYearCounts] = useState<number[]>([...EMPTY_COUNTS]);
-  const [tenYearAnalyzedDrawCount, setTenYearAnalyzedDrawCount] = useState(0);
-
-  useEffect(() => {
-    let isMounted = true;
-    const abortController = new AbortController();
-
-    const loadDrawNumbers = async () => {
-      setIsLoadingDraws(true);
-      setDrawLoadError(null);
-
-      try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
-        const response = await fetch(`${apiUrl}/api/analysis/accumulated-numbers/draw-numbers`, {
-          signal: abortController.signal,
-        });
-
-        if (!response.ok) {
-          throw new Error(`Failed to fetch draw numbers: ${response.status}`);
-        }
-
-        const data: unknown = await response.json();
-        if (!Array.isArray(data)) {
-          throw new Error('Draw numbers response is not an array');
-        }
-
-        const draws = data.filter((item): item is number => typeof item === 'number');
-        if (!isMounted) return;
-
-        setAvailableDraws(draws);
-        setSelectedDraw((prev) => (prev || draws.length === 0 ? prev : String(draws[0])));
-      } catch (error) {
-        if (abortController.signal.aborted || !isMounted) {
-          return;
-        }
-
-        console.error('Error fetching draw numbers:', error);
-        setAvailableDraws([]);
-        setSelectedDraw('');
-        setDrawLoadError('회차 정보를 불러오지 못했습니다.');
-      } finally {
-        if (isMounted) {
-          setIsLoadingDraws(false);
-        }
-      }
-    };
-
-    void loadDrawNumbers();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
-  const fetchWinningNumberByDraw = async (drawNo: number) => {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
-    const response = await fetch(`${apiUrl}/api/analysis/accumulated-numbers/winning-number?draw_no=${drawNo}`);
-
-    if (!response.ok) {
-      if (response.status === 404) {
-        throw new Error('선택한 회차의 당첨번호를 찾을 수 없습니다.');
-      }
-      throw new Error(`Failed to fetch selected winning number: ${response.status}`);
-    }
-
-    const data: unknown = await response.json();
-    if (!isWinningNumberRow(data)) {
-      throw new Error('Selected winning number response is invalid');
-    }
-
-    return data;
-  };
-
-  const fetchWinningNumbersRange = async (drawNo: number) => {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
-    const response = await fetch(`${apiUrl}/api/analysis/accumulated-numbers/winning-numbers-range?draw_no=${drawNo}`);
-
-    if (!response.ok) {
-      throw new Error(`Failed to fetch winning numbers range: ${response.status}`);
-    }
-
-    const data: unknown = await response.json();
-    if (!Array.isArray(data)) {
-      throw new Error('Winning numbers range response is not an array');
-    }
-
-    return data.filter(isWinningNumberRow);
-  };
-
-  const fetchWinningNumbersWindow = async (drawNo: number, windowSize: number) => {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
-    const response = await fetch(
-      `${apiUrl}/api/analysis/accumulated-numbers/winning-numbers-window?draw_no=${drawNo}&window_size=${windowSize}`
-    );
-
-    if (!response.ok) {
-      throw new Error(`Failed to fetch winning numbers window: ${response.status}`);
-    }
-
-    const data: unknown = await response.json();
-    if (!Array.isArray(data)) {
-      throw new Error('Winning numbers window response is not an array');
-    }
-
-    return data.filter(isWinningNumberRow);
-  };
-
-  const handleSearch = async () => {
-    if (!selectedDraw) {
-      return;
-    }
-
-    const selectedDrawNo = Number(selectedDraw);
-    if (!Number.isInteger(selectedDrawNo) || selectedDrawNo < 1) {
-      setSearchError('유효한 회차를 선택해 주세요.');
-      setSearchedDraw('');
-      setNumberCounts([...EMPTY_COUNTS]);
-      setAnalyzedDrawCount(0);
-      setThirtyDayCounts([...EMPTY_COUNTS]);
-      setThirtyDayAnalyzedDrawCount(0);
-      setNinetyDayCounts([...EMPTY_COUNTS]);
-      setNinetyDayAnalyzedDrawCount(0);
-      setSixMonthCounts([...EMPTY_COUNTS]);
-      setSixMonthAnalyzedDrawCount(0);
-      setOneYearCounts([...EMPTY_COUNTS]);
-      setOneYearAnalyzedDrawCount(0);
-      setThreeYearCounts([...EMPTY_COUNTS]);
-      setThreeYearAnalyzedDrawCount(0);
-      setFiveYearCounts([...EMPTY_COUNTS]);
-      setFiveYearAnalyzedDrawCount(0);
-      setTenYearCounts([...EMPTY_COUNTS]);
-      setTenYearAnalyzedDrawCount(0);
-      return;
-    }
-
-    setIsSearching(true);
-    setIsLoadingSelectedWinningNumber(true);
-    setSearchError(null);
-    setSelectedWinningNumberError(null);
-    setSearchedDraw(selectedDraw);
-
-    try {
-      if (selectedDrawNo === 1) {
-        const winningNumber = await fetchWinningNumberByDraw(selectedDrawNo);
-        setSelectedWinningNumber(winningNumber);
-        setNumberCounts([...EMPTY_COUNTS]);
-        setAnalyzedDrawCount(0);
-        setThirtyDayCounts([...EMPTY_COUNTS]);
-        setThirtyDayAnalyzedDrawCount(0);
-        setNinetyDayCounts([...EMPTY_COUNTS]);
-        setNinetyDayAnalyzedDrawCount(0);
-        setSixMonthCounts([...EMPTY_COUNTS]);
-        setSixMonthAnalyzedDrawCount(0);
-        setOneYearCounts([...EMPTY_COUNTS]);
-        setOneYearAnalyzedDrawCount(0);
-        setThreeYearCounts([...EMPTY_COUNTS]);
-        setThreeYearAnalyzedDrawCount(0);
-        setFiveYearCounts([...EMPTY_COUNTS]);
-        setFiveYearAnalyzedDrawCount(0);
-        setTenYearCounts([...EMPTY_COUNTS]);
-        setTenYearAnalyzedDrawCount(0);
-        return;
-      }
-
-      const [rows, winningNumber, thirtyDayRows, ninetyDayRows, sixMonthRows, oneYearRows, threeYearRows, fiveYearRows, tenYearRows] =
-        await Promise.all([
-        fetchWinningNumbersRange(selectedDrawNo),
-        fetchWinningNumberByDraw(selectedDrawNo),
-        fetchWinningNumbersWindow(selectedDrawNo, THIRTY_DAY_WINDOW_DRAWS),
-        fetchWinningNumbersWindow(selectedDrawNo, NINETY_DAY_WINDOW_DRAWS),
-        fetchWinningNumbersWindow(selectedDrawNo, SIX_MONTH_WINDOW_DRAWS),
-        fetchWinningNumbersWindow(selectedDrawNo, ONE_YEAR_WINDOW_DRAWS),
-        fetchWinningNumbersWindow(selectedDrawNo, THREE_YEAR_WINDOW_DRAWS),
-        fetchWinningNumbersWindow(selectedDrawNo, FIVE_YEAR_WINDOW_DRAWS),
-        fetchWinningNumbersWindow(selectedDrawNo, TEN_YEAR_WINDOW_DRAWS),
-      ]);
-
-      setNumberCounts(buildNumberCounts(rows));
-      setAnalyzedDrawCount(rows.length);
-      setThirtyDayCounts(buildNumberCounts(thirtyDayRows));
-      setThirtyDayAnalyzedDrawCount(thirtyDayRows.length);
-      setNinetyDayCounts(buildNumberCounts(ninetyDayRows));
-      setNinetyDayAnalyzedDrawCount(ninetyDayRows.length);
-      setSixMonthCounts(buildNumberCounts(sixMonthRows));
-      setSixMonthAnalyzedDrawCount(sixMonthRows.length);
-      setOneYearCounts(buildNumberCounts(oneYearRows));
-      setOneYearAnalyzedDrawCount(oneYearRows.length);
-      setThreeYearCounts(buildNumberCounts(threeYearRows));
-      setThreeYearAnalyzedDrawCount(threeYearRows.length);
-      setFiveYearCounts(buildNumberCounts(fiveYearRows));
-      setFiveYearAnalyzedDrawCount(fiveYearRows.length);
-      setTenYearCounts(buildNumberCounts(tenYearRows));
-      setTenYearAnalyzedDrawCount(tenYearRows.length);
-      setSelectedWinningNumber(winningNumber);
-    } catch (error) {
-      console.error('Error fetching accumulated numbers search data:', error);
-      setSearchError('조회 데이터를 불러오지 못했습니다.');
-      setNumberCounts([...EMPTY_COUNTS]);
-      setAnalyzedDrawCount(0);
-      setThirtyDayCounts([...EMPTY_COUNTS]);
-      setThirtyDayAnalyzedDrawCount(0);
-      setNinetyDayCounts([...EMPTY_COUNTS]);
-      setNinetyDayAnalyzedDrawCount(0);
-      setSixMonthCounts([...EMPTY_COUNTS]);
-      setSixMonthAnalyzedDrawCount(0);
-      setOneYearCounts([...EMPTY_COUNTS]);
-      setOneYearAnalyzedDrawCount(0);
-      setThreeYearCounts([...EMPTY_COUNTS]);
-      setThreeYearAnalyzedDrawCount(0);
-      setFiveYearCounts([...EMPTY_COUNTS]);
-      setFiveYearAnalyzedDrawCount(0);
-      setTenYearCounts([...EMPTY_COUNTS]);
-      setTenYearAnalyzedDrawCount(0);
-      setSelectedWinningNumber(null);
-      setSelectedWinningNumberError('선택한 회차의 당첨번호를 불러오지 못했습니다.');
-    } finally {
-      setIsSearching(false);
-      setIsLoadingSelectedWinningNumber(false);
-    }
-  };
+  const {
+    availableDraws,
+    selectedDraw,
+    setSelectedDraw,
+    searchedDraw,
+    isLoadingDraws,
+    drawLoadError,
+    isSearching,
+    searchError,
+    selectedWinningNumber,
+    isLoadingSelectedWinningNumber,
+    selectedWinningNumberError,
+    allTimeCountResult,
+    windowCharts,
+    handleSearch,
+  } = useAccumulatedNumbersData();
 
   const hasSearched = searchedDraw !== '';
   const selectedSearchDrawNo = Number(searchedDraw);
@@ -331,73 +55,6 @@ export default function AccumulatedNumbersPage() {
               ? null
               : '회차를 선택한 뒤 조회 버튼을 누르면 해당 회차 기준 분석을 시작합니다.';
 
-  const renderAccumulatedChart = (
-    title: string,
-    counts: number[],
-    analyzedCountForChart: number,
-    noDataMessage: string
-  ) => {
-    const maxCount = Math.max(...counts, 0);
-    const totalCount = counts.reduce((sum, count) => sum + count, 0);
-    const averageCount = analyzedCountForChart > 0 ? totalCount / counts.length : 0;
-    const averageRatio = maxCount > 0 ? (averageCount / maxCount) * 100 : 0;
-    const clampedAverageRatio = Math.min(100, Math.max(0, averageRatio));
-    const chartBarHeightPx = 145;
-    const chartBottomLabelOffsetPx = 14;
-    const averageLineBottomPx = chartBottomLabelOffsetPx + (clampedAverageRatio / 100) * chartBarHeightPx;
-    const chartRows = counts.map((count, index) => ({
-      number: index + 1,
-      count,
-      ratio: maxCount > 0 ? (count / maxCount) * 100 : 0,
-    }));
-
-    return (
-      <section className="rounded-2xl border border-card-border/30 bg-card-bg/60 p-3 space-y-2.5">
-        <h3 className="text-xl font-semibold text-white">{title}</h3>
-        {hasSearched && selectedSearchDrawNo <= 1 ? (
-          <p className="text-sm text-slate-300">1회는 이전 회차가 없어 집계할 데이터가 없습니다.</p>
-        ) : !hasSearched ? (
-          <p className="text-sm text-slate-300">조회를 실행하면 번호별 누적 막대 차트가 표시됩니다.</p>
-        ) : isSearching ? (
-          <p className="text-sm text-slate-300">차트 데이터를 계산하는 중입니다...</p>
-        ) : searchError ? (
-          <p className="text-sm text-rose-300">{searchError}</p>
-        ) : analyzedCountForChart <= 0 ? (
-          <p className="text-sm text-slate-300">{noDataMessage}</p>
-        ) : (
-          <div className="overflow-x-auto pb-0.5">
-            <div className="relative w-max">
-              <div className="pointer-events-none absolute inset-x-0" style={{ bottom: `${averageLineBottomPx}px` }}>
-                <div className="w-full border-t-[3px] border-rose-400/90" />
-                <span className="absolute -top-5 right-0 rounded bg-rose-500/20 px-2 py-0.5 text-[11px] font-medium text-rose-300">
-                  평균 {averageCount.toFixed(1)}회
-                </span>
-              </div>
-              <ul className="w-max flex items-end gap-1 h-[200px]">
-                {chartRows.map((item) => {
-                  const isHighlighted = selectedHighlightNumbers?.has(item.number) ?? false;
-
-                  return (
-                    <li key={`${title}-${item.number}`} className="w-8 shrink-0 flex flex-col items-center gap-1">
-                      <span className="text-[11px] text-slate-100 tabular-nums leading-none">{item.count}</span>
-                      <div className="w-full h-[145px] rounded-md border border-white/10 bg-slate-900/70 flex items-end overflow-hidden">
-                        <div
-                          className={`w-full ${isHighlighted ? 'bg-rose-500/90' : 'bg-primary/80'}`}
-                          style={{ height: `${Math.max(item.ratio, item.count > 0 ? 2 : 0)}%` }}
-                        />
-                      </div>
-                      <span className="text-[11px] text-slate-300 font-medium leading-none">{item.number}</span>
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
-          </div>
-        )}
-      </section>
-    );
-  };
-
   return (
     <div className="bg-background min-h-screen flex justify-center w-full overflow-x-hidden">
       <div className="bg-background text-foreground font-display min-h-screen flex flex-col w-full lg:w-[95%] xl:w-[95%] 2xl:w-[90%] max-w-[1920px] border-x border-card-border/30 relative shadow-2xl">
@@ -405,121 +62,47 @@ export default function AccumulatedNumbersPage() {
         <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
         <main className="flex-1 overflow-y-auto pb-12 px-4 pt-4 space-y-6">
+          <SearchPanel
+            availableDraws={availableDraws}
+            selectedDraw={selectedDraw}
+            onSelectedDrawChange={setSelectedDraw}
+            onSearch={handleSearch}
+            isLoadingDraws={isLoadingDraws}
+            isSearching={isSearching}
+            isLoadingSelectedWinningNumber={isLoadingSelectedWinningNumber}
+            selectedWinningNumberError={selectedWinningNumberError}
+            selectedWinningNumber={selectedWinningNumber}
+          />
           <section className="rounded-2xl border border-card-border/30 bg-card-bg/60 p-4 space-y-3">
-            <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-              <div className="flex flex-col sm:flex-row sm:items-end gap-3">
-                <label className="flex flex-col gap-2 text-sm text-slate-300 min-w-[180px]">
-                  <span className="font-medium">회차 선택</span>
-                  <select
-                    value={selectedDraw}
-                    onChange={(e) => setSelectedDraw(e.target.value)}
-                    disabled={isLoadingDraws || availableDraws.length === 0}
-                    className="bg-slate-900 border border-white/20 rounded-xl px-4 py-2.5 text-white font-semibold focus:border-primary outline-none transition-all cursor-pointer shadow-inner"
-                  >
-                    {isLoadingDraws && <option value="">회차 정보를 불러오는 중...</option>}
-                    {!isLoadingDraws && availableDraws.length === 0 && <option value="">조회 가능한 회차 없음</option>}
-                    {availableDraws.map((drawNo) => (
-                      <option key={drawNo} value={drawNo}>
-                        {drawNo}회
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <button
-                  type="button"
-                  onClick={handleSearch}
-                  disabled={!selectedDraw || isLoadingDraws || availableDraws.length === 0 || isSearching}
-                  className={`h-[44px] px-5 rounded-xl font-semibold text-sm transition-all ${
-                    selectedDraw && !isLoadingDraws && availableDraws.length > 0 && !isSearching
-                      ? 'bg-primary/20 text-primary border border-primary/40 hover:bg-primary/30 hover:border-primary/60 cursor-pointer'
-                      : 'bg-white/5 text-white/30 border border-white/10 cursor-not-allowed'
-                  }`}
-                >
-                  조회
-                </button>
-              </div>
-              <div className="rounded-xl border border-white/10 bg-slate-900/60 px-4 py-3 min-h-[74px] lg:min-w-[440px]">
-                <p className="text-xs font-medium text-slate-300 mb-2">선택 회차 당첨번호 (보너스 포함)</p>
-                {isLoadingSelectedWinningNumber ? (
-                  <p className="text-sm text-slate-300">당첨번호를 불러오는 중입니다...</p>
-                ) : selectedWinningNumberError ? (
-                  <p className="text-sm text-rose-300">{selectedWinningNumberError}</p>
-                ) : selectedWinningNumber ? (
-                  <div className="flex flex-wrap items-center gap-2">
-                    {selectedMainNumbers.map((num, index) => (
-                      <span
-                        key={`${selectedWinningNumber.draw_no}-${index}-${num}`}
-                        className="inline-flex h-8 min-w-8 items-center justify-center rounded-full bg-primary/25 px-2 text-sm font-semibold text-primary"
-                      >
-                        {num}
-                      </span>
-                    ))}
-                    <span className="text-sm text-slate-400 px-1">+</span>
-                    <span className="inline-flex h-8 min-w-8 items-center justify-center rounded-full bg-amber-400/25 px-2 text-sm font-semibold text-amber-300">
-                      {selectedWinningNumber.bonus_num}
-                    </span>
-                    <span className="text-xs text-amber-300 font-medium">보너스</span>
-                  </div>
-                ) : (
-                  <p className="text-sm text-slate-300">
-                    회차를 선택한 뒤 조회 버튼을 누르면 당첨번호가 표시됩니다.
-                  </p>
-                )}
-              </div>
-            </div>
-
             {statusMessage && <p className="text-slate-300 text-sm leading-relaxed">{statusMessage}</p>}
           </section>
 
-          {renderAccumulatedChart(
-            '번호별 누적 출현 횟수',
-            numberCounts,
-            analyzedDrawCount,
-            '저장된 당첨번호 기준으로 집계 가능한 이전 회차 데이터가 없습니다.'
-          )}
+          <AccumulatedChartSection
+            title="번호별 누적 출현 횟수"
+            counts={allTimeCountResult.counts}
+            analyzedDrawCountForChart={allTimeCountResult.analyzedDrawCount}
+            noDataMessage="저장된 당첨번호 기준으로 집계 가능한 이전 회차 데이터가 없습니다."
+            hasSearched={hasSearched}
+            selectedSearchDrawNo={selectedSearchDrawNo}
+            isSearching={isSearching}
+            searchError={searchError}
+            selectedHighlightNumbers={selectedHighlightNumbers}
+          />
 
-          {renderAccumulatedChart(
-            '30일 누적 출현 횟수 (이전 4회차)',
-            thirtyDayCounts,
-            thirtyDayAnalyzedDrawCount,
-            '선택 회차 기준 이전 4회차 데이터가 부족해 집계할 수 없습니다.'
-          )}
-          {renderAccumulatedChart(
-            '90일 누적 출현 횟수 (이전 12회차)',
-            ninetyDayCounts,
-            ninetyDayAnalyzedDrawCount,
-            '선택 회차 기준 이전 12회차 데이터가 부족해 집계할 수 없습니다.'
-          )}
-          {renderAccumulatedChart(
-            '6개월 누적 출현 횟수 (이전 26회차)',
-            sixMonthCounts,
-            sixMonthAnalyzedDrawCount,
-            '선택 회차 기준 이전 26회차 데이터가 부족해 집계할 수 없습니다.'
-          )}
-          {renderAccumulatedChart(
-            '1년 누적 출현 횟수 (이전 52회차)',
-            oneYearCounts,
-            oneYearAnalyzedDrawCount,
-            '선택 회차 기준 이전 52회차 데이터가 부족해 집계할 수 없습니다.'
-          )}
-          {renderAccumulatedChart(
-            '3년 누적 출현 횟수 (이전 156회차)',
-            threeYearCounts,
-            threeYearAnalyzedDrawCount,
-            '선택 회차 기준 이전 156회차 데이터가 부족해 집계할 수 없습니다.'
-          )}
-          {renderAccumulatedChart(
-            '5년 누적 출현 횟수 (이전 260회차)',
-            fiveYearCounts,
-            fiveYearAnalyzedDrawCount,
-            '선택 회차 기준 이전 260회차 데이터가 부족해 집계할 수 없습니다.'
-          )}
-          {renderAccumulatedChart(
-            '10년 누적 출현 횟수 (이전 520회차)',
-            tenYearCounts,
-            tenYearAnalyzedDrawCount,
-            '선택 회차 기준 이전 520회차 데이터가 부족해 집계할 수 없습니다.'
-          )}
+          {windowCharts.map((chart) => (
+            <AccumulatedChartSection
+              key={chart.key}
+              title={chart.title}
+              counts={chart.counts}
+              analyzedDrawCountForChart={chart.analyzedDrawCount}
+              noDataMessage={chart.noDataMessage}
+              hasSearched={hasSearched}
+              selectedSearchDrawNo={selectedSearchDrawNo}
+              isSearching={isSearching}
+              searchError={searchError}
+              selectedHighlightNumbers={selectedHighlightNumbers}
+            />
+          ))}
         </main>
       </div>
     </div>
