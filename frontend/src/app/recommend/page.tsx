@@ -8,6 +8,14 @@ import { AnalysisResultList } from '@/app/recommend/components/AnalysisResultLis
 import { useRecommendData } from '@/app/recommend/hooks/useRecommendData';
 import { useRecommendGeneration } from '@/app/recommend/hooks/useRecommendGeneration';
 
+function ErrorAlert({ message }: { message: string }) {
+  return (
+    <div className="text-red-400 py-4 text-center border border-red-900/50 rounded-lg bg-red-950/20 mt-4">
+      {message}
+    </div>
+  );
+}
+
 export default function RecommendPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const {
@@ -49,8 +57,8 @@ export default function RecommendPage() {
             isLoadingDraws={isLoadingDraws}
             winningNumbers={winningNumbers}
           />
-          {drawLoadError ? <div className="text-red-400 py-4 text-center border border-red-900/50 rounded-lg bg-red-950/20 mt-4">회차 로드 오류: {drawLoadError}</div> : null}
-          {error ? <div className="text-red-400 py-4 text-center border border-red-900/50 rounded-lg bg-red-950/20 mt-4">데이터 통신 오류: {error}</div> : null}
+          {drawLoadError ? <ErrorAlert message={`회차 로드 오류: ${drawLoadError}`} /> : null}
+          {error ? <ErrorAlert message={`데이터 통신 오류: ${error}`} /> : null}
           <AnalysisResultList
             statusMessage={statusMessage}
             targetDrawNo={selectedDraw}

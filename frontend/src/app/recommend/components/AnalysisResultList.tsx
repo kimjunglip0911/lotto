@@ -2,6 +2,15 @@
 
 import React from 'react';
 import { GeneratedSet, RecommendRuleResult } from '@/app/recommend/logic/types';
+import {
+  DEFAULT_RULE_DISPLAY,
+  getAvailableNumbers,
+  getDisplayExcludedNumbers,
+  getGlobalRestoredSet,
+  getStrategyBadge,
+  getStrategyLabel,
+  RULE_DISPLAY,
+} from '@/app/recommend/components/analysisResultView';
 
 interface AnalysisResultListProps {
   statusMessage?: string | null;
@@ -10,60 +19,6 @@ interface AnalysisResultListProps {
   excludedNumbers?: number[];
   sets?: GeneratedSet[];
   winningNumbers?: number[];
-}
-
-/** 규칙 ID별 표시 설정 */
-const RULE_DISPLAY: Record<string, { label: string; badgeClass: string; headerClass: string }> = {
-  'exclude-top-rank-from-windows': {
-    label: '누적(기간별) 제외 번호',
-    badgeClass: 'bg-amber-500/20 text-amber-200 border border-amber-500/40',
-    headerClass: 'text-amber-300',
-  },
-  'exclude-chi-square-high-deviation': {
-    label: '카이제곱 +편차 초과 제외 번호',
-    badgeClass: 'bg-blue-500/20 text-blue-200 border border-blue-500/40',
-    headerClass: 'text-blue-300',
-  },
-  'exclude-trend-down': {
-    label: '추세 감소 번호 제외',
-    badgeClass: 'bg-purple-500/20 text-purple-200 border border-purple-500/40',
-    headerClass: 'text-purple-300',
-  },
-};
-
-const DEFAULT_RULE_DISPLAY = {
-  label: '제외 번호',
-  badgeClass: 'bg-white/10 text-slate-200 border border-white/20',
-  headerClass: 'text-slate-300',
-}
-
-/** 세트 생성 전략 배지 */
-const STRATEGY_LABEL: Record<string, string> = {
-  deterministic: '최적 커버리지',
-  'position-diversity': '위치별 다양성',
-  'theme-diversity': '주제별 다양성',
-}
-
-const STRATEGY_BADGE: Record<string, string> = {
-  deterministic: 'bg-emerald-500/20 text-emerald-200 border-emerald-500/40',
-  'position-diversity': 'bg-sky-500/20 text-sky-200 border-sky-500/40',
-  'theme-diversity': 'bg-fuchsia-500/20 text-fuchsia-200 border-fuchsia-500/40',
-}
-
-const STRATEGY_BADGE_DEFAULT = 'bg-white/10 text-slate-300 border-white/20';
-
-function getStrategyLabel(strategy: string): string {
-  if (strategy.startsWith('theme:')) {
-    return strategy.replace('theme:', '')
-  }
-  return STRATEGY_LABEL[strategy] ?? strategy
-}
-
-function getStrategyBadge(strategy: string): string {
-  if (strategy.startsWith('theme:')) {
-    return STRATEGY_BADGE['theme-diversity']
-  }
-  return STRATEGY_BADGE[strategy] ?? STRATEGY_BADGE_DEFAULT
 }
 
 export const AnalysisResultList: React.FC<AnalysisResultListProps> = ({
@@ -75,10 +30,9 @@ export const AnalysisResultList: React.FC<AnalysisResultListProps> = ({
   winningNumbers,
 }) => {
   /** 모든 규칙에서 복원된 번호의 합집합 - 어느 규칙 카드에서도 제외 번호로 표시하지 않는다 */
-  const globalRestoredSet = new Set(
-    appliedRules.flatMap((r) => r.restoredNumbers ?? []),
-  );
+  const globalRestoredSet = getGlobalRestoredSet(appliedRules);
   const winningSet = new Set(winningNumbers ?? []);
+  const availableNumbers = getAvailableNumbers(excludedNumbers);
 
   return (
     <div className="mt-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -98,9 +52,7 @@ export const AnalysisResultList: React.FC<AnalysisResultListProps> = ({
                * 누적 규칙은 복원 대상이 아니므로 필터 없이 그대로 표시.
                * 나머지 규칙은 복원된 번호를 제거한다.
                */
-              const displayExcluded = [...new Set(rule.excludedNumbers)]
-                .filter((n) => rule.ruleId === 'exclude-top-rank-from-windows' || !globalRestoredSet.has(n))
-                .sort((a, b) => a - b);
+              const displayExcluded = getDisplayExcludedNumbers(rule, globalRestoredSet);
               return (
                 <div
                   key={rule.ruleId}
@@ -149,29 +101,23 @@ export const AnalysisResultList: React.FC<AnalysisResultListProps> = ({
         ) : null}
 
         {/* 전체 사용 가능 번호 */}
-        {(() => {
-          const excludedSet = new Set(excludedNumbers);
-          const availableNumbers = Array.from({ length: 45 }, (_, i) => i + 1).filter((n) => !excludedSet.has(n));
-          return (
-            <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 px-4 py-3 space-y-2">
-              <p className="text-sm font-semibold text-emerald-300">전체 사용 가능 번호</p>
-              {availableNumbers.length > 0 ? (
-                <div className="flex flex-wrap gap-1.5">
-                  {availableNumbers.map((num) => (
-                    <span
-                      key={`available-${num}`}
-                      className={`inline-flex h-7 min-w-7 items-center justify-center rounded-full px-2 text-xs font-bold ${winningSet.has(num) ? 'bg-red-600/80 text-white border border-red-400' : 'bg-emerald-500/25 text-emerald-200 border border-emerald-500/40'}`}
-                    >
-                      {num}
-                    </span>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-xs text-slate-500">해당 없음</p>
-              )}
+        <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 px-4 py-3 space-y-2">
+          <p className="text-sm font-semibold text-emerald-300">전체 사용 가능 번호</p>
+          {availableNumbers.length > 0 ? (
+            <div className="flex flex-wrap gap-1.5">
+              {availableNumbers.map((num) => (
+                <span
+                  key={`available-${num}`}
+                  className={`inline-flex h-7 min-w-7 items-center justify-center rounded-full px-2 text-xs font-bold ${winningSet.has(num) ? 'bg-red-600/80 text-white border border-red-400' : 'bg-emerald-500/25 text-emerald-200 border border-emerald-500/40'}`}
+                >
+                  {num}
+                </span>
+              ))}
             </div>
-          );
-        })()}
+          ) : (
+            <p className="text-xs text-slate-500">해당 없음</p>
+          )}
+        </div>
 
         {/* 생성된 추천 세트 */}
         {sets.length > 0 ? (
