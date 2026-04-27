@@ -1,6 +1,6 @@
 from typing import Any, Callable, List, Optional
 
-from backend.database import get_connection
+from backend.DB.database import get_connection
 from backend.router.recommend import queries
 
 

@@ -4,7 +4,7 @@ from typing import Any, Callable, TypeVar
 
 from fastapi import HTTPException
 
-from backend.database import get_connection
+from backend.DB.database import get_connection
 
 T = TypeVar("T")
 

@@ -7,7 +7,7 @@ sys.dont_write_bytecode = True
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from backend.models import MessageResponse
+from backend.domain.models.schemas import MessageResponse
 from backend.router.home.router import router as home_router
 from backend.router.recommend.router import router as recommend_router
 

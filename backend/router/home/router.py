@@ -3,7 +3,7 @@ from typing import Any, Callable, List, Optional
 
 from fastapi import APIRouter, HTTPException, Query
 
-from backend.database import get_connection
+from backend.DB.database import get_connection
 from backend.domain.models.schemas import SaveWinningRequest
 from backend.router.home import queries
 

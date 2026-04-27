@@ -17,14 +17,15 @@ backend/
 │   ├── router.py             # Home API 라우터
 │   └── queries.py            # Home SQL 쿼리 상수
 ├── router/analysis/*/queries.py # Analysis SQL 쿼리 상수
-├── router_loader.py        # (레거시) features 라우터 동적 로더
-├── models.py               # 공통 Pydantic 모델 export
-├── database.py             # 공통 DB 연결
-└── infrastructure/persistence/
+├── DB/
+│   ├── database.py            # 공통 DB 연결
+│   ├── init_db.py             # DB 초기화 스크립트
+│   ├── schema.sql             # SQLite 스키마
+│   └── lotto.db               # 로컬 DB 파일(.gitignore)
 ```
 
-- **SQLite 경로**: [`database.py`](database.py)의 `get_db_path()`는 `infrastructure/persistence/lotto.db` 한 경로만 사용합니다(`init_db.py` 출력과 동일).
-- **공통 Pydantic**: [`domain/models/schemas.py`](domain/models/schemas.py)는 [`models.py`](models.py)를 통해 노출되며, 현재는 `MessageResponse`, `GenerateSaveRequest`만 둡니다.
+- **SQLite 경로**: [`DB/database.py`](DB/database.py)의 `get_db_path()`는 `DB/lotto.db` 한 경로만 사용합니다(`init_db.py` 출력과 동일).
+- **공통 Pydantic**: [`domain/models/schemas.py`](domain/models/schemas.py)를 단일 정본으로 사용하며, 현재는 `MessageResponse`, `GenerateSaveRequest`를 포함합니다.
 - **Home API 추가/수정** → `backend/router/home/router.py`
 - **Home SQL 쿼리 수정** → `backend/router/home/queries.py`
 - **Recommend API 추가/수정** → `backend/router/recommend/router.py`
@@ -91,11 +92,11 @@ npm run check:no-init
 | 구분 | 위치 | 내용 |
 |------|------|------|
 | FastAPI 앱·미들웨어 | [`main.py`](main.py) | `FastAPI()` 인스턴스, `CORSMiddleware`(origins/methods/headers), `include_router`로 기능 라우터 마운트 |
-| 라우터 마운트 | [`router_loader.py`](router_loader.py) | `features/<기능>/api/router.py` 동적 로드 (프레임워크와 기능 모듈 연결) |
+| 라우터 마운트 | [`main.py`](main.py) | `include_router`와 `load_router_from_file`로 기능 라우터 동적 로드 |
 | Python 패키지 | [`requirements.txt`](requirements.txt) | 런타임: `fastapi`, `uvicorn[standard]`, `pydantic`, `torch` |
 | 로컬 개발 서버 (Node) | 저장소 루트 `package.json` | `npm run dev:backend` → `python -B -m uvicorn backend.main:app`, `--reload-dir backend`, `--reload-dir features` |
 
-**역할 분리 참고**: 엔드포인트 구현·DB 접근·공통 Pydantic 스키마는 `features/` 및 본 디렉터리의 `database.py`, `domain/models/`, `infrastructure/` 등에서 담고, 분석 기능의 등수 판정은 `features/analysis/domain/` 에 둡니다. 위 표는 **HTTP 서버 골격과 라이브러리 선언**에 해당합니다.
+**역할 분리 참고**: 엔드포인트 구현·DB 접근·공통 Pydantic 스키마는 `features/` 및 본 디렉터리의 `DB/database.py`, `domain/models/`, `DB/` 등에서 담고, 분석 기능의 등수 판정은 `features/analysis/domain/` 에 둡니다. 위 표는 **HTTP 서버 골격과 라이브러리 선언**에 해당합니다.
 
 ## 실행 방법
 

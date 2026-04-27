@@ -3,7 +3,7 @@ from typing import Dict, List, Optional
 
 from fastapi import APIRouter, HTTPException, Query
 
-from backend.models import GenerateSaveRequest
+from backend.domain.models.schemas import GenerateSaveRequest
 from backend.router.recommend.helpers import (
     NUMBER_KEYS,
     build_number_counts,

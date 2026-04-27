@@ -14,7 +14,7 @@ __pycache__/
 
 # Backend runtime
 backend/*.log
-backend/infrastructure/persistence/*.db
+backend/DB/*.db
 
 # Local instruction docs
 리팩터링지시서.md
