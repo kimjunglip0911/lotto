@@ -31,3 +31,7 @@ export interface LotterySetViewModel {
   method?: string;
   drawNo: number;
 }
+
+export function isValidLottoNumber(value: InputNumber): value is number {
+  return typeof value === 'number' && value >= 1 && value <= 45;
+}

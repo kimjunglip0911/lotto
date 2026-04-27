@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react';
 import type { InputNumber, WinningNumbersByDraw } from '@/app/home/components/types';
 
 const EMPTY_WINNING_NUMBERS: InputNumber[] = Array(6).fill('');
+const EMPTY_BONUS: InputNumber = '';
 
 export const useWinningNumbersInput = () => {
   const [winningNumbers, setWinningNumbers] = useState<InputNumber[]>(EMPTY_WINNING_NUMBERS);
@@ -28,18 +29,21 @@ export const useWinningNumbersInput = () => {
 
   const resetWinningInputs = useCallback(() => {
     setWinningNumbers(EMPTY_WINNING_NUMBERS);
-    setWinningBonus('');
+    setWinningBonus(EMPTY_BONUS);
+  }, []);
+
+  const applyWinningNumbers = useCallback((numbers: InputNumber[], bonus: InputNumber) => {
+    setWinningNumbers(numbers);
+    setWinningBonus(bonus);
   }, []);
 
   const setWinningNumbersFromDraw = useCallback((data: WinningNumbersByDraw | null) => {
     if (!data) {
-      setWinningNumbers(EMPTY_WINNING_NUMBERS);
-      setWinningBonus('');
+      applyWinningNumbers(EMPTY_WINNING_NUMBERS, EMPTY_BONUS);
       return;
     }
-    setWinningNumbers([data.num1, data.num2, data.num3, data.num4, data.num5, data.num6]);
-    setWinningBonus(data.bonus_num);
-  }, []);
+    applyWinningNumbers([data.num1, data.num2, data.num3, data.num4, data.num5, data.num6], data.bonus_num);
+  }, [applyWinningNumbers]);
 
   return {
     winningNumbers,

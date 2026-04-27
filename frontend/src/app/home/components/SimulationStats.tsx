@@ -2,12 +2,12 @@
 
 import React, { useMemo } from 'react';
 import { calculateSimulationStats } from '@/app/home/components/utils/calculateSimulationStats';
-import type { LotterySetViewModel } from '@/app/home/components/types';
+import type { InputNumber, LotterySetViewModel } from '@/app/home/components/types';
 
 interface SimulationStatsProps {
   sets: LotterySetViewModel[];
-  winningNumbers: number[];
-  bonusNumber: number;
+  winningNumbers: InputNumber[];
+  bonusNumber: InputNumber;
 }
 
 export function SimulationStats({ sets, winningNumbers, bonusNumber }: SimulationStatsProps) {

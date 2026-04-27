@@ -62,8 +62,8 @@ export function LotteryGrid() {
         />
         <SimulationStats
           sets={displaySets}
-          winningNumbers={winningNumbers as number[]}
-          bonusNumber={winningBonus as number}
+          winningNumbers={winningNumbers}
+          bonusNumber={winningBonus}
         />
         <LotterySetList sets={displaySets} />
       </div>

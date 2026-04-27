@@ -1,6 +1,7 @@
 interface LotterySet {
   numbers: number[];
 }
+type InputNumber = number | '';
 
 interface SetRanking {
   setNumber: number;
@@ -16,8 +17,8 @@ interface SimulationStatsResult {
 
 export const calculateSimulationStats = (
   sets: LotterySet[],
-  winningNumbers: number[],
-  bonusNumber: number,
+  winningNumbers: InputNumber[],
+  bonusNumber: InputNumber,
 ): SimulationStatsResult | null => {
   if (!sets || sets.length === 0) return null;
 

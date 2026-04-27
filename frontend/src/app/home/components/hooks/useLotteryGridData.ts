@@ -6,6 +6,18 @@ interface UseLotteryGridDataOptions {
 }
 
 type SelectedDraw = number | null;
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? '';
+
+const toAvailableDraws = (data: unknown): number[] => {
+  if (!Array.isArray(data) || data.length === 0) return [];
+  const drawNumbers = data.filter((value): value is number => Number.isInteger(value));
+  if (drawNumbers.length === 0) return [];
+  return [drawNumbers[0] + 1, ...drawNumbers];
+};
+
+const toLotterySets = (data: unknown): LotterySetData[] => {
+  return Array.isArray(data) ? (data as LotterySetData[]) : [];
+};
 
 export const useLotteryGridData = (options?: UseLotteryGridDataOptions) => {
   const onDrawChange = options?.onDrawChange;
@@ -19,15 +31,14 @@ export const useLotteryGridData = (options?: UseLotteryGridDataOptions) => {
 
     const loadDrawNumbers = async () => {
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
-        const response = await fetch(`${apiUrl}/api/analysis/accumulated-numbers/draw-numbers`);
+        const response = await fetch(`${API_BASE}/api/analysis/accumulated-numbers/draw-numbers`);
         if (!response.ok || cancelled) return;
 
         const data = await response.json();
-        if (!Array.isArray(data) || data.length === 0 || cancelled) return;
+        if (cancelled) return;
 
-        const nextDraw = data[0] + 1;
-        const draws = [nextDraw, ...data];
+        const draws = toAvailableDraws(data);
+        if (draws.length === 0) return;
         setAvailableDraws(draws);
         setSelectedDraw((prev) => prev ?? draws[0]);
       } catch (error) {
@@ -48,15 +59,14 @@ export const useLotteryGridData = (options?: UseLotteryGridDataOptions) => {
 
     const loadData = async () => {
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
         const [setsResponse, winningResponse] = await Promise.all([
-          fetch(`${apiUrl}/api/recommend/drawings?draw_no=${selectedDraw}`),
-          fetch(`${apiUrl}/api/drawings/winning-by-no?draw_no=${selectedDraw}`),
+          fetch(`${API_BASE}/api/recommend/drawings?draw_no=${selectedDraw}`),
+          fetch(`${API_BASE}/api/drawings/winning-by-no?draw_no=${selectedDraw}`),
         ]);
 
         if (setsResponse.ok) {
           const setsData = await setsResponse.json();
-          setSets(Array.isArray(setsData) ? setsData : []);
+          setSets(toLotterySets(setsData));
         } else {
           setSets([]);
         }

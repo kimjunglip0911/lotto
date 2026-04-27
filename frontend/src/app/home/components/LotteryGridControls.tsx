@@ -1,6 +1,6 @@
 import React from 'react';
 import { Save, Loader2, Check } from 'lucide-react';
-import type { InputNumber, SaveStatus } from '@/app/home/components/types';
+import { isValidLottoNumber, type InputNumber, type SaveStatus } from '@/app/home/components/types';
 
 interface LotteryGridControlsProps {
   selectedDraw: number | null;
@@ -13,10 +13,6 @@ interface LotteryGridControlsProps {
   onSaveWinning: () => void;
   isSaving: boolean;
   saveStatus: SaveStatus;
-}
-
-function isValidLottoNumber(n: number | ''): n is number {
-  return typeof n === 'number' && n >= 1 && n <= 45;
 }
 
 export function LotteryGridControls({

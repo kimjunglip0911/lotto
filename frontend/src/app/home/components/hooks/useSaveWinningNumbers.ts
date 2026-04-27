@@ -27,6 +27,8 @@ interface UseSaveWinningNumbersParams {
   winningBonus: InputNumber;
 }
 
+type SaveResult = 'success' | 'error';
+
 export const useSaveWinningNumbers = ({
   selectedDraw,
   winningNumbers,
@@ -51,6 +53,11 @@ export const useSaveWinningNumbers = ({
     saveTimerRef.current = setTimeout(() => setSaveStatus('idle'), SAVE_STATUS_RESET_DELAY_MS);
   }, []);
 
+  const setResultAndScheduleReset = useCallback((status: SaveResult) => {
+    setSaveStatus(status);
+    scheduleSaveStatusReset();
+  }, [scheduleSaveStatusReset]);
+
   const handleSaveWinning = useCallback(async () => {
     if (selectedDraw === null) return;
     setIsSaving(true);
@@ -66,15 +73,13 @@ export const useSaveWinningNumbers = ({
 
       if (!res.ok) throw new Error('저장 실패');
 
-      setSaveStatus('success');
-      scheduleSaveStatusReset();
+      setResultAndScheduleReset('success');
     } catch {
-      setSaveStatus('error');
-      scheduleSaveStatusReset();
+      setResultAndScheduleReset('error');
     } finally {
       setIsSaving(false);
     }
-  }, [scheduleSaveStatusReset, selectedDraw, winningNumbers, winningBonus]);
+  }, [selectedDraw, setResultAndScheduleReset, winningNumbers, winningBonus]);
 
   return {
     isSaving,
