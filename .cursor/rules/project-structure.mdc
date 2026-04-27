@@ -90,9 +90,18 @@ lotto/
 │       │   │       └── SimulationStats.tsx
 │       │   └── recommend/
 │       │       ├── page.tsx
-│       │       └── components/
+│       │       ├── hooks/
+│       │       │   ├── useRecommendData.ts
+│       │       │   └── useRecommendGeneration.ts
+│       │       ├── components/
 │       │           ├── AnalysisController.tsx
 │       │           └── AnalysisResultList.tsx
+│       │       └── logic/
+│       │           ├── api.ts
+│       │           ├── generator.ts
+│       │           ├── pipeline.ts
+│       │           ├── types.ts
+│       │           └── rules/
 │       ├── components/
 │       │   ├── common/
 │       │   │   ├── Header.tsx
