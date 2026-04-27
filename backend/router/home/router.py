@@ -1,5 +1,5 @@
 import random
-from typing import List, Optional
+from typing import Any, Callable, List, Optional
 
 from fastapi import APIRouter, HTTPException, Query
 
@@ -10,15 +10,62 @@ from backend.sql.home import queries
 router = APIRouter(tags=["drawings"])
 
 
+def run_db(handler: Callable[[Any], Any], *, commit: bool = False) -> Any:
+    conn = get_connection()
+    try:
+        cursor = conn.cursor()
+        result = handler(cursor)
+        if commit:
+            conn.commit()
+        return result
+    finally:
+        conn.close()
+
+
+def rows_to_dicts(rows: List[Any]) -> List[dict]:
+    return [dict(row) for row in rows]
+
+
+def normalize_method_name(method: Optional[str]) -> str:
+    return method.replace(" (Fallback)", "") if method else "기본"
+
+
+def build_recommended_drawings(rows: List[Any]) -> List[dict]:
+    if not rows:
+        return []
+
+    by_method: dict[str, List[dict]] = {}
+    for row in rows:
+        row_dict = dict(row)
+        method = normalize_method_name(row_dict.get("method"))
+        by_method.setdefault(method, []).append(row_dict)
+
+    for method_rows in by_method.values():
+        random.shuffle(method_rows)
+
+    recommended: List[dict] = []
+    for method in list(by_method.keys()):
+        if by_method[method]:
+            recommended.append(by_method[method].pop())
+
+    remaining_pool: List[dict] = []
+    for method_rows in by_method.values():
+        remaining_pool.extend(method_rows)
+
+    if remaining_pool and len(recommended) < 10:
+        sample_size = min(len(remaining_pool), 10 - len(recommended))
+        recommended.extend(random.sample(remaining_pool, sample_size))
+
+    return recommended
+
+
 @router.get("/api/drawings", response_model=List[dict])
 def get_drawings():
     try:
-        conn = get_connection()
-        cursor = conn.cursor()
-        cursor.execute(queries.GET_ALL_DRAWINGS)
-        rows = cursor.fetchall()
-        conn.close()
-        return [dict(row) for row in rows]
+        rows = run_db(lambda cursor: cursor.execute(queries.GET_ALL_DRAWINGS).fetchall())
+        return rows_to_dicts(rows)
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -26,12 +73,10 @@ def get_drawings():
 @router.delete("/api/drawings/all")
 def delete_all_drawings():
     try:
-        conn = get_connection()
-        cursor = conn.cursor()
-        cursor.execute(queries.DELETE_ALL_DRAWINGS)
-        conn.commit()
-        conn.close()
+        run_db(lambda cursor: cursor.execute(queries.DELETE_ALL_DRAWINGS), commit=True)
         return {"message": "All drawings deleted successfully"}
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -39,12 +84,10 @@ def delete_all_drawings():
 @router.get("/api/drawings/draw-numbers", response_model=List[int])
 def get_draw_numbers():
     try:
-        conn = get_connection()
-        cursor = conn.cursor()
-        cursor.execute(queries.GET_DISTINCT_DRAW_NOS)
-        rows = cursor.fetchall()
-        conn.close()
+        rows = run_db(lambda cursor: cursor.execute(queries.GET_DISTINCT_DRAW_NOS).fetchall())
         return [row[0] for row in rows]
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -52,55 +95,19 @@ def get_draw_numbers():
 @router.get("/api/drawings/recommend", response_model=List[dict])
 def recommend_drawings(draw_no: Optional[int] = Query(None)):
     try:
-        conn = get_connection()
-        cursor = conn.cursor()
-
         if draw_no:
             target_draw_no = draw_no
         else:
-            cursor.execute(queries.GET_MAX_DRAW_NO)
-            latest_row = cursor.fetchone()
+            latest_row = run_db(lambda cursor: cursor.execute(queries.GET_MAX_DRAW_NO).fetchone())
             target_draw_no = latest_row[0] if latest_row and latest_row[0] is not None else None
 
         if target_draw_no is None:
-            conn.close()
             return []
 
-        cursor.execute(queries.GET_DRAWINGS_BY_NO, (target_draw_no,))
-        rows = cursor.fetchall()
-        conn.close()
-
-        if not rows:
-            return []
-
-        by_method = {}
-        for row in rows:
-            row_dict = dict(row)
-            method = row_dict["method"]
-            base_m = method.replace(" (Fallback)", "") if method else "기본"
-            if base_m not in by_method:
-                by_method[base_m] = []
-            by_method[base_m].append(row_dict)
-
-        for method in by_method:
-            random.shuffle(by_method[method])
-
-        recommended = []
-        methods = list(by_method.keys())
-
-        for method in methods:
-            if by_method[method]:
-                recommended.append(by_method[method].pop())
-
-        remaining_pool = []
-        for method in by_method:
-            remaining_pool.extend(by_method[method])
-
-        if remaining_pool and len(recommended) < 10:
-            sample_size = min(len(remaining_pool), 10 - len(recommended))
-            recommended.extend(random.sample(remaining_pool, sample_size))
-
-        return recommended
+        rows = run_db(lambda cursor: cursor.execute(queries.GET_DRAWINGS_BY_NO, (target_draw_no,)).fetchall())
+        return build_recommended_drawings(rows)
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -108,12 +115,10 @@ def recommend_drawings(draw_no: Optional[int] = Query(None)):
 @router.get("/api/drawings/by-no", response_model=List[dict])
 def get_drawings_by_no(draw_no: int):
     try:
-        conn = get_connection()
-        cursor = conn.cursor()
-        cursor.execute(queries.GET_DRAWINGS_BY_NO, (draw_no,))
-        rows = cursor.fetchall()
-        conn.close()
-        return [dict(row) for row in rows]
+        rows = run_db(lambda cursor: cursor.execute(queries.GET_DRAWINGS_BY_NO, (draw_no,)).fetchall())
+        return rows_to_dicts(rows)
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -121,11 +126,7 @@ def get_drawings_by_no(draw_no: int):
 @router.get("/api/drawings/winning-by-no", response_model=dict)
 def get_winning_by_no(draw_no: int):
     try:
-        conn = get_connection()
-        cursor = conn.cursor()
-        cursor.execute(queries.GET_WINNING_BY_NO, (draw_no,))
-        row = cursor.fetchone()
-        conn.close()
+        row = run_db(lambda cursor: cursor.execute(queries.GET_WINNING_BY_NO, (draw_no,)).fetchone())
         if not row:
             raise HTTPException(status_code=404, detail=f"No winning numbers found for draw_no={draw_no}")
         return dict(row)
@@ -138,23 +139,24 @@ def get_winning_by_no(draw_no: int):
 @router.post("/api/drawings/save-winning", response_model=dict)
 def save_winning(request: SaveWinningRequest):
     try:
-        conn = get_connection()
-        cursor = conn.cursor()
-        cursor.execute(
-            queries.UPSERT_WINNING,
-            (
-                request.draw_no,
-                request.num1,
-                request.num2,
-                request.num3,
-                request.num4,
-                request.num5,
-                request.num6,
-                request.bonus_num,
+        run_db(
+            lambda cursor: cursor.execute(
+                queries.UPSERT_WINNING,
+                (
+                    request.draw_no,
+                    request.num1,
+                    request.num2,
+                    request.num3,
+                    request.num4,
+                    request.num5,
+                    request.num6,
+                    request.bonus_num,
+                ),
             ),
+            commit=True,
         )
-        conn.commit()
-        conn.close()
         return {"message": f"{request.draw_no}회 당첨번호가 저장되었습니다."}
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
