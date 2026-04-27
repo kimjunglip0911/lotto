@@ -10,15 +10,9 @@
     ],
     "preToolUse": [
       {
-        "matcher": "*",
-        "type": "command",
-        "command": ".cursor/hooks/inject-rules-on-session-start.ps1",
-        "failClosed": false
-      },
-      {
         "matcher": "CreatePlan",
         "type": "command",
-        "command": ".cursor/hooks/inject-plan-format.ps1",
+        "command": ".cursor/hooks/inject-rules-on-session-start.ps1",
         "failClosed": false
       }
     ]
