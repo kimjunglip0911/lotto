@@ -50,4 +50,3 @@ INSERT INTO lotto_drawings (
     strategy
 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 """.strip()
-

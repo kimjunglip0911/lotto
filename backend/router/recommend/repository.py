@@ -1,7 +1,7 @@
 from typing import Any, Callable, List, Optional
 
 from backend.database import get_connection
-from backend.sql.recommend import queries
+from backend.router.recommend import queries
 
 
 WINDOW_SIZES = {

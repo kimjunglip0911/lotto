@@ -10,12 +10,14 @@ backend/
 ├── router/recommend/
 │   ├── router.py             # Recommend API 엔드포인트 조립
 │   ├── repository.py         # Recommend DB 접근 레이어
+│   ├── queries.py            # Recommend SQL 쿼리 상수
 │   ├── helpers.py            # Recommend 순수 계산/변환 로직
 │   └── jl_loader.py          # JL 서비스 로더 + fallback
-├── router/home/router.py   # Home API 라우터
+├── router/home/
+│   ├── router.py             # Home API 라우터
+│   └── queries.py            # Home SQL 쿼리 상수
+├── router/analysis/*/queries.py # Analysis SQL 쿼리 상수
 ├── router_loader.py        # (레거시) features 라우터 동적 로더
-├── sql/recommend/queries.py # Recommend SQL 쿼리 상수
-├── sql/home/queries.py     # Home SQL 쿼리 상수
 ├── models.py               # 공통 Pydantic 모델 export
 ├── database.py             # 공통 DB 연결
 └── infrastructure/persistence/
@@ -24,26 +26,26 @@ backend/
 - **SQLite 경로**: [`database.py`](database.py)의 `get_db_path()`는 `infrastructure/persistence/lotto.db` 한 경로만 사용합니다(`init_db.py` 출력과 동일).
 - **공통 Pydantic**: [`domain/models/schemas.py`](domain/models/schemas.py)는 [`models.py`](models.py)를 통해 노출되며, 현재는 `MessageResponse`, `GenerateSaveRequest`만 둡니다.
 - **Home API 추가/수정** → `backend/router/home/router.py`
-- **Home SQL 쿼리 수정** → `backend/sql/home/queries.py`
+- **Home SQL 쿼리 수정** → `backend/router/home/queries.py`
 - **Recommend API 추가/수정** → `backend/router/recommend/router.py`
 - **Recommend 내부 로직 분리**
   - DB 접근/트랜잭션 → `backend/router/recommend/repository.py`
   - 번호 계산/치환 로직 → `backend/router/recommend/helpers.py`
   - JL 서비스 로더/fallback → `backend/router/recommend/jl_loader.py`
-- **Recommend SQL 쿼리 수정** → `backend/sql/recommend/queries.py`
+- **Recommend SQL 쿼리 수정** → `backend/router/recommend/queries.py`
 - **JL 휠 로직/속도 프로파일** → `features/analysis/api/jl_service/`
 - **JL 분석 엔진** → `features/analysis/api/jl_service/`
 
 ## Home 라우터 리팩터링 원칙
 
 - `backend/router/home/router.py`는 API 계약(경로, 파라미터, 응답 스키마)을 유지한 상태에서 내부 구현만 정리합니다.
-- Home SQL 본문과 파라미터는 `backend/sql/home/queries.py`를 단일 정본으로 사용하며, 라우터 리팩터링에서 쿼리 상수는 변경하지 않습니다.
+- Home SQL 본문과 파라미터는 `backend/router/home/queries.py`를 단일 정본으로 사용하며, 라우터 리팩터링에서 쿼리 상수는 변경하지 않습니다.
 - 라우터 내부에서는 DB 실행/연결 종료 중복을 헬퍼로 통일하고, 추천 조합 로직은 순수 함수로 분리해 가독성과 유지보수성을 높입니다.
 - 예외 처리는 `HTTPException` 재전파, 일반 예외 500 변환 원칙을 유지합니다.
 
 ## Analysis 라우터 구현 관례
 
-- `backend/router/analysis/*/router.py`는 `backend/router/analysis/_shared.py`를 통해 SQL 모듈을 동적으로 로드하고, `backend/sql/analysis/*/queries.py` 상수를 사용합니다.
+- `backend/router/analysis/*/router.py`는 `backend/router/analysis/_shared.py`를 통해 SQL 모듈을 동적으로 로드하고, `backend/router/analysis/*/queries.py` 상수를 사용합니다.
 - DB 실행은 `fetch_all`, `fetch_one` 기반 공통 헬퍼(`fetch_draw_numbers`, `fetch_dict_or_404`, `fetch_dict_rows`)를 우선 사용해 연결 종료와 응답 변환을 일관되게 유지합니다.
 - 라우터는 엔드포인트 계약(파라미터 검증, 404/400 분기, 응답 shape)에 집중하고, 인프라성 중복(로딩/조회/500 변환)은 `_shared.py`로 유지합니다.
 - 예외 처리 시 `HTTPException`은 의미를 보존해 그대로 재전파하고, 일반 예외만 `run_with_http_500` 경유로 500으로 변환합니다.

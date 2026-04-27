@@ -5,7 +5,7 @@ from fastapi import APIRouter, HTTPException, Query
 
 from backend.database import get_connection
 from backend.domain.models.schemas import SaveWinningRequest
-from backend.sql.home import queries
+from backend.router.home import queries
 
 router = APIRouter(tags=["drawings"])
 

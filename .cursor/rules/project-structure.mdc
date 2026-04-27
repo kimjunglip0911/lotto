@@ -44,17 +44,33 @@ lotto/
 │   │       ├── lotto.db               # 로컬 SQLite 파일
 │   │       └── README.md
 │   ├── router/
-│   │   ├── analysis/                  # 분석 API 라우터 확장 자리(현재 비어 있음)
+│   │   ├── analysis/
+│   │   │   ├── absence-streak/
+│   │   │   │   ├── router.py
+│   │   │   │   └── queries.py
+│   │   │   ├── trend/
+│   │   │   │   ├── router.py
+│   │   │   │   └── queries.py
+│   │   │   ├── chi-square/
+│   │   │   │   ├── router.py
+│   │   │   │   └── queries.py
+│   │   │   ├── accumulated-numbers/
+│   │   │   │   ├── router.py
+│   │   │   │   └── queries.py
+│   │   │   └── _shared.py
 │   │   ├── home/
-│   │   │   └── router.py
+│   │   │   ├── router.py
+│   │   │   └── queries.py
 │   │   └── recommend/
-│   │       └── router.py
+│   │       ├── router.py
+│   │       ├── repository.py
+│   │       ├── helpers.py
+│   │       ├── jl_loader.py
+│   │       └── queries.py
 │   └── sql/
 │       ├── analysis/                  # 분석 SQL 확장 자리(현재 비어 있음)
-│       ├── home/
-│       │   └── queries.py
-│       └── recommend/
-│           └── queries.py
+│       ├── home/                      # 비어 있음(queries는 router로 이동)
+│       └── recommend/                 # 비어 있음(queries는 router로 이동)
 │
 ├── frontend/
 │   ├── package.json
@@ -137,4 +153,4 @@ lotto/
 
 ---
 
-*Last Updated: 2026-04-22*
+*Last Updated: 2026-04-27*

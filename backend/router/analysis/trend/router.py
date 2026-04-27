@@ -10,8 +10,8 @@ from backend.router.analysis._shared import (
 )
 
 router = APIRouter(tags=["analysis"])
-QUERIES_MODULE_NAME = "backend.sql.analysis.trend.queries"
-QUERIES_RELATIVE_PATH = ("sql", "analysis", "trend", "queries.py")
+QUERIES_MODULE_NAME = "backend.router.analysis.trend.queries"
+QUERIES_RELATIVE_PATH = ("router", "analysis", "trend", "queries.py")
 NOT_FOUND_DETAIL = "선택한 회차의 당첨번호를 찾을 수 없습니다."
 
 
