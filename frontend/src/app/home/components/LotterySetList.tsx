@@ -2,6 +2,7 @@ import React from 'react';
 import { LotteryCard } from '@/app/home/components/LotteryCard';
 
 interface LotterySetViewModel {
+  id?: number;
   numbers: number[];
   method?: string;
   drawNo: number;
@@ -25,7 +26,7 @@ export function LotterySetList({ sets }: LotterySetListProps) {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-5">
           {sets.map((setInfo, index) => (
             <LotteryCard
-              key={index}
+              key={setInfo.id ?? `${setInfo.drawNo}-${setInfo.numbers.join('-')}-${index}`}
               setIndex={index}
               drawNo={setInfo.drawNo}
               numbers={setInfo.numbers}

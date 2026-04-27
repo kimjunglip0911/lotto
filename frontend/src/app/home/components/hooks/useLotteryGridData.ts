@@ -27,51 +27,54 @@ interface UseLotteryGridDataOptions {
   onDrawChange?: () => void;
 }
 
+type SelectedDraw = number | null;
+
 export const useLotteryGridData = (options?: UseLotteryGridDataOptions) => {
   const onDrawChange = options?.onDrawChange;
   const [sets, setSets] = useState<LotterySet[]>([]);
   const [winningByDraw, setWinningByDraw] = useState<WinningNumbersByDraw | null>(null);
   const [availableDraws, setAvailableDraws] = useState<number[]>([]);
-  const [selectedDraw, setSelectedDraw] = useState<number | string>('');
+  const [selectedDraw, setSelectedDraw] = useState<SelectedDraw>(null);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      void (async () => {
-        try {
-          const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
-          const response = await fetch(`${apiUrl}/api/analysis/accumulated-numbers/draw-numbers`);
-          if (!response.ok) return;
+    let cancelled = false;
 
-          const data = await response.json();
-          if (!Array.isArray(data) || data.length === 0) return;
+    const loadDrawNumbers = async () => {
+      try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+        const response = await fetch(`${apiUrl}/api/analysis/accumulated-numbers/draw-numbers`);
+        if (!response.ok || cancelled) return;
 
-          const nextDraw = data[0] + 1;
-          const draws = [nextDraw, ...data];
-          setAvailableDraws(draws);
-          setSelectedDraw((prev) => (prev || draws.length === 0 ? prev : draws[0]));
-        } catch (error) {
-          console.error('Error fetching draw numbers:', error);
-        }
-      })();
-    }, 0);
+        const data = await response.json();
+        if (!Array.isArray(data) || data.length === 0 || cancelled) return;
 
-    return () => clearTimeout(timer);
+        const nextDraw = data[0] + 1;
+        const draws = [nextDraw, ...data];
+        setAvailableDraws(draws);
+        setSelectedDraw((prev) => prev ?? draws[0]);
+      } catch (error) {
+        console.error('Error fetching draw numbers:', error);
+      }
+    };
+
+    void loadDrawNumbers();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
-    if (!selectedDraw) return;
-
-    let isMounted = true;
+    if (selectedDraw === null) return;
+    onDrawChange?.();
 
     const loadData = async () => {
       try {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
-        const setsResponse = await fetch(`${apiUrl}/api/recommend/drawings?draw_no=${selectedDraw}`);
-        const winningResponse = await fetch(`${apiUrl}/api/drawings/winning-by-no?draw_no=${selectedDraw}`);
-
-        if (!isMounted) return;
-
-        onDrawChange?.();
+        const [setsResponse, winningResponse] = await Promise.all([
+          fetch(`${apiUrl}/api/recommend/drawings?draw_no=${selectedDraw}`),
+          fetch(`${apiUrl}/api/drawings/winning-by-no?draw_no=${selectedDraw}`),
+        ]);
 
         if (setsResponse.ok) {
           const setsData = await setsResponse.json();
@@ -88,15 +91,11 @@ export const useLotteryGridData = (options?: UseLotteryGridDataOptions) => {
         }
       } catch (error) {
         console.error('Error loading draw data:', error);
-        if (isMounted) setWinningByDraw(null);
+        setWinningByDraw(null);
       }
     };
 
-    loadData();
-
-    return () => {
-      isMounted = false;
-    };
+    void loadData();
   }, [onDrawChange, selectedDraw]);
 
   return {

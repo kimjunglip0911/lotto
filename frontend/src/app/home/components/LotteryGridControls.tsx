@@ -2,11 +2,11 @@ import React from 'react';
 import { Save, Loader2, Check } from 'lucide-react';
 
 interface LotteryGridControlsProps {
-  selectedDraw: number | string;
+  selectedDraw: number | null;
   availableDraws: number[];
   winningNumbers: (number | '')[];
   winningBonus: number | '';
-  onSelectDraw: (value: string) => void;
+  onSelectDraw: (value: number | null) => void;
   onWinningNumberChange: (index: number, value: string) => void;
   onBonusNumberChange: (value: string) => void;
   onSaveWinning: () => void;
@@ -37,8 +37,11 @@ export function LotteryGridControls({
       <div className="flex items-center gap-3 w-full xl:w-auto justify-center xl:justify-start">
         <span className="text-white/60 font-medium whitespace-nowrap">회차 검색</span>
         <select
-          value={selectedDraw}
-          onChange={(e) => onSelectDraw(e.target.value)}
+          value={selectedDraw ?? ''}
+          onChange={(e) => {
+            const value = e.target.value;
+            onSelectDraw(value === '' ? null : Number.parseInt(value, 10));
+          }}
           className="bg-slate-900 border border-white/20 rounded-xl px-4 py-2.5 text-white font-bold focus:border-primary outline-none transition-all cursor-pointer min-w-[120px] shadow-inner"
         >
           {availableDraws.length === 0 && <option value="">데이터 없음</option>}

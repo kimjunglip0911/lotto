@@ -1,6 +1,8 @@
 import { useCallback, useState } from 'react';
 
 export type InputNumber = number | '';
+const EMPTY_WINNING_NUMBERS: InputNumber[] = Array(6).fill('');
+
 interface WinningNumbersSource {
   num1: number;
   num2: number;
@@ -12,31 +14,36 @@ interface WinningNumbersSource {
 }
 
 export const useWinningNumbersInput = () => {
-  const [winningNumbers, setWinningNumbers] = useState<InputNumber[]>(Array(6).fill(''));
+  const [winningNumbers, setWinningNumbers] = useState<InputNumber[]>(EMPTY_WINNING_NUMBERS);
   const [winningBonus, setWinningBonus] = useState<InputNumber>('');
 
+  const parseInputNumber = useCallback((value: string): InputNumber => {
+    if (value === '') return '';
+    const parsed = Number.parseInt(value, 10);
+    return Number.isNaN(parsed) ? '' : parsed;
+  }, []);
+
   const handleWinningNumberChange = useCallback((index: number, value: string) => {
-    const parsedNumber: InputNumber = value === '' ? '' : parseInt(value, 10) || 0;
+    const parsedNumber = parseInputNumber(value);
     setWinningNumbers((prev) => {
       const next = [...prev];
       next[index] = parsedNumber;
       return next;
     });
-  }, []);
+  }, [parseInputNumber]);
 
   const handleBonusNumberChange = useCallback((value: string) => {
-    const parsedNumber: InputNumber = value === '' ? '' : parseInt(value, 10) || 0;
-    setWinningBonus(parsedNumber);
-  }, []);
+    setWinningBonus(parseInputNumber(value));
+  }, [parseInputNumber]);
 
   const resetWinningInputs = useCallback(() => {
-    setWinningNumbers(Array(6).fill(''));
+    setWinningNumbers(EMPTY_WINNING_NUMBERS);
     setWinningBonus('');
   }, []);
 
   const setWinningNumbersFromDraw = useCallback((data: WinningNumbersSource | null) => {
     if (!data) {
-      setWinningNumbers(Array(6).fill(''));
+      setWinningNumbers(EMPTY_WINNING_NUMBERS);
       setWinningBonus('');
       return;
     }

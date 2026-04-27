@@ -8,6 +8,24 @@ import { useLotteryGridData } from '@/app/home/components/hooks/useLotteryGridDa
 import { useWinningNumbersInput } from '@/app/home/components/hooks/useWinningNumbersInput';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? '';
+const SAVE_STATUS_RESET_DELAY_MS = 2000;
+
+function buildSaveWinningBody(
+  selectedDraw: number,
+  winningNumbers: (number | '')[],
+  winningBonus: number | '',
+) {
+  return {
+    draw_no: selectedDraw,
+    num1: winningNumbers[0],
+    num2: winningNumbers[1],
+    num3: winningNumbers[2],
+    num4: winningNumbers[3],
+    num5: winningNumbers[4],
+    num6: winningNumbers[5],
+    bonus_num: winningBonus,
+  };
+}
 
 export function LotteryGrid() {
   const {
@@ -18,19 +36,20 @@ export function LotteryGrid() {
     setWinningNumbersFromDraw,
   } = useWinningNumbersInput();
 
-  const { sets, winningByDraw, availableDraws, selectedDraw, setSelectedDraw } = useLotteryGridData();
-
   const [isSaving, setIsSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const handleDrawChange = useCallback(() => {
+    setSaveStatus('idle');
+  }, []);
+
+  const { sets, winningByDraw, availableDraws, selectedDraw, setSelectedDraw } = useLotteryGridData({
+    onDrawChange: handleDrawChange,
+  });
 
   useEffect(() => {
     setWinningNumbersFromDraw(winningByDraw);
   }, [setWinningNumbersFromDraw, winningByDraw]);
-
-  useEffect(() => {
-    setSaveStatus('idle');
-  }, [selectedDraw]);
 
   useEffect(() => {
     return () => {
@@ -38,23 +57,18 @@ export function LotteryGrid() {
     };
   }, []);
 
+  const scheduleSaveStatusReset = useCallback(() => {
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(() => setSaveStatus('idle'), SAVE_STATUS_RESET_DELAY_MS);
+  }, []);
+
   const handleSaveWinning = useCallback(async () => {
-    if (!selectedDraw) return;
+    if (selectedDraw === null) return;
     setIsSaving(true);
     setSaveStatus('idle');
 
     try {
-      const body = {
-        draw_no: Number(selectedDraw),
-        num1: winningNumbers[0],
-        num2: winningNumbers[1],
-        num3: winningNumbers[2],
-        num4: winningNumbers[3],
-        num5: winningNumbers[4],
-        num6: winningNumbers[5],
-        bonus_num: winningBonus,
-      };
-
+      const body = buildSaveWinningBody(selectedDraw, winningNumbers, winningBonus);
       const res = await fetch(`${API_BASE}/api/drawings/save-winning`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -64,23 +78,22 @@ export function LotteryGrid() {
       if (!res.ok) throw new Error('저장 실패');
 
       setSaveStatus('success');
-      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
-      saveTimerRef.current = setTimeout(() => setSaveStatus('idle'), 2000);
+      scheduleSaveStatusReset();
     } catch {
       setSaveStatus('error');
-      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
-      saveTimerRef.current = setTimeout(() => setSaveStatus('idle'), 2000);
+      scheduleSaveStatusReset();
     } finally {
       setIsSaving(false);
     }
-  }, [selectedDraw, winningNumbers, winningBonus]);
+  }, [scheduleSaveStatusReset, selectedDraw, winningNumbers, winningBonus]);
 
   const displaySets = useMemo(
     () =>
       sets.map((set) => ({
+        id: set.id,
         numbers: [set.num1, set.num2, set.num3, set.num4, set.num5, set.num6],
         method: set.method,
-        drawNo: set.draw_no || Number(selectedDraw),
+        drawNo: set.draw_no ?? selectedDraw ?? 0,
       })),
     [selectedDraw, sets],
   );
