@@ -166,10 +166,14 @@ const THEME_SPECS: ThemeSpec[] = [
   { label: '연속 숫자 없음', noConsecutive: true },
   { label: '앞번호 연속 3개', tripleInBand: 'front', preferBand: 'front', preferLow: true },
   { label: '뒷번호 연속 3개', tripleInBand: 'back', preferBand: 'back', preferHigh: true },
-  { label: '중간번호 연속 3개', tripleInBand: 'middle', preferBand: 'middle' },
-  { label: '연속 2쌍', pairCountMin: 2 },
+  // 1209회(2,17,20,35,37,39) 패턴: 고구간 중심이지만 저/중구간도 함께 포함된 혼합형
+  { label: '1209 패턴(저중고 혼합+홀수 강세)', bandMin: { front: 1, middle: 1, back: 2 }, oddMin: 3, preferHigh: true, preferOdd: true, preferLow: true },
+  // 1219회(1,2,15,28,39,45) 패턴: 앞구간 연속 + 고구간 포함
+  { label: '1219 패턴(앞연속+고구간)', pairInBand: 'front', bandMin: { back: 2 }, oddMin: 4, preferHigh: true, preferLow: true },
   { label: '홀수 강세', oddMin: 4, oddMax: 5, preferOdd: true },
   { label: '짝수 강세', oddMin: 1, oddMax: 2, preferEven: true },
+  { label: '중간번호 연속 3개', tripleInBand: 'middle', preferBand: 'middle' },
+  { label: '연속 2쌍', pairCountMin: 2 },
   { label: '홀짝 균형', oddMin: 3, oddMax: 3 },
   { label: '저구간 강세', bandMin: { front: 3 }, bandMax: { back: 2 }, preferLow: true, preferBand: 'front' },
   { label: '중구간 강세', bandMin: { middle: 3 }, bandMax: { back: 2 }, preferBand: 'middle' },
@@ -313,6 +317,40 @@ function scoreSet(
   return score
 }
 
+function scoreCoverageGain(
+  nums: number[],
+  coveredPairs: Set<string>,
+  coveredTriples: Set<string>,
+): number {
+  let newPairs = 0
+  let newTriples = 0
+  for (let i = 0; i < nums.length; i++) {
+    for (let j = i + 1; j < nums.length; j++) {
+      if (!coveredPairs.has(mkPairKey(nums[i], nums[j]))) newPairs++
+      for (let k = j + 1; k < nums.length; k++) {
+        if (!coveredTriples.has(mkTripleKey(nums[i], nums[j], nums[k]))) newTriples++
+      }
+    }
+  }
+  // "당첨번호가 풀에 있는데 놓침"을 줄이기 위해 조합 커버리지를 강하게 가중
+  return newTriples * 8 + newPairs * 2
+}
+
+function registerCoverage(
+  nums: number[],
+  coveredPairs: Set<string>,
+  coveredTriples: Set<string>,
+): void {
+  for (let i = 0; i < nums.length; i++) {
+    for (let j = i + 1; j < nums.length; j++) {
+      coveredPairs.add(mkPairKey(nums[i], nums[j]))
+      for (let k = j + 1; k < nums.length; k++) {
+        coveredTriples.add(mkTripleKey(nums[i], nums[j], nums[k]))
+      }
+    }
+  }
+}
+
 function combinations(
   nums: number[],
   pick: number,
@@ -340,6 +378,9 @@ function buildThemeSet(
   trendMap: Map<number, string>,
   usageCount: Map<number, number>,
   usedSetKeys: Set<string>,
+  coveredPairs: Set<string>,
+  coveredTriples: Set<string>,
+  enforceTheme: boolean = true,
 ): number[] | null {
   const ranked = [...available].sort((a, b) => {
     const sa = scoreNumberForTheme(a, spec, trendMap, usageCount)
@@ -359,9 +400,11 @@ function buildThemeSet(
       const nums = [...combo].sort((a, b) => a - b)
       const key = nums.join(',')
       if (usedSetKeys.has(key)) return
-      if (!satisfyTheme(nums, spec)) return
+      if (enforceTheme && !satisfyTheme(nums, spec)) return
 
-      const score = scoreSet(nums, trendMap, usageCount)
+      const score =
+        scoreSet(nums, trendMap, usageCount) +
+        scoreCoverageGain(nums, coveredPairs, coveredTriples)
       if (score > bestScore) {
         bestScore = score
         best = nums
@@ -383,9 +426,10 @@ function buildSetFromIndices(pool: number[], indices: number[]): number[] | null
 
 function topUpWithRotatingPatterns(
   pool: number[],
-  trendMap: Map<number, string>,
   usageCount: Map<number, number>,
   usedSetKeys: Set<string>,
+  coveredPairs: Set<string>,
+  coveredTriples: Set<string>,
   targetCount: number,
   sets: GeneratedSet[],
 ): void {
@@ -402,6 +446,7 @@ function topUpWithRotatingPatterns(
 
       usedSetKeys.add(key)
       for (const n of nums) usageCount.set(n, (usageCount.get(n) ?? 0) + 1)
+      registerCoverage(nums, coveredPairs, coveredTriples)
       sets.push({
         num1: nums[0],
         num2: nums[1],
@@ -455,18 +500,52 @@ export function generateThemeDiverseSets(
   const trendMap = new Map<number, string>(trendResults.map((t) => [t.number, t.trend]))
   const usageCount = new Map<number, number>(pool.map((n) => [n, 0]))
   const usedSetKeys = new Set<string>()
+  const coveredPairs = new Set<string>()
+  const coveredTriples = new Set<string>()
   const sets: GeneratedSet[] = []
 
   for (let i = 0; i < Math.min(count, THEME_SPECS.length); i++) {
     const spec = THEME_SPECS[i]
-    let nums = buildThemeSet(pool, spec, trendMap, usageCount, usedSetKeys)
+    let nums = buildThemeSet(
+      pool,
+      spec,
+      trendMap,
+      usageCount,
+      usedSetKeys,
+      coveredPairs,
+      coveredTriples,
+      true,
+    )
     if (!nums) {
-      nums = buildThemeSet(pool, relaxThemeSpec(spec), trendMap, usageCount, usedSetKeys)
+      nums = buildThemeSet(
+        pool,
+        relaxThemeSpec(spec),
+        trendMap,
+        usageCount,
+        usedSetKeys,
+        coveredPairs,
+        coveredTriples,
+        true,
+      )
+    }
+    // 마지막 보완: 테마를 강제하지 않고(선호만 유지) 커버리지 최적 후보를 확보
+    if (!nums) {
+      nums = buildThemeSet(
+        pool,
+        relaxThemeSpec(spec),
+        trendMap,
+        usageCount,
+        usedSetKeys,
+        coveredPairs,
+        coveredTriples,
+        false,
+      )
     }
     if (!nums) continue
 
     usedSetKeys.add(nums.join(','))
     for (const n of nums) usageCount.set(n, (usageCount.get(n) ?? 0) + 1)
+    registerCoverage(nums, coveredPairs, coveredTriples)
 
     sets.push({
       num1: nums[0],
@@ -486,6 +565,7 @@ export function generateThemeDiverseSets(
       const key = [s.num1, s.num2, s.num3, s.num4, s.num5, s.num6].join(',')
       if (!usedSetKeys.has(key) && sets.length < count) {
         usedSetKeys.add(key)
+        registerCoverage([s.num1, s.num2, s.num3, s.num4, s.num5, s.num6], coveredPairs, coveredTriples)
         sets.push(s)
       }
     }
@@ -493,7 +573,7 @@ export function generateThemeDiverseSets(
 
   // 안전장치: 어떤 경우에도 목표 개수(기본 20개)를 채우도록 회전 패턴으로 추가 보충.
   if (sets.length < count) {
-    topUpWithRotatingPatterns(pool, trendMap, usageCount, usedSetKeys, count, sets)
+    topUpWithRotatingPatterns(pool, usageCount, usedSetKeys, coveredPairs, coveredTriples, count, sets)
   }
 
   // 최종 안전장치: 조합 공간이 너무 작아 유니크 20세트가 불가능한 경우에도
@@ -533,5 +613,10 @@ export function generate20Sets(
   trendResults: TrendNumberResult[],
   _allHistoryRows: HistoryRow[] = [],
 ): GeneratedSet[] {
-  return generateThemeDiverseSets(available, trendResults, 20)
+  const targetCount = 20
+  const themeOnlySets = generateThemeDiverseSets(available, trendResults, targetCount)
+  return themeOnlySets.slice(0, targetCount).map((set) => ({
+    ...set,
+    strategy: set.strategy?.startsWith('theme:') ? set.strategy : 'theme-diversity',
+  }))
 }

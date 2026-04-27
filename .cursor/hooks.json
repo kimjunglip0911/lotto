@@ -1,6 +1,13 @@
 {
   "version": 1,
   "hooks": {
+    "sessionStart": [
+      {
+        "type": "command",
+        "command": ".cursor/hooks/inject-rules-on-session-start.ps1",
+        "failClosed": false
+      }
+    ],
     "preToolUse": [
       {
         "matcher": "CreatePlan",
