@@ -1,122 +1,16 @@
+import { buildTrendResults, toWinningRows } from '@/app/recommend/logic/trend'
+import { ChiSquareHistoryRow, ExclusionCandidatesResponse, GeneratedSet, TrendNumberResult } from '@/app/recommend/logic/types'
 import {
-  ChiSquareHistoryRow,
-  ExclusionCandidatesResponse,
-  GeneratedSet,
-  TrendNumberResult,
-} from '@/app/recommend/logic/types'
-
-const TOTAL_NUMBERS = 45
-const K_CONFIG = { fast: 0.05, slow: 0.02 } as const
-const TREND_BASELINE = 6 / 45
-
-type WinningRow = {
-  draw_no: number
-  num1: number
-  num2: number
-  num3: number
-  num4: number
-  num5: number
-  num6: number
-  bonus_num: number
-}
+  isChiSquareHistoryRow,
+  isExclusionCandidatesResponse,
+  isGeneratedSet,
+  isWinningRow,
+} from '@/app/recommend/logic/validators'
 
 function errorMessage(err: unknown): string {
   return err instanceof Error ? err.message : String(err)
 }
 
-function isRankedNumberInfo(value: unknown): boolean {
-  if (typeof value !== 'object' || value === null) return false
-  const info = value as { number?: unknown; count?: unknown; is_tie?: unknown; candidates?: unknown }
-  return (
-    typeof info.number === 'number' &&
-    typeof info.count === 'number' &&
-    typeof info.is_tie === 'boolean' &&
-    Array.isArray(info.candidates)
-  )
-}
-
-function isExclusionCandidatesResponse(value: unknown): value is ExclusionCandidatesResponse {
-  if (typeof value !== 'object' || value === null) return false
-  const data = value as {
-    drawNo?: unknown
-    leastFrequentOverall?: unknown
-    windowTopNumbers?: Record<string, unknown>
-    excludedNumbersUnion?: unknown
-  }
-  const windows = data.windowTopNumbers
-  return (
-    typeof data.drawNo === 'number' &&
-    isRankedNumberInfo(data.leastFrequentOverall) &&
-    typeof windows === 'object' &&
-    windows !== null &&
-    ['overall', 'sixMonth', 'oneYear', 'threeYear', 'fiveYear', 'tenYear'].every((key) =>
-      isRankedNumberInfo(windows[key]),
-    ) &&
-    Array.isArray(data.excludedNumbersUnion)
-  )
-}
-
-function isWinningRow(value: unknown): value is WinningRow {
-  if (typeof value !== 'object' || value === null) return false
-  const row = value as Record<string, unknown>
-  return (
-    typeof row.draw_no === 'number' &&
-    typeof row.num1 === 'number' &&
-    typeof row.num2 === 'number' &&
-    typeof row.num3 === 'number' &&
-    typeof row.num4 === 'number' &&
-    typeof row.num5 === 'number' &&
-    typeof row.num6 === 'number' &&
-    typeof row.bonus_num === 'number'
-  )
-}
-
-function isChiSquareHistoryRow(value: unknown): value is ChiSquareHistoryRow {
-  return isWinningRow(value)
-}
-
-function isGeneratedSet(value: unknown): value is GeneratedSet {
-  if (typeof value !== 'object' || value === null) return false
-  const row = value as Record<string, unknown>
-  return (
-    typeof row.num1 === 'number' &&
-    typeof row.num2 === 'number' &&
-    typeof row.num3 === 'number' &&
-    typeof row.num4 === 'number' &&
-    typeof row.num5 === 'number' &&
-    typeof row.num6 === 'number' &&
-    typeof row.method === 'string'
-  )
-}
-
-function buildFixedKEma(rows: WinningRow[], num: number, k: number): number {
-  if (rows.length === 0) return 0
-  let ema = 0
-  for (const row of rows) {
-    const nums = [row.num1, row.num2, row.num3, row.num4, row.num5, row.num6, row.bonus_num]
-    const signal = nums.includes(num) ? 1 : 0
-    ema = signal * k + ema * (1 - k)
-  }
-  return ema
-}
-
-function buildTrendResults(allRows: WinningRow[]): TrendNumberResult[] {
-  return Array.from({ length: TOTAL_NUMBERS }, (_, i) => {
-    const num = i + 1
-    const emaFast = buildFixedKEma(allRows, num, K_CONFIG.fast)
-    const emaSlow = buildFixedKEma(allRows, num, K_CONFIG.slow)
-    const shortTermUp = emaFast > emaSlow
-    const longTermUp = emaSlow > TREND_BASELINE
-    const trend: TrendNumberResult['trend'] = shortTermUp && longTermUp
-      ? 'up_cont'
-      : !shortTermUp && longTermUp
-      ? 'topping'
-      : shortTermUp && !longTermUp
-      ? 'recovering'
-      : 'down_cont'
-    return { number: num, trend }
-  })
-}
 
 async function fetchJson(url: string): Promise<unknown> {
   const response = await fetch(url)
@@ -174,7 +68,7 @@ export async function fetchRecommendBaseData(apiUrl: string, drawNo: number): Pr
   const absenceStreakRows = Array.isArray(absenceStreakRangeData)
     ? absenceStreakRangeData.filter(isChiSquareHistoryRow)
     : []
-  const allHistoryRows = Array.isArray(allHistoryData) ? allHistoryData.filter(isWinningRow) : []
+  const allHistoryRows = toWinningRows(allHistoryData)
 
   return {
     exclusionCandidates: exclusionData,

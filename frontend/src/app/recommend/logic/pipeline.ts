@@ -1,5 +1,35 @@
 import { RecommendPipelineResult, RecommendRule, RecommendRuleContext } from '@/app/recommend/logic/types'
 
+function applyExcludedNumbers(target: Set<number>, excludedNumbers: number[]): void {
+  for (const number of excludedNumbers) {
+    target.add(number)
+  }
+}
+
+function applyIrreversibleNumbers(
+  irreversibleSet: Set<number>,
+  excludedNumbers: number[],
+  isIrreversible: boolean | undefined,
+): void {
+  if (!isIrreversible) return
+  for (const number of excludedNumbers) {
+    irreversibleSet.add(number)
+  }
+}
+
+function applyRestoredNumbers(
+  excludedSet: Set<number>,
+  irreversibleSet: Set<number>,
+  restoredNumbers: number[] | undefined,
+): void {
+  if (!restoredNumbers) return
+  for (const number of restoredNumbers) {
+    if (!irreversibleSet.has(number)) {
+      excludedSet.delete(number)
+    }
+  }
+}
+
 export function runRecommendPipeline(baseContext: Omit<RecommendRuleContext, 'currentExcludedNumbers'>, rules: RecommendRule[]): RecommendPipelineResult {
   const appliedRules: RecommendPipelineResult['appliedRules'] = []
   const excludedNumberSet = new Set<number>()
@@ -13,19 +43,9 @@ export function runRecommendPipeline(baseContext: Omit<RecommendRuleContext, 'cu
       appliedRuleResults: [...appliedRules],
     })
     appliedRules.push(result)
-    for (const number of result.excludedNumbers) {
-      excludedNumberSet.add(number)
-    }
-    if (rule.isIrreversible) {
-      for (const number of result.excludedNumbers) {
-        irreversibleSet.add(number)
-      }
-    }
-    for (const number of result.restoredNumbers ?? []) {
-      if (!irreversibleSet.has(number)) {
-        excludedNumberSet.delete(number)
-      }
-    }
+    applyExcludedNumbers(excludedNumberSet, result.excludedNumbers)
+    applyIrreversibleNumbers(irreversibleSet, result.excludedNumbers, rule.isIrreversible)
+    applyRestoredNumbers(excludedNumberSet, irreversibleSet, result.restoredNumbers)
   }
 
   return {
