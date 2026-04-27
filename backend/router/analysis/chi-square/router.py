@@ -1,32 +1,22 @@
-import importlib.util
-from pathlib import Path
 from typing import List
 
 from fastapi import APIRouter, HTTPException, Query
 
-from backend.database import get_connection
+from backend.router.analysis._shared import (
+    fetch_all,
+    fetch_one,
+    load_queries_module,
+    raise_as_http_500,
+)
 
 router = APIRouter(tags=["analysis"])
 
 
 def _load_queries_module():
-    queries_path = (
-        Path(__file__).resolve().parents[3]
-        / "sql"
-        / "analysis"
-        / "chi-square"
-        / "queries.py"
-    )
-    spec = importlib.util.spec_from_file_location(
+    return load_queries_module(
         "backend.sql.analysis.chi_square.queries",
-        queries_path,
+        ("sql", "analysis", "chi-square", "queries.py"),
     )
-    if spec is None or spec.loader is None:
-        raise ImportError(f"Failed to load SQL queries module from {queries_path}")
-
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
 
 
 queries = _load_queries_module()
@@ -35,24 +25,16 @@ queries = _load_queries_module()
 @router.get("/api/analysis/chi-square/draw-numbers", response_model=List[int])
 def get_draw_numbers():
     try:
-        conn = get_connection()
-        cursor = conn.cursor()
-        cursor.execute(queries.GET_AVAILABLE_DRAW_NOS)
-        rows = cursor.fetchall()
-        conn.close()
+        rows = fetch_all(queries.GET_AVAILABLE_DRAW_NOS)
         return [row[0] for row in rows]
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise_as_http_500(e)
 
 
 @router.get("/api/analysis/chi-square/winning-number", response_model=dict)
 def get_winning_number(draw_no: int = Query(..., ge=1, description="선택 회차")):
     try:
-        conn = get_connection()
-        cursor = conn.cursor()
-        cursor.execute(queries.GET_WINNING_NUMBERS_BY_DRAW, (draw_no,))
-        row = cursor.fetchone()
-        conn.close()
+        row = fetch_one(queries.GET_WINNING_NUMBERS_BY_DRAW, (draw_no,))
 
         if row is None:
             raise HTTPException(status_code=404, detail="선택한 회차의 당첨번호를 찾을 수 없습니다.")
@@ -61,7 +43,7 @@ def get_winning_number(draw_no: int = Query(..., ge=1, description="선택 회�
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise_as_http_500(e)
 
 
 @router.get("/api/analysis/chi-square/winning-numbers-range", response_model=List[dict])
@@ -69,12 +51,7 @@ def get_winning_numbers_range(draw_no: int = Query(..., ge=1, description="선�
     try:
         if draw_no <= 1:
             return []
-
-        conn = get_connection()
-        cursor = conn.cursor()
-        cursor.execute(queries.GET_WINNING_NUMBERS_BEFORE_DRAW, (draw_no,))
-        rows = cursor.fetchall()
-        conn.close()
+        rows = fetch_all(queries.GET_WINNING_NUMBERS_BEFORE_DRAW, (draw_no,))
         return [dict(row) for row in rows]
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise_as_http_500(e)

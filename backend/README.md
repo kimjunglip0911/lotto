@@ -28,9 +28,10 @@ backend/
 
 ## Analysis 라우터 구현 관례
 
-- `backend/router/analysis/*/router.py`에서는 SQL 모듈을 동적으로 로드해 `backend/sql/analysis/*/queries.py` 상수를 사용합니다.
-- 엔드포인트 내부에서 DB 조회 패턴이 반복되면 내부 헬퍼로 통합하고, `HTTPException`은 재전파하며 일반 예외만 500으로 변환합니다.
-- DB 연결은 예외 발생 여부와 무관하게 항상 닫히도록 `finally` 또는 공통 실행 헬퍼에서 일원화합니다.
+- `backend/router/analysis/*/router.py`는 `backend/router/analysis/_shared.py`를 통해 SQL 모듈을 동적으로 로드하고, `backend/sql/analysis/*/queries.py` 상수를 사용합니다.
+- DB 실행은 `fetch_all`, `fetch_one` 공통 헬퍼를 우선 사용해 연결 종료를 일관되게 보장합니다.
+- 라우터는 엔드포인트 계약(파라미터 검증, 404/400 분기, 응답 shape)에 집중하고, 인프라성 중복(로딩/조회/500 변환)은 공통 유틸로 유지합니다.
+- 예외 처리 시 `HTTPException`은 의미를 보존해 그대로 재전파하고, 일반 예외만 500으로 변환합니다.
 
 ## __pycache__ 사용 안 함
 
