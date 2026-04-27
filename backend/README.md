@@ -26,6 +26,12 @@ backend/
 - **JL 휠 로직/속도 프로파일** → `features/analysis/api/jl_service/`
 - **JL 분석 엔진** → `features/analysis/api/jl_service/`
 
+## Analysis 라우터 구현 관례
+
+- `backend/router/analysis/*/router.py`에서는 SQL 모듈을 동적으로 로드해 `backend/sql/analysis/*/queries.py` 상수를 사용합니다.
+- 엔드포인트 내부에서 DB 조회 패턴이 반복되면 내부 헬퍼로 통합하고, `HTTPException`은 재전파하며 일반 예외만 500으로 변환합니다.
+- DB 연결은 예외 발생 여부와 무관하게 항상 닫히도록 `finally` 또는 공통 실행 헬퍼에서 일원화합니다.
+
 ## __pycache__ 사용 안 함
 
 - **진입점** `main.py` 상단에 `sys.dont_write_bytecode = True`를 넣어 두었습니다.  
