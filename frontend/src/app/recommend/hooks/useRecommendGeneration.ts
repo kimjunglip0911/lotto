@@ -1,21 +1,12 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { generate20Sets } from '@/app/recommend/logic/generator'
 import { generateAndSaveSets, fetchRecommendBaseData, errorMessage } from '@/app/recommend/logic/api'
 import { runRecommendPipeline } from '@/app/recommend/logic/pipeline'
-import { excludeTopRankFromWindowsRule } from '@/app/recommend/logic/rules/excludeTopRankFromWindows'
-import { excludeChiSquareHighDeviationRule } from '@/app/recommend/logic/rules/excludeChiSquareHighDeviation'
-import { excludeTrendDownRule } from '@/app/recommend/logic/rules/excludeTrendDown'
-import { excludeAbsenceStreakTop5Rule } from '@/app/recommend/logic/rules/excludeAbsenceStreakTop5'
-import { GeneratedSet, RecommendPipelineResult } from '@/app/recommend/logic/types'
-
-const RULES = [
-  excludeTopRankFromWindowsRule,
-  excludeChiSquareHighDeviationRule,
-  excludeTrendDownRule,
-  excludeAbsenceStreakTop5Rule,
-]
+import { GeneratedSet, RecommendPipelineResult, TrendNumberResult } from '@/app/recommend/logic/types'
+import { RECOMMEND_RULES } from '@/app/recommend/hooks/recommendRules'
+import { useRecommendApiUrl } from '@/app/recommend/hooks/useRecommendApiUrl'
 
 interface UseRecommendGenerationOptions {
   selectedDraw: number | null
@@ -33,7 +24,18 @@ export function useRecommendGeneration({
   setError,
 }: UseRecommendGenerationOptions) {
   const [isGenerating, setIsGenerating] = useState(false)
-  const apiUrl = useMemo(() => process.env.NEXT_PUBLIC_API_URL || '', [])
+  const apiUrl = useRecommendApiUrl()
+
+  const buildGeneratedSetsPayload = (pipelineResult: RecommendPipelineResult, trendResults: TrendNumberResult[]) => {
+    const excludedSet = new Set(pipelineResult.excludedNumbers)
+    const availableNumbers = Array.from({ length: 45 }, (_, i) => i + 1).filter((n) => !excludedSet.has(n))
+
+    return generate20Sets(availableNumbers, trendResults).map((set) => ({
+      ...set,
+      applied_rule_ids: pipelineResult.appliedRules.map((rule) => rule.ruleId),
+      excluded_numbers: pipelineResult.excludedNumbers,
+    }))
+  }
 
   const handleGenerateAndSave = async () => {
     if (!selectedDraw) return
@@ -43,17 +45,11 @@ export function useRecommendGeneration({
 
     try {
       const baseData = await fetchRecommendBaseData(apiUrl, selectedDraw)
-      const nextPipelineResult = runRecommendPipeline(baseData, RULES)
+      const nextPipelineResult = runRecommendPipeline(baseData, RECOMMEND_RULES)
       setPipelineResult(nextPipelineResult)
       setStatusMessage('추천 번호를 생성하고 저장하는 중입니다...')
 
-      const excludedSet = new Set(nextPipelineResult.excludedNumbers)
-      const availableNumbers = Array.from({ length: 45 }, (_, i) => i + 1).filter((n) => !excludedSet.has(n))
-      const generatedSetsPayload = generate20Sets(availableNumbers, baseData.trendResults).map((set) => ({
-        ...set,
-        applied_rule_ids: nextPipelineResult.appliedRules.map((rule) => rule.ruleId),
-        excluded_numbers: nextPipelineResult.excludedNumbers,
-      }))
+      const generatedSetsPayload = buildGeneratedSetsPayload(nextPipelineResult, baseData.trendResults)
 
       const generatedData = await generateAndSaveSets(apiUrl, {
         drawNo: baseData.exclusionCandidates.drawNo,

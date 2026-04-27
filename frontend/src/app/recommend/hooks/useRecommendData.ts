@@ -1,21 +1,12 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { RecommendPipelineResult } from '@/app/recommend/logic/types'
 import { fetchDrawNumbers, fetchSavedRecommendData } from '@/app/recommend/logic/api'
 import { runRecommendPipeline } from '@/app/recommend/logic/pipeline'
-import { excludeTopRankFromWindowsRule } from '@/app/recommend/logic/rules/excludeTopRankFromWindows'
-import { excludeChiSquareHighDeviationRule } from '@/app/recommend/logic/rules/excludeChiSquareHighDeviation'
-import { excludeTrendDownRule } from '@/app/recommend/logic/rules/excludeTrendDown'
-import { excludeAbsenceStreakTop5Rule } from '@/app/recommend/logic/rules/excludeAbsenceStreakTop5'
 import { GeneratedSet } from '@/app/recommend/logic/types'
-
-const RULES = [
-  excludeTopRankFromWindowsRule,
-  excludeChiSquareHighDeviationRule,
-  excludeTrendDownRule,
-  excludeAbsenceStreakTop5Rule,
-]
+import { RECOMMEND_RULES } from '@/app/recommend/hooks/recommendRules'
+import { useRecommendApiUrl } from '@/app/recommend/hooks/useRecommendApiUrl'
 
 export function useRecommendData() {
   const [availableDraws, setAvailableDraws] = useState<number[]>([])
@@ -31,7 +22,37 @@ export function useRecommendData() {
   const [generatedSets, setGeneratedSets] = useState<GeneratedSet[]>([])
   const [winningNumbers, setWinningNumbers] = useState<number[] | null>(null)
 
-  const apiUrl = useMemo(() => process.env.NEXT_PUBLIC_API_URL || '', [])
+  const apiUrl = useRecommendApiUrl()
+
+  const resetSavedDataState = (draw: number) => {
+    setPipelineResult(null)
+    setGeneratedSets([])
+    setWinningNumbers(null)
+    setError(null)
+    setStatusMessage(`${draw}회차 저장된 추천 세트를 불러오는 중입니다...`)
+  }
+
+  const applySavedDataState = (
+    draw: number,
+    winningNumbersData: number[] | null,
+    sets: GeneratedSet[],
+    pipeline: RecommendPipelineResult,
+  ) => {
+    setWinningNumbers(winningNumbersData)
+    setGeneratedSets(sets)
+    setPipelineResult(pipeline)
+    if (sets.length > 0) {
+      setStatusMessage(`${draw}회차 기준 저장된 ${sets.length}개 추천 세트를 불러왔습니다.`)
+      return
+    }
+    setStatusMessage(`${draw}회차 기준 저장된 추천 세트가 없습니다. 생성 및 저장 실행 버튼을 눌러 생성하세요.`)
+  }
+
+  const applySavedDataErrorState = (draw: number) => {
+    setGeneratedSets([])
+    setPipelineResult(null)
+    setStatusMessage(`${draw}회차 세트 조회 중 오류가 발생했습니다.`)
+  }
 
   useEffect(() => {
     let isMounted = true
@@ -67,11 +88,7 @@ export function useRecommendData() {
     let isMounted = true
 
     const loadSavedSets = async () => {
-      setPipelineResult(null)
-      setGeneratedSets([])
-      setWinningNumbers(null)
-      setError(null)
-      setStatusMessage(`${selectedDraw}회차 저장된 추천 세트를 불러오는 중입니다...`)
+      resetSavedDataState(selectedDraw)
 
       try {
         const saved = await fetchSavedRecommendData(apiUrl, selectedDraw)
@@ -82,25 +99,14 @@ export function useRecommendData() {
             trendResults: saved.trendResults,
             absenceStreakRows: saved.absenceStreakRows,
           },
-          RULES,
+          RECOMMEND_RULES,
         )
         if (!isMounted) return
 
-        setWinningNumbers(saved.winningNumbers)
-        setGeneratedSets(saved.sets)
-        setPipelineResult(pipeline)
-        if (saved.sets.length > 0) {
-          setStatusMessage(`${selectedDraw}회차 기준 저장된 ${saved.sets.length}개 추천 세트를 불러왔습니다.`)
-        } else {
-          setStatusMessage(
-            `${selectedDraw}회차 기준 저장된 추천 세트가 없습니다. 생성 및 저장 실행 버튼을 눌러 생성하세요.`,
-          )
-        }
+        applySavedDataState(selectedDraw, saved.winningNumbers, saved.sets, pipeline)
       } catch (err) {
         if (!isMounted) return
-        setGeneratedSets([])
-        setPipelineResult(null)
-        setStatusMessage(`${selectedDraw}회차 세트 조회 중 오류가 발생했습니다.`)
+        applySavedDataErrorState(selectedDraw)
         console.error('Error fetching saved drawings:', err)
       }
     }
