@@ -18,4 +18,5 @@ alwaysApply: false
 |:---|:---|:---|
 | 홈 대시보드 리팩토링, `features/home/components/dashboard/kpiSection.helpers.ts` | JSX를 포함한 파일을 `.ts`로 생성해 파서가 TS로 해석하게 두기 | JSX가 들어가면 처음부터 `.tsx`로 생성하고, 분리 직후 빌드/파서 에러를 즉시 확인 |
 | 커밋 실행(PowerShell), 멀티 커맨드/커밋 메시지 전달 | Bash 전용 `&&`·HEREDOC 구문을 PowerShell에서 그대로 사용하기 | PowerShell에서는 세미콜론으로 명령 연결하고, 커밋 메시지는 here-string 변수(`@'...'@`)로 만들어 `git commit -m $msg` 사용 |
-|  |  |  |
+| 추천 페이지 초기 진입, `backend/DB/database.py` | DB 파일만 있다고 가정하고 스키마 적용 없이 조회 쿼리를 즉시 실행하기 | `get_connection()`에서 `schema.sql`을 1회 자동 적용해 테이블 부재(`no such table`) 500을 사전에 차단 |
+| 추천 세트 조회, `backend/router/recommend/queries.py` | 스키마 변경(`strategy` 컬럼 추가) 후 구버전 DB 마이그레이션 없이 새 컬럼을 즉시 조회하기 | 연결 시 `PRAGMA table_info`로 컬럼 존재를 확인하고 누락 시 `ALTER TABLE`로 자동 보정 |
