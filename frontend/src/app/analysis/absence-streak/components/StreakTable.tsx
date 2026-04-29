@@ -1,4 +1,5 @@
 import type { StreakResult } from '../types';
+import { StreakResultsStatus } from './StreakResultsStatus';
 
 type StreakTableProps = {
   hasSearched: boolean;
@@ -18,17 +19,15 @@ export const StreakTable = ({
   <section className="rounded-2xl border border-card-border/30 bg-card-bg/60 p-4 space-y-3">
     <h3 className="text-xl font-semibold text-white">번호별 연속 미출현 분석 결과</h3>
 
-    {noHistory ? (
-      <p className="text-sm text-slate-300">1회는 이전 회차가 없어 집계할 데이터가 없습니다.</p>
-    ) : !hasSearched ? (
-      <p className="text-sm text-slate-300">조회를 실행하면 번호별 연속 미출현 결과 테이블이 표시됩니다.</p>
-    ) : isSearching ? (
-      <p className="text-sm text-slate-300">데이터를 계산하는 중입니다...</p>
-    ) : searchError ? (
-      <p className="text-sm text-rose-300">{searchError}</p>
-    ) : streakResults.length === 0 ? (
-      <p className="text-sm text-slate-300">집계할 이전 회차 데이터가 없습니다.</p>
-    ) : (
+    <StreakResultsStatus
+      hasSearched={hasSearched}
+      noHistory={noHistory}
+      isSearching={isSearching}
+      searchError={searchError}
+      hasResults={streakResults.length > 0}
+      idleHint="조회를 실행하면 번호별 연속 미출현 결과 테이블이 표시됩니다."
+      loadingHint="데이터를 계산하는 중입니다..."
+    >
       <div className="overflow-x-auto">
         <table className="w-full text-sm text-left min-w-[480px]">
           <thead>
@@ -74,6 +73,6 @@ export const StreakTable = ({
           </tbody>
         </table>
       </div>
-    )}
+    </StreakResultsStatus>
   </section>
 );

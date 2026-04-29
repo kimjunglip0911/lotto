@@ -1,4 +1,5 @@
 import type { StreakResult } from '../types';
+import { StreakResultsStatus } from './StreakResultsStatus';
 
 type StreakChartProps = {
   hasSearched: boolean;
@@ -47,17 +48,15 @@ export const StreakChart = ({
         </div>
       )}
     </div>
-    {noHistory ? (
-      <p className="text-sm text-slate-300">1회는 이전 회차가 없어 집계할 데이터가 없습니다.</p>
-    ) : !hasSearched ? (
-      <p className="text-sm text-slate-300">조회를 실행하면 번호별 연속 미출현 기간 차트가 표시됩니다.</p>
-    ) : isSearching ? (
-      <p className="text-sm text-slate-300">차트 데이터를 계산하는 중입니다...</p>
-    ) : searchError ? (
-      <p className="text-sm text-rose-300">{searchError}</p>
-    ) : streakResults.length === 0 ? (
-      <p className="text-sm text-slate-300">집계할 이전 회차 데이터가 없습니다.</p>
-    ) : (
+    <StreakResultsStatus
+      hasSearched={hasSearched}
+      noHistory={noHistory}
+      isSearching={isSearching}
+      searchError={searchError}
+      hasResults={streakResults.length > 0}
+      idleHint="조회를 실행하면 번호별 연속 미출현 기간 차트가 표시됩니다."
+      loadingHint="차트 데이터를 계산하는 중입니다..."
+    >
       <div className="overflow-x-auto pb-0.5">
         <div className="relative w-max">
           {top5PctThreshold > 0 && maxStreak > 0 && (
@@ -97,6 +96,6 @@ export const StreakChart = ({
           </ul>
         </div>
       </div>
-    )}
+    </StreakResultsStatus>
   </section>
 );
