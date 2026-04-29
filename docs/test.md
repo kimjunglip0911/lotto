@@ -1,0 +1,3 @@
+# Test
+
+Workspace connectivity check.
