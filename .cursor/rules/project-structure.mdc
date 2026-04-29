@@ -75,7 +75,6 @@ lotto/
 │   ├── eslint.config.mjs
 │   ├── postcss.config.mjs
 │   ├── components.json
-│   ├── components.md
 │   ├── .env.local
 │   ├── next-env.d.ts
 │   ├── tsconfig.json
