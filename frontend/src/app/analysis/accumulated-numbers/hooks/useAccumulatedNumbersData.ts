@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { WINDOW_CONFIGS, createEmptyCounts } from '../constants';
-import { buildNumberCounts, isWinningNumberRow } from '../logic/numberCounts';
+import { WINDOW_CONFIGS } from '../constants';
+import { buildNumberCounts, createEmptyCountResult, isWinningNumberRow } from '../logic/numberCounts';
 import type { WinningNumberRow, WindowChartData, WindowKey } from '../types';
 
 type CountResult = {
@@ -8,15 +8,12 @@ type CountResult = {
   analyzedDrawCount: number;
 };
 
-const EMPTY_RESULT: CountResult = {
-  counts: createEmptyCounts(),
-  analyzedDrawCount: 0,
-};
+const EMPTY_RESULT: CountResult = createEmptyCountResult();
 
 type WindowCountResultMap = Record<WindowKey, CountResult>;
 
 const createEmptyWindowCountMap = () =>
-  Object.fromEntries(WINDOW_CONFIGS.map((config) => [config.key, { ...EMPTY_RESULT }])) as WindowCountResultMap;
+  Object.fromEntries(WINDOW_CONFIGS.map((config) => [config.key, createEmptyCountResult()])) as WindowCountResultMap;
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
 
@@ -34,6 +31,14 @@ const parseWinningNumberRowsResponse = (data: unknown, invalidMessage: string) =
   }
 
   return data.filter(isWinningNumberRow);
+};
+
+const parseSelectedDrawNo = (selectedDraw: string) => {
+  const selectedDrawNo = Number(selectedDraw);
+  if (!Number.isInteger(selectedDrawNo) || selectedDrawNo < 1) {
+    return null;
+  }
+  return selectedDrawNo;
 };
 
 const buildWindowCountResultMap = (windowRows: WinningNumberRow[][]): WindowCountResultMap =>
@@ -124,7 +129,9 @@ export const useAccumulatedNumbersData = () => {
 
         const data: unknown = await response.json();
         const draws = parseNumberArrayResponse(data, 'Draw numbers response is not an array');
-        if (!isMounted) return;
+        if (!isMounted) {
+          return;
+        }
 
         setAvailableDraws(draws);
         setSelectedDraw((prev) => (prev || draws.length === 0 ? prev : String(draws[0])));
@@ -161,50 +168,66 @@ export const useAccumulatedNumbersData = () => {
     }
   };
 
+  const initializeSearchState = (draw: string) => {
+    setIsSearching(true);
+    setIsLoadingSelectedWinningNumber(true);
+    setSearchError(null);
+    setSelectedWinningNumberError(null);
+    setSearchedDraw(draw);
+  };
+
+  const setSearchFailureState = () => {
+    setSearchError('조회 데이터를 불러오지 못했습니다.');
+    resetSearchResults({ clearWinningNumber: true });
+    setSelectedWinningNumberError('선택한 회차의 당첨번호를 불러오지 못했습니다.');
+  };
+
+  const finalizeSearchState = () => {
+    setIsSearching(false);
+    setIsLoadingSelectedWinningNumber(false);
+  };
+
+  const executeSearch = async (selectedDrawNo: number) => {
+    if (selectedDrawNo === 1) {
+      const winningNumber = await fetchWinningNumberByDraw(selectedDrawNo);
+      setSelectedWinningNumber(winningNumber);
+      resetSearchResults();
+      return;
+    }
+
+    const [rangeRows, winningNumber, ...windowRows] = await Promise.all([
+      fetchWinningNumbersRange(selectedDrawNo),
+      fetchWinningNumberByDraw(selectedDrawNo),
+      ...WINDOW_CONFIGS.map((config) => fetchWinningNumbersWindow(selectedDrawNo, config.windowSize)),
+    ]);
+
+    setAllTimeCountResult(toCountResult(rangeRows));
+    setWindowCountResultMap(buildWindowCountResultMap(windowRows));
+    setSelectedWinningNumber(winningNumber);
+  };
+
   const handleSearch = async () => {
     if (!selectedDraw) {
       return;
     }
 
-    const selectedDrawNo = Number(selectedDraw);
-    if (!Number.isInteger(selectedDrawNo) || selectedDrawNo < 1) {
+    const selectedDrawNo = parseSelectedDrawNo(selectedDraw);
+    if (selectedDrawNo === null) {
       setSearchError('유효한 회차를 선택해 주세요.');
       setSearchedDraw('');
       resetSearchResults({ clearWinningNumber: true });
       return;
     }
 
-    setIsSearching(true);
-    setIsLoadingSelectedWinningNumber(true);
-    setSearchError(null);
-    setSelectedWinningNumberError(null);
-    setSearchedDraw(selectedDraw);
+    initializeSearchState(selectedDraw);
 
     try {
-      if (selectedDrawNo === 1) {
-        const winningNumber = await fetchWinningNumberByDraw(selectedDrawNo);
-        setSelectedWinningNumber(winningNumber);
-        resetSearchResults();
-        return;
-      }
-
-      const [rangeRows, winningNumber, ...windowRows] = await Promise.all([
-        fetchWinningNumbersRange(selectedDrawNo),
-        fetchWinningNumberByDraw(selectedDrawNo),
-        ...WINDOW_CONFIGS.map((config) => fetchWinningNumbersWindow(selectedDrawNo, config.windowSize)),
-      ]);
-
-      setAllTimeCountResult(toCountResult(rangeRows));
-      setWindowCountResultMap(buildWindowCountResultMap(windowRows));
-      setSelectedWinningNumber(winningNumber);
+      await executeSearch(selectedDrawNo);
     } catch (error) {
       console.error('Error fetching accumulated numbers search data:', error);
-      setSearchError('조회 데이터를 불러오지 못했습니다.');
-      resetSearchResults({ clearWinningNumber: true });
-      setSelectedWinningNumberError('선택한 회차의 당첨번호를 불러오지 못했습니다.');
+      setSearchFailureState();
     } finally {
-      setIsSearching(false);
-      setIsLoadingSelectedWinningNumber(false);
+      finalizeSearchState();
     }
   };
 

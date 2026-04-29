@@ -1,6 +1,8 @@
 import { NUMBER_RANGE_MAX, createEmptyCounts } from '../constants';
 import type { WinningNumberRow } from '../types';
 
+const MAIN_NUMBER_KEYS = ['num1', 'num2', 'num3', 'num4', 'num5', 'num6'] as const;
+
 export const isWinningNumberRow = (value: unknown): value is WinningNumberRow => {
   if (typeof value !== 'object' || value === null) {
     return false;
@@ -19,12 +21,15 @@ export const isWinningNumberRow = (value: unknown): value is WinningNumberRow =>
   );
 };
 
+const toMainNumbers = (row: WinningNumberRow) => MAIN_NUMBER_KEYS.map((key) => row[key]);
+
+const toAllWinningNumbers = (row: WinningNumberRow) => [...toMainNumbers(row), row.bonus_num];
+
 export const buildNumberCounts = (rows: WinningNumberRow[]) => {
   const counts = createEmptyCounts();
 
   for (const row of rows) {
-    const winningNumbers = [row.num1, row.num2, row.num3, row.num4, row.num5, row.num6, row.bonus_num];
-    for (const num of winningNumbers) {
+    for (const num of toAllWinningNumbers(row)) {
       if (num >= 1 && num <= NUMBER_RANGE_MAX) {
         counts[num - 1] += 1;
       }
@@ -35,7 +40,7 @@ export const buildNumberCounts = (rows: WinningNumberRow[]) => {
 };
 
 export const toSelectedMainNumbers = (row: WinningNumberRow | null) =>
-  row ? [row.num1, row.num2, row.num3, row.num4, row.num5, row.num6] : [];
+  row ? toMainNumbers(row) : [];
 
 export const toSelectedHighlightNumbers = (row: WinningNumberRow | null) => {
   if (!row) {

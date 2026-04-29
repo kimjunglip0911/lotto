@@ -10,6 +10,39 @@ type AccumulatedChartSectionProps = {
   selectedHighlightNumbers: Set<number> | null;
 };
 
+const CHART_BAR_HEIGHT_PX = 145;
+const CHART_BOTTOM_LABEL_OFFSET_PX = 14;
+
+type ChartStats = {
+  averageCount: number;
+  averageLineBottomPx: number;
+  chartRows: {
+    number: number;
+    count: number;
+    ratio: number;
+  }[];
+};
+
+const toChartStats = (counts: number[], analyzedDrawCountForChart: number): ChartStats => {
+  const maxCount = Math.max(...counts, 0);
+  const totalCount = counts.reduce((sum, count) => sum + count, 0);
+  const averageCount = analyzedDrawCountForChart > 0 ? totalCount / counts.length : 0;
+  const averageRatio = maxCount > 0 ? (averageCount / maxCount) * 100 : 0;
+  const clampedAverageRatio = Math.min(100, Math.max(0, averageRatio));
+  const averageLineBottomPx = CHART_BOTTOM_LABEL_OFFSET_PX + (clampedAverageRatio / 100) * CHART_BAR_HEIGHT_PX;
+  const chartRows = counts.map((count, index) => ({
+    number: index + 1,
+    count,
+    ratio: maxCount > 0 ? (count / maxCount) * 100 : 0,
+  }));
+
+  return {
+    averageCount,
+    averageLineBottomPx,
+    chartRows,
+  };
+};
+
 export function AccumulatedChartSection({
   title,
   counts,
@@ -21,19 +54,7 @@ export function AccumulatedChartSection({
   searchError,
   selectedHighlightNumbers,
 }: AccumulatedChartSectionProps) {
-  const maxCount = Math.max(...counts, 0);
-  const totalCount = counts.reduce((sum, count) => sum + count, 0);
-  const averageCount = analyzedDrawCountForChart > 0 ? totalCount / counts.length : 0;
-  const averageRatio = maxCount > 0 ? (averageCount / maxCount) * 100 : 0;
-  const clampedAverageRatio = Math.min(100, Math.max(0, averageRatio));
-  const chartBarHeightPx = 145;
-  const chartBottomLabelOffsetPx = 14;
-  const averageLineBottomPx = chartBottomLabelOffsetPx + (clampedAverageRatio / 100) * chartBarHeightPx;
-  const chartRows = counts.map((count, index) => ({
-    number: index + 1,
-    count,
-    ratio: maxCount > 0 ? (count / maxCount) * 100 : 0,
-  }));
+  const { averageCount, averageLineBottomPx, chartRows } = toChartStats(counts, analyzedDrawCountForChart);
 
   return (
     <section className="rounded-2xl border border-card-border/30 bg-card-bg/60 p-3 space-y-2.5">
