@@ -2,6 +2,12 @@ import { useEffect, useMemo, useState } from 'react';
 import { buildStreakResults, getAverageStreak, getTop5PctThreshold } from '../logic/streak';
 import { isWinningNumberRow, type StreakResult, type WinningNumberRow } from '../types';
 
+/** `/api/analysis/absence-streak/` 이하 경로·쿼리(예: `draw-numbers`, `winning-number?draw_no=1`) */
+const absenceStreakApiUrl = (pathWithQuery: string): string => {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+  return `${apiUrl}/api/analysis/absence-streak/${pathWithQuery}`;
+};
+
 type UseAbsenceStreakDataResult = {
   availableDraws: number[];
   selectedDraw: string;
@@ -46,8 +52,7 @@ export const useAbsenceStreakData = (): UseAbsenceStreakDataResult => {
       setIsLoadingDraws(true);
       setDrawLoadError(null);
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
-        const response = await fetch(`${apiUrl}/api/analysis/absence-streak/draw-numbers`, {
+        const response = await fetch(absenceStreakApiUrl('draw-numbers'), {
           signal: abortController.signal,
         });
         if (!response.ok) throw new Error(`Failed to fetch draw numbers: ${response.status}`);
@@ -97,11 +102,9 @@ export const useAbsenceStreakData = (): UseAbsenceStreakDataResult => {
     setWinningNumberError(null);
     setSearchedDraw(selectedDraw);
 
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
-
     try {
       if (drawNo === 1) {
-        const res = await fetch(`${apiUrl}/api/analysis/absence-streak/winning-number?draw_no=${drawNo}`);
+        const res = await fetch(absenceStreakApiUrl(`winning-number?draw_no=${drawNo}`));
         if (!res.ok) throw new Error(`Failed to fetch winning number: ${res.status}`);
         const data: unknown = await res.json();
         if (!isWinningNumberRow(data)) throw new Error('Winning number response is invalid');
@@ -112,8 +115,8 @@ export const useAbsenceStreakData = (): UseAbsenceStreakDataResult => {
       }
 
       const [winningNumberRes, rangeRes] = await Promise.all([
-        fetch(`${apiUrl}/api/analysis/absence-streak/winning-number?draw_no=${drawNo}`),
-        fetch(`${apiUrl}/api/analysis/absence-streak/winning-numbers-range?draw_no=${drawNo}`),
+        fetch(absenceStreakApiUrl(`winning-number?draw_no=${drawNo}`)),
+        fetch(absenceStreakApiUrl(`winning-numbers-range?draw_no=${drawNo}`)),
       ]);
 
       if (!winningNumberRes.ok) {

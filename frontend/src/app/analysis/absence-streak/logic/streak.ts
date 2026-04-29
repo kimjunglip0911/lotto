@@ -36,6 +36,9 @@ export const getAverageStreak = (streakResults: StreakResult[]): number =>
     ? streakResults.reduce((sum, r) => sum + r.streak, 0) / streakResults.length
     : 0;
 
+export const getMaxStreak = (streakResults: StreakResult[]): number =>
+  streakResults.length > 0 ? Math.max(...streakResults.map((r) => r.streak)) : 0;
+
 export const getTop5PctThreshold = (streakResults: StreakResult[]): number => {
   if (streakResults.length === 0) return 0;
   const sorted = [...streakResults.map((s) => s.streak)].sort((a, b) => a - b);

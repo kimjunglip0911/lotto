@@ -16,6 +16,10 @@ export type StreakResult = {
   isCold: boolean;
 };
 
+/** 당첨 번호 6개 + 보너스를 조회·차트 하이라이트용 Set으로 변환한다. */
+export const winningNumbersToSet = (row: WinningNumberRow): Set<number> =>
+  new Set([row.num1, row.num2, row.num3, row.num4, row.num5, row.num6, row.bonus_num]);
+
 export const isWinningNumberRow = (value: unknown): value is WinningNumberRow => {
   if (typeof value !== 'object' || value === null) return false;
   const c = value as Partial<WinningNumberRow>;
