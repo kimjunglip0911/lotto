@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "prompt-master": {
+      "source": "smusman437/prompt-master",
+      "sourceType": "github",
+      "skillPath": "SKILL.md",
+      "computedHash": "26b129efae7abe8746a913c1ca5fa2aea139e1129550bd1b1d26f43f50c109fc"
+    }
+  }
+}
