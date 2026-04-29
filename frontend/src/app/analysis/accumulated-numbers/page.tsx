@@ -6,6 +6,51 @@ import { Sidebar } from '@/components/common/Sidebar';
 import { AccumulatedChartSection } from './components/AccumulatedChartSection';
 import { SearchPanel } from './components/SearchPanel';
 import { useAccumulatedNumbersData } from './hooks/useAccumulatedNumbersData';
+import { toSelectedHighlightNumbers, toSelectedMainNumbers } from './logic/numberCounts';
+
+const buildStatusMessage = ({
+  isLoadingDraws,
+  drawLoadError,
+  availableDrawsLength,
+  isSearching,
+  selectedDraw,
+  searchError,
+  searchedDraw,
+}: {
+  isLoadingDraws: boolean;
+  drawLoadError: string | null;
+  availableDrawsLength: number;
+  isSearching: boolean;
+  selectedDraw: string;
+  searchError: string | null;
+  searchedDraw: string;
+}) => {
+  if (isLoadingDraws) {
+    return '회차 정보를 불러오는 중입니다.';
+  }
+
+  if (drawLoadError) {
+    return `${drawLoadError} 잠시 후 다시 시도해 주세요.`;
+  }
+
+  if (availableDrawsLength === 0) {
+    return '조회 가능한 회차 정보가 없습니다.';
+  }
+
+  if (isSearching) {
+    return `${selectedDraw}회 기준 누적 당첨번호를 집계하고 있습니다.`;
+  }
+
+  if (searchError) {
+    return `${searchError} 잠시 후 다시 시도해 주세요.`;
+  }
+
+  if (searchedDraw) {
+    return null;
+  }
+
+  return '회차를 선택한 뒤 조회 버튼을 누르면 해당 회차 기준 분석을 시작합니다.';
+};
 
 export default function AccumulatedNumbersPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -28,32 +73,17 @@ export default function AccumulatedNumbersPage() {
 
   const hasSearched = searchedDraw !== '';
   const selectedSearchDrawNo = Number(searchedDraw);
-  const selectedMainNumbers = selectedWinningNumber
-    ? [
-        selectedWinningNumber.num1,
-        selectedWinningNumber.num2,
-        selectedWinningNumber.num3,
-        selectedWinningNumber.num4,
-        selectedWinningNumber.num5,
-        selectedWinningNumber.num6,
-      ]
-    : [];
-  const selectedHighlightNumbers = selectedWinningNumber
-    ? new Set([...selectedMainNumbers, selectedWinningNumber.bonus_num])
-    : null;
-  const statusMessage = isLoadingDraws
-    ? '회차 정보를 불러오는 중입니다.'
-    : drawLoadError
-      ? `${drawLoadError} 잠시 후 다시 시도해 주세요.`
-      : availableDraws.length === 0
-        ? '조회 가능한 회차 정보가 없습니다.'
-        : isSearching
-          ? `${selectedDraw}회 기준 누적 당첨번호를 집계하고 있습니다.`
-          : searchError
-            ? `${searchError} 잠시 후 다시 시도해 주세요.`
-            : searchedDraw
-              ? null
-              : '회차를 선택한 뒤 조회 버튼을 누르면 해당 회차 기준 분석을 시작합니다.';
+  const selectedMainNumbers = toSelectedMainNumbers(selectedWinningNumber);
+  const selectedHighlightNumbers = toSelectedHighlightNumbers(selectedWinningNumber);
+  const statusMessage = buildStatusMessage({
+    isLoadingDraws,
+    drawLoadError,
+    availableDrawsLength: availableDraws.length,
+    isSearching,
+    selectedDraw,
+    searchError,
+    searchedDraw,
+  });
 
   return (
     <div className="bg-background min-h-screen flex justify-center w-full overflow-x-hidden">
@@ -72,6 +102,7 @@ export default function AccumulatedNumbersPage() {
             isLoadingSelectedWinningNumber={isLoadingSelectedWinningNumber}
             selectedWinningNumberError={selectedWinningNumberError}
             selectedWinningNumber={selectedWinningNumber}
+            selectedMainNumbers={selectedMainNumbers}
           />
           <section className="rounded-2xl border border-card-border/30 bg-card-bg/60 p-4 space-y-3">
             {statusMessage && <p className="text-slate-300 text-sm leading-relaxed">{statusMessage}</p>}

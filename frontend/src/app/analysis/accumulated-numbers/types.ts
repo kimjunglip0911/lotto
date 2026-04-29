@@ -9,15 +9,24 @@ export type WinningNumberRow = {
   bonus_num: number;
 };
 
+export type WindowKey =
+  | 'thirtyDay'
+  | 'ninetyDay'
+  | 'sixMonth'
+  | 'oneYear'
+  | 'threeYear'
+  | 'fiveYear'
+  | 'tenYear';
+
 export type WindowConfig = {
-  key: string;
+  key: WindowKey;
   title: string;
   windowSize: number;
   noDataMessage: string;
 };
 
 export type WindowChartData = {
-  key: string;
+  key: WindowKey;
   title: string;
   counts: number[];
   analyzedDrawCount: number;

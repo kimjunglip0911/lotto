@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { WINDOW_CONFIGS, createEmptyCounts } from '../constants';
 import { buildNumberCounts, isWinningNumberRow } from '../logic/numberCounts';
-import type { WinningNumberRow, WindowChartData } from '../types';
+import type { WinningNumberRow, WindowChartData, WindowKey } from '../types';
 
 type CountResult = {
   counts: number[];
@@ -13,10 +13,36 @@ const EMPTY_RESULT: CountResult = {
   analyzedDrawCount: 0,
 };
 
+type WindowCountResultMap = Record<WindowKey, CountResult>;
+
 const createEmptyWindowCountMap = () =>
-  Object.fromEntries(WINDOW_CONFIGS.map((config) => [config.key, { ...EMPTY_RESULT }])) as Record<string, CountResult>;
+  Object.fromEntries(WINDOW_CONFIGS.map((config) => [config.key, { ...EMPTY_RESULT }])) as WindowCountResultMap;
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+
+const parseNumberArrayResponse = (data: unknown, invalidMessage: string) => {
+  if (!Array.isArray(data)) {
+    throw new Error(invalidMessage);
+  }
+
+  return data.filter((item): item is number => typeof item === 'number');
+};
+
+const parseWinningNumberRowsResponse = (data: unknown, invalidMessage: string) => {
+  if (!Array.isArray(data)) {
+    throw new Error(invalidMessage);
+  }
+
+  return data.filter(isWinningNumberRow);
+};
+
+const buildWindowCountResultMap = (windowRows: WinningNumberRow[][]): WindowCountResultMap =>
+  Object.fromEntries(
+    WINDOW_CONFIGS.map((config, index) => {
+      const rows = windowRows[index] ?? [];
+      return [config.key, toCountResult(rows)];
+    })
+  ) as WindowCountResultMap;
 
 const fetchWinningNumberByDraw = async (drawNo: number) => {
   const response = await fetch(`${apiUrl}/api/analysis/accumulated-numbers/winning-number?draw_no=${drawNo}`);
@@ -44,11 +70,7 @@ const fetchWinningNumbersRange = async (drawNo: number) => {
   }
 
   const data: unknown = await response.json();
-  if (!Array.isArray(data)) {
-    throw new Error('Winning numbers range response is not an array');
-  }
-
-  return data.filter(isWinningNumberRow);
+  return parseWinningNumberRowsResponse(data, 'Winning numbers range response is not an array');
 };
 
 const fetchWinningNumbersWindow = async (drawNo: number, windowSize: number) => {
@@ -61,11 +83,7 @@ const fetchWinningNumbersWindow = async (drawNo: number, windowSize: number) => 
   }
 
   const data: unknown = await response.json();
-  if (!Array.isArray(data)) {
-    throw new Error('Winning numbers window response is not an array');
-  }
-
-  return data.filter(isWinningNumberRow);
+  return parseWinningNumberRowsResponse(data, 'Winning numbers window response is not an array');
 };
 
 const toCountResult = (rows: WinningNumberRow[]): CountResult => ({
@@ -85,7 +103,7 @@ export const useAccumulatedNumbersData = () => {
   const [isLoadingSelectedWinningNumber, setIsLoadingSelectedWinningNumber] = useState(false);
   const [selectedWinningNumberError, setSelectedWinningNumberError] = useState<string | null>(null);
   const [allTimeCountResult, setAllTimeCountResult] = useState<CountResult>({ ...EMPTY_RESULT });
-  const [windowCountResultMap, setWindowCountResultMap] = useState<Record<string, CountResult>>(createEmptyWindowCountMap);
+  const [windowCountResultMap, setWindowCountResultMap] = useState<WindowCountResultMap>(createEmptyWindowCountMap);
 
   useEffect(() => {
     let isMounted = true;
@@ -105,11 +123,7 @@ export const useAccumulatedNumbersData = () => {
         }
 
         const data: unknown = await response.json();
-        if (!Array.isArray(data)) {
-          throw new Error('Draw numbers response is not an array');
-        }
-
-        const draws = data.filter((item): item is number => typeof item === 'number');
+        const draws = parseNumberArrayResponse(data, 'Draw numbers response is not an array');
         if (!isMounted) return;
 
         setAvailableDraws(draws);
@@ -181,14 +195,7 @@ export const useAccumulatedNumbersData = () => {
       ]);
 
       setAllTimeCountResult(toCountResult(rangeRows));
-      setWindowCountResultMap(
-        Object.fromEntries(
-          WINDOW_CONFIGS.map((config, index) => {
-            const rows = windowRows[index];
-            return [config.key, toCountResult(rows)];
-          })
-        ) as Record<string, CountResult>
-      );
+      setWindowCountResultMap(buildWindowCountResultMap(windowRows));
       setSelectedWinningNumber(winningNumber);
     } catch (error) {
       console.error('Error fetching accumulated numbers search data:', error);

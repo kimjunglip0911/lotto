@@ -34,6 +34,17 @@ export const buildNumberCounts = (rows: WinningNumberRow[]) => {
   return counts;
 };
 
+export const toSelectedMainNumbers = (row: WinningNumberRow | null) =>
+  row ? [row.num1, row.num2, row.num3, row.num4, row.num5, row.num6] : [];
+
+export const toSelectedHighlightNumbers = (row: WinningNumberRow | null) => {
+  if (!row) {
+    return null;
+  }
+
+  return new Set([...toSelectedMainNumbers(row), row.bonus_num]);
+};
+
 export const createEmptyCountResult = () => ({
   counts: createEmptyCounts(),
   analyzedDrawCount: 0,

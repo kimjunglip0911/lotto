@@ -10,6 +10,7 @@ type SearchPanelProps = {
   isLoadingSelectedWinningNumber: boolean;
   selectedWinningNumberError: string | null;
   selectedWinningNumber: WinningNumberRow | null;
+  selectedMainNumbers: number[];
 };
 
 export function SearchPanel({
@@ -22,18 +23,8 @@ export function SearchPanel({
   isLoadingSelectedWinningNumber,
   selectedWinningNumberError,
   selectedWinningNumber,
+  selectedMainNumbers,
 }: SearchPanelProps) {
-  const selectedMainNumbers = selectedWinningNumber
-    ? [
-        selectedWinningNumber.num1,
-        selectedWinningNumber.num2,
-        selectedWinningNumber.num3,
-        selectedWinningNumber.num4,
-        selectedWinningNumber.num5,
-        selectedWinningNumber.num6,
-      ]
-    : [];
-
   return (
     <section className="rounded-2xl border border-card-border/30 bg-card-bg/60 p-4 space-y-3">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
