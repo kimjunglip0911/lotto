@@ -17,12 +17,11 @@ import {
   BACKTEST_FOCUS_STRATEGY_KEYS,
   buildFinalNumberSelection,
   buildStrategyRecommendation,
+  combineStrategyRecommendations,
   getDefaultBacktestWindowSizes,
   pickTopWindowsByStrategy,
   runAccumulatedNumbersBacktest,
   sliceWindowTail,
-  toAtLeastOneRate,
-  toAvgHits,
 } from '../logic/backtestEngine';
 import type {
   CountResult,
@@ -188,52 +187,59 @@ export const useAccumulatedNumbersData = () => {
     });
     setStrategyCharts(charts);
 
-    const bestShort = shortTop[0];
-    const bestLong = longTop[0];
-    const bestShortAggregate = aggregates.find(
-      (a) => a.strategy === 'nearestMean4' && a.windowSize === bestShort?.windowSize
-    );
-    const bestLongAggregate = aggregates.find(
-      (a) => a.strategy === 'twoHotTwoCold' && a.windowSize === bestLong?.windowSize
-    );
+    const shortRecs = shortTop
+      .map((w) => {
+        const agg = aggregates.find((a) => a.strategy === 'nearestMean4' && a.windowSize === w.windowSize);
+        if (!agg) return null;
+        return buildStrategyRecommendation({
+          strategy: 'nearestMean4',
+          windowSize: w.windowSize,
+          allRowsBeforeSelectedDraw: rangeRows,
+          aggregate: agg,
+        });
+      })
+      .filter((v): v is NonNullable<typeof v> => v !== null);
 
-    if (!bestShort || !bestLong || !bestShortAggregate || !bestLongAggregate) {
+    const longRecs = longTop
+      .map((w) => {
+        const agg = aggregates.find((a) => a.strategy === 'twoHotTwoCold' && a.windowSize === w.windowSize);
+        if (!agg) return null;
+        return buildStrategyRecommendation({
+          strategy: 'twoHotTwoCold',
+          windowSize: w.windowSize,
+          allRowsBeforeSelectedDraw: rangeRows,
+          aggregate: agg,
+        });
+      })
+      .filter((v): v is NonNullable<typeof v> => v !== null);
+
+    const shortRecommendation = combineStrategyRecommendations(shortRecs);
+    const longRecommendation = combineStrategyRecommendations(longRecs);
+
+    if (!shortRecommendation || !longRecommendation) {
       setFinalNumberPlan(null);
       return;
     }
-
-    const shortRecommendation = buildStrategyRecommendation({
-      strategy: 'nearestMean4',
-      windowSize: bestShort.windowSize,
-      allRowsBeforeSelectedDraw: rangeRows,
-      aggregate: bestShortAggregate,
-    });
-    const longRecommendation = buildStrategyRecommendation({
-      strategy: 'twoHotTwoCold',
-      windowSize: bestLong.windowSize,
-      allRowsBeforeSelectedDraw: rangeRows,
-      aggregate: bestLongAggregate,
-    });
     const finalSelection = buildFinalNumberSelection(shortRecommendation, longRecommendation);
 
     const strategyPicks: StrategyNumberPick[] = [
       {
         strategyKey: 'nearestMean4',
         strategyLabel: '평균근접',
-        windowSize: shortRecommendation.windowSize,
+        windowSizes: shortTop.map((w) => w.windowSize),
         numbers: shortRecommendation.numbers,
-        atLeastOneRate: toAtLeastOneRate(bestShortAggregate),
-        avgHits: toAvgHits(bestShortAggregate),
-        maxMissStreak: bestShortAggregate.maxMissStreak,
+        atLeastOneRate: shortRecommendation.metrics.atLeastOneRate,
+        avgHits: shortRecommendation.metrics.avgHits,
+        maxMissStreak: shortRecommendation.metrics.maxMissStreak,
       },
       {
         strategyKey: 'twoHotTwoCold',
         strategyLabel: '상2+하2',
-        windowSize: longRecommendation.windowSize,
+        windowSizes: longTop.map((w) => w.windowSize),
         numbers: longRecommendation.numbers,
-        atLeastOneRate: toAtLeastOneRate(bestLongAggregate),
-        avgHits: toAvgHits(bestLongAggregate),
-        maxMissStreak: bestLongAggregate.maxMissStreak,
+        atLeastOneRate: longRecommendation.metrics.atLeastOneRate,
+        avgHits: longRecommendation.metrics.avgHits,
+        maxMissStreak: longRecommendation.metrics.maxMissStreak,
       },
     ];
 

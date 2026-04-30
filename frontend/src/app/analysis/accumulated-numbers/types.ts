@@ -49,7 +49,7 @@ export type StrategyChartData = {
 export type StrategyNumberPick = {
   strategyKey: 'nearestMean4' | 'twoHotTwoCold';
   strategyLabel: string;
-  windowSize: number;
+  windowSizes: number[];
   numbers: number[];
   atLeastOneRate: number;
   avgHits: number;

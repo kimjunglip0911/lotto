@@ -17,7 +17,6 @@ export default function AccumulatedNumbersPage() {
     selectedMainNumbers,
     selectedHighlightNumbers,
     statusMessage,
-    windowCharts,
     strategyWindowCharts,
     finalNumberPlan,
   } = useAccumulatedNumbersDerived({
@@ -69,21 +68,6 @@ export default function AccumulatedNumbersPage() {
             selectedHighlightNumbers={selectedHighlightNumbers}
           />
 
-          {windowCharts.map((chart) => (
-            <AccumulatedChartSection
-              key={chart.key}
-              title={chart.title}
-              counts={chart.counts}
-              analyzedDrawCountForChart={chart.analyzedDrawCount}
-              noDataMessage={chart.noDataMessage}
-              hasSearched={hasSearched}
-              selectedSearchDrawNo={selectedSearchDrawNo}
-              isSearching={data.isSearching}
-              searchError={data.searchError}
-              selectedHighlightNumbers={selectedHighlightNumbers}
-            />
-          ))}
-
           <section className="rounded-2xl border border-card-border/30 bg-card-bg/60 p-4 space-y-4">
             <h2 className="text-lg font-semibold text-slate-100">고도화 전략 분석 (단기/장기)</h2>
             <p className="text-sm text-slate-300 leading-relaxed">
@@ -128,7 +112,7 @@ export default function AccumulatedNumbersPage() {
                 {finalNumberPlan.strategyPicks.map((pick) => (
                   <div key={pick.strategyKey} className="rounded-xl border border-white/10 bg-slate-900/50 p-3 space-y-2">
                     <p className="text-sm font-medium text-slate-100">
-                      {pick.strategyLabel} (이전 {pick.windowSize}회)
+                      {pick.strategyLabel} (이전 {pick.windowSizes.join(', ')}회)
                     </p>
                     <div className="flex flex-wrap gap-2">
                       {pick.numbers.map((n) => (

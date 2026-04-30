@@ -23,9 +23,15 @@ import {
   BACKTEST_STRATEGY_KEYS,
   type BacktestAggregate,
   type BacktestStrategyKey,
+  buildFinalNumberSelection,
+  buildStrategyRecommendation,
+  combineStrategyRecommendations,
+  countMainHits,
   getDefaultBacktestWindowSizes,
+  pickTopWindowsByStrategy,
   runAccumulatedNumbersBacktest,
 } from '../logic/backtestEngine';
+import { toMainNumbersOnly } from '../logic/numberCounts';
 import type { WinningNumberRow } from '../types';
 
 const DEFAULT_API = 'http://127.0.0.1:8010';
@@ -174,6 +180,106 @@ function printTable(aggregates: BacktestAggregate[]): void {
   }
 }
 
+function runMergedFinalNumbersBacktest(params: {
+  allRowsSortedAsc: WinningNumberRow[];
+  drawNumbersToEvaluate: number[];
+  aggregates: BacktestAggregate[];
+}): {
+  finalNumbersExample: number[];
+  shortWindows: number[];
+  longWindows: number[];
+  evaluatedRounds: number;
+  atLeastOneRate: number;
+  avgHits: number;
+  maxMissStreak: number;
+} {
+  const { allRowsSortedAsc, drawNumbersToEvaluate, aggregates } = params;
+
+  const shortTop = pickTopWindowsByStrategy(aggregates, 'nearestMean4', 2, { maxWindowSize: 120 });
+  const longTop = pickTopWindowsByStrategy(aggregates, 'twoHotTwoCold', 2, { minWindowSize: 240 });
+
+  const shortTopSafe = shortTop.length >= 2 ? shortTop : pickTopWindowsByStrategy(aggregates, 'nearestMean4', 2);
+  const longTopSafe = longTop.length >= 2 ? longTop : pickTopWindowsByStrategy(aggregates, 'twoHotTwoCold', 2);
+
+  const aggMap = new Map<string, BacktestAggregate>();
+  for (const a of aggregates) {
+    aggMap.set(`${a.strategy}|${a.windowSize}`, a);
+  }
+
+  const drawMap = new Map<number, WinningNumberRow>();
+  for (const row of allRowsSortedAsc) {
+    drawMap.set(row.draw_no, row);
+  }
+
+  let evaluatedRounds = 0;
+  let roundsWithAtLeastOne = 0;
+  let sumHits = 0;
+  let currentMissStreak = 0;
+  let maxMissStreak = 0;
+  let finalNumbersExample: number[] = [];
+
+  for (const drawNo of drawNumbersToEvaluate) {
+    const actual = drawMap.get(drawNo);
+    if (!actual) continue;
+    const priorRows = allRowsSortedAsc.filter((r) => r.draw_no < drawNo);
+    if (priorRows.length === 0) continue;
+
+    const shortRecs = shortTopSafe
+      .map((w) => {
+        const agg = aggMap.get(`nearestMean4|${w.windowSize}`);
+        if (!agg) return null;
+        return buildStrategyRecommendation({
+          strategy: 'nearestMean4',
+          windowSize: w.windowSize,
+          allRowsBeforeSelectedDraw: priorRows,
+          aggregate: agg,
+        });
+      })
+      .filter((v): v is NonNullable<typeof v> => v !== null);
+
+    const longRecs = longTopSafe
+      .map((w) => {
+        const agg = aggMap.get(`twoHotTwoCold|${w.windowSize}`);
+        if (!agg) return null;
+        return buildStrategyRecommendation({
+          strategy: 'twoHotTwoCold',
+          windowSize: w.windowSize,
+          allRowsBeforeSelectedDraw: priorRows,
+          aggregate: agg,
+        });
+      })
+      .filter((v): v is NonNullable<typeof v> => v !== null);
+
+    const shortMerged = combineStrategyRecommendations(shortRecs);
+    const longMerged = combineStrategyRecommendations(longRecs);
+    if (!shortMerged || !longMerged) continue;
+
+    const finalSelection = buildFinalNumberSelection(shortMerged, longMerged);
+    const hits = countMainHits(finalSelection.finalNumbers, toMainNumbersOnly(actual));
+    finalNumbersExample = finalSelection.finalNumbers;
+
+    evaluatedRounds += 1;
+    sumHits += hits;
+    if (hits >= 1) {
+      roundsWithAtLeastOne += 1;
+      currentMissStreak = 0;
+    } else {
+      currentMissStreak += 1;
+      if (currentMissStreak > maxMissStreak) maxMissStreak = currentMissStreak;
+    }
+  }
+
+  return {
+    finalNumbersExample,
+    shortWindows: shortTopSafe.map((w) => w.windowSize),
+    longWindows: longTopSafe.map((w) => w.windowSize),
+    evaluatedRounds,
+    atLeastOneRate: evaluatedRounds > 0 ? roundsWithAtLeastOne / evaluatedRounds : 0,
+    avgHits: evaluatedRounds > 0 ? sumHits / evaluatedRounds : 0,
+    maxMissStreak,
+  };
+}
+
 /** 리포트에 붙여넣기 좋은 요약(동일 실행에서 stdout으로 복사 가능) */
 function printMarkdownSnippet(
   aggregates: BacktestAggregate[],
@@ -276,6 +382,20 @@ async function main(): Promise<void> {
     printTopWindowsByStrategy(aggregates, 'nearestMean4', 15, '평균 출현에 가장 가까운 4');
     printTopWindowsByStrategy(aggregates, 'twoHotTwoCold', 15, '상위 2 + 하위 2');
     printUiWindowPairComparison(aggregates);
+
+    const finalMerged = runMergedFinalNumbersBacktest({
+      allRowsSortedAsc: allRows,
+      drawNumbersToEvaluate: toEvaluate,
+      aggregates,
+    });
+    console.log('\n=== 최종 4개(전략별 2개 기간 통합) 백테스트 요약 ===\n');
+    console.log(`평균근접 기간: ${finalMerged.shortWindows.join(', ')}`);
+    console.log(`상2+하2 기간: ${finalMerged.longWindows.join(', ')}`);
+    console.log(`최신 기준 예시 최종 4개: ${finalMerged.finalNumbersExample.join(', ')}`);
+    console.log(`평가 회차: ${finalMerged.evaluatedRounds}`);
+    console.log(`>=1 적중률: ${(finalMerged.atLeastOneRate * 100).toFixed(2)}%`);
+    console.log(`평균 적중: ${finalMerged.avgHits.toFixed(3)}`);
+    console.log(`최대 연속 미적중: ${finalMerged.maxMissStreak}회`);
   }
 
   const minEv = toEvaluate[0] ?? 0;
