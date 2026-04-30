@@ -12,10 +12,9 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "jsx": "react-jsx",
-    "baseUrl": ".",
     "paths": {
-      "@/*": ["frontend/src/*"],
-      "@features/*": ["features/*"]
+      "@/*": ["./frontend/src/*"],
+      "@features/*": ["./features/*"]
     }
   },
   "include": [

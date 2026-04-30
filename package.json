@@ -10,13 +10,18 @@
         "check:no-init": "python scripts/check_no_init.py",
         "build": "npm run build -w frontend",
         "start": "npm run start -w frontend",
-        "lint": "npm run lint -w frontend"
+        "lint": "npm run lint -w frontend",
+        "cursor-sdk:example": "node scripts/cursor-sdk-example.mjs"
     },
     "devDependencies": {
         "@tailwindcss/postcss": "^4.2.1",
         "autoprefixer": "^10.4.27",
         "concurrently": "^9.2.1",
+        "dotenv": "^17.4.2",
         "postcss": "^8.5.6",
         "tailwindcss": "^4.2.1"
+    },
+    "dependencies": {
+        "@cursor/sdk": "^1.0.10"
     }
 }
