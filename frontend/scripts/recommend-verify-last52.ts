@@ -1,5 +1,5 @@
 /**
- * 추천 20세트 백테스트: 최근 N회차(기본 52)에 대해 앱과 동일 파이프라인으로 세트를 생성하고 실제 당첨과 등수를 집계한다.
+ * 추천 20세트 백테스트: 최근 N회차(기본 52)에 대해 앱과 동일 파이프라인(`toRecommendPipelineBaseContext` → `runRecommendPipeline` → `generate20Sets`)으로 세트를 생성하고 실제 당첨과 등수를 집계한다.
  *
  * 실행(백엔드 8010 가동 후):
  *   cd frontend && npm run verify:recommend-last52
@@ -13,44 +13,15 @@
 
 import { fetchDrawNumbers, fetchRecommendBaseData } from '../src/app/recommend/logic/api.ts'
 import { generate20Sets } from '../src/app/recommend/logic/generator.ts'
+import { bestRank, rankLabel, rankLotto645 } from '../src/app/recommend/logic/lottoRank.ts'
+import { toRecommendPipelineBaseContext } from '../src/app/recommend/logic/pipelineContext.ts'
 import { runRecommendPipeline } from '../src/app/recommend/logic/pipeline.ts'
 import type { GeneratedSet, TrendNumberResult, WinningHistoryRow } from '../src/app/recommend/logic/types.ts'
 import { RECOMMEND_RULES } from '../src/app/recommend/logic/recommendRulesList.ts'
 import { isWinningRow } from '../src/app/recommend/logic/validators.ts'
 
-/** 로또 6/45 등수: 1~5등, 낙첨은 null */
-function rankLotto645(pick: number[], winningMain: number[], bonus: number): 1 | 2 | 3 | 4 | 5 | null {
-  const mainSet = new Set(winningMain)
-  let matchedMain = 0
-  for (const n of pick) {
-    if (mainSet.has(n)) matchedMain += 1
-  }
-  const hasBonus = pick.includes(bonus)
-  if (matchedMain === 6) return 1
-  if (matchedMain === 5 && hasBonus) return 2
-  if (matchedMain === 5) return 3
-  if (matchedMain === 4) return 4
-  if (matchedMain === 3) return 5
-  return null
-}
-
 function setToNumbers(set: GeneratedSet): number[] {
   return [set.num1, set.num2, set.num3, set.num4, set.num5, set.num6]
-}
-
-function bestRank(ranks: Array<1 | 2 | 3 | 4 | 5 | null>): 1 | 2 | 3 | 4 | 5 | null {
-  const order: Array<1 | 2 | 3 | 4 | 5> = [1, 2, 3, 4, 5]
-  let best: 1 | 2 | 3 | 4 | 5 | null = null
-  for (const r of ranks) {
-    if (r === null) continue
-    if (best === null || order.indexOf(r) < order.indexOf(best)) best = r
-  }
-  return best
-}
-
-function rankLabel(r: 1 | 2 | 3 | 4 | 5 | null): string {
-  if (r === null) return '-'
-  return `${r}등`
 }
 
 async function fetchWinningRow(
@@ -109,15 +80,7 @@ async function main(): Promise<void> {
 
   for (const drawNo of chronological) {
     const baseData = await fetchRecommendBaseData(apiUrl, drawNo)
-    const pipeline = runRecommendPipeline(
-      {
-        exclusionCandidates: baseData.exclusionCandidates,
-        chiSquareRows: baseData.chiSquareRows,
-        trendResults: baseData.trendResults,
-        absenceStreakRows: baseData.absenceStreakRows,
-      },
-      RECOMMEND_RULES,
-    )
+    const pipeline = runRecommendPipeline(toRecommendPipelineBaseContext(baseData), RECOMMEND_RULES)
 
     const sets = buildGeneratedSets(
       pipeline.excludedNumbers,
@@ -133,7 +96,7 @@ async function main(): Promise<void> {
 
     drawsWithWinningData += 1
     totalComparisons += sets.length
-    const ranks: Array<1 | 2 | 3 | 4 | 5 | null> = []
+    const ranks: ReturnType<typeof rankLotto645>[] = []
     for (const set of sets) {
       const r = rankLotto645(setToNumbers(set), win.main, win.bonus)
       ranks.push(r)

@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { generate20Sets } from '@/app/recommend/logic/generator'
 import { generateAndSaveSets, fetchRecommendBaseData, errorMessage } from '@/app/recommend/logic/api'
+import { toRecommendPipelineBaseContext } from '@/app/recommend/logic/pipelineContext'
 import { runRecommendPipeline } from '@/app/recommend/logic/pipeline'
 import { GeneratedSet, RecommendPipelineResult, TrendNumberResult, WinningHistoryRow } from '@/app/recommend/logic/types'
 import { RECOMMEND_RULES } from '@/app/recommend/hooks/recommendRules'
@@ -49,7 +50,7 @@ export function useRecommendGeneration({
 
     try {
       const baseData = await fetchRecommendBaseData(apiUrl, selectedDraw)
-      const nextPipelineResult = runRecommendPipeline(baseData, RECOMMEND_RULES)
+      const nextPipelineResult = runRecommendPipeline(toRecommendPipelineBaseContext(baseData), RECOMMEND_RULES)
       setPipelineResult(nextPipelineResult)
       setStatusMessage('추천 번호를 생성하고 저장하는 중입니다...')
 

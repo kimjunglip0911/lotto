@@ -24,6 +24,10 @@
   - Recommend/Analysis API 호출과 응답 파싱, 타입가드, 추세 계산 공통화
 - `logic/pipeline.ts`
   - 규칙 배열을 순회하며 제외 번호를 누적 계산
+- `logic/pipelineContext.ts`
+  - `RecommendBaseData` → `runRecommendPipeline` 입력(`toRecommendPipelineBaseContext`) — UI와 검증 스크립트가 동일 필드만 넘기도록 정본화
+- `logic/lottoRank.ts`
+  - 6/45 등수 계산(`rankLotto645`, `bestRank`, `rankLabel`) — 백테스트 스크립트와 공유, 단위 테스트 대상
 - `logic/recommendRulesList.ts`
   - 추천 파이프라인에 쓰는 규칙 배열 정본(`RECOMMEND_RULES`, UI·Node 검증 스크립트 공통)
 - `logic/rules/excludeTopRankFromWindows.ts`
@@ -36,6 +40,13 @@
   - 장기 미출현 상위 번호 제외 규칙
 - `logic/generator.ts`
   - 제외 후 사용 가능 번호 풀에서 최종 추천 세트 생성
+- `logic/generator/scoring.ts`
+  - 이력 단번·페어 가중, 테마/세트 점수 내 사용량 페널티(기존보다 소폭 완화)로 최근 출현 정보를 조금 더 반영
+  - `hotTierBonusForNumber`: `generateDeterministicSets` 보충 경로에서만 사용하는 출현 비율 단계 가산
+- `logic/generator/coverage.ts`
+  - `scoreCoverageGain`의 트리플·페어 가중을 소폭 상향해 포트폴리오 다양성을 유지
+
+**백테스트 참고**: 최근 52회 구간에서 지표는 DB·가중치 조합에 따라 달라질 수 있다. 과거 구간에서의 수치 개선이 미래 회차로 이어진다고 보장할 수 없다.
 
 ## 확장 방법
 
@@ -51,10 +62,25 @@
 
 ## 백테스트 검증 스크립트
 
-백엔드(8010)와 DB(`lotto_winners`)가 준비된 상태에서, 최근 N회차(기본 52)에 대해 앱과 동일한 `fetchRecommendBaseData` → `runRecommendPipeline` → `generate20Sets` 흐름으로 세트를 만들고 실제 당첨과 등수를 집계합니다.
+백엔드(8010)와 DB(`lotto_winners`)가 준비된 상태에서, 최근 N회차(기본 52)에 대해 앱과 동일한 `fetchRecommendBaseData` → `toRecommendPipelineBaseContext` → `runRecommendPipeline` → `generate20Sets` 흐름으로 세트를 만들고 실제 당첨과 등수를 집계합니다. UI의 생성 버튼도 같은 `toRecommendPipelineBaseContext` 경로를 사용하므로, 제외 규칙 입력이 스크립트와 어긋나지 않습니다.
 
 ```bash
 cd frontend && npm run verify:recommend-last52
 ```
 
 환경 변수: `RECOMMEND_VERIFY_API_URL`(기본 `http://127.0.0.1:8010`), `RECOMMEND_VERIFY_DRAWS`(기본 52). Node에서 `tsx`로 실행할 때는 `tsconfig.run-scripts.json`을 사용합니다.
+
+### 지표 해석
+
+- **등수별 누적 / 비율(분모 = 총 비교 건수)**: 회차 × 세트(최대 20) 각 조합을 한 건으로 세어, 5등·4등 등이 몇 번 나왔는지에 대한 비율입니다.
+- **회차당 “5등 이상 1건 이상” 비율**: 당첨 데이터가 있는 회차만 분모로, 그중 한 세트라도 5등 이상이 나온 회차 비율입니다. 세트당 적중률과 의미가 다릅니다.
+
+가중치·규칙을 백테스트에 맞춰 조정하면 과거 구간 지표는 좋아질 수 있으나, 로또 추첨은 무작위에 가깝기 때문에 **미래 회차로의 일반화는 보장되지 않습니다.** 실험 결과는 검증·설명용으로만 취급하는 것이 좋습니다.
+
+## 단위 테스트
+
+등수 로직 회귀 방지:
+
+```bash
+cd frontend && npm run test
+```

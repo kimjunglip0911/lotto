@@ -1,6 +1,6 @@
 import { combinations, mkPairKey, mkTripleKey, registerCoverage, scoreCoverageGain, topUpWithRotatingPatterns, buildSetFromIndices } from '@/app/recommend/logic/generator/coverage'
 import { buildHistorySignals, type HistorySignals } from '@/app/recommend/logic/generator/historySignals'
-import { scoreHistoryForNumber, scoreNumberForTheme, scoreSet, trendBonusForNumber } from '@/app/recommend/logic/generator/scoring'
+import { hotTierBonusForNumber, scoreHistoryForNumber, scoreNumberForTheme, scoreSet, trendBonusForNumber } from '@/app/recommend/logic/generator/scoring'
 import { relaxThemeSpec, satisfyTheme, THEME_SPECS, ThemeSpec } from '@/app/recommend/logic/generator/theme'
 import { GeneratedSet, TrendNumberResult, WinningHistoryRow } from '@/app/recommend/logic/types'
 
@@ -70,11 +70,12 @@ export function generateDeterministicSets(
         }
 
         const tBonus = trendBonusForNumber(num, trendMap)
-        const fPenalty = (usageCount.get(num) ?? 0) * 3
+        const fPenalty = (usageCount.get(num) ?? 0) * 2.55
         const hist = scoreHistoryForNumber(num, historySignals)
+        const hotB = hotTierBonusForNumber(num, historySignals)
         // 세트 간으로 아직 적게 쓰인 가용 번호에 소프트 보너스(표현력 보조)
         const spreadBonus = Math.max(0, meanUse - (usageCount.get(num) ?? 0)) * 0.45
-        const score = newTriples * 6 + newPairs * 2 + tBonus + hist + spreadBonus - fPenalty
+        const score = newTriples * 6 + newPairs * 2 + tBonus + hist + hotB * 0.55 + spreadBonus - fPenalty
 
         if (score > bestScore || (score === bestScore && (bestNum === -1 || num < bestNum))) {
           bestScore = score
@@ -138,7 +139,8 @@ function buildThemeSet(
     return a - b
   })
 
-  const poolSizes = [18, 24, Math.min(30, available.length), available.length]
+  // 소폭 넓힌 풀: 테마 조합 후보에 번호 다양성을 조금 더 실어 회차당 적중 여지를 확대
+  const poolSizes = [19, 25, Math.min(32, available.length), available.length]
 
   for (const poolSize of poolSizes) {
     const pool = ranked.slice(0, poolSize).sort((a, b) => a - b)

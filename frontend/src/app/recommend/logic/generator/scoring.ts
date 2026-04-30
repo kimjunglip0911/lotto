@@ -9,16 +9,29 @@ export const TREND_BONUS: Record<string, number> = {
   down_cont: -1,
 }
 
-/** 이력 단번 정규화 가중(트렌드 EMA와 역할 분리, 소량) */
-const HISTORY_NUMBER_WEIGHT = 1.05
+/** 이력 단번 정규화 가중(트렌드 EMA와 역할 분리, 소량 — 기본 1.05 대비 소폭 상향) */
+const HISTORY_NUMBER_WEIGHT = 1.18
 /** 이력 페어 정규화 가중 */
-const HISTORY_PAIR_WEIGHT = 0.42
+const HISTORY_PAIR_WEIGHT = 0.44
 
 /** 최근 주번 출현 빈도를 0~스케일로 반영(트렌드와 이중 과대 방지 위해 작게) */
 export function scoreHistoryForNumber(n: number, signals: HistorySignals | null): number {
   if (!signals || signals.maxNumberHits === 0) return 0
   const c = signals.numberHitCount.get(n) ?? 0
   return (c / signals.maxNumberHits) * HISTORY_NUMBER_WEIGHT
+}
+
+/**
+ * 최근 윈도우 출현 비율 상위에 소량 가산(탐욕 보충 세트 전용으로 generator에서만 사용).
+ */
+export function hotTierBonusForNumber(n: number, signals: HistorySignals | null): number {
+  if (!signals || signals.maxNumberHits === 0) return 0
+  const c = signals.numberHitCount.get(n) ?? 0
+  const r = c / signals.maxNumberHits
+  if (r >= 0.85) return 0.55
+  if (r >= 0.65) return 0.32
+  if (r >= 0.45) return 0.14
+  return 0
 }
 
 /** 조합 내 페어들의 공출현 이력 합산 */
@@ -43,7 +56,7 @@ export function scoreNumberForTheme(
   historySignals: HistorySignals | null = null,
 ): number {
   let score = (TREND_BONUS[trendMap.get(n) ?? 'topping'] ?? 0) * 2
-  score -= (usageCount.get(n) ?? 0) * 2
+  score -= (usageCount.get(n) ?? 0) * 1.82
 
   if (spec.preferLow) score += (46 - n) * 0.08
   if (spec.preferHigh) score += n * 0.08
@@ -66,7 +79,7 @@ export function scoreSet(
   let score = 0
   for (const n of nums) {
     score += (TREND_BONUS[trendMap.get(n) ?? 'topping'] ?? 0) * 2
-    score -= (usageCount.get(n) ?? 0) * 1.8
+    score -= (usageCount.get(n) ?? 0) * 1.68
     if ((usageCount.get(n) ?? 0) === 0) score += 2.5
   }
   score += (nums[5] - nums[0]) * 0.08

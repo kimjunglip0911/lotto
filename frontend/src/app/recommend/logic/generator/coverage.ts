@@ -25,7 +25,7 @@ export function scoreCoverageGain(
     }
   }
   // 포트폴리오 내 신규 페어·트리플 다양화(이력·균형 점수와 경쟁하지 않도록 트리플 가중 완화)
-  return newTriples * 5 + newPairs * 2
+  return newTriples * 5.15 + newPairs * 2.04
 }
 
 export function registerCoverage(
