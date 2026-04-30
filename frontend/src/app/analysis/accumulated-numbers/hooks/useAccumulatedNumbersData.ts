@@ -19,10 +19,13 @@ import {
   buildStrategyRecommendation,
   combineStrategyRecommendations,
   getDefaultBacktestWindowSizes,
+  pickAdaptiveWindowsByStrategy,
   pickTopWindowsByStrategy,
   runAccumulatedNumbersBacktest,
   sliceWindowTail,
 } from '../logic/backtestEngine';
+const EXTENDED_WINDOW_MAX = 1208;
+
 import type {
   CountResult,
   FinalNumberPlan,
@@ -156,14 +159,26 @@ export const useAccumulatedNumbersData = () => {
     const { aggregates } = runAccumulatedNumbersBacktest({
       allRowsSortedAsc: rangeRows,
       drawNumbersToEvaluate,
-      windowSizes: getDefaultBacktestWindowSizes(),
+      windowSizes: getDefaultBacktestWindowSizes({ maxWindowSize: EXTENDED_WINDOW_MAX }),
       strategyKeys: BACKTEST_FOCUS_STRATEGY_KEYS,
     });
 
-    const shortTopRaw = pickTopWindowsByStrategy(aggregates, 'nearestMean4', 2, { maxWindowSize: 120 });
-    const longTopRaw = pickTopWindowsByStrategy(aggregates, 'twoHotTwoCold', 2, { minWindowSize: 240 });
+    const shortTopRaw = pickAdaptiveWindowsByStrategy(aggregates, 'nearestMean4', {
+      poolSize: 8,
+      pickCount: 2,
+      minWindowGap: 24,
+    });
+    const longTopRaw = pickAdaptiveWindowsByStrategy(aggregates, 'twoHotTwoCold', {
+      poolSize: 8,
+      pickCount: 2,
+      minWindowGap: 24,
+      minWindowSize: 240,
+    });
     const shortTop = shortTopRaw.length >= 2 ? shortTopRaw : pickTopWindowsByStrategy(aggregates, 'nearestMean4', 2);
-    const longTop = longTopRaw.length >= 2 ? longTopRaw : pickTopWindowsByStrategy(aggregates, 'twoHotTwoCold', 2);
+    const longTop =
+      longTopRaw.length >= 2
+        ? longTopRaw
+        : pickTopWindowsByStrategy(aggregates, 'twoHotTwoCold', 2, { minWindowSize: 240 });
     const charts: StrategyChartData[] = [...shortTop, ...longTop].map((w, idx) => {
       const nearestIndex = shortTop.findIndex((v) => v.windowSize === w.windowSize && v.strategy === w.strategy);
       const twoHotIndex = longTop.findIndex((v) => v.windowSize === w.windowSize && v.strategy === w.strategy);

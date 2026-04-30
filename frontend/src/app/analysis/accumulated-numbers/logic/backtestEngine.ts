@@ -44,6 +44,14 @@ export type StrategyTopWindow = {
   maxMissStreak: number;
 };
 
+type AdaptiveWindowSelectionOptions = {
+  poolSize: number;
+  pickCount: number;
+  minWindowGap?: number;
+  minWindowSize?: number;
+  maxWindowSize?: number;
+};
+
 export type StrategyRecommendation = {
   strategy: BacktestStrategyKey;
   windowSize: number;
@@ -63,11 +71,30 @@ export type FinalNumberSelection = {
   finalNumbers: number[];
 };
 
-/** UI에 정의된 윈도우 + 4~520회 8회차 간격 스윕(상한은 prior 길이에서 자연스럽게 클램프) */
-export function getDefaultBacktestWindowSizes(): number[] {
+type BacktestWindowSweepOptions = {
+  minWindowSize?: number;
+  maxWindowSize?: number;
+};
+
+/**
+ * UI에 정의된 윈도우 + 다구간 스윕 후보를 생성한다.
+ * - 단기(4~120): 4간격으로 촘촘히
+ * - 중기(128~600): 8간격
+ * - 장기(616~max): 16간격
+ */
+export function getDefaultBacktestWindowSizes(options?: BacktestWindowSweepOptions): number[] {
+  const minWindow = Math.max(1, options?.minWindowSize ?? 4);
+  const maxWindow = Math.max(minWindow, options?.maxWindowSize ?? 520);
   const fromUi = WINDOW_CONFIGS.map((c) => c.windowSize);
   const sweep: number[] = [];
-  for (let w = 4; w <= 520; w += 8) {
+
+  for (let w = minWindow; w <= Math.min(maxWindow, 120); w += 4) {
+    sweep.push(w);
+  }
+  for (let w = Math.max(minWindow, 128); w <= Math.min(maxWindow, 600); w += 8) {
+    sweep.push(w);
+  }
+  for (let w = Math.max(minWindow, 616); w <= maxWindow; w += 16) {
     sweep.push(w);
   }
   return [...new Set([...fromUi, ...sweep])].sort((a, b) => a - b);
@@ -347,6 +374,47 @@ export function pickTopWindowsByStrategy(
   }));
 }
 
+function toWindowQualityScore(row: StrategyTopWindow): number {
+  // 적중률/평균적중은 높을수록, 최대 연속 미적중은 낮을수록 유리
+  return row.atLeastOneRate * 0.7 + row.avgHits * 0.3 - row.maxMissStreak * 0.006;
+}
+
+/** 상위 Top-N 후보 풀에서 간격 제약(minWindowGap)을 두고 동적으로 pickCount개를 고른다. */
+export function pickAdaptiveWindowsByStrategy(
+  aggregates: BacktestAggregate[],
+  strategy: BacktestStrategyKey,
+  options: AdaptiveWindowSelectionOptions
+): StrategyTopWindow[] {
+  const { poolSize, pickCount, minWindowGap = 24, minWindowSize, maxWindowSize } = options;
+  const pool = pickTopWindowsByStrategy(aggregates, strategy, Math.max(poolSize, pickCount), {
+    minWindowSize,
+    maxWindowSize,
+  });
+  const ranked = [...pool].sort((a, b) => {
+    const diff = toWindowQualityScore(b) - toWindowQualityScore(a);
+    if (diff !== 0) return diff;
+    return a.windowSize - b.windowSize;
+  });
+
+  const picked: StrategyTopWindow[] = [];
+  for (const row of ranked) {
+    if (picked.length >= pickCount) break;
+    const tooClose = picked.some((p) => Math.abs(p.windowSize - row.windowSize) < minWindowGap);
+    if (!tooClose) {
+      picked.push(row);
+    }
+  }
+  if (picked.length < pickCount) {
+    for (const row of ranked) {
+      if (picked.length >= pickCount) break;
+      if (!picked.some((p) => p.windowSize === row.windowSize)) {
+        picked.push(row);
+      }
+    }
+  }
+  return picked;
+}
+
 function toScoreByNumber(
   strategy: BacktestStrategyKey,
   aggregate: BacktestAggregate,
@@ -453,11 +521,91 @@ export function buildFinalNumberSelection(
     return a - b;
   });
 
-  const finalNumbers: number[] = [...commonNumbers];
-  for (const n of merged) {
-    if (finalNumbers.length >= 4) break;
-    if (!finalNumbers.includes(n)) finalNumbers.push(n);
+  const candidatePool = [...new Set([...strategyA.numbers, ...strategyB.numbers])];
+  const candidateScore = new Map<number, number>();
+  for (const n of candidatePool) {
+    candidateScore.set(n, scoreMap.get(n) ?? 0);
   }
+
+  const bandIndex = (n: number): number => {
+    if (n <= 15) return 0;
+    if (n <= 30) return 1;
+    return 2;
+  };
+  const hasValidHardConstraints = (nums: number[]): boolean => {
+    if (nums.length !== 4) return false;
+    const sorted = [...nums].sort((a, b) => a - b);
+    const odd = sorted.filter((n) => n % 2 === 1).length;
+    const even = 4 - odd;
+    if (odd === 0 || even === 0) return false;
+
+    let consecutivePairs = 0;
+    for (let i = 1; i < sorted.length; i += 1) {
+      if (sorted[i] - sorted[i - 1] === 1) consecutivePairs += 1;
+    }
+    if (consecutivePairs > 1) return false;
+
+    const endDigitCounts = new Map<number, number>();
+    const bandCounts = [0, 0, 0];
+    for (const n of sorted) {
+      const digit = n % 10;
+      endDigitCounts.set(digit, (endDigitCounts.get(digit) ?? 0) + 1);
+      if ((endDigitCounts.get(digit) ?? 0) > 1) return false;
+
+      const b = bandIndex(n);
+      bandCounts[b] += 1;
+      if (bandCounts[b] > 2) return false;
+    }
+    return true;
+  };
+
+  const pickByScore = (numbers: number[]): number[] =>
+    [...numbers]
+      .sort((a, b) => {
+        const diff = (candidateScore.get(b) ?? 0) - (candidateScore.get(a) ?? 0);
+        if (diff !== 0) return diff;
+        return a - b;
+      })
+      .slice(0, 4);
+
+  const generated: number[] = [];
+  const combos: number[][] = [];
+  const sortedPool = [...candidatePool].sort((a, b) => a - b);
+  const dfs = (start: number) => {
+    if (generated.length === 4) {
+      combos.push([...generated]);
+      return;
+    }
+    for (let i = start; i < sortedPool.length; i += 1) {
+      generated.push(sortedPool[i]);
+      dfs(i + 1);
+      generated.pop();
+    }
+  };
+  dfs(0);
+
+  const preferred = combos
+    .filter((c) => commonNumbers.every((n) => c.includes(n)))
+    .filter(hasValidHardConstraints);
+  const fallback = combos.filter(hasValidHardConstraints);
+  const candidates = preferred.length > 0 ? preferred : fallback;
+
+  const bestConstrained =
+    candidates.length > 0
+      ? [...candidates].sort((x, y) => {
+          const sx = x.reduce((sum, n) => sum + (candidateScore.get(n) ?? 0), 0);
+          const sy = y.reduce((sum, n) => sum + (candidateScore.get(n) ?? 0), 0);
+          const diff = sy - sx;
+          if (diff !== 0) return diff;
+          const minX = Math.min(...x);
+          const minY = Math.min(...y);
+          return minX - minY;
+        })[0]
+      : null;
+
+  const finalNumbers: number[] = (bestConstrained ? [...bestConstrained] : pickByScore(merged)).sort(
+    (a, b) => a - b
+  );
 
   return {
     strategyA,

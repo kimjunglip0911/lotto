@@ -28,6 +28,7 @@ import {
   combineStrategyRecommendations,
   countMainHits,
   getDefaultBacktestWindowSizes,
+  pickAdaptiveWindowsByStrategy,
   pickTopWindowsByStrategy,
   runAccumulatedNumbersBacktest,
 } from '../logic/backtestEngine';
@@ -37,6 +38,7 @@ import type { WinningNumberRow } from '../types';
 const DEFAULT_API = 'http://127.0.0.1:8010';
 /** 이보다 작은 회차는 직전 누적이 너무 짧아 백테스트 지표 의미가 약하므로 평가에서 제외 */
 const DEFAULT_MIN_EVAL_DRAW = 100;
+const EXTENDED_WINDOW_MAX = 1208;
 
 function strategyLabel(key: BacktestAggregate['strategy']): string {
   switch (key) {
@@ -195,11 +197,21 @@ function runMergedFinalNumbersBacktest(params: {
 } {
   const { allRowsSortedAsc, drawNumbersToEvaluate, aggregates } = params;
 
-  const shortTop = pickTopWindowsByStrategy(aggregates, 'nearestMean4', 2, { maxWindowSize: 120 });
-  const longTop = pickTopWindowsByStrategy(aggregates, 'twoHotTwoCold', 2, { minWindowSize: 240 });
+  const shortTop = pickAdaptiveWindowsByStrategy(aggregates, 'nearestMean4', {
+    poolSize: 8,
+    pickCount: 2,
+    minWindowGap: 24,
+  });
+  const longTop = pickAdaptiveWindowsByStrategy(aggregates, 'twoHotTwoCold', {
+    poolSize: 8,
+    pickCount: 2,
+    minWindowGap: 24,
+    minWindowSize: 240,
+  });
 
   const shortTopSafe = shortTop.length >= 2 ? shortTop : pickTopWindowsByStrategy(aggregates, 'nearestMean4', 2);
-  const longTopSafe = longTop.length >= 2 ? longTop : pickTopWindowsByStrategy(aggregates, 'twoHotTwoCold', 2);
+  const longTopSafe =
+    longTop.length >= 2 ? longTop : pickTopWindowsByStrategy(aggregates, 'twoHotTwoCold', 2, { minWindowSize: 240 });
 
   const aggMap = new Map<string, BacktestAggregate>();
   for (const a of aggregates) {
@@ -306,7 +318,7 @@ function printMarkdownSnippet(
   console.log('```');
   console.log(`- API: ${meta.apiUrl}`);
   console.log(`- 평가 회차 범위: ${meta.minDraw} ~ ${meta.maxDraw} (총 ${meta.evaluatedDrawCount}회, 당첨 데이터 존재)`);
-  console.log(`- 윈도우 후보 수: ${meta.windowCount} (UI 고정값 + 4~520 8간격)`);
+  console.log(`- 윈도우 후보 수: ${meta.windowCount} (UI 고정값 + 단/중/장기 다구간 스윕)`);
   console.log(`- 전략: ${meta.strategyKeys.join(', ')}`);
   console.log(`- 집계: 본번호+보너스 출현 합 / 적중: 본번호 6개만 교집합`);
   console.log('');
@@ -358,7 +370,7 @@ async function main(): Promise<void> {
   }
 
   const strategyKeys = resolveStrategyKeys();
-  const windowSizes = getDefaultBacktestWindowSizes();
+  const windowSizes = getDefaultBacktestWindowSizes({ maxWindowSize: EXTENDED_WINDOW_MAX });
   const { aggregates } = runAccumulatedNumbersBacktest({
     allRowsSortedAsc: allRows,
     drawNumbersToEvaluate: toEvaluate,

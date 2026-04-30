@@ -9,14 +9,7 @@ export type WinningNumberRow = {
   bonus_num: number;
 };
 
-export type WindowKey =
-  | 'thirtyDay'
-  | 'ninetyDay'
-  | 'sixMonth'
-  | 'oneYear'
-  | 'threeYear'
-  | 'fiveYear'
-  | 'tenYear';
+export type WindowKey = 'period136' | 'period192' | 'period320' | 'period336';
 
 export type WindowConfig = {
   key: WindowKey;
