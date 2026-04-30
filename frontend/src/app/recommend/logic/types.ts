@@ -39,6 +39,9 @@ export interface ChiSquareHistoryRow {
   bonus_num: number
 }
 
+/** 추천 생성기에 전달하는 당첨 이력 한 행(주번 6 + 보너스, all-history 등과 동일 스키마) */
+export type WinningHistoryRow = ChiSquareHistoryRow
+
 export interface RecommendRuleContext {
   exclusionCandidates: ExclusionCandidatesResponse
   currentExcludedNumbers: number[]

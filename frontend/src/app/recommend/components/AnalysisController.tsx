@@ -100,6 +100,10 @@ export function AnalysisController({
         <p className="text-sm text-slate-400">
           누적 최저 출현 번호 제외 + 기간별 1등 번호 집합 제외 규칙을 순차 적용합니다.
         </p>
+        <p className="text-xs text-slate-500 leading-relaxed max-w-xl">
+          추천 세트는 최근 당첨 이력·추세를 반영한 휴리스틱이며 당첨을 보장하지 않습니다. 제외된 번호가 실제
+          당첨에 포함되면 해당 번호로는 적중할 수 없습니다.
+        </p>
       </div>
 
       <div className="w-full sm:w-auto">

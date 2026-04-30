@@ -24,8 +24,8 @@ export function scoreCoverageGain(
       }
     }
   }
-  // "당첨번호가 풀에 있는데 놓침"을 줄이기 위해 조합 커버리지를 강하게 가중
-  return newTriples * 8 + newPairs * 2
+  // 포트폴리오 내 신규 페어·트리플 다양화(이력·균형 점수와 경쟁하지 않도록 트리플 가중 완화)
+  return newTriples * 5 + newPairs * 2
 }
 
 export function registerCoverage(

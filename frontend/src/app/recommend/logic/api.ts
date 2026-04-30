@@ -1,5 +1,11 @@
 import { buildTrendResults, toWinningRows } from '@/app/recommend/logic/trend'
-import { ChiSquareHistoryRow, ExclusionCandidatesResponse, GeneratedSet, TrendNumberResult } from '@/app/recommend/logic/types'
+import {
+  ChiSquareHistoryRow,
+  ExclusionCandidatesResponse,
+  GeneratedSet,
+  TrendNumberResult,
+  WinningHistoryRow,
+} from '@/app/recommend/logic/types'
 import {
   isChiSquareHistoryRow,
   isExclusionCandidatesResponse,
@@ -33,6 +39,8 @@ export interface RecommendBaseData {
   chiSquareRows: ChiSquareHistoryRow[]
   absenceStreakRows: ChiSquareHistoryRow[]
   trendResults: TrendNumberResult[]
+  /** 최근 회차 당첨 이력(생성기 이력 신호용). `trend/all-history` 기반 */
+  allHistoryRows: WinningHistoryRow[]
 }
 
 export async function fetchRecommendBaseData(apiUrl: string, drawNo: number): Promise<RecommendBaseData> {
@@ -75,6 +83,7 @@ export async function fetchRecommendBaseData(apiUrl: string, drawNo: number): Pr
     chiSquareRows,
     absenceStreakRows,
     trendResults: buildTrendResults(allHistoryRows),
+    allHistoryRows,
   }
 }
 

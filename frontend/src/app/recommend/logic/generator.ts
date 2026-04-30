@@ -1,28 +1,27 @@
 import { combinations, mkPairKey, mkTripleKey, registerCoverage, scoreCoverageGain, topUpWithRotatingPatterns, buildSetFromIndices } from '@/app/recommend/logic/generator/coverage'
-import { scoreNumberForTheme, scoreSet, trendBonusForNumber } from '@/app/recommend/logic/generator/scoring'
+import { buildHistorySignals, type HistorySignals } from '@/app/recommend/logic/generator/historySignals'
+import { scoreHistoryForNumber, scoreNumberForTheme, scoreSet, trendBonusForNumber } from '@/app/recommend/logic/generator/scoring'
 import { relaxThemeSpec, satisfyTheme, THEME_SPECS, ThemeSpec } from '@/app/recommend/logic/generator/theme'
-import { ChiSquareHistoryRow, GeneratedSet, TrendNumberResult } from '@/app/recommend/logic/types'
-
-type HistoryRow = Pick<ChiSquareHistoryRow, 'draw_no' | 'num1' | 'num2' | 'num3' | 'num4' | 'num5' | 'num6' | 'bonus_num'>
+import { GeneratedSet, TrendNumberResult, WinningHistoryRow } from '@/app/recommend/logic/types'
 
 /**
  * 결정론적 탐욕 트리플 커버리지 알고리즘.
  *
  * 동작 방식:
  *   1. 세트 s마다 "강제 시작 번호"를 전체 풀에 고르게 분산시켜 첫 번호를 고정한다.
- *   2. 나머지 5개는 탐욕 점수(신규 트리플 × 10 + 신규 페어 × 2 + 추세 보너스 - 사용 횟수 패널티)가
+ *   2. 나머지 5개는 탐욕 점수(신규 트리플·페어 + 추세 + 최근 이력 단번 + 세트 간 사용량 균형)가
  *      가장 높은 번호를 순서대로 선택한다. 동점이면 작은 번호를 선택한다.
  *   3. 이미 생성된 세트와 동일한 조합이면 건너뛰고 다음 강제 시작 인덱스를 시도한다.
  *
  * 보장:
- *   - 동일한 available + trendResults 입력 → 항상 동일한 결과 (Math.random 사용 없음)
- *   - 전체 풀에 걸쳐 번호가 고르게 분포
- *   - 트리플 커버리지 극대화로 3개 일치(4등) 이상의 기대 적중 횟수 최대화
+ *   - 동일한 available + trendResults + 동일 당첨 이력 입력 → 항상 동일한 결과(Math.random 미사용)
+ *   - 전체 풀에 걸쳐 번호가 비교적 고르게 분포하도록 유도
  */
 export function generateDeterministicSets(
   available: number[],
   trendResults: TrendNumberResult[],
   count: number = 20,
+  historySignals: HistorySignals | null = null,
 ): GeneratedSet[] {
   if (available.length < 6) return []
 
@@ -51,6 +50,9 @@ export function generateDeterministicSets(
       let bestNum = -1
       let bestScore = -Infinity
 
+      const totalUses = sorted.reduce((acc, n) => acc + (usageCount.get(n) ?? 0), 0)
+      const meanUse = totalUses / N
+
       for (const num of sorted) {
         if (selected.includes(num)) continue
 
@@ -69,7 +71,10 @@ export function generateDeterministicSets(
 
         const tBonus = trendBonusForNumber(num, trendMap)
         const fPenalty = (usageCount.get(num) ?? 0) * 3
-        const score = newTriples * 10 + newPairs * 2 + tBonus - fPenalty
+        const hist = scoreHistoryForNumber(num, historySignals)
+        // 세트 간으로 아직 적게 쓰인 가용 번호에 소프트 보너스(표현력 보조)
+        const spreadBonus = Math.max(0, meanUse - (usageCount.get(num) ?? 0)) * 0.45
+        const score = newTriples * 6 + newPairs * 2 + tBonus + hist + spreadBonus - fPenalty
 
         if (score > bestScore || (score === bestScore && (bestNum === -1 || num < bestNum))) {
           bestScore = score
@@ -123,11 +128,12 @@ function buildThemeSet(
   usedSetKeys: Set<string>,
   coveredPairs: Set<string>,
   coveredTriples: Set<string>,
+  historySignals: HistorySignals | null,
   enforceTheme: boolean = true,
 ): number[] | null {
   const ranked = [...available].sort((a, b) => {
-    const sa = scoreNumberForTheme(a, spec, trendMap, usageCount)
-    const sb = scoreNumberForTheme(b, spec, trendMap, usageCount)
+    const sa = scoreNumberForTheme(a, spec, trendMap, usageCount, historySignals)
+    const sb = scoreNumberForTheme(b, spec, trendMap, usageCount, historySignals)
     if (sa !== sb) return sb - sa
     return a - b
   })
@@ -146,7 +152,7 @@ function buildThemeSet(
       if (enforceTheme && !satisfyTheme(nums, spec)) return
 
       const score =
-        scoreSet(nums, trendMap, usageCount) +
+        scoreSet(nums, trendMap, usageCount, historySignals) +
         scoreCoverageGain(nums, coveredPairs, coveredTriples)
       if (score > bestScore) {
         bestScore = score
@@ -165,6 +171,7 @@ export function generateThemeDiverseSets(
   available: number[],
   trendResults: TrendNumberResult[],
   count: number = 20,
+  historySignals: HistorySignals | null = null,
 ): GeneratedSet[] {
   if (available.length < 6) return []
 
@@ -186,6 +193,7 @@ export function generateThemeDiverseSets(
       usedSetKeys,
       coveredPairs,
       coveredTriples,
+      historySignals,
       true,
     )
     if (!nums) {
@@ -197,6 +205,7 @@ export function generateThemeDiverseSets(
         usedSetKeys,
         coveredPairs,
         coveredTriples,
+        historySignals,
         true,
       )
     }
@@ -210,6 +219,7 @@ export function generateThemeDiverseSets(
         usedSetKeys,
         coveredPairs,
         coveredTriples,
+        historySignals,
         false,
       )
     }
@@ -232,7 +242,7 @@ export function generateThemeDiverseSets(
   }
 
   if (sets.length < count) {
-    const extra = generateDeterministicSets(pool, trendResults, count - sets.length)
+    const extra = generateDeterministicSets(pool, trendResults, count - sets.length, historySignals)
     for (const s of extra) {
       const key = [s.num1, s.num2, s.num3, s.num4, s.num5, s.num6].join(',')
       if (!usedSetKeys.has(key) && sets.length < count) {
@@ -283,11 +293,11 @@ export function generateThemeDiverseSets(
 export function generate20Sets(
   available: number[],
   trendResults: TrendNumberResult[],
-  _allHistoryRows: HistoryRow[] = [],
+  allHistoryRows: WinningHistoryRow[] = [],
 ): GeneratedSet[] {
-  void _allHistoryRows
+  const historySignals = buildHistorySignals(allHistoryRows)
   const targetCount = 20
-  const themeOnlySets = generateThemeDiverseSets(available, trendResults, targetCount)
+  const themeOnlySets = generateThemeDiverseSets(available, trendResults, targetCount, historySignals)
   return themeOnlySets.slice(0, targetCount).map((set) => ({
     ...set,
     strategy: set.strategy?.startsWith('theme:') ? set.strategy : 'theme-diversity',

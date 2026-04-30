@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { generate20Sets } from '@/app/recommend/logic/generator'
 import { generateAndSaveSets, fetchRecommendBaseData, errorMessage } from '@/app/recommend/logic/api'
 import { runRecommendPipeline } from '@/app/recommend/logic/pipeline'
-import { GeneratedSet, RecommendPipelineResult, TrendNumberResult } from '@/app/recommend/logic/types'
+import { GeneratedSet, RecommendPipelineResult, TrendNumberResult, WinningHistoryRow } from '@/app/recommend/logic/types'
 import { RECOMMEND_RULES } from '@/app/recommend/hooks/recommendRules'
 import { useRecommendApiUrl } from '@/app/recommend/hooks/useRecommendApiUrl'
 
@@ -26,11 +26,15 @@ export function useRecommendGeneration({
   const [isGenerating, setIsGenerating] = useState(false)
   const apiUrl = useRecommendApiUrl()
 
-  const buildGeneratedSetsPayload = (pipelineResult: RecommendPipelineResult, trendResults: TrendNumberResult[]) => {
+  const buildGeneratedSetsPayload = (
+    pipelineResult: RecommendPipelineResult,
+    trendResults: TrendNumberResult[],
+    allHistoryRows: WinningHistoryRow[],
+  ) => {
     const excludedSet = new Set(pipelineResult.excludedNumbers)
     const availableNumbers = Array.from({ length: 45 }, (_, i) => i + 1).filter((n) => !excludedSet.has(n))
 
-    return generate20Sets(availableNumbers, trendResults).map((set) => ({
+    return generate20Sets(availableNumbers, trendResults, allHistoryRows).map((set) => ({
       ...set,
       applied_rule_ids: pipelineResult.appliedRules.map((rule) => rule.ruleId),
       excluded_numbers: pipelineResult.excludedNumbers,
@@ -49,7 +53,11 @@ export function useRecommendGeneration({
       setPipelineResult(nextPipelineResult)
       setStatusMessage('추천 번호를 생성하고 저장하는 중입니다...')
 
-      const generatedSetsPayload = buildGeneratedSetsPayload(nextPipelineResult, baseData.trendResults)
+      const generatedSetsPayload = buildGeneratedSetsPayload(
+        nextPipelineResult,
+        baseData.trendResults,
+        baseData.allHistoryRows,
+      )
 
       const generatedData = await generateAndSaveSets(apiUrl, {
         drawNo: baseData.exclusionCandidates.drawNo,

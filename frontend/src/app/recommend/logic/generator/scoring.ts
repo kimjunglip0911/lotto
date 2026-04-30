@@ -1,3 +1,5 @@
+import { mkPairKey } from '@/app/recommend/logic/generator/coverage'
+import type { HistorySignals } from '@/app/recommend/logic/generator/historySignals'
 import { isInBand, PRIME_NUMBERS, ThemeSpec } from '@/app/recommend/logic/generator/theme'
 
 export const TREND_BONUS: Record<string, number> = {
@@ -7,11 +9,38 @@ export const TREND_BONUS: Record<string, number> = {
   down_cont: -1,
 }
 
+/** 이력 단번 정규화 가중(트렌드 EMA와 역할 분리, 소량) */
+const HISTORY_NUMBER_WEIGHT = 1.05
+/** 이력 페어 정규화 가중 */
+const HISTORY_PAIR_WEIGHT = 0.42
+
+/** 최근 주번 출현 빈도를 0~스케일로 반영(트렌드와 이중 과대 방지 위해 작게) */
+export function scoreHistoryForNumber(n: number, signals: HistorySignals | null): number {
+  if (!signals || signals.maxNumberHits === 0) return 0
+  const c = signals.numberHitCount.get(n) ?? 0
+  return (c / signals.maxNumberHits) * HISTORY_NUMBER_WEIGHT
+}
+
+/** 조합 내 페어들의 공출현 이력 합산 */
+export function scoreHistoryForSet(nums: number[], signals: HistorySignals | null): number {
+  if (!signals || signals.maxPairHits === 0 || nums.length < 2) return 0
+  let sum = 0
+  for (let i = 0; i < nums.length; i++) {
+    for (let j = i + 1; j < nums.length; j++) {
+      const key = mkPairKey(nums[i], nums[j])
+      const c = signals.pairHitCount.get(key) ?? 0
+      sum += c / signals.maxPairHits
+    }
+  }
+  return sum * HISTORY_PAIR_WEIGHT
+}
+
 export function scoreNumberForTheme(
   n: number,
   spec: ThemeSpec,
   trendMap: Map<number, string>,
   usageCount: Map<number, number>,
+  historySignals: HistorySignals | null = null,
 ): number {
   let score = (TREND_BONUS[trendMap.get(n) ?? 'topping'] ?? 0) * 2
   score -= (usageCount.get(n) ?? 0) * 2
@@ -23,6 +52,8 @@ export function scoreNumberForTheme(
   if (spec.preferEven && n % 2 === 0) score += 0.8
   if (spec.preferPrime && PRIME_NUMBERS.has(n)) score += 1
 
+  score += scoreHistoryForNumber(n, historySignals)
+
   return score
 }
 
@@ -30,6 +61,7 @@ export function scoreSet(
   nums: number[],
   trendMap: Map<number, string>,
   usageCount: Map<number, number>,
+  historySignals: HistorySignals | null = null,
 ): number {
   let score = 0
   for (const n of nums) {
@@ -38,6 +70,7 @@ export function scoreSet(
     if ((usageCount.get(n) ?? 0) === 0) score += 2.5
   }
   score += (nums[5] - nums[0]) * 0.08
+  score += scoreHistoryForSet(nums, historySignals)
   return score
 }
 
