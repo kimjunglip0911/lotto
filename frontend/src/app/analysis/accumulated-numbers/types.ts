@@ -32,3 +32,12 @@ export type WindowChartData = {
   analyzedDrawCount: number;
   noDataMessage: string;
 };
+
+/** 회차 묶음 기준 번호별 집계 결과(차트·안내용). */
+export type CountResult = {
+  counts: number[];
+  analyzedDrawCount: number;
+};
+
+/** 윈도우 키별 집계 결과 맵. */
+export type WindowCountResultMap = Record<WindowKey, CountResult>;

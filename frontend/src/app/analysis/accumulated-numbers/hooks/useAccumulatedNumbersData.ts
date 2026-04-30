@@ -1,37 +1,18 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
+import {
+  fetchDrawNumbers,
+  fetchWinningNumberByDraw,
+  fetchWinningNumbersRange,
+  fetchWinningNumbersWindow,
+} from '../api';
 import { WINDOW_CONFIGS } from '../constants';
-import { buildNumberCounts, createEmptyCountResult, isWinningNumberRow } from '../logic/numberCounts';
-import type { WinningNumberRow, WindowChartData, WindowKey } from '../types';
-
-type CountResult = {
-  counts: number[];
-  analyzedDrawCount: number;
-};
-
-const EMPTY_RESULT: CountResult = createEmptyCountResult();
-
-type WindowCountResultMap = Record<WindowKey, CountResult>;
-
-const createEmptyWindowCountMap = () =>
-  Object.fromEntries(WINDOW_CONFIGS.map((config) => [config.key, createEmptyCountResult()])) as WindowCountResultMap;
-
-const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
-
-const parseNumberArrayResponse = (data: unknown, invalidMessage: string) => {
-  if (!Array.isArray(data)) {
-    throw new Error(invalidMessage);
-  }
-
-  return data.filter((item): item is number => typeof item === 'number');
-};
-
-const parseWinningNumberRowsResponse = (data: unknown, invalidMessage: string) => {
-  if (!Array.isArray(data)) {
-    throw new Error(invalidMessage);
-  }
-
-  return data.filter(isWinningNumberRow);
-};
+import {
+  buildWindowCountResultMap,
+  createEmptyCountResult,
+  createEmptyWindowCountMap,
+  toCountResult,
+} from '../logic/numberCounts';
+import type { CountResult, WinningNumberRow, WindowCountResultMap } from '../types';
 
 const parseSelectedDrawNo = (selectedDraw: string) => {
   const selectedDrawNo = Number(selectedDraw);
@@ -40,61 +21,6 @@ const parseSelectedDrawNo = (selectedDraw: string) => {
   }
   return selectedDrawNo;
 };
-
-const buildWindowCountResultMap = (windowRows: WinningNumberRow[][]): WindowCountResultMap =>
-  Object.fromEntries(
-    WINDOW_CONFIGS.map((config, index) => {
-      const rows = windowRows[index] ?? [];
-      return [config.key, toCountResult(rows)];
-    })
-  ) as WindowCountResultMap;
-
-const fetchWinningNumberByDraw = async (drawNo: number) => {
-  const response = await fetch(`${apiUrl}/api/analysis/accumulated-numbers/winning-number?draw_no=${drawNo}`);
-
-  if (!response.ok) {
-    if (response.status === 404) {
-      throw new Error('선택한 회차의 당첨번호를 찾을 수 없습니다.');
-    }
-    throw new Error(`Failed to fetch selected winning number: ${response.status}`);
-  }
-
-  const data: unknown = await response.json();
-  if (!isWinningNumberRow(data)) {
-    throw new Error('Selected winning number response is invalid');
-  }
-
-  return data;
-};
-
-const fetchWinningNumbersRange = async (drawNo: number) => {
-  const response = await fetch(`${apiUrl}/api/analysis/accumulated-numbers/winning-numbers-range?draw_no=${drawNo}`);
-
-  if (!response.ok) {
-    throw new Error(`Failed to fetch winning numbers range: ${response.status}`);
-  }
-
-  const data: unknown = await response.json();
-  return parseWinningNumberRowsResponse(data, 'Winning numbers range response is not an array');
-};
-
-const fetchWinningNumbersWindow = async (drawNo: number, windowSize: number) => {
-  const response = await fetch(
-    `${apiUrl}/api/analysis/accumulated-numbers/winning-numbers-window?draw_no=${drawNo}&window_size=${windowSize}`
-  );
-
-  if (!response.ok) {
-    throw new Error(`Failed to fetch winning numbers window: ${response.status}`);
-  }
-
-  const data: unknown = await response.json();
-  return parseWinningNumberRowsResponse(data, 'Winning numbers window response is not an array');
-};
-
-const toCountResult = (rows: WinningNumberRow[]): CountResult => ({
-  counts: buildNumberCounts(rows),
-  analyzedDrawCount: rows.length,
-});
 
 export const useAccumulatedNumbersData = () => {
   const [availableDraws, setAvailableDraws] = useState<number[]>([]);
@@ -107,8 +33,10 @@ export const useAccumulatedNumbersData = () => {
   const [selectedWinningNumber, setSelectedWinningNumber] = useState<WinningNumberRow | null>(null);
   const [isLoadingSelectedWinningNumber, setIsLoadingSelectedWinningNumber] = useState(false);
   const [selectedWinningNumberError, setSelectedWinningNumberError] = useState<string | null>(null);
-  const [allTimeCountResult, setAllTimeCountResult] = useState<CountResult>({ ...EMPTY_RESULT });
-  const [windowCountResultMap, setWindowCountResultMap] = useState<WindowCountResultMap>(createEmptyWindowCountMap);
+  const [allTimeCountResult, setAllTimeCountResult] = useState<CountResult>(() => createEmptyCountResult());
+  const [windowCountResultMap, setWindowCountResultMap] = useState<WindowCountResultMap>(() =>
+    createEmptyWindowCountMap()
+  );
 
   useEffect(() => {
     let isMounted = true;
@@ -119,16 +47,7 @@ export const useAccumulatedNumbersData = () => {
       setDrawLoadError(null);
 
       try {
-        const response = await fetch(`${apiUrl}/api/analysis/accumulated-numbers/draw-numbers`, {
-          signal: abortController.signal,
-        });
-
-        if (!response.ok) {
-          throw new Error(`Failed to fetch draw numbers: ${response.status}`);
-        }
-
-        const data: unknown = await response.json();
-        const draws = parseNumberArrayResponse(data, 'Draw numbers response is not an array');
+        const draws = await fetchDrawNumbers(abortController.signal);
         if (!isMounted) {
           return;
         }
@@ -160,7 +79,7 @@ export const useAccumulatedNumbersData = () => {
   }, []);
 
   const resetSearchResults = (options?: { clearWinningNumber?: boolean }) => {
-    setAllTimeCountResult({ ...EMPTY_RESULT });
+    setAllTimeCountResult(createEmptyCountResult());
     setWindowCountResultMap(createEmptyWindowCountMap());
 
     if (options?.clearWinningNumber) {
@@ -231,21 +150,6 @@ export const useAccumulatedNumbersData = () => {
     }
   };
 
-  const windowCharts: WindowChartData[] = useMemo(
-    () =>
-      WINDOW_CONFIGS.map((config) => {
-        const result = windowCountResultMap[config.key] ?? EMPTY_RESULT;
-        return {
-          key: config.key,
-          title: config.title,
-          counts: result.counts,
-          analyzedDrawCount: result.analyzedDrawCount,
-          noDataMessage: config.noDataMessage,
-        };
-      }),
-    [windowCountResultMap]
-  );
-
   return {
     availableDraws,
     selectedDraw,
@@ -259,7 +163,7 @@ export const useAccumulatedNumbersData = () => {
     isLoadingSelectedWinningNumber,
     selectedWinningNumberError,
     allTimeCountResult,
-    windowCharts,
+    windowCountResultMap,
     handleSearch,
   };
 };
