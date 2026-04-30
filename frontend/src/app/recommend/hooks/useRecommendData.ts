@@ -21,6 +21,7 @@ export function useRecommendData() {
   const [pipelineResult, setPipelineResult] = useState<RecommendPipelineResult | null>(null)
   const [generatedSets, setGeneratedSets] = useState<GeneratedSet[]>([])
   const [winningNumbers, setWinningNumbers] = useState<number[] | null>(null)
+  const [usedNumbers, setUsedNumbers] = useState<number[]>([])
 
   const apiUrl = useRecommendApiUrl()
 
@@ -28,6 +29,7 @@ export function useRecommendData() {
     setPipelineResult(null)
     setGeneratedSets([])
     setWinningNumbers(null)
+    setUsedNumbers([])
     setError(null)
     setStatusMessage(`${draw}회차 저장된 추천 세트를 불러오는 중입니다...`)
   }
@@ -35,10 +37,12 @@ export function useRecommendData() {
   const applySavedDataState = (
     draw: number,
     winningNumbersData: number[] | null,
+    usedNumbersData: number[],
     sets: GeneratedSet[],
     pipeline: RecommendPipelineResult,
   ) => {
     setWinningNumbers(winningNumbersData)
+    setUsedNumbers(usedNumbersData)
     setGeneratedSets(sets)
     setPipelineResult(pipeline)
     if (sets.length > 0) {
@@ -51,6 +55,7 @@ export function useRecommendData() {
   const applySavedDataErrorState = (draw: number) => {
     setGeneratedSets([])
     setPipelineResult(null)
+    setUsedNumbers([])
     setStatusMessage(`${draw}회차 세트 조회 중 오류가 발생했습니다.`)
   }
 
@@ -103,7 +108,7 @@ export function useRecommendData() {
         )
         if (!isMounted) return
 
-        applySavedDataState(selectedDraw, saved.winningNumbers, saved.sets, pipeline)
+        applySavedDataState(selectedDraw, saved.winningNumbers, saved.usedNumbersPlan.numbers, saved.sets, pipeline)
       } catch (err) {
         if (!isMounted) return
         applySavedDataErrorState(selectedDraw)
@@ -132,5 +137,7 @@ export function useRecommendData() {
     generatedSets,
     setGeneratedSets,
     winningNumbers,
+    usedNumbers,
+    setUsedNumbers,
   }
 }

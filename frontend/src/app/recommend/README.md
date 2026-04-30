@@ -4,7 +4,7 @@
 
 ## 목적
 
-- 추천 실행 시 제외 규칙을 순차 적용하고, 최종 추천 세트를 생성/저장합니다.
+- 추천 실행 시 제외 규칙을 순차 적용하고, 누적번호분석 최종 4개(사용 번호)를 함께 표시하며 최종 추천 세트를 생성/저장합니다.
 - 향후 규칙이 늘어나도 `logic/rules`에 파일을 추가하는 방식으로 확장할 수 있게 합니다.
 
 ## 화면 구성
@@ -13,7 +13,7 @@
 - `hooks/useRecommendData.ts`: 회차 목록 로드 + 선택 회차 저장 세트/파이프라인 상태 조회
 - `hooks/useRecommendGeneration.ts`: 생성/저장 실행 플로우 담당
 - `components/AnalysisController.tsx`: 실행 버튼/회차 선택/당첨번호 표시
-- `components/AnalysisResultList.tsx`: 적용 규칙, 제외 번호, 생성 결과 표시
+- `components/AnalysisResultList.tsx`: 사용 번호(누적번호분석 최종 4개), 적용 규칙, 제외 번호, 생성 결과 표시
 
 ## 로직 구조
 
@@ -30,8 +30,6 @@
   - 6/45 등수 계산(`rankLotto645`, `bestRank`, `rankLabel`) — 백테스트 스크립트와 공유, 단위 테스트 대상
 - `logic/recommendRulesList.ts`
   - 추천 파이프라인에 쓰는 규칙 배열 정본(`RECOMMEND_RULES`, UI·Node 검증 스크립트 공통)
-- `logic/rules/excludeTopRankFromWindows.ts`
-  - 누적 기준 제외 번호 규칙
 - `logic/rules/excludeChiSquareHighDeviation.ts`
   - 카이제곱 편차 기반 제외 규칙
 - `logic/rules/excludeTrendDown.ts`
@@ -40,6 +38,8 @@
   - 장기 미출현 상위 번호 제외 규칙
 - `logic/generator.ts`
   - 제외 후 사용 가능 번호 풀에서 최종 추천 세트 생성
+- `logic/usedNumbers.ts`
+  - 누적번호분석과 동일한 전략 조합으로 최종 사용 번호 4개 계산
 - `logic/generator/scoring.ts`
   - 이력 단번·페어 가중, 테마/세트 점수 내 사용량 페널티(기존보다 소폭 완화)로 최근 출현 정보를 조금 더 반영
   - `hotTierBonusForNumber`: `generateDeterministicSets` 보충 경로에서만 사용하는 출현 비율 단계 가산

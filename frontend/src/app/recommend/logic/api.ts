@@ -4,8 +4,10 @@ import {
   ExclusionCandidatesResponse,
   GeneratedSet,
   TrendNumberResult,
+  UsedNumbersPlan,
   WinningHistoryRow,
 } from '@/app/recommend/logic/types'
+import { deriveUsedNumbers } from '@/app/recommend/logic/usedNumbers'
 import {
   isChiSquareHistoryRow,
   isExclusionCandidatesResponse,
@@ -36,6 +38,7 @@ export async function fetchDrawNumbers(apiUrl: string): Promise<number[]> {
 
 export interface RecommendBaseData {
   exclusionCandidates: ExclusionCandidatesResponse
+  usedNumbersPlan: UsedNumbersPlan
   chiSquareRows: ChiSquareHistoryRow[]
   absenceStreakRows: ChiSquareHistoryRow[]
   trendResults: TrendNumberResult[]
@@ -77,9 +80,14 @@ export async function fetchRecommendBaseData(apiUrl: string, drawNo: number): Pr
     ? absenceStreakRangeData.filter(isChiSquareHistoryRow)
     : []
   const allHistoryRows = toWinningRows(allHistoryData)
+  const usedNumbers = deriveUsedNumbers(exclusionData.drawNo, allHistoryRows)
 
   return {
     exclusionCandidates: exclusionData,
+    usedNumbersPlan: {
+      drawNo: exclusionData.drawNo,
+      numbers: usedNumbers,
+    },
     chiSquareRows,
     absenceStreakRows,
     trendResults: buildTrendResults(allHistoryRows),

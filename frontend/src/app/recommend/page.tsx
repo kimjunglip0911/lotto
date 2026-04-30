@@ -33,11 +33,14 @@ export default function RecommendPage() {
     generatedSets,
     setGeneratedSets,
     winningNumbers,
+    usedNumbers,
+    setUsedNumbers,
   } = useRecommendData();
   const { isGenerating, handleGenerateAndSave } = useRecommendGeneration({
     selectedDraw,
     setPipelineResult,
     setGeneratedSets,
+    setUsedNumbers,
     setStatusMessage,
     setError,
   });
@@ -64,6 +67,7 @@ export default function RecommendPage() {
             targetDrawNo={selectedDraw}
             appliedRules={pipelineResult?.appliedRules ?? []}
             excludedNumbers={pipelineResult?.excludedNumbers ?? []}
+            usedNumbers={usedNumbers}
             sets={generatedSets}
             winningNumbers={winningNumbers ?? undefined}
           />

@@ -17,6 +17,7 @@ interface AnalysisResultListProps {
   targetDrawNo?: number | null;
   appliedRules?: RecommendRuleResult[];
   excludedNumbers?: number[];
+  usedNumbers?: number[];
   sets?: GeneratedSet[];
   winningNumbers?: number[];
 }
@@ -26,6 +27,7 @@ export const AnalysisResultList: React.FC<AnalysisResultListProps> = ({
   targetDrawNo,
   appliedRules = [],
   excludedNumbers = [],
+  usedNumbers = [],
   sets = [],
   winningNumbers,
 }) => {
@@ -41,6 +43,25 @@ export const AnalysisResultList: React.FC<AnalysisResultListProps> = ({
         <p>추천 로직은 제외 번호를 누적한 뒤 최종 추천 세트를 생성 및 저장합니다.</p>
         {targetDrawNo ? <p className="text-slate-200">기준 회차: {targetDrawNo}회</p> : null}
         {statusMessage ? <p className="text-emerald-300">{statusMessage}</p> : null}
+
+        {/* 누적번호분석 최종 채택 4개 */}
+        <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 px-4 py-3 space-y-2">
+          <p className="text-sm font-semibold text-amber-300">사용 번호 (누적번호분석 최종 4개)</p>
+          {usedNumbers.length > 0 ? (
+            <div className="flex flex-wrap gap-1.5">
+              {usedNumbers.map((num) => (
+                <span
+                  key={`used-${num}`}
+                  className={`inline-flex h-7 min-w-7 items-center justify-center rounded-full px-2 text-xs font-bold ${winningSet.has(num) ? 'bg-red-600/80 text-white border border-red-400' : 'bg-amber-500/20 text-amber-200 border border-amber-500/40'}`}
+                >
+                  {num}
+                </span>
+              ))}
+            </div>
+          ) : (
+            <p className="text-xs text-slate-500">해당 없음</p>
+          )}
+        </div>
 
         {/* 규칙별 제외 번호 구분 표시 */}
         {appliedRules.length > 0 ? (

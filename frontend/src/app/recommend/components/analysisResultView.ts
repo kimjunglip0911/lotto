@@ -8,11 +8,6 @@ export interface RuleDisplay {
 
 /** 규칙 ID별 표시 설정 */
 export const RULE_DISPLAY: Record<string, RuleDisplay> = {
-  'exclude-top-rank-from-windows': {
-    label: '누적(기간별) 제외 번호',
-    badgeClass: 'bg-amber-500/20 text-amber-200 border border-amber-500/40',
-    headerClass: 'text-amber-300',
-  },
   'exclude-chi-square-high-deviation': {
     label: '카이제곱 +편차 초과 제외 번호',
     badgeClass: 'bg-blue-500/20 text-blue-200 border border-blue-500/40',
@@ -69,7 +64,7 @@ export function getDisplayExcludedNumbers(
   globalRestoredSet: Set<number>,
 ): number[] {
   return [...new Set(rule.excludedNumbers)]
-    .filter((num) => rule.ruleId === 'exclude-top-rank-from-windows' || !globalRestoredSet.has(num))
+    .filter((num) => !globalRestoredSet.has(num))
     .sort((a, b) => a - b);
 }
 

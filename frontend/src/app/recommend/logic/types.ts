@@ -28,6 +28,11 @@ export interface ExclusionCandidatesResponse {
   }
 }
 
+export interface UsedNumbersPlan {
+  drawNo: number
+  numbers: number[]
+}
+
 export interface ChiSquareHistoryRow {
   draw_no: number
   num1: number

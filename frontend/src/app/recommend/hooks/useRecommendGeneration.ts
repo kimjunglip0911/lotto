@@ -13,6 +13,7 @@ interface UseRecommendGenerationOptions {
   selectedDraw: number | null
   setPipelineResult: (value: RecommendPipelineResult | null) => void
   setGeneratedSets: (value: GeneratedSet[]) => void
+  setUsedNumbers: (value: number[]) => void
   setStatusMessage: (value: string | null) => void
   setError: (value: string | null) => void
 }
@@ -21,6 +22,7 @@ export function useRecommendGeneration({
   selectedDraw,
   setPipelineResult,
   setGeneratedSets,
+  setUsedNumbers,
   setStatusMessage,
   setError,
 }: UseRecommendGenerationOptions) {
@@ -52,6 +54,7 @@ export function useRecommendGeneration({
       const baseData = await fetchRecommendBaseData(apiUrl, selectedDraw)
       const nextPipelineResult = runRecommendPipeline(toRecommendPipelineBaseContext(baseData), RECOMMEND_RULES)
       setPipelineResult(nextPipelineResult)
+      setUsedNumbers(baseData.usedNumbersPlan.numbers)
       setStatusMessage('추천 번호를 생성하고 저장하는 중입니다...')
 
       const generatedSetsPayload = buildGeneratedSetsPayload(
@@ -76,6 +79,7 @@ export function useRecommendGeneration({
       setError(msg)
       setPipelineResult(null)
       setGeneratedSets([])
+      setUsedNumbers([])
       setStatusMessage(null)
     } finally {
       setIsGenerating(false)
