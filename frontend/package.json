@@ -6,7 +6,8 @@
     "dev": "next dev --webpack -p 3010",
     "build": "next build",
     "start": "next start -p 3010",
-    "lint": "eslint"
+    "lint": "eslint",
+    "verify:recommend-last52": "npx tsx --tsconfig tsconfig.run-scripts.json scripts/recommend-verify-last52.ts"
   },
   "dependencies": {
     "class-variance-authority": "^0.7.1",

@@ -11,7 +11,8 @@
         "build": "npm run build -w frontend",
         "start": "npm run start -w frontend",
         "lint": "npm run lint -w frontend",
-        "cursor-sdk:example": "node scripts/cursor-sdk-example.mjs"
+        "cursor-sdk:example": "node scripts/cursor-sdk-example.mjs",
+        "verify:recommend-last52": "npm run verify:recommend-last52 -w frontend"
     },
     "devDependencies": {
         "@tailwindcss/postcss": "^4.2.1",

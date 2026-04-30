@@ -24,6 +24,8 @@
   - Recommend/Analysis API 호출과 응답 파싱, 타입가드, 추세 계산 공통화
 - `logic/pipeline.ts`
   - 규칙 배열을 순회하며 제외 번호를 누적 계산
+- `logic/recommendRulesList.ts`
+  - 추천 파이프라인에 쓰는 규칙 배열 정본(`RECOMMEND_RULES`, UI·Node 검증 스크립트 공통)
 - `logic/rules/excludeTopRankFromWindows.ts`
   - 누적 기준 제외 번호 규칙
 - `logic/rules/excludeChiSquareHighDeviation.ts`
@@ -39,10 +41,20 @@
 
 1. `logic/rules`에 신규 규칙 파일 생성
 2. `RecommendRule` 인터페이스로 `id`, `name`, `apply` 구현
-3. `hooks/useRecommendData.ts`, `hooks/useRecommendGeneration.ts`의 규칙 배열에 신규 규칙을 추가
+3. `logic/recommendRulesList.ts`의 `RECOMMEND_RULES` 배열에 신규 규칙을 추가
 
 ## 주의사항
 
 - 백엔드 응답은 `unknown`으로 수신 후 타입 가드로 검증합니다.
 - 추천 페이지는 `NEXT_PUBLIC_API_URL` 기반으로 백엔드와 통신합니다.
 - 임시 디버그 호출/미사용 상태값/미사용 props는 유지하지 않습니다.
+
+## 백테스트 검증 스크립트
+
+백엔드(8010)와 DB(`lotto_winners`)가 준비된 상태에서, 최근 N회차(기본 52)에 대해 앱과 동일한 `fetchRecommendBaseData` → `runRecommendPipeline` → `generate20Sets` 흐름으로 세트를 만들고 실제 당첨과 등수를 집계합니다.
+
+```bash
+cd frontend && npm run verify:recommend-last52
+```
+
+환경 변수: `RECOMMEND_VERIFY_API_URL`(기본 `http://127.0.0.1:8010`), `RECOMMEND_VERIFY_DRAWS`(기본 52). Node에서 `tsx`로 실행할 때는 `tsconfig.run-scripts.json`을 사용합니다.
