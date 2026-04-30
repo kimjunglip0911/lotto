@@ -1,7 +1,13 @@
 import { useMemo } from 'react';
 import { WINDOW_CONFIGS } from '../constants';
 import { createEmptyCountResult, toSelectedHighlightNumbers, toSelectedMainNumbers } from '../logic/numberCounts';
-import type { WinningNumberRow, WindowChartData, WindowCountResultMap } from '../types';
+import type {
+  FinalNumberPlan,
+  StrategyChartData,
+  WinningNumberRow,
+  WindowChartData,
+  WindowCountResultMap,
+} from '../types';
 
 type Params = {
   availableDraws: number[];
@@ -13,6 +19,8 @@ type Params = {
   searchedDraw: string;
   selectedWinningNumber: WinningNumberRow | null;
   windowCountResultMap: WindowCountResultMap;
+  strategyCharts: StrategyChartData[];
+  finalNumberPlan: FinalNumberPlan | null;
 };
 
 /** 안내 문구 — 분기 순서와 문구는 page.tsx `buildStatusMessage`와 동일해야 한다. */
@@ -70,6 +78,8 @@ export const useAccumulatedNumbersDerived = ({
   searchedDraw,
   selectedWinningNumber,
   windowCountResultMap,
+  strategyCharts,
+  finalNumberPlan,
 }: Params) => {
   const hasSearched = searchedDraw !== '';
   const selectedSearchDrawNo = Number(searchedDraw);
@@ -101,6 +111,14 @@ export const useAccumulatedNumbersDerived = ({
     [windowCountResultMap]
   );
 
+  const strategyWindowCharts = useMemo(
+    () => ({
+      nearestMean4: strategyCharts.filter((chart) => chart.strategyLabel === '평균근접'),
+      twoHotTwoCold: strategyCharts.filter((chart) => chart.strategyLabel === '상2+하2'),
+    }),
+    [strategyCharts]
+  );
+
   return {
     hasSearched,
     selectedSearchDrawNo,
@@ -108,5 +126,7 @@ export const useAccumulatedNumbersDerived = ({
     selectedHighlightNumbers,
     statusMessage,
     windowCharts,
+    strategyWindowCharts,
+    finalNumberPlan,
   };
 };

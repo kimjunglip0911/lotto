@@ -3,6 +3,10 @@ import type { CountResult, WinningNumberRow, WindowCountResultMap } from '../typ
 
 const MAIN_NUMBER_KEYS = ['num1', 'num2', 'num3', 'num4', 'num5', 'num6'] as const;
 
+/** 적중 판정용 — 본번호 6개만(보너스 제외). 집계용 buildNumberCounts(본+보너스)와 구분한다. */
+export const toMainNumbersOnly = (row: WinningNumberRow): number[] =>
+  MAIN_NUMBER_KEYS.map((key) => row[key]);
+
 export const isWinningNumberRow = (value: unknown): value is WinningNumberRow => {
   if (typeof value !== 'object' || value === null) {
     return false;
@@ -21,9 +25,7 @@ export const isWinningNumberRow = (value: unknown): value is WinningNumberRow =>
   );
 };
 
-const toMainNumbers = (row: WinningNumberRow) => MAIN_NUMBER_KEYS.map((key) => row[key]);
-
-const toAllWinningNumbers = (row: WinningNumberRow) => [...toMainNumbers(row), row.bonus_num];
+const toAllWinningNumbers = (row: WinningNumberRow) => [...toMainNumbersOnly(row), row.bonus_num];
 
 export const buildNumberCounts = (rows: WinningNumberRow[]) => {
   const counts = createEmptyCounts();
@@ -40,7 +42,7 @@ export const buildNumberCounts = (rows: WinningNumberRow[]) => {
 };
 
 export const toSelectedMainNumbers = (row: WinningNumberRow | null) =>
-  row ? toMainNumbers(row) : [];
+  row ? toMainNumbersOnly(row) : [];
 
 export const toSelectedHighlightNumbers = (row: WinningNumberRow | null) => {
   if (!row) {

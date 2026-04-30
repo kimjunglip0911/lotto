@@ -33,6 +33,35 @@ export type WindowChartData = {
   noDataMessage: string;
 };
 
+export type StrategyChartData = {
+  key: string;
+  title: string;
+  counts: number[];
+  analyzedDrawCount: number;
+  noDataMessage: string;
+  strategyLabel: string;
+  windowSize: number;
+  atLeastOneRate: number;
+  avgHits: number;
+  maxMissStreak: number;
+};
+
+export type StrategyNumberPick = {
+  strategyKey: 'nearestMean4' | 'twoHotTwoCold';
+  strategyLabel: string;
+  windowSize: number;
+  numbers: number[];
+  atLeastOneRate: number;
+  avgHits: number;
+  maxMissStreak: number;
+};
+
+export type FinalNumberPlan = {
+  commonNumbers: number[];
+  finalNumbers: number[];
+  strategyPicks: StrategyNumberPick[];
+};
+
 /** 회차 묶음 기준 번호별 집계 결과(차트·안내용). */
 export type CountResult = {
   counts: number[];

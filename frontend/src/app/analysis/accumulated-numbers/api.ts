@@ -1,9 +1,20 @@
 import { isWinningNumberRow } from './logic/numberCounts';
 import type { WinningNumberRow } from './types';
 
+/** 백테스트 스크립트 등에서 베이스 URL 오버라이드 시 사용. 미지정이면 NEXT_PUBLIC_API_URL */
+export type AccumulatedNumbersFetchContext = {
+  signal?: AbortSignal;
+  baseUrl?: string;
+};
+
+const resolveApiBaseUrl = (baseUrl?: string): string => {
+  const raw = (baseUrl ?? process.env.NEXT_PUBLIC_API_URL ?? '').replace(/\/$/, '');
+  return raw;
+};
+
 /** `/api/analysis/accumulated-numbers/` 이하 경로·쿼리(예: `draw-numbers`, `winning-number?draw_no=1`) */
-export const accumulatedNumbersApiUrl = (pathWithQuery: string): string => {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+export const accumulatedNumbersApiUrl = (pathWithQuery: string, baseUrl?: string): string => {
+  const apiUrl = resolveApiBaseUrl(baseUrl);
   return `${apiUrl}/api/analysis/accumulated-numbers/${pathWithQuery}`;
 };
 
@@ -23,8 +34,10 @@ export const parseWinningNumberRowsResponse = (data: unknown, invalidMessage: st
   return data.filter(isWinningNumberRow);
 };
 
-export const fetchDrawNumbers = async (signal?: AbortSignal): Promise<number[]> => {
-  const response = await fetch(accumulatedNumbersApiUrl('draw-numbers'), {
+export const fetchDrawNumbers = async (ctx?: AccumulatedNumbersFetchContext): Promise<number[]> => {
+  const signal = ctx?.signal;
+  const baseUrl = ctx?.baseUrl;
+  const response = await fetch(accumulatedNumbersApiUrl('draw-numbers', baseUrl), {
     signal,
   });
 
@@ -54,8 +67,13 @@ export const fetchWinningNumberByDraw = async (drawNo: number): Promise<WinningN
   return data;
 };
 
-export const fetchWinningNumbersRange = async (drawNo: number): Promise<WinningNumberRow[]> => {
-  const response = await fetch(accumulatedNumbersApiUrl(`winning-numbers-range?draw_no=${drawNo}`));
+export const fetchWinningNumbersRange = async (
+  drawNo: number,
+  ctx?: Pick<AccumulatedNumbersFetchContext, 'baseUrl'>
+): Promise<WinningNumberRow[]> => {
+  const response = await fetch(
+    accumulatedNumbersApiUrl(`winning-numbers-range?draw_no=${drawNo}`, ctx?.baseUrl)
+  );
 
   if (!response.ok) {
     throw new Error(`Failed to fetch winning numbers range: ${response.status}`);

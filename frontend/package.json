@@ -9,7 +9,8 @@
     "lint": "eslint",
     "test": "vitest run",
     "test:watch": "vitest",
-    "verify:recommend-last52": "npx tsx --tsconfig tsconfig.run-scripts.json scripts/recommend-verify-last52.ts"
+    "verify:recommend-last52": "npx tsx --tsconfig tsconfig.run-scripts.json scripts/recommend-verify-last52.ts",
+    "backtest:accumulated-numbers": "npx tsx --tsconfig tsconfig.run-scripts.json src/app/analysis/accumulated-numbers/scripts/backtestAccumulatedNumbers.ts"
   },
   "dependencies": {
     "class-variance-authority": "^0.7.1",

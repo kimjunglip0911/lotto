@@ -8,11 +8,30 @@ import {
 import { WINDOW_CONFIGS } from '../constants';
 import {
   buildWindowCountResultMap,
+  buildNumberCounts,
   createEmptyCountResult,
   createEmptyWindowCountMap,
   toCountResult,
 } from '../logic/numberCounts';
-import type { CountResult, WinningNumberRow, WindowCountResultMap } from '../types';
+import {
+  BACKTEST_FOCUS_STRATEGY_KEYS,
+  buildFinalNumberSelection,
+  buildStrategyRecommendation,
+  getDefaultBacktestWindowSizes,
+  pickTopWindowsByStrategy,
+  runAccumulatedNumbersBacktest,
+  sliceWindowTail,
+  toAtLeastOneRate,
+  toAvgHits,
+} from '../logic/backtestEngine';
+import type {
+  CountResult,
+  FinalNumberPlan,
+  StrategyChartData,
+  StrategyNumberPick,
+  WinningNumberRow,
+  WindowCountResultMap,
+} from '../types';
 
 const parseSelectedDrawNo = (selectedDraw: string) => {
   const selectedDrawNo = Number(selectedDraw);
@@ -37,6 +56,8 @@ export const useAccumulatedNumbersData = () => {
   const [windowCountResultMap, setWindowCountResultMap] = useState<WindowCountResultMap>(() =>
     createEmptyWindowCountMap()
   );
+  const [strategyCharts, setStrategyCharts] = useState<StrategyChartData[]>([]);
+  const [finalNumberPlan, setFinalNumberPlan] = useState<FinalNumberPlan | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -47,7 +68,7 @@ export const useAccumulatedNumbersData = () => {
       setDrawLoadError(null);
 
       try {
-        const draws = await fetchDrawNumbers(abortController.signal);
+        const draws = await fetchDrawNumbers({ signal: abortController.signal });
         if (!isMounted) {
           return;
         }
@@ -81,6 +102,8 @@ export const useAccumulatedNumbersData = () => {
   const resetSearchResults = (options?: { clearWinningNumber?: boolean }) => {
     setAllTimeCountResult(createEmptyCountResult());
     setWindowCountResultMap(createEmptyWindowCountMap());
+    setStrategyCharts([]);
+    setFinalNumberPlan(null);
 
     if (options?.clearWinningNumber) {
       setSelectedWinningNumber(null);
@@ -123,6 +146,102 @@ export const useAccumulatedNumbersData = () => {
     setAllTimeCountResult(toCountResult(rangeRows));
     setWindowCountResultMap(buildWindowCountResultMap(windowRows));
     setSelectedWinningNumber(winningNumber);
+
+    const drawNumbersToEvaluate = rangeRows.map((r) => r.draw_no).filter((d) => d >= 100);
+    if (drawNumbersToEvaluate.length === 0) {
+      setStrategyCharts([]);
+      setFinalNumberPlan(null);
+      return;
+    }
+
+    const { aggregates } = runAccumulatedNumbersBacktest({
+      allRowsSortedAsc: rangeRows,
+      drawNumbersToEvaluate,
+      windowSizes: getDefaultBacktestWindowSizes(),
+      strategyKeys: BACKTEST_FOCUS_STRATEGY_KEYS,
+    });
+
+    const shortTopRaw = pickTopWindowsByStrategy(aggregates, 'nearestMean4', 2, { maxWindowSize: 120 });
+    const longTopRaw = pickTopWindowsByStrategy(aggregates, 'twoHotTwoCold', 2, { minWindowSize: 240 });
+    const shortTop = shortTopRaw.length >= 2 ? shortTopRaw : pickTopWindowsByStrategy(aggregates, 'nearestMean4', 2);
+    const longTop = longTopRaw.length >= 2 ? longTopRaw : pickTopWindowsByStrategy(aggregates, 'twoHotTwoCold', 2);
+    const charts: StrategyChartData[] = [...shortTop, ...longTop].map((w, idx) => {
+      const nearestIndex = shortTop.findIndex((v) => v.windowSize === w.windowSize && v.strategy === w.strategy);
+      const twoHotIndex = longTop.findIndex((v) => v.windowSize === w.windowSize && v.strategy === w.strategy);
+      const rank = w.strategy === 'nearestMean4' ? nearestIndex + 1 : twoHotIndex + 1;
+      const rows = sliceWindowTail(rangeRows, w.windowSize);
+      return {
+        key: `${w.strategy}-${w.windowSize}-${idx}`,
+        title:
+          w.strategy === 'nearestMean4'
+            ? `평균근접 전략 추천 기간 ${rank} (이전 ${w.windowSize}회)`
+            : `상2+하2 전략 추천 기간 ${rank} (이전 ${w.windowSize}회)`,
+        counts: buildNumberCounts(rows),
+        analyzedDrawCount: rows.length,
+        noDataMessage: `이전 ${w.windowSize}회 데이터가 부족해 전략 차트를 표시할 수 없습니다.`,
+        strategyLabel: w.strategy === 'nearestMean4' ? '평균근접' : '상2+하2',
+        windowSize: w.windowSize,
+        atLeastOneRate: w.atLeastOneRate,
+        avgHits: w.avgHits,
+        maxMissStreak: w.maxMissStreak,
+      };
+    });
+    setStrategyCharts(charts);
+
+    const bestShort = shortTop[0];
+    const bestLong = longTop[0];
+    const bestShortAggregate = aggregates.find(
+      (a) => a.strategy === 'nearestMean4' && a.windowSize === bestShort?.windowSize
+    );
+    const bestLongAggregate = aggregates.find(
+      (a) => a.strategy === 'twoHotTwoCold' && a.windowSize === bestLong?.windowSize
+    );
+
+    if (!bestShort || !bestLong || !bestShortAggregate || !bestLongAggregate) {
+      setFinalNumberPlan(null);
+      return;
+    }
+
+    const shortRecommendation = buildStrategyRecommendation({
+      strategy: 'nearestMean4',
+      windowSize: bestShort.windowSize,
+      allRowsBeforeSelectedDraw: rangeRows,
+      aggregate: bestShortAggregate,
+    });
+    const longRecommendation = buildStrategyRecommendation({
+      strategy: 'twoHotTwoCold',
+      windowSize: bestLong.windowSize,
+      allRowsBeforeSelectedDraw: rangeRows,
+      aggregate: bestLongAggregate,
+    });
+    const finalSelection = buildFinalNumberSelection(shortRecommendation, longRecommendation);
+
+    const strategyPicks: StrategyNumberPick[] = [
+      {
+        strategyKey: 'nearestMean4',
+        strategyLabel: '평균근접',
+        windowSize: shortRecommendation.windowSize,
+        numbers: shortRecommendation.numbers,
+        atLeastOneRate: toAtLeastOneRate(bestShortAggregate),
+        avgHits: toAvgHits(bestShortAggregate),
+        maxMissStreak: bestShortAggregate.maxMissStreak,
+      },
+      {
+        strategyKey: 'twoHotTwoCold',
+        strategyLabel: '상2+하2',
+        windowSize: longRecommendation.windowSize,
+        numbers: longRecommendation.numbers,
+        atLeastOneRate: toAtLeastOneRate(bestLongAggregate),
+        avgHits: toAvgHits(bestLongAggregate),
+        maxMissStreak: bestLongAggregate.maxMissStreak,
+      },
+    ];
+
+    setFinalNumberPlan({
+      commonNumbers: finalSelection.commonNumbers,
+      finalNumbers: finalSelection.finalNumbers,
+      strategyPicks,
+    });
   };
 
   const handleSearch = async () => {
@@ -164,6 +283,8 @@ export const useAccumulatedNumbersData = () => {
     selectedWinningNumberError,
     allTimeCountResult,
     windowCountResultMap,
+    strategyCharts,
+    finalNumberPlan,
     handleSearch,
   };
 };
