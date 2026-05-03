@@ -47,7 +47,9 @@ def _load_queries_module():
 
 
 queries = _load_queries_module()
-ALLOWED_WINDOW_SIZES = {4, 12, 26, 52, 156, 260, 520}
+# 프론트 누적번호: 고정 윈도(136·192·320·336 등) + 백테스트 스윕(최대 약 1208+) — SQL은 LIMIT 바인딩만 사용
+_MIN_WINDOW_SIZE = 1
+_MAX_WINDOW_SIZE = 3000
 
 
 @router.get("/api/analysis/accumulated-numbers/draw-numbers", response_model=List[int])
@@ -74,15 +76,15 @@ def get_winning_number(draw_no: int = Query(..., ge=1, description="선택 회�
 @router.get("/api/analysis/accumulated-numbers/winning-numbers-window", response_model=List[dict])
 def get_winning_numbers_window(
     draw_no: int = Query(..., ge=1, description="선택 회차"),
-    window_size: int = Query(..., description="이전 회차 개수 (허용값: 4, 12, 26, 52, 156, 260, 520)"),
+    window_size: int = Query(
+        ...,
+        ge=_MIN_WINDOW_SIZE,
+        le=_MAX_WINDOW_SIZE,
+        description=f"이전 회차 개수 ({_MIN_WINDOW_SIZE}~{_MAX_WINDOW_SIZE})",
+    ),
 ):
     if draw_no <= 1:
         return []
-    if window_size not in ALLOWED_WINDOW_SIZES:
-        raise HTTPException(
-            status_code=400,
-            detail="window_size는 4, 12, 26, 52, 156, 260, 520만 허용됩니다.",
-        )
 
     return fetch_dict_rows(queries.GET_WINNING_NUMBERS_BEFORE_DRAW_LIMITED, (draw_no, window_size))
 
