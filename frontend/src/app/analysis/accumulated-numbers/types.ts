@@ -63,3 +63,6 @@ export type CountResult = {
 
 /** 윈도우 키별 집계 결과 맵. */
 export type WindowCountResultMap = Record<WindowKey, CountResult>;
+
+/** 백엔드 `AccumulatedNumberSnapshotSaveRequest.schema_version` (2=최종 채택 4개만 저장). */
+export const ACCUMULATED_SNAPSHOT_SCHEMA_VERSION = 2;

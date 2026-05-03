@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   fetchDrawNumbers,
   fetchWinningNumberByDraw,
   fetchWinningNumbersRange,
   fetchWinningNumbersWindow,
+  saveAccumulatedNumbersSnapshot,
 } from '../api';
 import { WINDOW_CONFIGS } from '../constants';
 import {
@@ -60,6 +61,9 @@ export const useAccumulatedNumbersData = () => {
   );
   const [strategyCharts, setStrategyCharts] = useState<StrategyChartData[]>([]);
   const [finalNumberPlan, setFinalNumberPlan] = useState<FinalNumberPlan | null>(null);
+  const [isSavingSnapshot, setIsSavingSnapshot] = useState(false);
+  const [saveSnapshotMessage, setSaveSnapshotMessage] = useState<string | null>(null);
+  const [saveSnapshotError, setSaveSnapshotError] = useState<string | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -117,6 +121,8 @@ export const useAccumulatedNumbersData = () => {
     setIsLoadingSelectedWinningNumber(true);
     setSearchError(null);
     setSelectedWinningNumberError(null);
+    setSaveSnapshotMessage(null);
+    setSaveSnapshotError(null);
     setSearchedDraw(draw);
   };
 
@@ -265,6 +271,33 @@ export const useAccumulatedNumbersData = () => {
     });
   };
 
+  const saveAccumulatedSnapshot = useCallback(async () => {
+    setSaveSnapshotMessage(null);
+    setSaveSnapshotError(null);
+    const anchor = parseSelectedDrawNo(searchedDraw);
+    if (anchor === null || anchor <= 1) {
+      setSaveSnapshotError('회차 2 이상 조회 후에만 저장할 수 있습니다.');
+      return;
+    }
+
+    if (!finalNumberPlan || finalNumberPlan.finalNumbers.length !== 4) {
+      setSaveSnapshotError('최종 채택 4개 번호가 계산된 뒤에만 저장할 수 있습니다.');
+      return;
+    }
+
+    setIsSavingSnapshot(true);
+    try {
+      const quad = finalNumberPlan.finalNumbers as [number, number, number, number];
+      const res = await saveAccumulatedNumbersSnapshot(anchor, quad);
+      setSaveSnapshotMessage(res.message);
+    } catch (error) {
+      console.error('Error saving accumulated snapshot:', error);
+      setSaveSnapshotError(error instanceof Error ? error.message : '저장에 실패했습니다.');
+    } finally {
+      setIsSavingSnapshot(false);
+    }
+  }, [searchedDraw, finalNumberPlan]);
+
   const handleSearch = async () => {
     if (!selectedDraw) {
       return;
@@ -307,5 +340,9 @@ export const useAccumulatedNumbersData = () => {
     strategyCharts,
     finalNumberPlan,
     handleSearch,
+    saveAccumulatedSnapshot,
+    isSavingSnapshot,
+    saveSnapshotMessage,
+    saveSnapshotError,
   };
 };

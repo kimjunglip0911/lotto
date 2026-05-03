@@ -33,6 +33,15 @@ export default function AccumulatedNumbersPage() {
     finalNumberPlan: data.finalNumberPlan,
   });
 
+  const canSaveSnapshot =
+    hasSearched &&
+    !data.isSearching &&
+    !data.searchError &&
+    Number.isFinite(selectedSearchDrawNo) &&
+    selectedSearchDrawNo > 1 &&
+    finalNumberPlan != null &&
+    finalNumberPlan.finalNumbers.length === 4;
+
   return (
     <div className="bg-background min-h-screen flex justify-center w-full overflow-x-hidden">
       <div className="bg-background text-foreground font-display min-h-screen flex flex-col w-full lg:w-[95%] xl:w-[95%] 2xl:w-[90%] max-w-[1920px] border-x border-card-border/30 relative shadow-2xl">
@@ -51,6 +60,13 @@ export default function AccumulatedNumbersPage() {
             selectedWinningNumberError={data.selectedWinningNumberError}
             selectedWinningNumber={data.selectedWinningNumber}
             selectedMainNumbers={selectedMainNumbers}
+            showSaveSnapshot={canSaveSnapshot}
+            onSaveSnapshot={() => {
+              void data.saveAccumulatedSnapshot();
+            }}
+            isSavingSnapshot={data.isSavingSnapshot}
+            saveSnapshotMessage={data.saveSnapshotMessage}
+            saveSnapshotError={data.saveSnapshotError}
           />
           <section className="rounded-2xl border border-card-border/30 bg-card-bg/60 p-4 space-y-3">
             {statusMessage && <p className="text-slate-300 text-sm leading-relaxed">{statusMessage}</p>}

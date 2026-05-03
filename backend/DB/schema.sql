@@ -27,3 +27,14 @@ CREATE TABLE IF NOT EXISTS lotto_drawings (
     method TEXT,
     draw_no INTEGER
 );
+
+-- 누적번호 분석: 기준 회차별 최종 채택 4개 번호만 저장(회차당 최신 1건 UPSERT)
+CREATE TABLE IF NOT EXISTS accumulated_number_snapshots (
+    anchor_draw_no INTEGER PRIMARY KEY,
+    schema_version INTEGER NOT NULL,
+    final_num1 INTEGER NOT NULL,
+    final_num2 INTEGER NOT NULL,
+    final_num3 INTEGER NOT NULL,
+    final_num4 INTEGER NOT NULL,
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);

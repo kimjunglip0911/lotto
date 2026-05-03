@@ -7,6 +7,7 @@
 - `schema.sql`: SQLite 데이터베이스 테이블 정의 파일
   - `lotto_winners`: 당첨 회차별 번호, 당첨자 수, 당첨금 정보 저장
   - `lotto_drawings`: 사용자별 추첨 번호 리스트 저장
+  - `accumulated_number_snapshots`: 누적번호 분석 **최종 채택 4개 번호**만, 기준 회차(`anchor_draw_no`)당 최신 1건
 - `init_db.py`: `schema.sql`을 기반으로 `lotto.db` 파일을 생성하고 스키마를 초기화하는 스크립트
 - `lotto.db`: 실제 데이터가 저장된 SQLite 데이터베이스 파일
 

@@ -27,6 +27,28 @@ def _ensure_schema(conn: sqlite3.Connection) -> None:
         # 구버전 DB와 호환되도록 누락 컬럼을 런타임에서 보정한다.
         conn.execute("ALTER TABLE lotto_drawings ADD COLUMN strategy TEXT")
 
+    # 누적번호 스냅샷: 구버전(payload_json) → 최종 4번호 컬럼만 (기존 스냅샷 행은 삭제됨)
+    snap_row = conn.execute(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='accumulated_number_snapshots'"
+    ).fetchone()
+    if snap_row is not None:
+        snap_cols = {r[1] for r in conn.execute("PRAGMA table_info(accumulated_number_snapshots)").fetchall()}
+        if "payload_json" in snap_cols and "final_num1" not in snap_cols:
+            conn.execute("DROP TABLE accumulated_number_snapshots")
+            conn.execute(
+                """
+                CREATE TABLE accumulated_number_snapshots (
+                    anchor_draw_no INTEGER PRIMARY KEY,
+                    schema_version INTEGER NOT NULL,
+                    final_num1 INTEGER NOT NULL,
+                    final_num2 INTEGER NOT NULL,
+                    final_num3 INTEGER NOT NULL,
+                    final_num4 INTEGER NOT NULL,
+                    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+                )
+                """
+            )
+
     conn.commit()
     _SCHEMA_READY = True
 
