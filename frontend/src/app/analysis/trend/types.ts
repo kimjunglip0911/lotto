@@ -9,12 +9,9 @@ export type WinningNumberRow = {
   bonus_num: number;
 };
 
-export type TrendPhase = 'up_cont' | 'topping' | 'recovering' | 'down_cont';
-
 export type NumberTrendResult = {
   number: number;
   ema: number;
-  phase: TrendPhase;
 };
 
 /** 기댓값 대비 EMA 편차(%) 구간 한 줄(표·스크립트 공통) */

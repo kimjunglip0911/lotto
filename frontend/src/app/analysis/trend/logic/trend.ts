@@ -1,11 +1,5 @@
-import {
-  BASELINE_PHASE_BAND,
-  CHART_INNER_H,
-  CHART_PADDING_TOP,
-  K_TREND,
-  TOTAL_NUMBERS,
-} from '../constants';
-import type { NumberTrendResult, TrendPhase, WinningNumberRow } from '../types';
+import { CHART_INNER_H, CHART_PADDING_TOP, K_TREND, TOTAL_NUMBERS } from '../constants';
+import type { NumberTrendResult, WinningNumberRow } from '../types';
 
 /** 주번호 6개만 사용(보너스 제외). */
 const mainNumbersOf = (row: WinningNumberRow): readonly number[] => [
@@ -43,27 +37,11 @@ export const buildTrendEma = (rows: WinningNumberRow[], num: number, k: number):
   return ema;
 };
 
-/**
- * 단일 EMA와 이력 기반 기댓값의 차이로 4국면 분류.
- * d = ema − baseline: d > band → 상승지속, 0 < d ≤ band → 하락전환, −band ≤ d ≤ 0 → 회복중, d < −band → 하락지속.
- */
-export const classifyPhase = (ema: number, baseline: number, band: number = BASELINE_PHASE_BAND): TrendPhase => {
-  const d = ema - baseline;
-  if (d > band) return 'up_cont';
-  if (d > 0) return 'topping';
-  if (d >= -band) return 'recovering';
-  return 'down_cont';
-};
-
-export const buildTrendResults = (
-  allRows: WinningNumberRow[],
-  baseline: number,
-): NumberTrendResult[] => {
+export const buildTrendResults = (allRows: WinningNumberRow[]): NumberTrendResult[] => {
   return Array.from({ length: TOTAL_NUMBERS }, (_, i) => {
     const number = i + 1;
     const ema = buildTrendEma(allRows, number, K_TREND);
-    const phase = classifyPhase(ema, baseline);
-    return { number, ema, phase };
+    return { number, ema };
   });
 };
 

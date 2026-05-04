@@ -18,7 +18,7 @@ type UseTrendDataResult = {
   searchError: string | null;
   trendResults: NumberTrendResult[];
   historyCount: number;
-  /** 트렌드 EMA·국면·기댓값선에 쓰는 이력 기반 출현 비율(주6·보너스 제외) */
+  /** 트렌드 EMA·기댓값선에 쓰는 이력 기반 출현 비율(주6·보너스 제외) */
   trendBaseline: number;
   /** 선택 회차 미포함 이력만으로, 전체 회차 주6 표본의 기댓값 대비 EMA 편차% 구간 분포 */
   deviationBinsSummary: DeviationBinsSummary | null;
@@ -142,7 +142,7 @@ export const useTrendData = (): UseTrendDataResult => {
       setTrendBaseline(empiricalBaseline);
       setSelectedWinningNumber(winningData);
       setHistoryCount(allRows.length);
-      setTrendResults(buildTrendResults(sortedRows, empiricalBaseline));
+      setTrendResults(buildTrendResults(sortedRows));
 
       // 선택(조회) 회차는 표본에서 제외: all-history 행만 사용
       setDeviationBinsSummary(aggregateDeviationBins(sortedRows));

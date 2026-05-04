@@ -1,4 +1,3 @@
-import { PHASE_META } from '../constants';
 import type { NumberTrendResult } from '../types';
 
 type Props = {
@@ -47,22 +46,23 @@ export function TrendResultTable({
                   EMA
                 </th>
                 <th className="py-2 pr-2 font-medium text-right text-slate-400">기댓값 대비</th>
-                <th className="py-2 font-medium text-center">국면</th>
               </tr>
             </thead>
             <tbody>
               {trendResults.map((row) => {
                 const isWinning = selectedWinningNumberSet?.has(row.number) ?? false;
-                const meta = PHASE_META[row.phase];
                 const emaPct = (row.ema * 100).toFixed(1);
                 const diffPct = ((row.ema - baseline) * 100).toFixed(1);
                 const diffPositive = row.ema >= baseline;
                 return (
-                  <tr key={row.number} className={`border-b border-white/5 transition-colors ${meta.bgClass} hover:brightness-110`}>
+                  <tr
+                    key={row.number}
+                    className="border-b border-white/5 transition-colors hover:bg-white/5"
+                  >
                     <td className="py-1.5 pr-3">
                       <span
                         className={`inline-flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold ${
-                          isWinning ? 'bg-amber-400/30 text-amber-200' : `${meta.badgeClass}`
+                          isWinning ? 'bg-amber-400/30 text-amber-200' : 'bg-white/10 text-slate-200'
                         }`}
                       >
                         {row.number}
@@ -72,9 +72,6 @@ export function TrendResultTable({
                     <td className={`py-1.5 pr-2 text-right tabular-nums text-xs ${diffPositive ? 'text-blue-300' : 'text-rose-400'}`}>
                       {diffPositive ? '+' : ''}
                       {diffPct}%
-                    </td>
-                    <td className="py-1.5 text-center">
-                      <span className={`text-xs font-semibold rounded-md px-2 py-0.5 ${meta.badgeClass}`}>{meta.label}</span>
                     </td>
                   </tr>
                 );
