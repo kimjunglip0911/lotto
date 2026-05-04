@@ -3,7 +3,7 @@ import type { CountResult, WinningNumberRow, WindowCountResultMap } from '../typ
 
 const MAIN_NUMBER_KEYS = ['num1', 'num2', 'num3', 'num4', 'num5', 'num6'] as const;
 
-/** 적중 판정용 — 본번호 6개만(보너스 제외). 집계용 buildNumberCounts(본+보너스)와 구분한다. */
+/** 본번호 6개만(보너스 제외). 적중 판정·누적 출현 집계 모두 동일 기준을 쓴다. */
 export const toMainNumbersOnly = (row: WinningNumberRow): number[] =>
   MAIN_NUMBER_KEYS.map((key) => row[key]);
 
@@ -25,13 +25,12 @@ export const isWinningNumberRow = (value: unknown): value is WinningNumberRow =>
   );
 };
 
-const toAllWinningNumbers = (row: WinningNumberRow) => [...toMainNumbersOnly(row), row.bonus_num];
-
+/** 선택 구간 내 번호별 출현 횟수 — 회차당 본번호 6개만 반영(보너스 제외). */
 export const buildNumberCounts = (rows: WinningNumberRow[]) => {
   const counts = createEmptyCounts();
 
   for (const row of rows) {
-    for (const num of toAllWinningNumbers(row)) {
+    for (const num of toMainNumbersOnly(row)) {
       if (num >= 1 && num <= NUMBER_RANGE_MAX) {
         counts[num - 1] += 1;
       }

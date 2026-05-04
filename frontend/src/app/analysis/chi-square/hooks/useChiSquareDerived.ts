@@ -5,17 +5,17 @@ import {
   TOTAL_NUMBERS,
 } from '../constants';
 import {
-  getAverageLinePx,
-  getExcludedNumbers,
   getMaxAbsDeviation,
-  getTop5PctThreshold,
-  selectAdoptedNumbersByLowObserved,
+  pickFirstNumbersBySignedDeviationOrder,
+  selectAdoptedBySignedDeviationSkippingExcluded,
 } from '../logic/chiSquare';
 import type { ChiSquareResult, WinningNumberRow } from '../types';
 
 type Params = {
   analyzedDrawCount: number;
   chiSquareResults: ChiSquareResult[];
+  /** 길이 4일 때만 사용 번호 4개 채택에서 제외한다. */
+  accumulatedFinalNumbers: readonly number[] | null;
   selectedWinningNumber: WinningNumberRow | null;
   searchedDraw: string;
   isLoadingDraws: boolean;
@@ -29,6 +29,7 @@ type Params = {
 export const useChiSquareDerived = ({
   analyzedDrawCount,
   chiSquareResults,
+  accumulatedFinalNumbers,
   selectedWinningNumber,
   searchedDraw,
   isLoadingDraws,
@@ -70,20 +71,16 @@ export const useChiSquareDerived = ({
     : null;
 
   const maxAbsDeviation = useMemo(() => getMaxAbsDeviation(chiSquareResults), [chiSquareResults]);
-  const top5PctThreshold = useMemo(() => getTop5PctThreshold(chiSquareResults), [chiSquareResults]);
-  const avgLinePx = useMemo(
-    () => getAverageLinePx(top5PctThreshold, maxAbsDeviation),
-    [top5PctThreshold, maxAbsDeviation],
-  );
-  const excludedNumbers = useMemo(
-    () => getExcludedNumbers(chiSquareResults, top5PctThreshold),
-    [chiSquareResults, top5PctThreshold],
-  );
 
-  const adoptedUsageNumbers = useMemo(
-    () => selectAdoptedNumbersByLowObserved(chiSquareResults),
-    [chiSquareResults],
-  );
+  const adoptedUsageNumbers = useMemo(() => {
+    const exclude = new Set<number>(pickFirstNumbersBySignedDeviationOrder(chiSquareResults, 4));
+    if (accumulatedFinalNumbers !== null && accumulatedFinalNumbers.length === 4) {
+      for (const n of accumulatedFinalNumbers) {
+        exclude.add(n);
+      }
+    }
+    return selectAdoptedBySignedDeviationSkippingExcluded(chiSquareResults, exclude);
+  }, [chiSquareResults, accumulatedFinalNumbers]);
 
   const adoptedUsageNumberSet = useMemo(
     () => (adoptedUsageNumbers ? new Set<number>(adoptedUsageNumbers) : null),
@@ -97,7 +94,7 @@ export const useChiSquareDerived = ({
       : availableDraws.length === 0
         ? '조회 가능한 회차 정보가 없습니다.'
         : isSearching
-          ? `${selectedDraw}회 기준 카이제곱 검정을 계산하고 있습니다.`
+          ? `${selectedDraw}회 기준 누적번호 분석과 카이제곱 검정을 계산하고 있습니다.`
           : searchError
             ? `${searchError} 잠시 후 다시 시도해 주세요.`
             : hasSearched
@@ -113,9 +110,6 @@ export const useChiSquareDerived = ({
     selectedMainNumbers,
     selectedWinningNumberSet,
     maxAbsDeviation,
-    top5PctThreshold,
-    avgLinePx,
-    excludedNumbers,
     adoptedUsageNumbers,
     adoptedUsageNumberSet,
     statusMessage,

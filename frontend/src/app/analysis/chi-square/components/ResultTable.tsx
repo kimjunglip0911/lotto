@@ -9,7 +9,6 @@ type Props = {
   expected: number;
   analyzedDrawCount: number;
   chiSquareThreshold: number;
-  top5PctThreshold: number;
   selectedWinningNumberSet: Set<number> | null;
   adoptedUsageNumberSet?: Set<number> | null;
 };
@@ -23,7 +22,6 @@ export function ResultTable({
   expected,
   analyzedDrawCount,
   chiSquareThreshold,
-  top5PctThreshold,
   selectedWinningNumberSet,
   adoptedUsageNumberSet = null,
 }: Props) {
@@ -92,31 +90,26 @@ export function ResultTable({
               </thead>
               <tbody>
                 {chiSquareResults.map((row) => {
-                  const isRowExcluded = top5PctThreshold > 0 && row.deviation >= top5PctThreshold;
                   const isAdopted = adoptedUsageNumberSet?.has(row.number) ?? false;
                   return (
                     <tr
                       key={row.number}
                       className={`border-b border-white/5 transition-colors ${
-                        isRowExcluded
-                          ? 'bg-orange-500/10 hover:bg-orange-500/15'
-                          : row.isLowFreq
-                            ? 'bg-rose-500/10 hover:bg-rose-500/15'
-                            : row.isHighFreq
-                              ? 'bg-blue-500/10 hover:bg-blue-500/15'
-                              : 'hover:bg-white/3'
+                        row.isLowFreq
+                          ? 'bg-rose-500/10 hover:bg-rose-500/15'
+                          : row.isHighFreq
+                            ? 'bg-blue-500/10 hover:bg-blue-500/15'
+                            : 'hover:bg-white/3'
                       }`}
                     >
                       <td className="py-2 pr-3">
                         <span
                           className={`inline-flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold ${
-                            isRowExcluded
-                              ? 'bg-orange-500/30 text-orange-200'
-                              : row.isLowFreq
-                                ? 'bg-rose-500/30 text-rose-200'
-                                : row.isHighFreq
-                                  ? 'bg-blue-500/30 text-blue-200'
-                                  : 'bg-white/10 text-white'
+                            row.isLowFreq
+                              ? 'bg-rose-500/30 text-rose-200'
+                              : row.isHighFreq
+                                ? 'bg-blue-500/30 text-blue-200'
+                                : 'bg-white/10 text-white'
                           } ${isAdopted ? 'ring-2 ring-emerald-400/85 ring-offset-1 ring-offset-slate-900' : ''}`}
                         >
                           {row.number}
@@ -130,9 +123,7 @@ export function ResultTable({
                       </td>
                       <td className="py-2 pr-3 text-right tabular-nums text-slate-300">{row.chiSquare.toFixed(4)}</td>
                       <td className="py-2 text-center">
-                        {isRowExcluded ? (
-                          <span className="text-xs font-semibold text-orange-300 bg-orange-500/20 rounded-md px-2 py-0.5">제외</span>
-                        ) : row.isLowFreq ? (
+                        {row.isLowFreq ? (
                           <span className="text-xs font-semibold text-rose-300 bg-rose-500/20 rounded-md px-2 py-0.5">저빈도</span>
                         ) : row.isHighFreq ? (
                           <span className="text-xs font-semibold text-blue-300 bg-blue-500/20 rounded-md px-2 py-0.5">고빈도</span>

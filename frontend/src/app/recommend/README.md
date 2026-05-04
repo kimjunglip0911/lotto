@@ -60,22 +60,18 @@
 - 추천 페이지는 `NEXT_PUBLIC_API_URL` 기반으로 백엔드와 통신합니다.
 - 임시 디버그 호출/미사용 상태값/미사용 props는 유지하지 않습니다.
 
-## 백테스트 검증 스크립트
+## 검증
 
-백엔드(8010)와 DB(`lotto_winners`)가 준비된 상태에서, 최근 N회차(기본 52)에 대해 앱과 동일한 `fetchRecommendBaseData` → `toRecommendPipelineBaseContext` → `runRecommendPipeline` → `generate20Sets` 흐름으로 세트를 만들고 실제 당첨과 등수를 집계합니다. UI의 생성 버튼도 같은 `toRecommendPipelineBaseContext` 경로를 사용하므로, 제외 규칙 입력이 스크립트와 어긋나지 않습니다.
+- **등수 로직**: `cd frontend && npm run test` — `logic/lottoRank.test.ts` 등으로 회귀를 막습니다.
+- **파이프라인·생성 품질**: 추천 페이지(3010)에서 백엔드(8010) 연동 후 실제 생성·비교 흐름을 확인합니다. UI는 `toRecommendPipelineBaseContext` → `runRecommendPipeline` → `generate20Sets` 경로를 사용합니다.
+- **과거 CLI로 남긴 지표 스냅샷**: [`docs/추천번호검증.md`](../../../../docs/추천번호검증.md) (문서만 보관, 해당 터미널 스크립트는 제거됨)
 
-```bash
-cd frontend && npm run verify:recommend-last52
-```
-
-환경 변수: `RECOMMEND_VERIFY_API_URL`(기본 `http://127.0.0.1:8010`), `RECOMMEND_VERIFY_DRAWS`(기본 52). Node에서 `tsx`로 실행할 때는 `tsconfig.run-scripts.json`을 사용합니다.
-
-### 지표 해석
+### 지표 해석(문서·실험 공통)
 
 - **등수별 누적 / 비율(분모 = 총 비교 건수)**: 회차 × 세트(최대 20) 각 조합을 한 건으로 세어, 5등·4등 등이 몇 번 나왔는지에 대한 비율입니다.
 - **회차당 “5등 이상 1건 이상” 비율**: 당첨 데이터가 있는 회차만 분모로, 그중 한 세트라도 5등 이상이 나온 회차 비율입니다. 세트당 적중률과 의미가 다릅니다.
 
-가중치·규칙을 백테스트에 맞춰 조정하면 과거 구간 지표는 좋아질 수 있으나, 로또 추첨은 무작위에 가깝기 때문에 **미래 회차로의 일반화는 보장되지 않습니다.** 실험 결과는 검증·설명용으로만 취급하는 것이 좋습니다.
+가중치·규칙을 과거 구간에 맞춰 조정하면 지표는 좋아질 수 있으나, 로또 추첨은 무작위에 가깝기 때문에 **미래 회차로의 일반화는 보장되지 않습니다.** 실험 결과는 검증·설명용으로만 취급하는 것이 좋습니다.
 
 ## 단위 테스트
 

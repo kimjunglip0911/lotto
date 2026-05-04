@@ -28,6 +28,7 @@ export default function ChiSquarePage() {
     searchError,
     analyzedDrawCount,
     chiSquareResults,
+    accumulatedFinalNumbers,
     handleSearch,
   } = useChiSquareData();
 
@@ -40,9 +41,6 @@ export default function ChiSquarePage() {
     selectedMainNumbers,
     selectedWinningNumberSet,
     maxAbsDeviation,
-    top5PctThreshold,
-    avgLinePx,
-    excludedNumbers,
     adoptedUsageNumbers,
     adoptedUsageNumberSet,
     statusMessage,
@@ -50,6 +48,7 @@ export default function ChiSquarePage() {
   } = useChiSquareDerived({
     analyzedDrawCount,
     chiSquareResults,
+    accumulatedFinalNumbers,
     selectedWinningNumber,
     searchedDraw,
     isLoadingDraws,
@@ -88,15 +87,31 @@ export default function ChiSquarePage() {
               analyzedDrawCount={analyzedDrawCount}
               expected={expected}
               chiSquareThreshold={chiSquareThreshold}
-              top5PctThreshold={top5PctThreshold}
-              excludedCount={excludedNumbers.length}
             />
           )}
 
           {hasSearched && !noHistory && !isSearching && !searchError && adoptedUsageNumbers && (
             <section className="rounded-2xl border border-card-border/30 bg-card-bg/60 p-4 space-y-3">
+              {accumulatedFinalNumbers && accumulatedFinalNumbers.length === 4 && (
+                <div className="rounded-xl border border-sky-400/30 bg-sky-500/10 p-3 space-y-2">
+                  <p className="text-sm font-semibold text-sky-200">누적번호 분석 최종 4개</p>
+                  <div className="flex flex-wrap gap-2">
+                    {accumulatedFinalNumbers.map((n) => (
+                      <span
+                        key={`accum-final-${n}`}
+                        className="inline-flex h-9 min-w-9 items-center justify-center rounded-full bg-sky-400/25 px-2 text-sm font-bold text-sky-100"
+                      >
+                        {n}
+                      </span>
+                    ))}
+                  </div>
+                  <p className="text-xs text-sky-100/85 leading-relaxed">
+                    누적번호 분석 페이지와 동일한 전략·집계로 조회 시점에 계산된 최종 채택 번호입니다.
+                  </p>
+                </div>
+              )}
               <div className="rounded-xl border border-emerald-400/30 bg-emerald-500/10 p-3 space-y-2">
-                <p className="text-sm font-semibold text-emerald-300">사용 번호 4개 (저빈도 순)</p>
+                <p className="text-sm font-semibold text-emerald-300">사용 번호 4개 (편차 순 이어서)</p>
                 <div className="flex flex-wrap gap-2">
                   {adoptedUsageNumbers.map((n) => (
                     <span
@@ -108,7 +123,7 @@ export default function ChiSquarePage() {
                   ))}
                 </div>
                 <p className="text-xs text-emerald-100/90 leading-relaxed">
-                  기준 회차 이전까지 집계한 출현 횟수(O)가 가장 적은 순으로 4개입니다. 동률이면 번호가 작은 쪽을 먼저 두고, 이미 뽑힌 번호와 겹치면 다음 순위로 채웁니다.
+                  편차(O−E) 값이 가장 작은(가장 음수에 가까운) 4개 번호와 누적번호 분석 최종 4개(있을 때)는 제외합니다. 사용 번호 4개는 전체를 편차 오름차순으로 한 줄 세운 뒤, 제외분을 건너뛰고 그다음 순서에서 4개를 고릅니다(예: −30~−26 제외 후 −25부터). 동률이면 번호가 작은 쪽을 먼저 둡니다.
                 </p>
               </div>
             </section>
@@ -123,16 +138,10 @@ export default function ChiSquarePage() {
             selectedWinningNumberSet={selectedWinningNumberSet}
             adoptedUsageNumberSet={adoptedUsageNumberSet}
             maxAbsDeviation={maxAbsDeviation}
-            top5PctThreshold={top5PctThreshold}
-            avgLinePx={avgLinePx}
           />
 
           {hasSearched && !noHistory && !isSearching && !searchError && chiSquareResults.length > 0 && (
-            <FrequencySummary
-              lowFreqNumbers={lowFreqNumbers}
-              highFreqNumbers={highFreqNumbers}
-              excludedNumbers={excludedNumbers}
-            />
+            <FrequencySummary lowFreqNumbers={lowFreqNumbers} highFreqNumbers={highFreqNumbers} />
           )}
 
           <ResultTable
@@ -144,7 +153,6 @@ export default function ChiSquarePage() {
             expected={expected}
             analyzedDrawCount={analyzedDrawCount}
             chiSquareThreshold={chiSquareThreshold}
-            top5PctThreshold={top5PctThreshold}
             selectedWinningNumberSet={selectedWinningNumberSet}
             adoptedUsageNumberSet={adoptedUsageNumberSet}
           />

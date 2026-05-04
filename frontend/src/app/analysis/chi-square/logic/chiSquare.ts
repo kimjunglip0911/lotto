@@ -1,9 +1,4 @@
-import {
-  CHART_HALF_H,
-  CHI_SQUARE_THRESHOLD,
-  NUMBERS_PER_DRAW,
-  TOTAL_NUMBERS,
-} from '../constants';
+import { CHI_SQUARE_THRESHOLD, NUMBERS_PER_DRAW, TOTAL_NUMBERS } from '../constants';
 import type { ChiSquareResult, WinningNumberRow } from '../types';
 
 export const buildChiSquareResults = (rows: WinningNumberRow[]): ChiSquareResult[] => {
@@ -36,23 +31,43 @@ export const buildChiSquareResults = (rows: WinningNumberRow[]): ChiSquareResult
 };
 
 /**
- * 저빈도 순위: 출현 횟수(observed) 오름차순, 동률 시 번호 오름차순.
- * 이미 채택된 번호와 동일하면 건너뛰고 다음 순위로 채움(누적번호 pickTwoHotTwoCold 저빈도 구간과 동일 패턴).
- * 화면 표기용으로 최종 4개는 오름차순 정렬해 반환한다.
+ * 편차(O−E) **값** 오름차순(가장 작은·가장 음수에 가까운 순), 동률 시 번호 오름차순으로 앞에서 `count`개 번호.
+ * 「|편차|가 가장 작다」와 다르다(−30이 +1보다 먼저 온다).
  */
-export const selectAdoptedNumbersByLowObserved = (
-  results: ChiSquareResult[]
+export const pickFirstNumbersBySignedDeviationOrder = (
+  results: ChiSquareResult[],
+  count: number
+): readonly number[] => {
+  if (results.length === 0 || count <= 0) {
+    return [];
+  }
+  const sorted = [...results].sort((a, b) => a.deviation - b.deviation || a.number - b.number);
+  const take = Math.min(count, sorted.length);
+  return sorted.slice(0, take).map((r) => r.number);
+};
+
+/**
+ * 전체 번호를 편차(O−E) 오름차순으로 한 번만 순회하며, `exclude`에 없는 항목을 앞에서 4개 고른다.
+ * 제외 집합이 「편차가 가장 작은 4개」이면 그 **다음** 순위(예: −25 이후)가 채택된다.
+ * 동일 번호가 중복 행으로 들어오면 건너뛴다. 화면 표기용으로 최종 4개는 번호 오름차순 정렬해 반환한다.
+ */
+export const selectAdoptedBySignedDeviationSkippingExcluded = (
+  results: ChiSquareResult[],
+  exclude?: ReadonlySet<number>
 ): readonly [number, number, number, number] | null => {
   if (results.length === 0) {
     return null;
   }
 
-  const sorted = [...results].sort((a, b) => a.observed - b.observed || a.number - b.number);
+  const sorted = [...results].sort((a, b) => a.deviation - b.deviation || a.number - b.number);
   const picked = new Set<number>();
   const out: number[] = [];
 
   for (const row of sorted) {
     if (picked.has(row.number)) {
+      continue;
+    }
+    if (exclude?.has(row.number)) {
       continue;
     }
     picked.add(row.number);
@@ -70,25 +85,7 @@ export const selectAdoptedNumbersByLowObserved = (
   return [ascending[0], ascending[1], ascending[2], ascending[3]];
 };
 
-export const getTop5PctThreshold = (results: ChiSquareResult[]): number => {
-  const positiveDeviations = results.filter((r) => r.deviation > 0).map((r) => r.deviation);
-  if (positiveDeviations.length === 0) return 0;
-
-  const sorted = [...positiveDeviations].sort((a, b) => a - b);
-  const idx = Math.min(Math.ceil(sorted.length * 0.95) - 1, sorted.length - 1);
-  return sorted[idx];
-};
-
-export const getExcludedNumbers = (results: ChiSquareResult[], top5PctThreshold: number): ChiSquareResult[] => {
-  if (top5PctThreshold <= 0) return [];
-  return results.filter((r) => r.deviation >= top5PctThreshold);
-};
-
 export const getMaxAbsDeviation = (results: ChiSquareResult[]): number => {
   if (results.length === 0) return 1;
   return Math.max(...results.map((r) => Math.abs(r.deviation)), 1);
-};
-
-export const getAverageLinePx = (top5PctThreshold: number, maxAbsDeviation: number): number => {
-  return Math.round(CHART_HALF_H - (top5PctThreshold / maxAbsDeviation) * CHART_HALF_H);
 };

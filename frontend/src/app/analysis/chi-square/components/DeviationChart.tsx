@@ -11,8 +11,6 @@ type Props = {
   /** 사용 번호 4개 — 막대·번호에 보조 강조 */
   adoptedUsageNumberSet?: Set<number> | null;
   maxAbsDeviation: number;
-  top5PctThreshold: number;
-  avgLinePx: number;
 };
 
 export function DeviationChart({
@@ -24,8 +22,6 @@ export function DeviationChart({
   selectedWinningNumberSet,
   adoptedUsageNumberSet = null,
   maxAbsDeviation,
-  top5PctThreshold,
-  avgLinePx,
 }: Props) {
   return (
     <section className="rounded-2xl border border-card-border/30 bg-card-bg/60 p-3 space-y-2.5">
@@ -36,10 +32,6 @@ export function DeviationChart({
             <span className="flex items-center gap-1.5">
               <span className="inline-block w-3 h-3 rounded bg-amber-400/50 border border-amber-400/70" />
               선택 회차 당첨번호
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="inline-block w-3 h-3 rounded bg-orange-500/70 border border-orange-500/90" />
-              제외 번호 (상위 5%)
             </span>
             <span className="flex items-center gap-1.5">
               <span className="inline-block w-3 h-3 rounded bg-blue-500/60 border border-blue-500/80" />
@@ -71,14 +63,6 @@ export function DeviationChart({
       ) : (
         <div className="overflow-x-auto pb-0.5">
           <div className="relative w-max">
-            {top5PctThreshold > 0 && (
-              <div className="pointer-events-none absolute inset-x-0 z-10" style={{ top: avgLinePx }}>
-                <div className="w-full border-t-2 border-dashed border-emerald-400/80" />
-                <span className="absolute -top-5 right-0 rounded bg-emerald-500/20 px-2 py-0.5 text-[11px] font-medium text-emerald-300 whitespace-nowrap">
-                  +편차 상위5% +{top5PctThreshold.toFixed(2)}
-                </span>
-              </div>
-            )}
             <ul className="w-max flex gap-1">
               {chiSquareResults.map((item) => {
                 const isWinningNum = selectedWinningNumberSet?.has(item.number) ?? false;
@@ -90,10 +74,9 @@ export function DeviationChart({
                   ? Math.max((Math.abs(item.deviation) / maxAbsDeviation) * CHART_HALF_H, 2)
                   : 0;
 
-                const isExcluded = top5PctThreshold > 0 && item.deviation >= top5PctThreshold;
-                const posColor = isWinningNum ? 'bg-amber-400/90' : isExcluded ? 'bg-orange-500/90' : item.isHighFreq ? 'bg-blue-500/90' : 'bg-blue-400/50';
+                const posColor = isWinningNum ? 'bg-amber-400/90' : item.isHighFreq ? 'bg-blue-500/90' : 'bg-blue-400/50';
                 const negColor = isWinningNum ? 'bg-amber-400/90' : item.isLowFreq ? 'bg-rose-500/90' : 'bg-rose-400/50';
-                const numColor = isWinningNum ? 'text-amber-300 font-bold' : isExcluded ? 'text-orange-300 font-bold' : 'text-slate-300 font-medium';
+                const numColor = isWinningNum ? 'text-amber-300 font-bold' : 'text-slate-300 font-medium';
 
                 return (
                   <li

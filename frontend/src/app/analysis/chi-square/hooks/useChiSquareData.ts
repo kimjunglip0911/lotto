@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { runAccumulatedStrategySelection } from '@/app/analysis/accumulated-numbers/logic/runAccumulatedStrategySelection';
 import { buildChiSquareResults } from '../logic/chiSquare';
 import { isWinningNumberRow } from '../logic/guards';
 import type { ChiSquareResult, WinningNumberRow } from '../types';
@@ -17,6 +18,8 @@ type UseChiSquareDataResult = {
   searchError: string | null;
   analyzedDrawCount: number;
   chiSquareResults: ChiSquareResult[];
+  /** 누적번호 분석과 동일 로직으로 계산된 최종 4개(없으면 null) */
+  accumulatedFinalNumbers: readonly number[] | null;
   handleSearch: () => Promise<void>;
 };
 
@@ -36,6 +39,7 @@ export const useChiSquareData = (): UseChiSquareDataResult => {
 
   const [analyzedDrawCount, setAnalyzedDrawCount] = useState(0);
   const [chiSquareResults, setChiSquareResults] = useState<ChiSquareResult[]>([]);
+  const [accumulatedFinalNumbers, setAccumulatedFinalNumbers] = useState<readonly number[] | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -79,6 +83,7 @@ export const useChiSquareData = (): UseChiSquareDataResult => {
     setChiSquareResults([]);
     setSelectedWinningNumber(null);
     setWinningNumberError(null);
+    setAccumulatedFinalNumbers(null);
   };
 
   const handleSearch = async () => {
@@ -106,8 +111,8 @@ export const useChiSquareData = (): UseChiSquareDataResult => {
         if (!res.ok) throw new Error(`Failed to fetch winning number: ${res.status}`);
         const data: unknown = await res.json();
         if (!isWinningNumberRow(data)) throw new Error('Winning number response is invalid');
-        setSelectedWinningNumber(data);
         resetResults();
+        setSelectedWinningNumber(data);
         setAnalyzedDrawCount(0);
         return;
       }
@@ -130,6 +135,12 @@ export const useChiSquareData = (): UseChiSquareDataResult => {
       if (!Array.isArray(rangeData)) throw new Error('Winning numbers range response is not an array');
 
       const rows = rangeData.filter(isWinningNumberRow);
+      const sortedRows = [...rows].sort((a, b) => a.draw_no - b.draw_no);
+      const { finalNumberPlan } = runAccumulatedStrategySelection(sortedRows);
+      const finalFour =
+        finalNumberPlan?.finalNumbers.length === 4 ? [...finalNumberPlan.finalNumbers] : null;
+      setAccumulatedFinalNumbers(finalFour);
+
       setSelectedWinningNumber(winningData);
       setAnalyzedDrawCount(rows.length);
       setChiSquareResults(buildChiSquareResults(rows));
@@ -158,6 +169,7 @@ export const useChiSquareData = (): UseChiSquareDataResult => {
     searchError,
     analyzedDrawCount,
     chiSquareResults,
+    accumulatedFinalNumbers,
     handleSearch,
   };
 };
