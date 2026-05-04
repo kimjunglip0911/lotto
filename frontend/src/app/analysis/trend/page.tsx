@@ -3,10 +3,9 @@
 import React, { useState } from 'react';
 import { Header } from '@/components/common/Header';
 import { Sidebar } from '@/components/common/Sidebar';
-import { PhaseCards } from './components/PhaseCards';
-import { TrendRecommendedStrip } from './components/TrendRecommendedStrip';
 import { SearchControls } from './components/SearchControls';
 import { StatisticalNote } from './components/StatisticalNote';
+import { ExpectedDeviationBinTable } from './components/ExpectedDeviationBinTable';
 import { SummaryCards } from './components/SummaryCards';
 import { TrendChart } from './components/TrendChart';
 import { TrendResultTable } from './components/TrendResultTable';
@@ -29,9 +28,8 @@ export default function TrendPage() {
     searchError,
     trendResults,
     historyCount,
-    accumulatedFinalFour,
-    chiSquareAdoptedFour,
     trendBaseline,
+    deviationBinsSummary,
     handleSearch,
   } = useTrendData();
 
@@ -41,7 +39,6 @@ export default function TrendPage() {
     hasResults,
     selectedMainNumbers,
     selectedWinningNumberSet,
-    phaseGroups,
     maxRate,
     chartTotalW,
     baselineY,
@@ -52,7 +49,6 @@ export default function TrendPage() {
     chartPaddingTop,
     chartPaddingBottom,
     chartWidthPerNum,
-    trendRecommendedFour,
   } = useTrendDerived({
     trendResults,
     trendBaseline,
@@ -64,8 +60,6 @@ export default function TrendPage() {
     isSearching,
     selectedDraw,
     searchError,
-    accumulatedFinalFour,
-    chiSquareAdoptedFour,
   });
 
   return (
@@ -112,12 +106,8 @@ export default function TrendPage() {
             kTrend={kTrend}
           />
 
-          {hasSearched && !noHistory && !isSearching && !searchError && hasResults && (
-            <PhaseCards phaseGroups={phaseGroups} />
-          )}
-
-          {hasSearched && !noHistory && !isSearching && !searchError && hasResults && (
-            <TrendRecommendedStrip trendRecommendedFour={trendRecommendedFour} />
+          {hasSearched && !noHistory && !isSearching && !searchError && hasResults && deviationBinsSummary !== null && (
+            <ExpectedDeviationBinTable summary={deviationBinsSummary} />
           )}
 
           <TrendResultTable

@@ -1,13 +1,8 @@
 import { useEffect, useState } from 'react';
-import { runAccumulatedStrategySelection } from '@/app/analysis/accumulated-numbers/logic/runAccumulatedStrategySelection';
-import {
-  buildChiSquareResults,
-  pickFirstNumbersBySignedDeviationOrder,
-  selectAdoptedBySignedDeviationSkippingExcluded,
-} from '@/app/analysis/chi-square/logic/chiSquare';
+import { aggregateDeviationBins } from '../logic/trendDeviationBins';
 import { buildTrendResults, computeEmpiricalAppearanceRate } from '../logic/trend';
 import { isWinningNumberRow } from '../logic/guards';
-import type { NumberTrendResult, WinningNumberRow } from '../types';
+import type { DeviationBinsSummary, NumberTrendResult, WinningNumberRow } from '../types';
 
 type UseTrendDataResult = {
   availableDraws: number[];
@@ -23,12 +18,10 @@ type UseTrendDataResult = {
   searchError: string | null;
   trendResults: NumberTrendResult[];
   historyCount: number;
-  /** 누적번호 분석 최종 4개(없으면 null) — 트렌드 선정 제외에 사용 */
-  accumulatedFinalFour: readonly number[] | null;
-  /** 카이제곱 화면과 동일한 사용 번호 4개(없으면 null) */
-  chiSquareAdoptedFour: readonly [number, number, number, number] | null;
   /** 트렌드 EMA·국면·기댓값선에 쓰는 이력 기반 출현 비율(주6·보너스 제외) */
   trendBaseline: number;
+  /** 선택 회차 미포함 이력만으로, 전체 회차 주6 표본의 기댓값 대비 EMA 편차% 구간 분포 */
+  deviationBinsSummary: DeviationBinsSummary | null;
   handleSearch: () => Promise<void>;
 };
 
@@ -48,11 +41,8 @@ export const useTrendData = (): UseTrendDataResult => {
 
   const [trendResults, setTrendResults] = useState<NumberTrendResult[]>([]);
   const [historyCount, setHistoryCount] = useState(0);
-  const [accumulatedFinalFour, setAccumulatedFinalFour] = useState<readonly number[] | null>(null);
-  const [chiSquareAdoptedFour, setChiSquareAdoptedFour] = useState<
-    readonly [number, number, number, number] | null
-  >(null);
   const [trendBaseline, setTrendBaseline] = useState(0);
+  const [deviationBinsSummary, setDeviationBinsSummary] = useState<DeviationBinsSummary | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -95,10 +85,9 @@ export const useTrendData = (): UseTrendDataResult => {
     setTrendResults([]);
     setHistoryCount(0);
     setTrendBaseline(0);
+    setDeviationBinsSummary(null);
     setSelectedWinningNumber(null);
     setWinningNumberError(null);
-    setAccumulatedFinalFour(null);
-    setChiSquareAdoptedFour(null);
   };
 
   const handleSearch = async () => {
@@ -149,25 +138,14 @@ export const useTrendData = (): UseTrendDataResult => {
       const allRows = historyData.filter(isWinningNumberRow);
       const sortedRows = [...allRows].sort((a, b) => a.draw_no - b.draw_no);
 
-      const { finalNumberPlan } = runAccumulatedStrategySelection(sortedRows);
-      const finalFour =
-        finalNumberPlan?.finalNumbers.length === 4 ? [...finalNumberPlan.finalNumbers] : null;
-      setAccumulatedFinalFour(finalFour);
-
-      const chiSquareResults = buildChiSquareResults(sortedRows);
-      const chiExclude = new Set<number>(pickFirstNumbersBySignedDeviationOrder(chiSquareResults, 4));
-      if (finalFour !== null) {
-        for (const n of finalFour) {
-          chiExclude.add(n);
-        }
-      }
-      setChiSquareAdoptedFour(selectAdoptedBySignedDeviationSkippingExcluded(chiSquareResults, chiExclude));
-
       const empiricalBaseline = computeEmpiricalAppearanceRate(sortedRows);
       setTrendBaseline(empiricalBaseline);
       setSelectedWinningNumber(winningData);
       setHistoryCount(allRows.length);
       setTrendResults(buildTrendResults(sortedRows, empiricalBaseline));
+
+      // 선택(조회) 회차는 표본에서 제외: all-history 행만 사용
+      setDeviationBinsSummary(aggregateDeviationBins(sortedRows));
     } catch (error) {
       console.error('Error fetching trend data:', error);
       setSearchError('조회 데이터를 불러오지 못했습니다.');
@@ -193,9 +171,8 @@ export const useTrendData = (): UseTrendDataResult => {
     searchError,
     trendResults,
     historyCount,
-    accumulatedFinalFour,
-    chiSquareAdoptedFour,
     trendBaseline,
+    deviationBinsSummary,
     handleSearch,
   };
 };
