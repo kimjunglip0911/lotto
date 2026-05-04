@@ -111,11 +111,11 @@ lotto/
 │       │   │       │       ├── evaluationRun.ts
 │       │   │       │       ├── windowRanking.ts
 │       │   │       │       └── recommendationSelection.ts
-│       │   │       ├── scripts/
-│       │   │       │   └── accumulatedStrategyMetricsCli.ts
 │       │   │       └── components/
+│       │   │           ├── accumulatedBarChartStats.ts
+│       │   │           ├── AccumulatedChartSection.tsx
 │       │   │           ├── SearchPanel.tsx
-│       │   │           └── AccumulatedChartSection.tsx
+│       │   │           └── SelectedWinningNumbersStrip.tsx
 │       │   ├── home/
 │       │   │   ├── page.tsx
 │       │   │   ├── hooks/
