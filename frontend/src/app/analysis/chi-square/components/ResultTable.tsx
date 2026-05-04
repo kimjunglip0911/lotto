@@ -11,6 +11,7 @@ type Props = {
   chiSquareThreshold: number;
   top5PctThreshold: number;
   selectedWinningNumberSet: Set<number> | null;
+  adoptedUsageNumberSet?: Set<number> | null;
 };
 
 export function ResultTable({
@@ -24,6 +25,7 @@ export function ResultTable({
   chiSquareThreshold,
   top5PctThreshold,
   selectedWinningNumberSet,
+  adoptedUsageNumberSet = null,
 }: Props) {
   return (
     <section className="rounded-2xl border border-card-border/30 bg-card-bg/60 p-4 space-y-3">
@@ -68,6 +70,12 @@ export function ResultTable({
                   선택 회차 당첨번호
                 </span>
               )}
+              {adoptedUsageNumberSet && adoptedUsageNumberSet.size > 0 && (
+                <span className="flex items-center gap-1.5">
+                  <span className="inline-block w-3 h-3 rounded ring-2 ring-emerald-400/80 ring-offset-1 ring-offset-slate-900 bg-emerald-500/30" />
+                  사용 번호 4개
+                </span>
+              )}
             </div>
           </div>
           <div className="overflow-x-auto">
@@ -85,6 +93,7 @@ export function ResultTable({
               <tbody>
                 {chiSquareResults.map((row) => {
                   const isRowExcluded = top5PctThreshold > 0 && row.deviation >= top5PctThreshold;
+                  const isAdopted = adoptedUsageNumberSet?.has(row.number) ?? false;
                   return (
                     <tr
                       key={row.number}
@@ -108,7 +117,7 @@ export function ResultTable({
                                 : row.isHighFreq
                                   ? 'bg-blue-500/30 text-blue-200'
                                   : 'bg-white/10 text-white'
-                          }`}
+                          } ${isAdopted ? 'ring-2 ring-emerald-400/85 ring-offset-1 ring-offset-slate-900' : ''}`}
                         >
                           {row.number}
                         </span>

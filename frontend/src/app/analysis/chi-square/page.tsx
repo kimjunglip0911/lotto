@@ -43,6 +43,8 @@ export default function ChiSquarePage() {
     top5PctThreshold,
     avgLinePx,
     excludedNumbers,
+    adoptedUsageNumbers,
+    adoptedUsageNumberSet,
     statusMessage,
     chiSquareThreshold,
   } = useChiSquareDerived({
@@ -91,6 +93,27 @@ export default function ChiSquarePage() {
             />
           )}
 
+          {hasSearched && !noHistory && !isSearching && !searchError && adoptedUsageNumbers && (
+            <section className="rounded-2xl border border-card-border/30 bg-card-bg/60 p-4 space-y-3">
+              <div className="rounded-xl border border-emerald-400/30 bg-emerald-500/10 p-3 space-y-2">
+                <p className="text-sm font-semibold text-emerald-300">사용 번호 4개 (저빈도 순)</p>
+                <div className="flex flex-wrap gap-2">
+                  {adoptedUsageNumbers.map((n) => (
+                    <span
+                      key={`adopted-${n}`}
+                      className="inline-flex h-9 min-w-9 items-center justify-center rounded-full bg-emerald-400/25 px-2 text-sm font-bold text-emerald-200"
+                    >
+                      {n}
+                    </span>
+                  ))}
+                </div>
+                <p className="text-xs text-emerald-100/90 leading-relaxed">
+                  기준 회차 이전까지 집계한 출현 횟수(O)가 가장 적은 순으로 4개입니다. 동률이면 번호가 작은 쪽을 먼저 두고, 이미 뽑힌 번호와 겹치면 다음 순위로 채웁니다.
+                </p>
+              </div>
+            </section>
+          )}
+
           <DeviationChart
             hasSearched={hasSearched}
             noHistory={noHistory}
@@ -98,6 +121,7 @@ export default function ChiSquarePage() {
             searchError={searchError}
             chiSquareResults={chiSquareResults}
             selectedWinningNumberSet={selectedWinningNumberSet}
+            adoptedUsageNumberSet={adoptedUsageNumberSet}
             maxAbsDeviation={maxAbsDeviation}
             top5PctThreshold={top5PctThreshold}
             avgLinePx={avgLinePx}
@@ -122,6 +146,7 @@ export default function ChiSquarePage() {
             chiSquareThreshold={chiSquareThreshold}
             top5PctThreshold={top5PctThreshold}
             selectedWinningNumberSet={selectedWinningNumberSet}
+            adoptedUsageNumberSet={adoptedUsageNumberSet}
           />
 
           <StatisticalNote />

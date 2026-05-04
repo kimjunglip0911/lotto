@@ -8,6 +8,8 @@ type Props = {
   searchError: string | null;
   chiSquareResults: ChiSquareResult[];
   selectedWinningNumberSet: Set<number> | null;
+  /** 사용 번호 4개 — 막대·번호에 보조 강조 */
+  adoptedUsageNumberSet?: Set<number> | null;
   maxAbsDeviation: number;
   top5PctThreshold: number;
   avgLinePx: number;
@@ -20,6 +22,7 @@ export function DeviationChart({
   searchError,
   chiSquareResults,
   selectedWinningNumberSet,
+  adoptedUsageNumberSet = null,
   maxAbsDeviation,
   top5PctThreshold,
   avgLinePx,
@@ -46,6 +49,12 @@ export function DeviationChart({
               <span className="inline-block w-3 h-3 rounded bg-rose-500/60 border border-rose-500/80" />
               − 편차 (적게 나옴)
             </span>
+            {adoptedUsageNumberSet && adoptedUsageNumberSet.size > 0 && (
+              <span className="flex items-center gap-1.5">
+                <span className="inline-block w-3 h-3 rounded ring-2 ring-emerald-400/90 ring-offset-1 ring-offset-slate-900 bg-emerald-500/40" />
+                사용 번호 4개
+              </span>
+            )}
           </div>
         )}
       </div>
@@ -73,6 +82,7 @@ export function DeviationChart({
             <ul className="w-max flex gap-1">
               {chiSquareResults.map((item) => {
                 const isWinningNum = selectedWinningNumberSet?.has(item.number) ?? false;
+                const isAdopted = adoptedUsageNumberSet?.has(item.number) ?? false;
                 const posBarPx = item.deviation > 0
                   ? Math.max((item.deviation / maxAbsDeviation) * CHART_HALF_H, 2)
                   : 0;
@@ -86,7 +96,10 @@ export function DeviationChart({
                 const numColor = isWinningNum ? 'text-amber-300 font-bold' : isExcluded ? 'text-orange-300 font-bold' : 'text-slate-300 font-medium';
 
                 return (
-                  <li key={item.number} className="w-8 shrink-0 flex flex-col items-center">
+                  <li
+                    key={item.number}
+                    className={`w-8 shrink-0 flex flex-col items-center ${isAdopted ? 'rounded-b-sm pb-0.5 ring-1 ring-emerald-400/70 ring-offset-1 ring-offset-slate-950' : ''}`}
+                  >
                     <div className="relative w-full flex flex-col justify-end" style={{ height: CHART_HALF_H }}>
                       {item.deviation > 0 && (
                         <>

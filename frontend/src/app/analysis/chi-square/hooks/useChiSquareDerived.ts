@@ -9,6 +9,7 @@ import {
   getExcludedNumbers,
   getMaxAbsDeviation,
   getTop5PctThreshold,
+  selectAdoptedNumbersByLowObserved,
 } from '../logic/chiSquare';
 import type { ChiSquareResult, WinningNumberRow } from '../types';
 
@@ -79,6 +80,16 @@ export const useChiSquareDerived = ({
     [chiSquareResults, top5PctThreshold],
   );
 
+  const adoptedUsageNumbers = useMemo(
+    () => selectAdoptedNumbersByLowObserved(chiSquareResults),
+    [chiSquareResults],
+  );
+
+  const adoptedUsageNumberSet = useMemo(
+    () => (adoptedUsageNumbers ? new Set<number>(adoptedUsageNumbers) : null),
+    [adoptedUsageNumbers],
+  );
+
   const statusMessage = isLoadingDraws
     ? '회차 정보를 불러오는 중입니다.'
     : drawLoadError
@@ -105,6 +116,8 @@ export const useChiSquareDerived = ({
     top5PctThreshold,
     avgLinePx,
     excludedNumbers,
+    adoptedUsageNumbers,
+    adoptedUsageNumberSet,
     statusMessage,
     chiSquareThreshold: CHI_SQUARE_THRESHOLD,
   };

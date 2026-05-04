@@ -35,6 +35,41 @@ export const buildChiSquareResults = (rows: WinningNumberRow[]): ChiSquareResult
   });
 };
 
+/**
+ * 저빈도 순위: 출현 횟수(observed) 오름차순, 동률 시 번호 오름차순.
+ * 이미 채택된 번호와 동일하면 건너뛰고 다음 순위로 채움(누적번호 pickTwoHotTwoCold 저빈도 구간과 동일 패턴).
+ * 화면 표기용으로 최종 4개는 오름차순 정렬해 반환한다.
+ */
+export const selectAdoptedNumbersByLowObserved = (
+  results: ChiSquareResult[]
+): readonly [number, number, number, number] | null => {
+  if (results.length === 0) {
+    return null;
+  }
+
+  const sorted = [...results].sort((a, b) => a.observed - b.observed || a.number - b.number);
+  const picked = new Set<number>();
+  const out: number[] = [];
+
+  for (const row of sorted) {
+    if (picked.has(row.number)) {
+      continue;
+    }
+    picked.add(row.number);
+    out.push(row.number);
+    if (out.length === 4) {
+      break;
+    }
+  }
+
+  if (out.length !== 4) {
+    return null;
+  }
+
+  const ascending = [...out].sort((a, b) => a - b);
+  return [ascending[0], ascending[1], ascending[2], ascending[3]];
+};
+
 export const getTop5PctThreshold = (results: ChiSquareResult[]): number => {
   const positiveDeviations = results.filter((r) => r.deviation > 0).map((r) => r.deviation);
   if (positiveDeviations.length === 0) return 0;
