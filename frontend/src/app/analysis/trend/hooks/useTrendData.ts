@@ -1,4 +1,10 @@
 import { useEffect, useState } from 'react';
+import { runAccumulatedStrategySelection } from '@/app/analysis/accumulated-numbers/logic/runAccumulatedStrategySelection';
+import {
+  buildChiSquareResults,
+  pickFirstNumbersBySignedDeviationOrder,
+  selectAdoptedBySignedDeviationSkippingExcluded,
+} from '@/app/analysis/chi-square/logic/chiSquare';
 import { buildTrendResults } from '../logic/trend';
 import { isWinningNumberRow } from '../logic/guards';
 import type { NumberTrendResult, WinningNumberRow } from '../types';
@@ -17,6 +23,10 @@ type UseTrendDataResult = {
   searchError: string | null;
   trendResults: NumberTrendResult[];
   historyCount: number;
+  /** 누적번호 분석 최종 4개(없으면 null) — 트렌드 선정 제외에 사용 */
+  accumulatedFinalFour: readonly number[] | null;
+  /** 카이제곱 화면과 동일한 사용 번호 4개(없으면 null) */
+  chiSquareAdoptedFour: readonly [number, number, number, number] | null;
   handleSearch: () => Promise<void>;
 };
 
@@ -36,6 +46,10 @@ export const useTrendData = (): UseTrendDataResult => {
 
   const [trendResults, setTrendResults] = useState<NumberTrendResult[]>([]);
   const [historyCount, setHistoryCount] = useState(0);
+  const [accumulatedFinalFour, setAccumulatedFinalFour] = useState<readonly number[] | null>(null);
+  const [chiSquareAdoptedFour, setChiSquareAdoptedFour] = useState<
+    readonly [number, number, number, number] | null
+  >(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -79,6 +93,8 @@ export const useTrendData = (): UseTrendDataResult => {
     setHistoryCount(0);
     setSelectedWinningNumber(null);
     setWinningNumberError(null);
+    setAccumulatedFinalFour(null);
+    setChiSquareAdoptedFour(null);
   };
 
   const handleSearch = async () => {
@@ -127,6 +143,21 @@ export const useTrendData = (): UseTrendDataResult => {
       const historyData: unknown = await allHistoryRes.json();
       if (!Array.isArray(historyData)) throw new Error('All history response is not an array');
       const allRows = historyData.filter(isWinningNumberRow);
+      const sortedRows = [...allRows].sort((a, b) => a.draw_no - b.draw_no);
+
+      const { finalNumberPlan } = runAccumulatedStrategySelection(sortedRows);
+      const finalFour =
+        finalNumberPlan?.finalNumbers.length === 4 ? [...finalNumberPlan.finalNumbers] : null;
+      setAccumulatedFinalFour(finalFour);
+
+      const chiSquareResults = buildChiSquareResults(sortedRows);
+      const chiExclude = new Set<number>(pickFirstNumbersBySignedDeviationOrder(chiSquareResults, 4));
+      if (finalFour !== null) {
+        for (const n of finalFour) {
+          chiExclude.add(n);
+        }
+      }
+      setChiSquareAdoptedFour(selectAdoptedBySignedDeviationSkippingExcluded(chiSquareResults, chiExclude));
 
       setSelectedWinningNumber(winningData);
       setHistoryCount(allRows.length);
@@ -156,6 +187,8 @@ export const useTrendData = (): UseTrendDataResult => {
     searchError,
     trendResults,
     historyCount,
+    accumulatedFinalFour,
+    chiSquareAdoptedFour,
     handleSearch,
   };
 };

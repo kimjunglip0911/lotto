@@ -8,6 +8,7 @@ import {
   K_CONFIG,
   TOTAL_NUMBERS,
 } from '../constants';
+import { pickTrendRecommendedFour } from '../logic/trendPickFour';
 import { rateToY } from '../logic/trend';
 import type { NumberTrendResult, TrendPhase, WinningNumberRow } from '../types';
 
@@ -21,6 +22,8 @@ type Params = {
   isSearching: boolean;
   selectedDraw: string;
   searchError: string | null;
+  accumulatedFinalFour: readonly number[] | null;
+  chiSquareAdoptedFour: readonly [number, number, number, number] | null;
 };
 
 export const useTrendDerived = ({
@@ -33,6 +36,8 @@ export const useTrendDerived = ({
   isSearching,
   selectedDraw,
   searchError,
+  accumulatedFinalFour,
+  chiSquareAdoptedFour,
 }: Params) => {
   const hasSearched = searchedDraw !== '';
   const searchedDrawNo = Number(searchedDraw);
@@ -70,6 +75,26 @@ export const useTrendDerived = ({
       down_cont: trendResults.filter((r) => r.phase === 'down_cont'),
     }),
     [trendResults],
+  );
+
+  const trendCrossPickExclude = useMemo(() => {
+    const s = new Set<number>();
+    if (accumulatedFinalFour !== null) {
+      for (const n of accumulatedFinalFour) {
+        s.add(n);
+      }
+    }
+    if (chiSquareAdoptedFour !== null) {
+      for (const n of chiSquareAdoptedFour) {
+        s.add(n);
+      }
+    }
+    return s;
+  }, [accumulatedFinalFour, chiSquareAdoptedFour]);
+
+  const trendRecommendedFour = useMemo(
+    () => pickTrendRecommendedFour(trendResults, trendCrossPickExclude, BASELINE),
+    [trendResults, trendCrossPickExclude],
   );
 
   const maxRate = useMemo(() => {
@@ -111,5 +136,6 @@ export const useTrendDerived = ({
     chartPaddingTop: CHART_PADDING_TOP,
     chartPaddingBottom: CHART_PADDING_BOTTOM,
     chartWidthPerNum: CHART_W_PER_NUM,
+    trendRecommendedFour,
   };
 };

@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Header } from '@/components/common/Header';
 import { Sidebar } from '@/components/common/Sidebar';
 import { PhaseCards } from './components/PhaseCards';
+import { TrendRecommendedStrip } from './components/TrendRecommendedStrip';
 import { SearchControls } from './components/SearchControls';
 import { StatisticalNote } from './components/StatisticalNote';
 import { SummaryCards } from './components/SummaryCards';
@@ -28,6 +29,8 @@ export default function TrendPage() {
     searchError,
     trendResults,
     historyCount,
+    accumulatedFinalFour,
+    chiSquareAdoptedFour,
     handleSearch,
   } = useTrendData();
 
@@ -48,6 +51,7 @@ export default function TrendPage() {
     chartPaddingTop,
     chartPaddingBottom,
     chartWidthPerNum,
+    trendRecommendedFour,
   } = useTrendDerived({
     trendResults,
     selectedWinningNumber,
@@ -58,6 +62,8 @@ export default function TrendPage() {
     isSearching,
     selectedDraw,
     searchError,
+    accumulatedFinalFour,
+    chiSquareAdoptedFour,
   });
 
   return (
@@ -106,6 +112,10 @@ export default function TrendPage() {
 
           {hasSearched && !noHistory && !isSearching && !searchError && hasResults && (
             <PhaseCards phaseGroups={phaseGroups} />
+          )}
+
+          {hasSearched && !noHistory && !isSearching && !searchError && hasResults && (
+            <TrendRecommendedStrip trendRecommendedFour={trendRecommendedFour} />
           )}
 
           <TrendResultTable
