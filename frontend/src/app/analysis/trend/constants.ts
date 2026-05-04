@@ -1,7 +1,11 @@
 import type { TrendPhase } from './types';
 
-export const K_CONFIG = { fast: 0.05, slow: 0.02 } as const;
-export const BASELINE = 6 / 45;
+/** 단일 트렌드 EMA 평활 계수(기존 Slow k) */
+export const K_TREND = 0.02;
+/** 회차당 트렌드 출현 집계에 쓰는 주번호 개수(보너스 제외) */
+export const MAIN_NUMBERS_PER_DRAW = 6;
+/** 기댓값 대비 차이로 4국면을 나눌 때 사용하는 밴드 폭(비율 단위, 약 0.5%p) */
+export const BASELINE_PHASE_BAND = 0.005;
 export const TOTAL_NUMBERS = 45;
 
 export const CHART_W_PER_NUM = 36;

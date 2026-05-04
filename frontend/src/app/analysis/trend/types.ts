@@ -13,7 +13,6 @@ export type TrendPhase = 'up_cont' | 'topping' | 'recovering' | 'down_cont';
 
 export type NumberTrendResult = {
   number: number;
-  emaFast: number;
-  emaSlow: number;
+  ema: number;
   phase: TrendPhase;
 };

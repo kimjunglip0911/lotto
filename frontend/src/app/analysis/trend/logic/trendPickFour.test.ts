@@ -1,15 +1,16 @@
 import { describe, expect, it } from 'vitest';
-import { BASELINE } from '../constants';
+import { MAIN_NUMBERS_PER_DRAW, TOTAL_NUMBERS } from '../constants';
 import type { NumberTrendResult } from '../types';
 import { pickTrendRecommendedFour } from './trendPickFour';
 
-const B = BASELINE;
+/** 테스트용 기댓값(주6/45, 트렌드와 동일 스케일) */
+const B = MAIN_NUMBERS_PER_DRAW / TOTAL_NUMBERS;
 
-function mk(num: number, emaSlow: number): NumberTrendResult {
-  return { number: num, emaFast: emaSlow, emaSlow, phase: 'up_cont' };
+function mk(num: number, ema: number): NumberTrendResult {
+  return { number: num, ema, phase: 'up_cont' };
 }
 
-/** deltaPp = (emaSlow - B) * 100 = target → emaSlow = B + target/100 */
+/** deltaPp = (ema - B) * 100 = target → ema = B + target/100 */
 function emaForDeltaPp(deltaPp: number): number {
   return B + deltaPp / 100;
 }

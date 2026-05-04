@@ -22,7 +22,7 @@ export function TrendRecommendedStrip({ trendRecommendedFour }: Props) {
             ))}
           </div>
           <p className="text-xs text-slate-400 leading-relaxed">
-            누적번호 분석 최종 4개·카이제곱 사용 번호 4개를 제외한 뒤, 기대값 대비(Slow EMA)가{' '}
+            누적번호 분석 최종 4개·카이제곱 사용 번호 4개를 제외한 뒤, 기대값 대비(단일 EMA, 주6·보너스 제외)가{' '}
             <span className="text-slate-300">+2.0~+3.9%p → +0.0~+0.9%p</span> 순으로 채웁니다.
             첫 구간 후보가 4개를 넘으면 +3%p에 가까운 번호를 우선합니다.
           </p>

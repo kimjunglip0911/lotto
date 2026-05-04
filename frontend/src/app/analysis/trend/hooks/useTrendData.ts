@@ -5,7 +5,7 @@ import {
   pickFirstNumbersBySignedDeviationOrder,
   selectAdoptedBySignedDeviationSkippingExcluded,
 } from '@/app/analysis/chi-square/logic/chiSquare';
-import { buildTrendResults } from '../logic/trend';
+import { buildTrendResults, computeEmpiricalAppearanceRate } from '../logic/trend';
 import { isWinningNumberRow } from '../logic/guards';
 import type { NumberTrendResult, WinningNumberRow } from '../types';
 
@@ -27,6 +27,8 @@ type UseTrendDataResult = {
   accumulatedFinalFour: readonly number[] | null;
   /** 카이제곱 화면과 동일한 사용 번호 4개(없으면 null) */
   chiSquareAdoptedFour: readonly [number, number, number, number] | null;
+  /** 트렌드 EMA·국면·기댓값선에 쓰는 이력 기반 출현 비율(주6·보너스 제외) */
+  trendBaseline: number;
   handleSearch: () => Promise<void>;
 };
 
@@ -50,6 +52,7 @@ export const useTrendData = (): UseTrendDataResult => {
   const [chiSquareAdoptedFour, setChiSquareAdoptedFour] = useState<
     readonly [number, number, number, number] | null
   >(null);
+  const [trendBaseline, setTrendBaseline] = useState(0);
 
   useEffect(() => {
     let isMounted = true;
@@ -91,6 +94,7 @@ export const useTrendData = (): UseTrendDataResult => {
   const resetResults = () => {
     setTrendResults([]);
     setHistoryCount(0);
+    setTrendBaseline(0);
     setSelectedWinningNumber(null);
     setWinningNumberError(null);
     setAccumulatedFinalFour(null);
@@ -159,9 +163,11 @@ export const useTrendData = (): UseTrendDataResult => {
       }
       setChiSquareAdoptedFour(selectAdoptedBySignedDeviationSkippingExcluded(chiSquareResults, chiExclude));
 
+      const empiricalBaseline = computeEmpiricalAppearanceRate(sortedRows);
+      setTrendBaseline(empiricalBaseline);
       setSelectedWinningNumber(winningData);
       setHistoryCount(allRows.length);
-      setTrendResults(buildTrendResults(allRows));
+      setTrendResults(buildTrendResults(sortedRows, empiricalBaseline));
     } catch (error) {
       console.error('Error fetching trend data:', error);
       setSearchError('조회 데이터를 불러오지 못했습니다.');
@@ -189,6 +195,7 @@ export const useTrendData = (): UseTrendDataResult => {
     historyCount,
     accumulatedFinalFour,
     chiSquareAdoptedFour,
+    trendBaseline,
     handleSearch,
   };
 };

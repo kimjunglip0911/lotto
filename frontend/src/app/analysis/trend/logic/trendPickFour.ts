@@ -29,7 +29,7 @@ export function pickTrendRecommendedFour(
 ): readonly [number, number, number, number] | null {
   const scored: Scored[] = trendResults
     .filter((r) => !exclude.has(r.number))
-    .map((r) => ({ number: r.number, deltaPp: (r.emaSlow - baseline) * 100 }));
+    .map((r) => ({ number: r.number, deltaPp: (r.ema - baseline) * 100 }));
 
   const tierFirst = scored.filter((s) => inDeltaPpRange(s.deltaPp, 2.0, 3.9));
   let chosen: Scored[] = [];

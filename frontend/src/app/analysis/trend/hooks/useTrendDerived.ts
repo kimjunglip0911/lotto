@@ -1,11 +1,10 @@
 import { useMemo } from 'react';
 import {
-  BASELINE,
   CHART_H,
   CHART_PADDING_BOTTOM,
   CHART_PADDING_TOP,
   CHART_W_PER_NUM,
-  K_CONFIG,
+  K_TREND,
   TOTAL_NUMBERS,
 } from '../constants';
 import { pickTrendRecommendedFour } from '../logic/trendPickFour';
@@ -14,6 +13,7 @@ import type { NumberTrendResult, TrendPhase, WinningNumberRow } from '../types';
 
 type Params = {
   trendResults: NumberTrendResult[];
+  trendBaseline: number;
   selectedWinningNumber: WinningNumberRow | null;
   searchedDraw: string;
   isLoadingDraws: boolean;
@@ -28,6 +28,7 @@ type Params = {
 
 export const useTrendDerived = ({
   trendResults,
+  trendBaseline,
   selectedWinningNumber,
   searchedDraw,
   isLoadingDraws,
@@ -93,17 +94,21 @@ export const useTrendDerived = ({
   }, [accumulatedFinalFour, chiSquareAdoptedFour]);
 
   const trendRecommendedFour = useMemo(
-    () => pickTrendRecommendedFour(trendResults, trendCrossPickExclude, BASELINE),
-    [trendResults, trendCrossPickExclude],
+    () => pickTrendRecommendedFour(trendResults, trendCrossPickExclude, trendBaseline),
+    [trendResults, trendCrossPickExclude, trendBaseline],
   );
 
   const maxRate = useMemo(() => {
-    const allEmaValues = trendResults.flatMap((r) => [r.emaFast, r.emaSlow]);
-    return allEmaValues.length > 0 ? Math.max(...allEmaValues, BASELINE * 1.5) : BASELINE * 2;
-  }, [trendResults]);
+    const floor = 0.02;
+    const emaVals = trendResults.map((r) => r.ema);
+    if (emaVals.length === 0) {
+      return Math.max(trendBaseline * 2, floor);
+    }
+    return Math.max(...emaVals, trendBaseline * 1.5, floor);
+  }, [trendResults, trendBaseline]);
 
   const chartTotalW = TOTAL_NUMBERS * CHART_W_PER_NUM;
-  const baselineY = rateToY(BASELINE, maxRate);
+  const baselineY = rateToY(trendBaseline, maxRate);
 
   const statusMessage = isLoadingDraws
     ? '회차 정보를 불러오는 중입니다.'
@@ -130,8 +135,8 @@ export const useTrendDerived = ({
     chartTotalW,
     baselineY,
     statusMessage,
-    baseline: BASELINE,
-    kConfig: K_CONFIG,
+    baseline: trendBaseline,
+    kTrend: K_TREND,
     chartHeight: CHART_H,
     chartPaddingTop: CHART_PADDING_TOP,
     chartPaddingBottom: CHART_PADDING_BOTTOM,

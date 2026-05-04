@@ -17,7 +17,7 @@ type Props = {
   maxRate: number;
   baselineY: number;
   baseline: number;
-  kConfig: { fast: number; slow: number };
+  kTrend: number;
 };
 
 export function TrendChart({
@@ -36,7 +36,7 @@ export function TrendChart({
   maxRate,
   baselineY,
   baseline,
-  kConfig,
+  kTrend,
 }: Props) {
   return (
     <section className="rounded-2xl border border-card-border/30 bg-card-bg/60 p-3 space-y-3">
@@ -45,16 +45,12 @@ export function TrendChart({
         {hasResults && (
           <div className="flex flex-wrap gap-3">
             <span className="flex items-center gap-1.5 text-xs text-slate-400">
-              <span className="inline-block w-5 h-[2px] rounded" style={{ backgroundColor: '#4ade80' }} />
-              Fast EMA (k={kConfig.fast})
-            </span>
-            <span className="flex items-center gap-1.5 text-xs text-slate-400">
               <span className="inline-block w-5 h-[2px] rounded" style={{ backgroundColor: '#38bdf8' }} />
-              Slow EMA (k={kConfig.slow})
+              EMA (k={kTrend}, 주6·보너스 제외)
             </span>
             <span className="flex items-center gap-1.5 text-xs text-slate-400">
               <span className="inline-block w-5 h-[2px] rounded border-t-2 border-dashed border-emerald-400/80" />
-              기댓값
+              기댓값(이력 출현 비율)
             </span>
           </div>
         )}
@@ -91,26 +87,12 @@ export function TrendChart({
               points={trendResults
                 .map((r, i) => {
                   const x = i * chartWidthPerNum + chartWidthPerNum / 2;
-                  const y = rateToY(r.emaSlow, maxRate);
+                  const y = rateToY(r.ema, maxRate);
                   return `${x},${y}`;
                 })
                 .join(' ')}
               fill="none"
               stroke="#38bdf8"
-              strokeWidth={1.5}
-              opacity={0.8}
-            />
-
-            <polyline
-              points={trendResults
-                .map((r, i) => {
-                  const x = i * chartWidthPerNum + chartWidthPerNum / 2;
-                  const y = rateToY(r.emaFast, maxRate);
-                  return `${x},${y}`;
-                })
-                .join(' ')}
-              fill="none"
-              stroke="#4ade80"
               strokeWidth={1.5}
               opacity={0.85}
             />

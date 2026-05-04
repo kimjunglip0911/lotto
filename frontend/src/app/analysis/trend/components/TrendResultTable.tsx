@@ -1,4 +1,4 @@
-import { BASELINE, PHASE_META } from '../constants';
+import { PHASE_META } from '../constants';
 import type { NumberTrendResult } from '../types';
 
 type Props = {
@@ -9,6 +9,8 @@ type Props = {
   hasResults: boolean;
   trendResults: NumberTrendResult[];
   selectedWinningNumberSet: Set<number> | null;
+  /** 트렌드 이력 기반 기댓값(주6·보너스 제외) */
+  baseline: number;
 };
 
 export function TrendResultTable({
@@ -19,6 +21,7 @@ export function TrendResultTable({
   hasResults,
   trendResults,
   selectedWinningNumberSet,
+  baseline,
 }: Props) {
   return (
     <section className="rounded-2xl border border-card-border/30 bg-card-bg/60 p-4 space-y-3">
@@ -36,15 +39,12 @@ export function TrendResultTable({
         <p className="text-sm text-slate-300">집계할 이전 회차 데이터가 없습니다.</p>
       ) : (
         <div className="overflow-x-auto">
-          <table className="w-full text-sm text-left" style={{ minWidth: 480 }}>
+          <table className="w-full text-sm text-left" style={{ minWidth: 400 }}>
             <thead>
               <tr className="border-b border-white/10 text-xs text-slate-400">
                 <th className="py-2 pr-3 font-medium w-12">번호</th>
-                <th className="py-2 pr-2 font-medium text-right" style={{ color: '#4ade80' }}>
-                  Fast EMA
-                </th>
                 <th className="py-2 pr-2 font-medium text-right" style={{ color: '#38bdf8' }}>
-                  Slow EMA
+                  EMA
                 </th>
                 <th className="py-2 pr-2 font-medium text-right text-slate-400">기댓값 대비</th>
                 <th className="py-2 font-medium text-center">국면</th>
@@ -54,10 +54,9 @@ export function TrendResultTable({
               {trendResults.map((row) => {
                 const isWinning = selectedWinningNumberSet?.has(row.number) ?? false;
                 const meta = PHASE_META[row.phase];
-                const fastPct = (row.emaFast * 100).toFixed(1);
-                const slowPct = (row.emaSlow * 100).toFixed(1);
-                const diffPct = ((row.emaSlow - BASELINE) * 100).toFixed(1);
-                const diffPositive = row.emaSlow >= BASELINE;
+                const emaPct = (row.ema * 100).toFixed(1);
+                const diffPct = ((row.ema - baseline) * 100).toFixed(1);
+                const diffPositive = row.ema >= baseline;
                 return (
                   <tr key={row.number} className={`border-b border-white/5 transition-colors ${meta.bgClass} hover:brightness-110`}>
                     <td className="py-1.5 pr-3">
@@ -69,8 +68,7 @@ export function TrendResultTable({
                         {row.number}
                       </span>
                     </td>
-                    <td className="py-1.5 pr-2 text-right tabular-nums text-xs text-emerald-300">{fastPct}%</td>
-                    <td className="py-1.5 pr-2 text-right tabular-nums text-xs text-sky-300">{slowPct}%</td>
+                    <td className="py-1.5 pr-2 text-right tabular-nums text-xs text-sky-300">{emaPct}%</td>
                     <td className={`py-1.5 pr-2 text-right tabular-nums text-xs ${diffPositive ? 'text-blue-300' : 'text-rose-400'}`}>
                       {diffPositive ? '+' : ''}
                       {diffPct}%

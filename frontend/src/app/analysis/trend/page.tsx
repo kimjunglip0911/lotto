@@ -31,6 +31,7 @@ export default function TrendPage() {
     historyCount,
     accumulatedFinalFour,
     chiSquareAdoptedFour,
+    trendBaseline,
     handleSearch,
   } = useTrendData();
 
@@ -46,7 +47,7 @@ export default function TrendPage() {
     baselineY,
     statusMessage,
     baseline,
-    kConfig,
+    kTrend,
     chartHeight,
     chartPaddingTop,
     chartPaddingBottom,
@@ -54,6 +55,7 @@ export default function TrendPage() {
     trendRecommendedFour,
   } = useTrendDerived({
     trendResults,
+    trendBaseline,
     selectedWinningNumber,
     searchedDraw,
     isLoadingDraws,
@@ -88,7 +90,7 @@ export default function TrendPage() {
           />
 
           {hasSearched && !noHistory && !isSearching && !searchError && hasResults && (
-            <SummaryCards historyCount={historyCount} baseline={baseline} kConfig={kConfig} />
+            <SummaryCards historyCount={historyCount} baseline={baseline} kTrend={kTrend} />
           )}
 
           <TrendChart
@@ -107,7 +109,7 @@ export default function TrendPage() {
             maxRate={maxRate}
             baselineY={baselineY}
             baseline={baseline}
-            kConfig={kConfig}
+            kTrend={kTrend}
           />
 
           {hasSearched && !noHistory && !isSearching && !searchError && hasResults && (
@@ -126,10 +128,10 @@ export default function TrendPage() {
             hasResults={hasResults}
             trendResults={trendResults}
             selectedWinningNumberSet={selectedWinningNumberSet}
+            baseline={baseline}
           />
 
-          <StatisticalNote baseline={baseline} kConfig={kConfig} />
-
+          <StatisticalNote kTrend={kTrend} />
         </main>
       </div>
     </div>
