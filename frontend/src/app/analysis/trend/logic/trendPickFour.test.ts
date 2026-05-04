@@ -15,7 +15,7 @@ function emaForDeltaPp(deltaPp: number): number {
 }
 
 describe('pickTrendRecommendedFour', () => {
-  it('+2.0~+2.9 구간 후보가 4 초과면 +2.5에 가까운 4개만 고른다', () => {
+  it('+2.0~+3.9 구간 후보가 4 초과면 +3%p에 가까운 4개만 고른다', () => {
     const rows: NumberTrendResult[] = [
       mk(1, emaForDeltaPp(2.0)),
       mk(2, emaForDeltaPp(2.1)),
@@ -25,35 +25,48 @@ describe('pickTrendRecommendedFour', () => {
     ];
     const out = pickTrendRecommendedFour(rows, new Set(), B);
     expect(out).not.toBeNull();
-    // |d-2.5| 가장 작은 순: 3(0), 2(0.4), 4(0.1), 2와4 중 4가 0.1 — 정렬: 3, 4, 2는 0.4, 1은 0.5, 5는 0.4
-    // distances: 1→0.5, 2→0.4, 3→0, 4→0.1, 5→0.4 → order 3,4,2,5 (2 before 5 same 0.4, number 2<5)
+    // |d-3|: 5→0.1, 4→0.4, 3→0.5, 2→0.9, 1→1.0 → 상위 4개 번호 2,3,4,5
     expect([...out!].sort((a, b) => a - b)).toEqual([2, 3, 4, 5]);
   });
 
-  it('+2 구간이 4 이하면 +1 구간으로 이어 붙인다', () => {
+  it('+2.0~+3.9 후보가 4 초과일 때 |d-3| 타이브레이크가 +2.5 근접과 다른 집합을 낸다', () => {
+    const rows: NumberTrendResult[] = [
+      mk(10, emaForDeltaPp(2.0)),
+      mk(11, emaForDeltaPp(2.3)),
+      mk(12, emaForDeltaPp(2.5)),
+      mk(13, emaForDeltaPp(2.6)),
+      mk(14, emaForDeltaPp(2.7)),
+      mk(15, emaForDeltaPp(2.9)),
+    ];
+    const out = pickTrendRecommendedFour(rows, new Set(), B);
+    expect(out).not.toBeNull();
+    // |d-3|: 15→0.1, 14→0.3, 13→0.4, 12→0.5, 11→0.7, 10→1.0
+    expect([...out!].sort((a, b) => a - b)).toEqual([12, 13, 14, 15]);
+  });
+
+  it('+2.0~+3.9가 4 이하면 +0.0~+0.9 구간으로 이어 붙인다', () => {
     const rows: NumberTrendResult[] = [
       mk(10, emaForDeltaPp(2.8)),
       mk(11, emaForDeltaPp(2.9)),
-      mk(20, emaForDeltaPp(1.0)),
-      mk(21, emaForDeltaPp(1.5)),
+      mk(20, emaForDeltaPp(0.0)),
+      mk(21, emaForDeltaPp(0.5)),
     ];
     const out = pickTrendRecommendedFour(rows, new Set(), B);
     expect(out).not.toBeNull();
     expect([...out!].sort((a, b) => a - b)).toEqual([10, 11, 20, 21]);
   });
 
-  it('+2·+1로 부족하면 +3 구간을 쓴다', () => {
+  it('첫 구간 3개와 둘째 0.0~0.9로 4개를 채운다', () => {
     const rows: NumberTrendResult[] = [
       mk(1, emaForDeltaPp(2.0)),
-      mk(2, emaForDeltaPp(1.9)),
-      mk(3, emaForDeltaPp(1.8)),
       mk(4, emaForDeltaPp(3.0)),
       mk(5, emaForDeltaPp(3.9)),
+      mk(2, emaForDeltaPp(0.2)),
+      mk(3, emaForDeltaPp(0.8)),
     ];
     const out = pickTrendRecommendedFour(rows, new Set(), B);
     expect(out).not.toBeNull();
-    // tier29: 1 only. tier19: 2,3 by delta order 1.8,1.9 → numbers 3,2. tier39: 4,3.0 first then 5
-    expect([...out!].sort((a, b) => a - b)).toEqual([1, 2, 3, 4]);
+    expect([...out!].sort((a, b) => a - b)).toEqual([1, 2, 4, 5]);
   });
 
   it('exclude에 있는 번호는 선정에서 제외한다', () => {
@@ -75,12 +88,12 @@ describe('pickTrendRecommendedFour', () => {
     expect(pickTrendRecommendedFour(rows, new Set(), B)).toBeNull();
   });
 
-  it('경계: deltaPp 2.0·2.9는 첫 구간, 1.0·1.9는 둘째, 3.0·3.9는 셋째', () => {
+  it('경계: deltaPp 2.0·3.9는 첫 구간, 0.0·0.9는 둘째 구간', () => {
     const rows: NumberTrendResult[] = [
       mk(1, emaForDeltaPp(2.0)),
-      mk(2, emaForDeltaPp(2.9)),
-      mk(3, emaForDeltaPp(1.0)),
-      mk(4, emaForDeltaPp(1.9)),
+      mk(2, emaForDeltaPp(3.9)),
+      mk(3, emaForDeltaPp(0.0)),
+      mk(4, emaForDeltaPp(0.9)),
     ];
     const out = pickTrendRecommendedFour(rows, new Set(), B);
     expect(out).not.toBeNull();
