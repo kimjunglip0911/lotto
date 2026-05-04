@@ -95,8 +95,24 @@ lotto/
 │       │   │       ├── hooks/
 │       │   │       │   ├── useAccumulatedNumbersData.ts
 │       │   │       │   └── useAccumulatedNumbersDerived.ts
+│       │   │       ├── test/
+│       │   │       │   ├── runAccumulatedStrategySelection.test.ts
+│       │   │       │   └── __snapshots__/
 │       │   │       ├── logic/
-│       │   │       │   └── numberCounts.ts
+│       │   │       │   ├── numberCounts.ts
+│       │   │       │   ├── accumulatedStrategyEvaluation.ts
+│       │   │       │   ├── buildStrategyChartsFromTopWindows.ts
+│       │   │       │   ├── pickFocusStrategyTopWindows.ts
+│       │   │       │   ├── runAccumulatedStrategySelection.ts
+│       │   │       │   └── strategyEvaluation/
+│       │   │       │       ├── types.ts
+│       │   │       │       ├── windowSlice.ts
+│       │   │       │       ├── numberPicking.ts
+│       │   │       │       ├── evaluationRun.ts
+│       │   │       │       ├── windowRanking.ts
+│       │   │       │       └── recommendationSelection.ts
+│       │   │       ├── scripts/
+│       │   │       │   └── accumulatedStrategyMetricsCli.ts
 │       │   │       └── components/
 │       │   │           ├── SearchPanel.tsx
 │       │   │           └── AccumulatedChartSection.tsx

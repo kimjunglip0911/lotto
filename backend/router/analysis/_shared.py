@@ -4,7 +4,7 @@ from typing import Any, Callable, TypeVar
 
 from fastapi import HTTPException
 
-from backend.DB.database import get_connection
+from backend.DB.database import db_session
 
 T = TypeVar("T")
 
@@ -21,23 +21,17 @@ def load_queries_module(module_name: str, queries_relative_path: tuple[str, ...]
 
 
 def fetch_all(sql: str, params: tuple[Any, ...] = ()) -> list[Any]:
-    conn = get_connection()
-    try:
+    with db_session() as conn:
         cursor = conn.cursor()
         cursor.execute(sql, params)
         return cursor.fetchall()
-    finally:
-        conn.close()
 
 
 def fetch_one(sql: str, params: tuple[Any, ...] = ()) -> Any | None:
-    conn = get_connection()
-    try:
+    with db_session() as conn:
         cursor = conn.cursor()
         cursor.execute(sql, params)
         return cursor.fetchone()
-    finally:
-        conn.close()
 
 
 def raise_as_http_500(error: Exception) -> None:

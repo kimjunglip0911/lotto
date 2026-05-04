@@ -9,29 +9,15 @@ import {
 import { WINDOW_CONFIGS } from '../constants';
 import {
   buildWindowCountResultMap,
-  buildNumberCounts,
   createEmptyCountResult,
   createEmptyWindowCountMap,
   toCountResult,
 } from '../logic/numberCounts';
-import {
-  BACKTEST_FOCUS_STRATEGY_KEYS,
-  buildFinalNumberSelection,
-  buildStrategyRecommendation,
-  combineStrategyRecommendations,
-  getDefaultBacktestWindowSizes,
-  pickAdaptiveWindowsByStrategy,
-  pickTopWindowsByStrategy,
-  runAccumulatedNumbersBacktest,
-  sliceWindowTail,
-} from '../logic/backtestEngine';
-const EXTENDED_WINDOW_MAX = 1208;
-
+import { runAccumulatedStrategySelection } from '../logic/runAccumulatedStrategySelection';
 import type {
   CountResult,
   FinalNumberPlan,
   StrategyChartData,
-  StrategyNumberPick,
   WinningNumberRow,
   WindowCountResultMap,
 } from '../types';
@@ -155,120 +141,9 @@ export const useAccumulatedNumbersData = () => {
     setWindowCountResultMap(buildWindowCountResultMap(windowRows));
     setSelectedWinningNumber(winningNumber);
 
-    const drawNumbersToEvaluate = rangeRows.map((r) => r.draw_no).filter((d) => d >= 100);
-    if (drawNumbersToEvaluate.length === 0) {
-      setStrategyCharts([]);
-      setFinalNumberPlan(null);
-      return;
-    }
-
-    const { aggregates } = runAccumulatedNumbersBacktest({
-      allRowsSortedAsc: rangeRows,
-      drawNumbersToEvaluate,
-      windowSizes: getDefaultBacktestWindowSizes({ maxWindowSize: EXTENDED_WINDOW_MAX }),
-      strategyKeys: BACKTEST_FOCUS_STRATEGY_KEYS,
-    });
-
-    const shortTopRaw = pickAdaptiveWindowsByStrategy(aggregates, 'nearestMean4', {
-      poolSize: 8,
-      pickCount: 2,
-      minWindowGap: 24,
-    });
-    const longTopRaw = pickAdaptiveWindowsByStrategy(aggregates, 'twoHotTwoCold', {
-      poolSize: 8,
-      pickCount: 2,
-      minWindowGap: 24,
-      minWindowSize: 240,
-    });
-    const shortTop = shortTopRaw.length >= 2 ? shortTopRaw : pickTopWindowsByStrategy(aggregates, 'nearestMean4', 2);
-    const longTop =
-      longTopRaw.length >= 2
-        ? longTopRaw
-        : pickTopWindowsByStrategy(aggregates, 'twoHotTwoCold', 2, { minWindowSize: 240 });
-    const charts: StrategyChartData[] = [...shortTop, ...longTop].map((w, idx) => {
-      const nearestIndex = shortTop.findIndex((v) => v.windowSize === w.windowSize && v.strategy === w.strategy);
-      const twoHotIndex = longTop.findIndex((v) => v.windowSize === w.windowSize && v.strategy === w.strategy);
-      const rank = w.strategy === 'nearestMean4' ? nearestIndex + 1 : twoHotIndex + 1;
-      const rows = sliceWindowTail(rangeRows, w.windowSize);
-      return {
-        key: `${w.strategy}-${w.windowSize}-${idx}`,
-        title:
-          w.strategy === 'nearestMean4'
-            ? `평균근접 전략 추천 기간 ${rank} (이전 ${w.windowSize}회)`
-            : `상2+하2 전략 추천 기간 ${rank} (이전 ${w.windowSize}회)`,
-        counts: buildNumberCounts(rows),
-        analyzedDrawCount: rows.length,
-        noDataMessage: `이전 ${w.windowSize}회 데이터가 부족해 전략 차트를 표시할 수 없습니다.`,
-        strategyLabel: w.strategy === 'nearestMean4' ? '평균근접' : '상2+하2',
-        windowSize: w.windowSize,
-        atLeastOneRate: w.atLeastOneRate,
-        avgHits: w.avgHits,
-        maxMissStreak: w.maxMissStreak,
-      };
-    });
-    setStrategyCharts(charts);
-
-    const shortRecs = shortTop
-      .map((w) => {
-        const agg = aggregates.find((a) => a.strategy === 'nearestMean4' && a.windowSize === w.windowSize);
-        if (!agg) return null;
-        return buildStrategyRecommendation({
-          strategy: 'nearestMean4',
-          windowSize: w.windowSize,
-          allRowsBeforeSelectedDraw: rangeRows,
-          aggregate: agg,
-        });
-      })
-      .filter((v): v is NonNullable<typeof v> => v !== null);
-
-    const longRecs = longTop
-      .map((w) => {
-        const agg = aggregates.find((a) => a.strategy === 'twoHotTwoCold' && a.windowSize === w.windowSize);
-        if (!agg) return null;
-        return buildStrategyRecommendation({
-          strategy: 'twoHotTwoCold',
-          windowSize: w.windowSize,
-          allRowsBeforeSelectedDraw: rangeRows,
-          aggregate: agg,
-        });
-      })
-      .filter((v): v is NonNullable<typeof v> => v !== null);
-
-    const shortRecommendation = combineStrategyRecommendations(shortRecs);
-    const longRecommendation = combineStrategyRecommendations(longRecs);
-
-    if (!shortRecommendation || !longRecommendation) {
-      setFinalNumberPlan(null);
-      return;
-    }
-    const finalSelection = buildFinalNumberSelection(shortRecommendation, longRecommendation);
-
-    const strategyPicks: StrategyNumberPick[] = [
-      {
-        strategyKey: 'nearestMean4',
-        strategyLabel: '평균근접',
-        windowSizes: shortTop.map((w) => w.windowSize),
-        numbers: shortRecommendation.numbers,
-        atLeastOneRate: shortRecommendation.metrics.atLeastOneRate,
-        avgHits: shortRecommendation.metrics.avgHits,
-        maxMissStreak: shortRecommendation.metrics.maxMissStreak,
-      },
-      {
-        strategyKey: 'twoHotTwoCold',
-        strategyLabel: '상2+하2',
-        windowSizes: longTop.map((w) => w.windowSize),
-        numbers: longRecommendation.numbers,
-        atLeastOneRate: longRecommendation.metrics.atLeastOneRate,
-        avgHits: longRecommendation.metrics.avgHits,
-        maxMissStreak: longRecommendation.metrics.maxMissStreak,
-      },
-    ];
-
-    setFinalNumberPlan({
-      commonNumbers: finalSelection.commonNumbers,
-      finalNumbers: finalSelection.finalNumbers,
-      strategyPicks,
-    });
+    const { strategyCharts, finalNumberPlan } = runAccumulatedStrategySelection(rangeRows);
+    setStrategyCharts(strategyCharts);
+    setFinalNumberPlan(finalNumberPlan);
   };
 
   const saveAccumulatedSnapshot = useCallback(async () => {

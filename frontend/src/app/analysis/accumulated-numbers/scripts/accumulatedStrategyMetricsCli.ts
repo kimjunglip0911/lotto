@@ -1,46 +1,47 @@
 /**
- * 누적 번호 4개 선택 규칙 백테스트(당첨회차 D는 항상 draw_no < D 데이터만 사용).
+ * 누적 번호 4개 선택 규칙의 전략·윈도 지표 CLI(당첨회차 D는 항상 draw_no < D 데이터만 사용).
  *
  * 실행(백엔드 8010 가동 후):
- *   cd frontend && npm run backtest:accumulated-numbers
+ *   cd frontend && npm run accumulated-numbers:strategy-metrics
  *
  * 환경 변수:
- *   ACCUMULATED_BACKTEST_API_URL — API 베이스(기본 http://127.0.0.1:8010)
- *   ACCUMULATED_BACKTEST_MIN_DRAW — 평가 시작 회차 하한(기본 100, 이보다 작은 회차는 지표 왜곡 방지를 위해 제외)
- *   ACCUMULATED_BACKTEST_MAX_DRAWS — 최근 N회차만 평가(기본 전체, 2 미만이면 전체)
- *   ACCUMULATED_BACKTEST_STRATEGIES — 평가할 전략(기본 focus)
+ *   ACCUMULATED_STRATEGY_METRICS_API_URL — API 베이스(기본 http://127.0.0.1:8010)
+ *   ACCUMULATED_STRATEGY_METRICS_MIN_DRAW — 평가 시작 회차 하한(기본 100, 이보다 작은 회차는 지표 왜곡 방지를 위해 제외)
+ *   ACCUMULATED_STRATEGY_METRICS_MAX_DRAWS — 최근 N회차만 평가(기본 전체, 2 미만이면 전체)
+ *   ACCUMULATED_STRATEGY_METRICS_STRATEGIES — 평가할 전략(기본 focus)
  *     - 미지정 또는 `focus`: 평균근접(nearestMean4) + 상위2+하위2(twoHotTwoCold) 만
  *     - `all`: 네 전략 모두
  *     - 예: `nearestMean4,twoHotTwoCold` (쉼표 구분, 키 이름은 엔진과 동일)
+ *
+ * 구 CLI 환경 변수 접두어는 ACCUMULATED_STRATEGY_METRICS_* 로 통일되었다.
  *
  * 참고: import 경로는 확장자 없이 두어 `tsc`와 호환된다.
  */
 
 import { fetchDrawNumbers, fetchWinningNumbersRange } from '../api';
 import { WINDOW_CONFIGS } from '../constants';
+import { pickFocusStrategyTopWindows } from '../logic/pickFocusStrategyTopWindows';
 import {
-  BACKTEST_FOCUS_STRATEGY_KEYS,
-  BACKTEST_STRATEGY_KEYS,
-  type BacktestAggregate,
-  type BacktestStrategyKey,
+  ACCUMULATED_FOCUS_STRATEGY_KEYS,
+  ACCUMULATED_STRATEGY_KEYS,
+  type AccumulatedStrategyKey,
   buildFinalNumberSelection,
   buildStrategyRecommendation,
   combineStrategyRecommendations,
   countMainHits,
-  getDefaultBacktestWindowSizes,
-  pickAdaptiveWindowsByStrategy,
-  pickTopWindowsByStrategy,
-  runAccumulatedNumbersBacktest,
-} from '../logic/backtestEngine';
+  getDefaultEvaluationWindowSizes,
+  runAccumulatedStrategyEvaluation,
+} from '../logic/accumulatedStrategyEvaluation';
 import { toMainNumbersOnly } from '../logic/numberCounts';
+import type { StrategyWindowMetrics } from '../logic/strategyEvaluation/types';
 import type { WinningNumberRow } from '../types';
 
 const DEFAULT_API = 'http://127.0.0.1:8010';
-/** 이보다 작은 회차는 직전 누적이 너무 짧아 백테스트 지표 의미가 약하므로 평가에서 제외 */
+/** 이보다 작은 회차는 직전 누적이 너무 짧아 지표 의미가 약하므로 평가에서 제외 */
 const DEFAULT_MIN_EVAL_DRAW = 100;
 const EXTENDED_WINDOW_MAX = 1208;
 
-function strategyLabel(key: BacktestAggregate['strategy']): string {
+function strategyLabel(key: StrategyWindowMetrics['strategy']): string {
   switch (key) {
     case 'top4Frequency':
       return '출현 많은 상위 4';
@@ -66,38 +67,38 @@ function formatPct(n: number, d: number): string {
   return `${((100 * n) / d).toFixed(2)}%`;
 }
 
-function rateAtLeastOne(a: BacktestAggregate): number {
+function rateAtLeastOne(a: StrategyWindowMetrics): number {
   return a.evaluatedRounds > 0 ? a.roundsWithAtLeastOne / a.evaluatedRounds : 0;
 }
 
-function avgHits(a: BacktestAggregate): number {
+function avgHits(a: StrategyWindowMetrics): number {
   return a.evaluatedRounds > 0 ? a.sumHits / a.evaluatedRounds : 0;
 }
 
 /** 기본은 평균근접+상2하2, `all`이면 네 전략, 그 외는 쉼표 분리 키 */
-function resolveStrategyKeys(): readonly BacktestStrategyKey[] {
-  const raw = (process.env.ACCUMULATED_BACKTEST_STRATEGIES ?? '').trim().toLowerCase();
+function resolveStrategyKeys(): readonly AccumulatedStrategyKey[] {
+  const raw = (process.env.ACCUMULATED_STRATEGY_METRICS_STRATEGIES ?? '').trim().toLowerCase();
   if (raw === '' || raw === 'focus') {
-    return BACKTEST_FOCUS_STRATEGY_KEYS;
+    return ACCUMULATED_FOCUS_STRATEGY_KEYS;
   }
   if (raw === 'all') {
-    return BACKTEST_STRATEGY_KEYS;
+    return ACCUMULATED_STRATEGY_KEYS;
   }
-  const allowed = new Set<string>(BACKTEST_STRATEGY_KEYS);
-  const picked: BacktestStrategyKey[] = [];
+  const allowed = new Set<string>(ACCUMULATED_STRATEGY_KEYS);
+  const picked: AccumulatedStrategyKey[] = [];
   for (const part of raw.split(',')) {
-    const key = part.trim() as BacktestStrategyKey;
+    const key = part.trim() as AccumulatedStrategyKey;
     if (allowed.has(key)) {
       picked.push(key);
     }
   }
-  return picked.length > 0 ? picked : BACKTEST_FOCUS_STRATEGY_KEYS;
+  return picked.length > 0 ? picked : ACCUMULATED_FOCUS_STRATEGY_KEYS;
 }
 
 /** 전략별 ≥1% 상위 윈도우 */
 function printTopWindowsByStrategy(
-  aggregates: BacktestAggregate[],
-  strategy: BacktestStrategyKey,
+  aggregates: StrategyWindowMetrics[],
+  strategy: AccumulatedStrategyKey,
   topN: number,
   label: string
 ): void {
@@ -125,8 +126,8 @@ function printTopWindowsByStrategy(
 }
 
 /** 차트 UI와 동일한 이전 N회 구간에서 두 전략만 나란히 */
-function printUiWindowPairComparison(aggregates: BacktestAggregate[]): void {
-  const by = new Map<string, BacktestAggregate>();
+function printUiWindowPairComparison(aggregates: StrategyWindowMetrics[]): void {
+  const by = new Map<string, StrategyWindowMetrics>();
   for (const a of aggregates) {
     by.set(`${a.strategy}|${a.windowSize}`, a);
   }
@@ -156,7 +157,7 @@ function printUiWindowPairComparison(aggregates: BacktestAggregate[]): void {
   }
 }
 
-function printTable(aggregates: BacktestAggregate[]): void {
+function printTable(aggregates: StrategyWindowMetrics[]): void {
   const header =
     'strategy'.padEnd(22) +
     'win'.padStart(5) +
@@ -182,10 +183,11 @@ function printTable(aggregates: BacktestAggregate[]): void {
   }
 }
 
-function runMergedFinalNumbersBacktest(params: {
+/** 회차별 통합 최종 4개에 대한 ≥1 적중 등 요약 */
+function evaluateMergedFinalNumbersAcrossDraws(params: {
   allRowsSortedAsc: WinningNumberRow[];
   drawNumbersToEvaluate: number[];
-  aggregates: BacktestAggregate[];
+  aggregates: StrategyWindowMetrics[];
 }): {
   finalNumbersExample: number[];
   shortWindows: number[];
@@ -197,23 +199,9 @@ function runMergedFinalNumbersBacktest(params: {
 } {
   const { allRowsSortedAsc, drawNumbersToEvaluate, aggregates } = params;
 
-  const shortTop = pickAdaptiveWindowsByStrategy(aggregates, 'nearestMean4', {
-    poolSize: 8,
-    pickCount: 2,
-    minWindowGap: 24,
-  });
-  const longTop = pickAdaptiveWindowsByStrategy(aggregates, 'twoHotTwoCold', {
-    poolSize: 8,
-    pickCount: 2,
-    minWindowGap: 24,
-    minWindowSize: 240,
-  });
+  const { shortTop: shortTopSafe, longTop: longTopSafe } = pickFocusStrategyTopWindows(aggregates);
 
-  const shortTopSafe = shortTop.length >= 2 ? shortTop : pickTopWindowsByStrategy(aggregates, 'nearestMean4', 2);
-  const longTopSafe =
-    longTop.length >= 2 ? longTop : pickTopWindowsByStrategy(aggregates, 'twoHotTwoCold', 2, { minWindowSize: 240 });
-
-  const aggMap = new Map<string, BacktestAggregate>();
+  const aggMap = new Map<string, StrategyWindowMetrics>();
   for (const a of aggregates) {
     aggMap.set(`${a.strategy}|${a.windowSize}`, a);
   }
@@ -294,17 +282,17 @@ function runMergedFinalNumbersBacktest(params: {
 
 /** 리포트에 붙여넣기 좋은 요약(동일 실행에서 stdout으로 복사 가능) */
 function printMarkdownSnippet(
-  aggregates: BacktestAggregate[],
+  aggregates: StrategyWindowMetrics[],
   meta: {
     apiUrl: string;
     minDraw: number;
     maxDraw: number;
     evaluatedDrawCount: number;
     windowCount: number;
-    strategyKeys: readonly BacktestStrategyKey[];
+    strategyKeys: readonly AccumulatedStrategyKey[];
   }
 ): void {
-  const bestByStrategy = new Map<string, BacktestAggregate>();
+  const bestByStrategy = new Map<string, StrategyWindowMetrics>();
   for (const a of aggregates) {
     if (a.evaluatedRounds === 0) continue;
     const rate = rateAtLeastOne(a);
@@ -337,10 +325,10 @@ function printMarkdownSnippet(
 }
 
 async function main(): Promise<void> {
-  const apiUrl = (process.env.ACCUMULATED_BACKTEST_API_URL ?? DEFAULT_API).replace(/\/$/, '');
-  const maxDrawsEnv = Number.parseInt(process.env.ACCUMULATED_BACKTEST_MAX_DRAWS ?? '', 10);
+  const apiUrl = (process.env.ACCUMULATED_STRATEGY_METRICS_API_URL ?? DEFAULT_API).replace(/\/$/, '');
+  const maxDrawsEnv = Number.parseInt(process.env.ACCUMULATED_STRATEGY_METRICS_MAX_DRAWS ?? '', 10);
   const maxDrawsLimit = Number.isFinite(maxDrawsEnv) && maxDrawsEnv >= 2 ? maxDrawsEnv : null;
-  const minDrawEnv = Number.parseInt(process.env.ACCUMULATED_BACKTEST_MIN_DRAW ?? '', 10);
+  const minDrawEnv = Number.parseInt(process.env.ACCUMULATED_STRATEGY_METRICS_MIN_DRAW ?? '', 10);
   const minEvalDraw =
     Number.isFinite(minDrawEnv) && minDrawEnv >= 2 ? minDrawEnv : DEFAULT_MIN_EVAL_DRAW;
 
@@ -370,8 +358,8 @@ async function main(): Promise<void> {
   }
 
   const strategyKeys = resolveStrategyKeys();
-  const windowSizes = getDefaultBacktestWindowSizes({ maxWindowSize: EXTENDED_WINDOW_MAX });
-  const { aggregates } = runAccumulatedNumbersBacktest({
+  const windowSizes = getDefaultEvaluationWindowSizes({ maxWindowSize: EXTENDED_WINDOW_MAX });
+  const { aggregates } = runAccumulatedStrategyEvaluation({
     allRowsSortedAsc: allRows,
     drawNumbersToEvaluate: toEvaluate,
     windowSizes,
@@ -381,7 +369,7 @@ async function main(): Promise<void> {
   console.log(`API: ${apiUrl}`);
   console.log(`전체 이력 행 수: ${allRows.length} (draw_no < ${maxDraw + 1})`);
   console.log(`평가 회차 수: ${toEvaluate.length} (회차 >= ${minEvalDraw}, 최신까지)`);
-  console.log(`전략: ${strategyKeys.join(', ')} (전체 4종은 ACCUMULATED_BACKTEST_STRATEGIES=all)\n`);
+  console.log(`전략: ${strategyKeys.join(', ')} (전체 4종은 ACCUMULATED_STRATEGY_METRICS_STRATEGIES=all)\n`);
 
   printTable(aggregates);
 
@@ -395,12 +383,12 @@ async function main(): Promise<void> {
     printTopWindowsByStrategy(aggregates, 'twoHotTwoCold', 15, '상위 2 + 하위 2');
     printUiWindowPairComparison(aggregates);
 
-    const finalMerged = runMergedFinalNumbersBacktest({
+    const finalMerged = evaluateMergedFinalNumbersAcrossDraws({
       allRowsSortedAsc: allRows,
       drawNumbersToEvaluate: toEvaluate,
       aggregates,
     });
-    console.log('\n=== 최종 4개(전략별 2개 기간 통합) 백테스트 요약 ===\n');
+    console.log('\n=== 최종 4개(전략별 2개 기간 통합) 지표 요약 ===\n');
     console.log(`평균근접 기간: ${finalMerged.shortWindows.join(', ')}`);
     console.log(`상2+하2 기간: ${finalMerged.longWindows.join(', ')}`);
     console.log(`최신 기준 예시 최종 4개: ${finalMerged.finalNumbersExample.join(', ')}`);

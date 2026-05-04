@@ -2,7 +2,9 @@
 
 from typing import Any
 
-from backend.DB.database import get_connection
+import sqlite3
+
+from backend.DB.database import db_session, run_in_db_session_with_retry
 from backend.router.analysis._shared import load_queries_module
 
 _QUERIES = load_queries_module(
@@ -19,24 +21,20 @@ def save_snapshot(
     final_num3: int,
     final_num4: int,
 ) -> None:
-    conn = get_connection()
-    try:
+    def _write(conn: sqlite3.Connection) -> None:
         conn.execute(
             _QUERIES.UPSERT_ACCUMULATED_SNAPSHOT,
             (anchor_draw_no, schema_version, final_num1, final_num2, final_num3, final_num4),
         )
         conn.commit()
-    finally:
-        conn.close()
+
+    run_in_db_session_with_retry(_write)
 
 
 def get_snapshot_row(anchor_draw_no: int) -> dict[str, Any] | None:
-    conn = get_connection()
-    try:
+    with db_session() as conn:
         row = conn.execute(
             _QUERIES.GET_ACCUMULATED_SNAPSHOT_BY_DRAW,
             (anchor_draw_no,),
         ).fetchone()
         return dict(row) if row is not None else None
-    finally:
-        conn.close()

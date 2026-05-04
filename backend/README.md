@@ -24,7 +24,7 @@ backend/
 │   └── lotto.db               # 로컬 DB 파일(.gitignore)
 ```
 
-- **SQLite 경로**: [`DB/database.py`](DB/database.py)의 `get_db_path()`는 `DB/lotto.db` 한 경로만 사용합니다(`init_db.py` 출력과 동일).
+- **SQLite 경로**: [`DB/database.py`](DB/database.py)의 `get_db_path()`는 기본 `DB/lotto.db`이며, 환경 변수 `LOTTO_DB_PATH`가 있으면 그 절대 경로를 씁니다.
 - **공통 Pydantic**: [`domain/models/schemas.py`](domain/models/schemas.py)를 단일 정본으로 사용하며, `MessageResponse`, `GenerateSaveRequest`, 누적번호 최종 4개 저장(`AccumulatedNumberSnapshotSaveRequest` 등)을 포함합니다.
 - **누적번호 분석 API**: [`router/analysis/accumulated-numbers/router.py`](router/analysis/accumulated-numbers/router.py), SQL [`queries.py`](router/analysis/accumulated-numbers/queries.py), 최종 번호 4개만 DB에 쓰는 [`repository.py`](router/analysis/accumulated-numbers/repository.py).
 - **Home API 추가/수정** → `backend/router/home/router.py`

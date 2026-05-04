@@ -1,12 +1,30 @@
+from contextlib import contextmanager
+import os
+import threading
+import time
 from pathlib import Path
 import sqlite3
+from typing import Callable, TypeVar
 
 _SCHEMA_READY = False
+# 단일 프로세스에서 요청마다 연결을 새로 열기 때문에, 동시 요청 시 SQLite 파일 잠금이 겹친다.
+# 연결 open~close 구간을 직렬화해 `database is locked`를 구조적으로 줄인다(멀티 워커 프로세스 간에는 적용 안 됨).
+_SQLITE_ACCESS = threading.Lock()
+
+T_db = TypeVar("T_db")
 
 
 def get_db_path() -> str:
-    """Return canonical lotto.db path (same directory as init_db.py output)."""
+    """Return SQLite 파일 경로. `LOTTO_DB_PATH`가 있으면 우선(동기화 폴더 밖 권장)."""
+    override = os.environ.get("LOTTO_DB_PATH", "").strip()
+    if override:
+        return override
     return str(Path(__file__).resolve().parent / "lotto.db")
+
+
+def _is_transient_sqlite_lock(exc: sqlite3.OperationalError) -> bool:
+    msg = str(exc).lower()
+    return "locked" in msg or "busy" in msg
 
 
 def _ensure_schema(conn: sqlite3.Connection) -> None:
@@ -53,9 +71,51 @@ def _ensure_schema(conn: sqlite3.Connection) -> None:
     _SCHEMA_READY = True
 
 
-def get_connection() -> sqlite3.Connection:
-    """Create sqlite connection configured with Row factory."""
-    conn = sqlite3.connect(get_db_path())
+def _open_sqlite_connection() -> sqlite3.Connection:
+    """스키마·PRAGMA까지 적용한 연결만 생성한다. `db_session()` 안에서만 호출한다."""
+    conn = sqlite3.connect(get_db_path(), timeout=60.0)
     conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA busy_timeout = 30000")
+    try:
+        conn.execute("PRAGMA journal_mode=WAL")
+    except sqlite3.OperationalError:
+        pass
     _ensure_schema(conn)
     return conn
+
+
+@contextmanager
+def db_session():
+    """동일 프로세스 내에서 SQLite 사용을 직렬화한다(연결 open~close).
+
+    `with db_session() as conn:` 형태로만 사용한다.
+    """
+    _SQLITE_ACCESS.acquire()
+    conn: sqlite3.Connection | None = None
+    try:
+        conn = _open_sqlite_connection()
+        yield conn
+    finally:
+        if conn is not None:
+            conn.close()
+        _SQLITE_ACCESS.release()
+
+
+def run_in_db_session_with_retry(
+    action: Callable[[sqlite3.Connection], T_db],
+    *,
+    attempts: int = 15,
+    base_delay_sec: float = 0.2,
+) -> T_db:
+    """다른 프로세스·클라우드 동기화 등으로 일시적 잠금이 날 때 재시도한다."""
+    attempts = max(1, attempts)
+    for i in range(attempts):
+        try:
+            with db_session() as conn:
+                return action(conn)
+        except sqlite3.OperationalError as e:
+            if not _is_transient_sqlite_lock(e):
+                raise
+            if i == attempts - 1:
+                raise
+            time.sleep(base_delay_sec * (1 + i))

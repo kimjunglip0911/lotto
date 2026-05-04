@@ -1,14 +1,13 @@
+import { pickFocusStrategyTopWindows } from '@/app/analysis/accumulated-numbers/logic/pickFocusStrategyTopWindows'
 import type { WinningHistoryRow } from '@/app/recommend/logic/types'
 import {
-  BACKTEST_FOCUS_STRATEGY_KEYS,
+  ACCUMULATED_FOCUS_STRATEGY_KEYS,
   buildFinalNumberSelection,
   buildStrategyRecommendation,
   combineStrategyRecommendations,
-  getDefaultBacktestWindowSizes,
-  pickAdaptiveWindowsByStrategy,
-  pickTopWindowsByStrategy,
-  runAccumulatedNumbersBacktest,
-} from '@/app/analysis/accumulated-numbers/logic/backtestEngine'
+  getDefaultEvaluationWindowSizes,
+  runAccumulatedStrategyEvaluation,
+} from '@/app/analysis/accumulated-numbers/logic/accumulatedStrategyEvaluation'
 
 const EXTENDED_WINDOW_MAX = 1208
 
@@ -22,30 +21,14 @@ export function deriveUsedNumbers(drawNo: number, allHistoryRows: WinningHistory
   const drawNumbersToEvaluate = rowsBeforeTarget.map((row) => row.draw_no).filter((value) => value >= 100)
   if (drawNumbersToEvaluate.length === 0) return []
 
-  const { aggregates } = runAccumulatedNumbersBacktest({
+  const { aggregates } = runAccumulatedStrategyEvaluation({
     allRowsSortedAsc: rowsBeforeTarget,
     drawNumbersToEvaluate,
-    windowSizes: getDefaultBacktestWindowSizes({ maxWindowSize: EXTENDED_WINDOW_MAX }),
-    strategyKeys: BACKTEST_FOCUS_STRATEGY_KEYS,
+    windowSizes: getDefaultEvaluationWindowSizes({ maxWindowSize: EXTENDED_WINDOW_MAX }),
+    strategyKeys: ACCUMULATED_FOCUS_STRATEGY_KEYS,
   })
 
-  const shortTopRaw = pickAdaptiveWindowsByStrategy(aggregates, 'nearestMean4', {
-    poolSize: 8,
-    pickCount: 2,
-    minWindowGap: 24,
-  })
-  const longTopRaw = pickAdaptiveWindowsByStrategy(aggregates, 'twoHotTwoCold', {
-    poolSize: 8,
-    pickCount: 2,
-    minWindowGap: 24,
-    minWindowSize: 240,
-  })
-
-  const shortTop = shortTopRaw.length >= 2 ? shortTopRaw : pickTopWindowsByStrategy(aggregates, 'nearestMean4', 2)
-  const longTop =
-    longTopRaw.length >= 2
-      ? longTopRaw
-      : pickTopWindowsByStrategy(aggregates, 'twoHotTwoCold', 2, { minWindowSize: 240 })
+  const { shortTop, longTop } = pickFocusStrategyTopWindows(aggregates)
 
   const shortRecommendations = shortTop
     .map((top) => {

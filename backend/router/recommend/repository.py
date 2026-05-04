@@ -1,6 +1,6 @@
 from typing import Any, Callable, List, Optional
 
-from backend.DB.database import get_connection
+from backend.DB.database import db_session
 from backend.router.recommend import queries
 
 
@@ -15,15 +15,12 @@ WINDOW_SIZES = {
 
 
 def run_db(handler: Callable[[Any], Any], *, commit: bool = False) -> Any:
-    conn = get_connection()
-    try:
+    with db_session() as conn:
         cursor = conn.cursor()
         result = handler(cursor)
         if commit:
             conn.commit()
         return result
-    finally:
-        conn.close()
 
 
 def resolve_target_draw_no(draw_no: Optional[int]) -> int:

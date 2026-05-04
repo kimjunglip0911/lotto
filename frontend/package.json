@@ -10,7 +10,10 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "verify:recommend-last52": "npx tsx --tsconfig tsconfig.run-scripts.json scripts/recommend-verify-last52.ts",
-    "backtest:accumulated-numbers": "npx tsx --tsconfig tsconfig.run-scripts.json src/app/analysis/accumulated-numbers/scripts/backtestAccumulatedNumbers.ts"
+    "accumulated-numbers:strategy-metrics": "npx tsx --tsconfig tsconfig.run-scripts.json src/app/analysis/accumulated-numbers/scripts/accumulatedStrategyMetricsCli.ts",
+    "snapshots:accumulated:export": "npx tsx --tsconfig tsconfig.run-scripts.json src/app/analysis/accumulated-numbers/scripts/exportImportAccumulatedSnapshots.ts export",
+    "snapshots:accumulated:import": "npx tsx --tsconfig tsconfig.run-scripts.json src/app/analysis/accumulated-numbers/scripts/exportImportAccumulatedSnapshots.ts import",
+    "snapshots:accumulated:all": "npx tsx --tsconfig tsconfig.run-scripts.json src/app/analysis/accumulated-numbers/scripts/exportImportAccumulatedSnapshots.ts all"
   },
   "dependencies": {
     "class-variance-authority": "^0.7.1",

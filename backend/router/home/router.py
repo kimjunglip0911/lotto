@@ -3,7 +3,7 @@ from typing import Any, Callable, List, Optional
 
 from fastapi import APIRouter, HTTPException, Query
 
-from backend.DB.database import get_connection
+from backend.DB.database import db_session
 from backend.domain.models.schemas import SaveWinningRequest
 from backend.router.home import queries
 
@@ -11,15 +11,12 @@ router = APIRouter(tags=["drawings"])
 
 
 def run_db(handler: Callable[[Any], Any], *, commit: bool = False) -> Any:
-    conn = get_connection()
-    try:
+    with db_session() as conn:
         cursor = conn.cursor()
         result = handler(cursor)
         if commit:
             conn.commit()
         return result
-    finally:
-        conn.close()
 
 
 def rows_to_dicts(rows: List[Any]) -> List[dict]:
