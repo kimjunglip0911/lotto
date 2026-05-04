@@ -39,6 +39,7 @@ export const fetchDrawNumbers = async (ctx?: AccumulatedNumbersFetchContext): Pr
   const baseUrl = ctx?.baseUrl;
   const response = await fetch(accumulatedNumbersApiUrl('draw-numbers', baseUrl), {
     signal,
+    cache: 'no-store',
   });
 
   if (!response.ok) {
@@ -50,7 +51,9 @@ export const fetchDrawNumbers = async (ctx?: AccumulatedNumbersFetchContext): Pr
 };
 
 export const fetchWinningNumberByDraw = async (drawNo: number): Promise<WinningNumberRow> => {
-  const response = await fetch(accumulatedNumbersApiUrl(`winning-number?draw_no=${drawNo}`));
+  const response = await fetch(accumulatedNumbersApiUrl(`winning-number?draw_no=${drawNo}`), {
+    cache: 'no-store',
+  });
 
   if (!response.ok) {
     if (response.status === 404) {
@@ -71,9 +74,9 @@ export const fetchWinningNumbersRange = async (
   drawNo: number,
   ctx?: Pick<AccumulatedNumbersFetchContext, 'baseUrl'>
 ): Promise<WinningNumberRow[]> => {
-  const response = await fetch(
-    accumulatedNumbersApiUrl(`winning-numbers-range?draw_no=${drawNo}`, ctx?.baseUrl)
-  );
+  const response = await fetch(accumulatedNumbersApiUrl(`winning-numbers-range?draw_no=${drawNo}`, ctx?.baseUrl), {
+    cache: 'no-store',
+  });
 
   if (!response.ok) {
     throw new Error(`Failed to fetch winning numbers range: ${response.status}`);
@@ -88,7 +91,8 @@ export const fetchWinningNumbersWindow = async (
   windowSize: number
 ): Promise<WinningNumberRow[]> => {
   const response = await fetch(
-    accumulatedNumbersApiUrl(`winning-numbers-window?draw_no=${drawNo}&window_size=${windowSize}`)
+    accumulatedNumbersApiUrl(`winning-numbers-window?draw_no=${drawNo}&window_size=${windowSize}`),
+    { cache: 'no-store' },
   );
 
   if (!response.ok) {

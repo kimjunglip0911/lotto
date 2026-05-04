@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   fetchDrawNumbers,
   fetchWinningNumberByDraw,
@@ -50,6 +50,9 @@ export const useAccumulatedNumbersData = () => {
   const [isSavingSnapshot, setIsSavingSnapshot] = useState(false);
   const [saveSnapshotMessage, setSaveSnapshotMessage] = useState<string | null>(null);
   const [saveSnapshotError, setSaveSnapshotError] = useState<string | null>(null);
+
+  /** 조회 버튼을 연속으로 누를 때 늦게 도착한 이전 요청이 상태를 덮어쓰지 않도록 구분한다. */
+  const searchSessionRef = useRef(0);
 
   useEffect(() => {
     let isMounted = true;
@@ -123,9 +126,14 @@ export const useAccumulatedNumbersData = () => {
     setIsLoadingSelectedWinningNumber(false);
   };
 
-  const executeSearch = async (selectedDrawNo: number) => {
+  const executeSearch = async (selectedDrawNo: number, session: number) => {
+    const isStale = () => session !== searchSessionRef.current;
+
     if (selectedDrawNo === 1) {
       const winningNumber = await fetchWinningNumberByDraw(selectedDrawNo);
+      if (isStale()) {
+        return;
+      }
       setSelectedWinningNumber(winningNumber);
       resetSearchResults();
       return;
@@ -136,6 +144,10 @@ export const useAccumulatedNumbersData = () => {
       fetchWinningNumberByDraw(selectedDrawNo),
       ...WINDOW_CONFIGS.map((config) => fetchWinningNumbersWindow(selectedDrawNo, config.windowSize)),
     ]);
+
+    if (isStale()) {
+      return;
+    }
 
     setAllTimeCountResult(toCountResult(rangeRows));
     setWindowCountResultMap(buildWindowCountResultMap(windowRows));
@@ -186,15 +198,20 @@ export const useAccumulatedNumbersData = () => {
       return;
     }
 
+    const session = ++searchSessionRef.current;
     initializeSearchState(selectedDraw);
 
     try {
-      await executeSearch(selectedDrawNo);
+      await executeSearch(selectedDrawNo, session);
     } catch (error) {
       console.error('Error fetching accumulated numbers search data:', error);
-      setSearchFailureState();
+      if (session === searchSessionRef.current) {
+        setSearchFailureState();
+      }
     } finally {
-      finalizeSearchState();
+      if (session === searchSessionRef.current) {
+        finalizeSearchState();
+      }
     }
   };
 
