@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { K_TREND, TOTAL_NUMBERS } from '../constants';
 import type { WinningNumberRow } from '../types';
 import { aggregateDeviationBins, MIN_BASELINE } from './trendDeviationBins';
-import { buildTrendEma, computeEmpiricalAppearanceRate } from './trend';
+import { computeEmpiricalAppearanceRate } from './trend';
 
 const mk = (draw_no: number, nums: [number, number, number, number, number, number]): WinningNumberRow => ({
   draw_no,
@@ -33,7 +33,7 @@ const naiveBinKey = (pct: number): string => {
 };
 
 describe('aggregateDeviationBins', () => {
-  it('증분 결과가 회차별 재계산과 동일한 구간 카운트를 낸다(minDraw 100~105 구간)', () => {
+  it('증분 결과가 회차별 재계산과 동일한 회차기준 출현확률 집계를 낸다(minDraw 100~105 구간)', () => {
     const rows: WinningNumberRow[] = [];
     for (let d = 1; d < 100; d += 1) {
       rows.push(mk(d, [1, 2, 3, 4, 5, 6]));
@@ -42,44 +42,59 @@ describe('aggregateDeviationBins', () => {
       rows.push(mk(d, [(d % 45) + 1, 2, 3, 4, 5, 6]));
     }
 
-    const naiveCounts = new Map<string, number>();
-    let naiveValid = 0;
-    let naiveSkipped = 0;
+    const naiveDrawCounts = new Map<string, number>();
+    const naiveWinningHitDrawCounts = new Map<string, number>();
+    let naiveValidDraws = 0;
+    let naiveSkippedDraws = 0;
+    const orderedKeys = ['tail_low', ...Array.from({ length: 20 }, (_, i) => `mid_${-100 + i * 10}`), 'tail_high'];
+    for (const key of orderedKeys) {
+      naiveDrawCounts.set(key, 0);
+      naiveWinningHitDrawCounts.set(key, 0);
+    }
+
     for (const row of rows) {
       if (row.draw_no < 100 || row.draw_no > 105) continue;
       const prefix = rows.filter((r) => r.draw_no < row.draw_no);
       const baseline = computeEmpiricalAppearanceRate(prefix);
       if (prefix.length === 0 || baseline < MIN_BASELINE) {
-        naiveSkipped += mainSix(row).filter((n) => n >= 1 && n <= TOTAL_NUMBERS).length;
+        naiveSkippedDraws += 1;
         continue;
       }
-      for (const num of mainSix(row)) {
-        if (num < 1 || num > TOTAL_NUMBERS) continue;
-        const ema = buildTrendEma(prefix, num, K_TREND);
+
+      naiveValidDraws += 1;
+      const presentKeys = new Set<string>();
+      const winningHitKeys = new Set<string>();
+      const winningSet = new Set(mainSix(row));
+      const drawsInPrefix = prefix.length;
+      const alpha = K_TREND;
+
+      for (let n = 1; n <= TOTAL_NUMBERS; n += 1) {
+        let ema = 0;
+        for (let i = 0; i < drawsInPrefix; i += 1) {
+          const hit = mainSix(prefix[i]!).includes(n) ? 1 : 0;
+          ema = hit * alpha + ema * (1 - alpha);
+        }
         const pct = ((ema - baseline) / baseline) * 100;
         const key = naiveBinKey(pct);
-        naiveCounts.set(key, (naiveCounts.get(key) ?? 0) + 1);
-        naiveValid += 1;
+        presentKeys.add(key);
+        if (winningSet.has(n)) winningHitKeys.add(key);
+      }
+
+      for (const key of presentKeys) {
+        naiveDrawCounts.set(key, (naiveDrawCounts.get(key) ?? 0) + 1);
+      }
+      for (const key of winningHitKeys) {
+        naiveWinningHitDrawCounts.set(key, (naiveWinningHitDrawCounts.get(key) ?? 0) + 1);
       }
     }
 
     const agg = aggregateDeviationBins(rows, { minDraw: 100, maxDraw: 105 });
-    expect(agg.validSampleCount).toBe(naiveValid);
-    expect(agg.skippedSampleCount).toBe(naiveSkipped);
+    expect(agg.validDrawCount).toBe(naiveValidDraws);
+    expect(agg.skippedDrawCount).toBe(naiveSkippedDraws);
     for (const r of agg.rows) {
-      expect(r.count).toBe(naiveCounts.get(r.key) ?? 0);
+      expect(r.drawCount).toBe(naiveDrawCounts.get(r.key) ?? 0);
+      expect(r.winningHitDrawCount).toBe(naiveWinningHitDrawCounts.get(r.key) ?? 0);
     }
-  });
-
-  it('기본 minDraw=1일 때 유효 표본이 있으면 구간 비율 합이 약 100%이다', () => {
-    const rows: WinningNumberRow[] = [];
-    for (let d = 1; d < 120; d += 1) {
-      rows.push(mk(d, [7, 8, 9, 10, 11, 12]));
-    }
-    const agg = aggregateDeviationBins(rows);
-    expect(agg.validSampleCount).toBeGreaterThan(0);
-    const sum = agg.rows.reduce((a, r) => a + r.percent, 0);
-    expect(sum).toBeCloseTo(100, 5);
   });
 
   it('pct=10 은 10~20% 구간(mid_10)에 속한다', () => {
@@ -87,9 +102,42 @@ describe('aggregateDeviationBins', () => {
     expect(naiveBinKey(9.999)).toBe('mid_0');
   });
 
-  it('첫 회차만 있으면 prefix 없어 표본은 모두 스킵된다', () => {
+  it('첫 회차만 있으면 prefix 없어 회차가 스킵된다', () => {
     const agg = aggregateDeviationBins([mk(1, [1, 2, 3, 4, 5, 6])]);
-    expect(agg.validSampleCount).toBe(0);
-    expect(agg.skippedSampleCount).toBe(6);
+    expect(agg.validDrawCount).toBe(0);
+    expect(agg.skippedDrawCount).toBe(1);
+  });
+
+  it('요구사항 예시: 구간 출현 1000회 중 당첨 포함 1000회면 출현확률 100%', () => {
+    const rows: WinningNumberRow[] = [];
+    for (let d = 1; d <= 1001; d += 1) {
+      rows.push(mk(d, [1, 2, 3, 4, 5, 6]));
+    }
+
+    const agg = aggregateDeviationBins(rows, { minDraw: 2, maxDraw: 1001, kTrend: 1 });
+    const tailHigh = agg.rows.find((r) => r.key === 'tail_high');
+    expect(tailHigh).toBeDefined();
+    expect(tailHigh!.drawCount).toBe(1000);
+    expect(tailHigh!.winningHitDrawCount).toBe(1000);
+    expect(tailHigh!.appearanceProbability).toBeCloseTo(100, 10);
+  });
+
+  it('요구사항 예시: 구간 출현 1000회 중 당첨 포함 100회면 출현확률 10%', () => {
+    const rows: WinningNumberRow[] = [];
+    rows.push(mk(1, [1, 2, 3, 4, 5, 6]));
+
+    for (let d = 2; d <= 101; d += 1) {
+      rows.push(mk(d, [1, 2, 3, 4, 5, 6]));
+    }
+    for (let d = 102; d <= 1001; d += 1) {
+      rows.push(mk(d, d % 2 === 0 ? [7, 8, 9, 10, 11, 12] : [13, 14, 15, 16, 17, 18]));
+    }
+
+    const agg = aggregateDeviationBins(rows, { minDraw: 2, maxDraw: 1001, kTrend: 1 });
+    const tailHigh = agg.rows.find((r) => r.key === 'tail_high');
+    expect(tailHigh).toBeDefined();
+    expect(tailHigh!.drawCount).toBe(1000);
+    expect(tailHigh!.winningHitDrawCount).toBe(100);
+    expect(tailHigh!.appearanceProbability).toBeCloseTo(10, 10);
   });
 });
