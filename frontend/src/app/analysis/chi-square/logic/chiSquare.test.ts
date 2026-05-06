@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import type { ChiSquareResult } from '../types';
 import {
+  pickFirstNumbersBySignedDeviationDescending,
   pickFirstNumbersBySignedDeviationOrder,
   selectAdoptedBySignedDeviationSkippingExcluded,
+  selectAdoptedBySignedDeviationSkippingExcludedDescending,
 } from './chiSquare';
 
 function mk(partial: Pick<ChiSquareResult, 'number' | 'observed'> & Partial<ChiSquareResult>): ChiSquareResult {
@@ -107,5 +109,35 @@ describe('selectAdoptedBySignedDeviationSkippingExcluded', () => {
     ];
     const exclude = new Set<number>([5, 2, 3, 4]);
     expect(selectAdoptedBySignedDeviationSkippingExcluded(rows, exclude)).toEqual([1, 6, 7, 8]);
+  });
+});
+
+describe('pickFirstNumbersBySignedDeviationDescending', () => {
+  it('편차 내림차순·동률 시 번호 오름차순으로 앞에서 count개', () => {
+    const rows: ChiSquareResult[] = [
+      mk({ number: 3, observed: 10, expected: 10, deviation: 0 }),
+      mk({ number: 1, observed: 11, expected: 10, deviation: 1 }),
+      mk({ number: 2, observed: 12, expected: 10, deviation: 2 }),
+      mk({ number: 5, observed: 20, expected: 10, deviation: 10 }),
+    ];
+    expect(pickFirstNumbersBySignedDeviationDescending(rows, 2)).toEqual([5, 2]);
+  });
+});
+
+describe('selectAdoptedBySignedDeviationSkippingExcludedDescending', () => {
+  it('상위 4개 제외 후 내림차순에서 이어서 4개', () => {
+    const rows: ChiSquareResult[] = [
+      mk({ number: 1, observed: 0, expected: 10, deviation: 22 }),
+      mk({ number: 2, observed: 0, expected: 10, deviation: 23 }),
+      mk({ number: 3, observed: 0, expected: 10, deviation: 24 }),
+      mk({ number: 4, observed: 0, expected: 10, deviation: 25 }),
+      mk({ number: 5, observed: 0, expected: 10, deviation: 26 }),
+      mk({ number: 6, observed: 0, expected: 10, deviation: 27 }),
+      mk({ number: 7, observed: 0, expected: 10, deviation: 28 }),
+      mk({ number: 8, observed: 0, expected: 10, deviation: 30 }),
+    ];
+    const exclude = new Set(pickFirstNumbersBySignedDeviationDescending(rows, 4));
+    expect([...exclude].sort((a, b) => a - b)).toEqual([5, 6, 7, 8]);
+    expect(selectAdoptedBySignedDeviationSkippingExcludedDescending(rows, exclude)).toEqual([1, 2, 3, 4]);
   });
 });

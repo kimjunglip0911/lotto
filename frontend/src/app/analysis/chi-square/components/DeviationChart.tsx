@@ -23,10 +23,19 @@ export function DeviationChart({
   adoptedUsageNumberSet = null,
   maxAbsDeviation,
 }: Props) {
+  const sortedItems = [...chiSquareResults].sort(
+    (a, b) => a.deviation - b.deviation || a.number - b.number
+  );
+
   return (
     <section className="rounded-2xl border border-card-border/30 bg-card-bg/60 p-3 space-y-2.5">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h3 className="text-xl font-semibold text-white">번호별 편차 차트 (O − E)</h3>
+        <div>
+          <h3 className="text-xl font-semibold text-white">번호별 편차 차트 (O − E)</h3>
+          {hasSearched && !noHistory && chiSquareResults.length > 0 && (
+            <p className="text-[11px] text-slate-500 mt-0.5">막대 순서: 편차 작은 순(음→양)</p>
+          )}
+        </div>
         {hasSearched && !noHistory && chiSquareResults.length > 0 && (
           <div className="flex flex-wrap gap-3 text-xs text-slate-400">
             <span className="flex items-center gap-1.5">
@@ -64,7 +73,7 @@ export function DeviationChart({
         <div className="overflow-x-auto pb-0.5">
           <div className="relative w-max">
             <ul className="w-max flex gap-1">
-              {chiSquareResults.map((item) => {
+              {sortedItems.map((item) => {
                 const isWinningNum = selectedWinningNumberSet?.has(item.number) ?? false;
                 const isAdopted = adoptedUsageNumberSet?.has(item.number) ?? false;
                 const posBarPx = item.deviation > 0

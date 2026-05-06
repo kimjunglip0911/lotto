@@ -24,6 +24,9 @@ backend/*.log
 frontend/src/app/analysis/accumulated-numbers/accumulated-snapshots-staging.md
 frontend/accumulated-snapshots-staging-test.md
 
+# 카이제곱 워크포워드 스테이징(배치 스크립트 산출물, 커밋 금지)
+frontend/src/app/analysis/chi-square/chi-square-walkforward-staging.md
+
 # Local instruction docs
 리팩터링지시서.md
 리팩토링지시서.md

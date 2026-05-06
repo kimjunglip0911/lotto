@@ -25,6 +25,10 @@ export function ResultTable({
   selectedWinningNumberSet,
   adoptedUsageNumberSet = null,
 }: Props) {
+  const sortedRows = [...chiSquareResults].sort(
+    (a, b) => a.deviation - b.deviation || a.number - b.number
+  );
+
   return (
     <section className="rounded-2xl border border-card-border/30 bg-card-bg/60 p-4 space-y-3">
       <h3 className="text-xl font-semibold text-white">번호별 카이제곱 검정 결과</h3>
@@ -54,6 +58,7 @@ export function ResultTable({
               </span>
             </div>
             <div className="flex flex-wrap gap-4 text-xs text-slate-400 pt-1 border-t border-white/5">
+              <span className="text-slate-500 w-full">행 정렬: 편차(O−E) 작은 순(음→양), 동률 시 번호 오름차순</span>
               <span className="flex items-center gap-1.5">
                 <span className="inline-block w-3 h-3 rounded bg-rose-500/40 border border-rose-500/60" />
                 저빈도: O &lt; {expected.toFixed(2)} AND χ² ≥ {chiSquareThreshold}
@@ -89,7 +94,7 @@ export function ResultTable({
                 </tr>
               </thead>
               <tbody>
-                {chiSquareResults.map((row) => {
+                {sortedRows.map((row) => {
                   const isAdopted = adoptedUsageNumberSet?.has(row.number) ?? false;
                   return (
                     <tr
