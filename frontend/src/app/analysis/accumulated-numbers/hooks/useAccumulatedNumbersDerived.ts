@@ -111,14 +111,6 @@ export const useAccumulatedNumbersDerived = ({
     [windowCountResultMap]
   );
 
-  const strategyWindowCharts = useMemo(
-    () => ({
-      nearestMean4: strategyCharts.filter((chart) => chart.strategyLabel === '평균근접'),
-      twoHotTwoCold: strategyCharts.filter((chart) => chart.strategyLabel === '상2+하2'),
-    }),
-    [strategyCharts]
-  );
-
   return {
     hasSearched,
     selectedSearchDrawNo,
@@ -126,7 +118,7 @@ export const useAccumulatedNumbersDerived = ({
     selectedHighlightNumbers,
     statusMessage,
     windowCharts,
-    strategyWindowCharts,
+    strategyCharts,
     finalNumberPlan,
   };
 };

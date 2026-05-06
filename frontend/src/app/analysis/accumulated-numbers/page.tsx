@@ -17,7 +17,7 @@ export default function AccumulatedNumbersPage() {
     selectedMainNumbers,
     selectedHighlightNumbers,
     statusMessage,
-    strategyWindowCharts,
+    strategyCharts,
     finalNumberPlan,
   } = useAccumulatedNumbersDerived({
     availableDraws: data.availableDraws,
@@ -85,28 +85,13 @@ export default function AccumulatedNumbersPage() {
           />
 
           <section className="rounded-2xl border border-card-border/30 bg-card-bg/60 p-4 space-y-4">
-            <h2 className="text-lg font-semibold text-slate-100">고도화 전략 분석 (단기/장기)</h2>
+            <h2 className="text-lg font-semibold text-slate-100">고도화 전략 분석 (2년 / 평균근접)</h2>
             <p className="text-sm text-slate-300 leading-relaxed">
-              단기 구간은 평균근접, 장기 구간은 상2+하2 전략에서 상위 2개 기간을 자동 선정해 비교합니다.
+              선택 회차 직전 104회차(2년) 누적 출현 분포를 막대 차트로 보고, 평균근접 규칙으로 번호 4개를 채택합니다.
             </p>
           </section>
 
-          {strategyWindowCharts.nearestMean4.map((chart) => (
-            <AccumulatedChartSection
-              key={chart.key}
-              title={chart.title}
-              counts={chart.counts}
-              analyzedDrawCountForChart={chart.analyzedDrawCount}
-              noDataMessage={chart.noDataMessage}
-              hasSearched={hasSearched}
-              selectedSearchDrawNo={selectedSearchDrawNo}
-              isSearching={data.isSearching}
-              searchError={data.searchError}
-              selectedHighlightNumbers={selectedHighlightNumbers}
-            />
-          ))}
-
-          {strategyWindowCharts.twoHotTwoCold.map((chart) => (
+          {strategyCharts.map((chart) => (
             <AccumulatedChartSection
               key={chart.key}
               title={chart.title}
@@ -123,8 +108,8 @@ export default function AccumulatedNumbersPage() {
 
           {finalNumberPlan && (
             <section className="rounded-2xl border border-card-border/30 bg-card-bg/60 p-4 space-y-4">
-              <h3 className="text-base font-semibold text-slate-100">전략별 추천 4개 / 최종 채택 4개</h3>
-              <div className="grid gap-3 md:grid-cols-2">
+              <h3 className="text-base font-semibold text-slate-100">평균근접 추천 4개 / 최종 채택 4개</h3>
+              <div className="grid gap-3 md:grid-cols-1">
                 {finalNumberPlan.strategyPicks.map((pick) => (
                   <div key={pick.strategyKey} className="rounded-xl border border-white/10 bg-slate-900/50 p-3 space-y-2">
                     <p className="text-sm font-medium text-slate-100">
@@ -149,25 +134,19 @@ export default function AccumulatedNumbersPage() {
               </div>
 
               <div className="rounded-xl border border-emerald-400/30 bg-emerald-500/10 p-3 space-y-2">
-                <p className="text-sm font-semibold text-emerald-300">최종 채택 4개 (공통번호 우선)</p>
+                <p className="text-sm font-semibold text-emerald-300">최종 채택 4개</p>
                 <div className="flex flex-wrap gap-2">
-                  {finalNumberPlan.finalNumbers.map((n) => {
-                    const isCommon = finalNumberPlan.commonNumbers.includes(n);
-                    return (
-                      <span
-                        key={`final-${n}`}
-                        className={`px-2 py-1 rounded-md text-xs font-semibold ${
-                          isCommon ? 'bg-emerald-400/30 text-emerald-200' : 'bg-slate-700/60 text-slate-100'
-                        }`}
-                      >
-                        {n}
-                        {isCommon ? ' (공통)' : ''}
-                      </span>
-                    );
-                  })}
+                  {finalNumberPlan.finalNumbers.map((n) => (
+                    <span
+                      key={`final-${n}`}
+                      className="px-2 py-1 rounded-md text-xs font-semibold bg-emerald-400/30 text-emerald-200"
+                    >
+                      {n}
+                    </span>
+                  ))}
                 </div>
                 <p className="text-xs text-emerald-100/90">
-                  공통번호 {finalNumberPlan.commonNumbers.length}개 우선 포함 후, 부족분은 전략 점수 합이 높은 번호로 채웠습니다.
+                  직전 104회차(2년) 누적 출현 횟수에 대해 평균근접 규칙으로 선정한 번호입니다.
                 </p>
               </div>
             </section>
