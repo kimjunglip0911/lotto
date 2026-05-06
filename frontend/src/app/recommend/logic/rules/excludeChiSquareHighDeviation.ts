@@ -2,7 +2,7 @@ import { ChiSquareHistoryRow, RecommendRule } from '@/app/recommend/logic/types'
 import { getTopPercentileThreshold, normalizeNumberList } from '@/app/recommend/logic/rules/common'
 
 const TOTAL_NUMBERS = 45
-const NUMBERS_PER_DRAW = 7
+const NUMBERS_PER_DRAW = 6
 const RULE_ID = 'exclude-chi-square-high-deviation'
 const RULE_NAME = '카이제곱 +편차 상위 5% 번호 제외'
 
@@ -13,7 +13,7 @@ function computeDeviations(rows: ChiSquareHistoryRow[]): { number: number; devia
   const counts = Array.from({ length: TOTAL_NUMBERS }, () => 0)
 
   for (const row of rows) {
-    const nums = [row.num1, row.num2, row.num3, row.num4, row.num5, row.num6, row.bonus_num]
+    const nums = [row.num1, row.num2, row.num3, row.num4, row.num5, row.num6]
     for (const num of nums) {
       if (num >= 1 && num <= TOTAL_NUMBERS) {
         counts[num - 1] += 1

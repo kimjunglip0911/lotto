@@ -50,7 +50,7 @@ export function ResultTable({
             <div className="flex flex-wrap gap-x-6 gap-y-1.5 text-xs text-slate-400">
               <span>
                 기대값 <span className="font-semibold text-white">E = {expected.toFixed(2)}</span>
-                <span className="text-slate-500 ml-1">({analyzedDrawCount}회 × 7 / 45)</span>
+                <span className="text-slate-500 ml-1">({analyzedDrawCount}회 × 6 / 45)</span>
               </span>
               <span>
                 유의 임계값 <span className="font-semibold text-amber-300">χ² ≥ {chiSquareThreshold}</span>

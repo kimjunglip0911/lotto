@@ -15,7 +15,7 @@ import {
   selectAdoptedBySignedDeviationSkippingExcludedDescending,
 } from './chiSquare';
 
-/** 이전 회차 수가 `pastDraws`일 때 번호별 O·E·편차·χ² (회차당 7개 추첨, 보너스 포함 집계). */
+/** 이전 회차 수가 `pastDraws`일 때 번호별 O·E·편차·χ² (회차당 본번호 6개만 누적 집계). */
 export const buildChiSquareResultsFromCounts = (
   counts: readonly number[],
   pastDraws: number
@@ -37,7 +37,7 @@ export const buildChiSquareResultsFromCounts = (
 };
 
 const addRowToCounts = (row: WinningNumberRow, counts: number[]): void => {
-  const nums = [row.num1, row.num2, row.num3, row.num4, row.num5, row.num6, row.bonus_num];
+  const nums = [row.num1, row.num2, row.num3, row.num4, row.num5, row.num6];
   for (const num of nums) {
     if (num >= 1 && num <= TOTAL_NUMBERS) {
       counts[num - 1] += 1;

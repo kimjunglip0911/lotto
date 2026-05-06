@@ -44,7 +44,7 @@ describe('buildChiSquareResultsFromCounts', () => {
     const expectedFull = buildChiSquareResults(rows);
     const counts = Array.from({ length: 45 }, () => 0);
     for (const r of rows) {
-      for (const n of [r.num1, r.num2, r.num3, r.num4, r.num5, r.num6, r.bonus_num]) {
+      for (const n of [r.num1, r.num2, r.num3, r.num4, r.num5, r.num6]) {
         counts[n - 1] += 1;
       }
     }
@@ -251,7 +251,7 @@ describe('selectNumbersByDeviationBinMergedRanking', () => {
     ];
     const s = runChiSquareDeviationBinWalkForward(rows);
     const counts = Array.from({ length: 45 }, () => 0);
-    for (const n of [1, 2, 3, 4, 5, 6, 7]) {
+    for (const n of [1, 2, 3, 4, 5, 6]) {
       counts[n - 1] += 1;
     }
     const results = buildChiSquareResultsFromCounts(counts, 1);

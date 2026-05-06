@@ -7,7 +7,8 @@ export const buildChiSquareResults = (rows: WinningNumberRow[]): ChiSquareResult
   const counts = Array.from({ length: TOTAL_NUMBERS }, () => 0);
 
   for (const row of rows) {
-    const nums = [row.num1, row.num2, row.num3, row.num4, row.num5, row.num6, row.bonus_num];
+    // 본번호 6개만 집계(기대값 E도 회차당 6과 정합).
+    const nums = [row.num1, row.num2, row.num3, row.num4, row.num5, row.num6];
     for (const num of nums) {
       if (num >= 1 && num <= TOTAL_NUMBERS) {
         counts[num - 1] += 1;
