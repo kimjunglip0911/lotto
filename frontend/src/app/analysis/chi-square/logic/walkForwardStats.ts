@@ -1,4 +1,5 @@
 import {
+  CHI_SQUARE_ADOPTION_BIN_MIN_POOL,
   CHI_SQUARE_DEVIATION_BIN_RANGE_MAX_EXCLUSIVE,
   CHI_SQUARE_DEVIATION_BIN_RANGE_MIN,
   CHI_SQUARE_DEVIATION_BIN_WIDTH,
@@ -114,10 +115,9 @@ export type RunChiSquareWalkForwardOptions = {
    * `i >= minPastDraws`일 때만 분모에 포함한다.
    */
   minPastDraws?: number;
+  /** 조회 회차의 당첨 본번호 집합(조건부 구간 확률 계산용). */
+  referenceMainNumbers?: ReadonlySet<number>;
 };
-
-/** 표에 남길 최소 비율(%). 미만인 구간 행은 제외한다. */
-const DEV_BIN_MIN_DISPLAY_PCT = 1;
 
 const DEV_BIN_LT_KEY = 'lt_tail';
 const DEV_BIN_GE_KEY = 'ge_tail';
@@ -140,21 +140,30 @@ export const deviationToBinKey = (deviation: number): string => {
 export type DeviationBinRow = {
   binKey: string;
   label: string;
-  /** 워크포워드 누적: 본번호가 이 편차 구간에 속한 횟수 */
+  /** 워크포워드 누적: 본번호 슬롯(회차당 최대 6)이 이 구간에 들어간 횟수 */
   hits: number;
-  /** 분모 대비 비율(%) */
+  /** 목표 회차 중 이 구간에 본번호가 1개라도 있었던 회차 수 */
+  roundsHit: number;
+  /**
+   * 조건부 당첨 포함 회차 수: 구간이 나온 회차 중 조회 당첨 본번호와 실제 겹친 회차 수.
+   * (같은 회차·같은 구간에서 여러 번호가 겹쳐도 회차는 1회만 가산)
+   */
+  roundsMatched: number;
+  /** 조건부 출현 확률(%): `roundsHit > 0 ? roundsMatched / roundsHit × 100 : 0` */
   pct: number;
 };
 
 export type DeviationBinWalkForwardSummary = {
   /**
-   * 비율(%) 분모: 워크포워드 목표 회차마다 본번호 6개 중 편차 구간에 넣은 횟수의 합
-   * (한 회차에서 같은 구간에 여러 번호가 있으면 그만큼 가산, 최대 회차당 6).
+   * 본번호 슬롯 누적 건수: 목표 회차마다 본번호 6개를 구간에 넣은 횟수의 합
+   * (한 회차·같은 구간에 여러 번호면 그만큼 가산, 회차당 최대 6).
    */
   denominator: number;
-  /** 표시용: 비율(%)이 `DEV_BIN_MIN_DISPLAY_PCT` 이상인 구간만. */
+  /** 워크포워드에 편차를 쓴 목표 회차 수(`minPastDraws` 이후 행 수). */
+  targetRoundCount: number;
+  /** 표시용: `roundsHit > 0`인 구간만. 채택 순위는 필터 없는 `allBins`를 쓴다. */
   bins: DeviationBinRow[];
-  /** 채택·순위용: 필터 없이 전 구간의 비율(%). */
+  /** 채택·순위용: 전 구간의 조건부 출현 확률(%). */
   allBins: DeviationBinRow[];
 };
 
@@ -175,11 +184,12 @@ export const isNegativeDeviationBinKey = (binKey: string): boolean => {
 
 export type SplitSortedDeviationBins = {
   denominator: number;
+  targetRoundCount: number;
   negBins: DeviationBinRow[];
   posBins: DeviationBinRow[];
 };
 
-/** 음/양 구간으로 나누고 각각 비율(%) 내림차순으로 정렬한다. */
+/** 음/양 구간으로 나누고 각각 조건부 출현 확률(%) 내림차순으로 정렬한다. */
 export const splitAndSortDeviationBins = (
   summary: DeviationBinWalkForwardSummary,
 ): SplitSortedDeviationBins => {
@@ -196,7 +206,12 @@ export const splitAndSortDeviationBins = (
     b.pct - a.pct || a.binKey.localeCompare(b.binKey);
   negBins.sort(byPctDesc);
   posBins.sort(byPctDesc);
-  return { denominator: summary.denominator, negBins, posBins };
+  return {
+    denominator: summary.denominator,
+    targetRoundCount: summary.targetRoundCount,
+    negBins,
+    posBins,
+  };
 };
 
 const orderedDeviationBinKeys = (): string[] => {
@@ -228,9 +243,9 @@ const labelForDeviationBinKey = (key: string): string => {
 };
 
 /**
- * 워크포워드 `allBins`의 구간별 비율(%)을 음·양 합친 직렬 위계로 두고,
- * 현재 `chiSquareResults` 각 번호의 편차(O−E)가 속한 구간 비율이 더 높을수록 먼저 채택한다.
- * 동일 구간(동일 pct)이면 번호 오름차순.
+ * 워크포워드 `allBins`의 구간별 조건부 출현 확률(%) `pct`와, 조회 시점 `results`에서 구간별 번호 개수 n을 써서
+ * 가중 점수 S = pct / max(CHI_SQUARE_ADOPTION_BIN_MIN_POOL, n)를 둔다. S가 클수록 먼저 채택한다.
+ * 동점이면 pct 내림차순, 그다음 음·양 통합 구간 순위(`mergedBinPriority`), 마지막 번호 오름차순.
  */
 export const selectNumbersByDeviationBinMergedRanking = (
   results: ChiSquareResult[],
@@ -239,6 +254,11 @@ export const selectNumbersByDeviationBinMergedRanking = (
 ): readonly number[] | null => {
   if (results.length === 0 || take <= 0) {
     return null;
+  }
+  const countByBin = new Map<string, number>();
+  for (const r of results) {
+    const k = deviationToBinKey(r.deviation);
+    countByBin.set(k, (countByBin.get(k) ?? 0) + 1);
   }
   const pctByBin = new Map<string, number>();
   for (const b of allBins) {
@@ -256,6 +276,19 @@ export const selectNumbersByDeviationBinMergedRanking = (
     const keyB = deviationToBinKey(b.deviation);
     const pcta = pctByBin.get(keyA) ?? Number.NEGATIVE_INFINITY;
     const pctb = pctByBin.get(keyB) ?? Number.NEGATIVE_INFINITY;
+    const na = Math.max(
+      CHI_SQUARE_ADOPTION_BIN_MIN_POOL,
+      countByBin.get(keyA) ?? 0,
+    );
+    const nb = Math.max(
+      CHI_SQUARE_ADOPTION_BIN_MIN_POOL,
+      countByBin.get(keyB) ?? 0,
+    );
+    const scoreA = pcta / na;
+    const scoreB = pctb / nb;
+    if (scoreB !== scoreA) {
+      return scoreB - scoreA;
+    }
     if (pctb !== pcta) {
       return pctb - pcta;
     }
@@ -275,55 +308,87 @@ export const selectNumbersByDeviationBinMergedRanking = (
 
 /**
  * 워크포워드: 각 목표 회차마다 직전 누적으로 본번호 6개의 편차(O−E)를 구한 뒤,
- * `CHI_SQUARE_DEVIATION_BIN_WIDTH` 단위 구간마다 본번호 **한 개당 1회** 가산한다.
- * 비율(%) 분모는 구간에 넣은 본번호 횟수의 합이다.
+ * `CHI_SQUARE_DEVIATION_BIN_WIDTH` 단위 구간마다 본번호 **한 개당 1회** 슬롯을 가산한다.
+ * 표·채택용 `pct`는 **구간이 나온 회차 중 조회 당첨 본번호와 겹친 회차 비율(%)**이다.
+ * 예: 구간 출현 50회 중 겹침 25회면 50%, 1회 중 1회면 100%.
  */
 export const runChiSquareDeviationBinWalkForward = (
   sortedRows: WinningNumberRow[],
   options?: RunChiSquareWalkForwardOptions,
 ): DeviationBinWalkForwardSummary => {
   const minPastDraws = options?.minPastDraws ?? 1;
+  const referenceMainNumbers = options?.referenceMainNumbers;
+  const hasReferenceMainNumbers =
+    referenceMainNumbers !== undefined && referenceMainNumbers.size > 0;
   const rows = [...sortedRows].sort((a, b) => a.draw_no - b.draw_no);
   const counts = Array.from({ length: TOTAL_NUMBERS }, () => 0);
 
   const keys = orderedDeviationBinKeys();
   const hitMap = new Map<string, number>();
+  const roundPresenceMap = new Map<string, number>();
+  const roundMatchedMap = new Map<string, number>();
   for (const k of keys) {
     hitMap.set(k, 0);
+    roundPresenceMap.set(k, 0);
+    roundMatchedMap.set(k, 0);
   }
 
   let classifiedSlotCount = 0;
+  let targetRoundCount = 0;
 
   for (let i = 0; i < rows.length; i++) {
     if (i >= minPastDraws) {
+      targetRoundCount += 1;
       const pastDraws = i;
       const results = buildChiSquareResultsFromCounts(counts, pastDraws);
       const resultsByNumber = new Map(results.map((r) => [r.number, r]));
 
+      const binsThisRound = new Set<string>();
+      const matchedBinsThisRound = new Set<string>();
       for (const num of mainSix(rows[i])) {
         const r = resultsByNumber.get(num);
         if (!r) continue;
         const binKey = deviationToBinKey(r.deviation);
         hitMap.set(binKey, (hitMap.get(binKey) ?? 0) + 1);
         classifiedSlotCount += 1;
+        binsThisRound.add(binKey);
+        if (hasReferenceMainNumbers && referenceMainNumbers.has(num)) {
+          matchedBinsThisRound.add(binKey);
+        }
+      }
+      for (const k of binsThisRound) {
+        roundPresenceMap.set(k, (roundPresenceMap.get(k) ?? 0) + 1);
+      }
+      for (const k of matchedBinsThisRound) {
+        roundMatchedMap.set(k, (roundMatchedMap.get(k) ?? 0) + 1);
       }
     }
     addRowToCounts(rows[i], counts);
   }
 
-  const pct = (h: number) => (classifiedSlotCount > 0 ? (h / classifiedSlotCount) * 100 : 0);
+  const roundPct = (roundsHit: number, roundsMatched: number) =>
+    roundsHit > 0 ? (roundsMatched / roundsHit) * 100 : 0;
   const allBins: DeviationBinRow[] = keys.map((binKey) => {
     const hits = hitMap.get(binKey) ?? 0;
+    const roundsHit = roundPresenceMap.get(binKey) ?? 0;
+    const roundsMatched = roundMatchedMap.get(binKey) ?? 0;
     return {
       binKey,
       label: labelForDeviationBinKey(binKey),
       hits,
-      pct: pct(hits),
+      roundsHit,
+      roundsMatched,
+      pct: roundPct(roundsHit, roundsMatched),
     };
   });
-  const bins = allBins.filter((row) => row.pct >= DEV_BIN_MIN_DISPLAY_PCT);
+  const bins = allBins.filter((row) => row.roundsHit > 0);
 
-  return { denominator: classifiedSlotCount, bins, allBins };
+  return {
+    denominator: classifiedSlotCount,
+    targetRoundCount,
+    bins,
+    allBins,
+  };
 };
 
 /**

@@ -104,15 +104,49 @@ describe('deviationToBinKey', () => {
 });
 
 describe('runChiSquareDeviationBinWalkForward', () => {
-  it('분모는 구간에 넣은 본번호 횟수의 합이고, 반환 구간은 모두 비율 1% 이상이다', () => {
+  it('reference set이 없으면 조건부 확률 pct는 0이다', () => {
     const rows = [
       row(1, 1, 2, 3, 4, 5, 6, 7),
       row(2, 8, 9, 10, 11, 12, 13, 14),
     ];
     const s = runChiSquareDeviationBinWalkForward(rows);
     expect(s.denominator).toBe(6);
+    expect(s.targetRoundCount).toBe(1);
     expect(s.bins.length).toBeGreaterThan(0);
-    expect(s.bins.every((b) => b.pct >= 1)).toBe(true);
+    expect(s.bins.every((b) => b.roundsHit > 0)).toBe(true);
+    expect(s.bins.every((b) => b.roundsMatched === 0 && b.pct === 0)).toBe(true);
+  });
+
+  it('조건부 확률(%)은 roundsMatched / roundsHit × 100이다', () => {
+    const rows = [
+      row(1, 1, 2, 3, 4, 5, 6, 7),
+      row(2, 8, 9, 10, 11, 12, 13, 14),
+      row(3, 15, 16, 17, 18, 19, 20, 21),
+    ];
+    const s = runChiSquareDeviationBinWalkForward(rows, {
+      referenceMainNumbers: new Set([8, 9, 10, 11, 12, 13]),
+    });
+    expect(s.targetRoundCount).toBe(2);
+    for (const b of s.allBins) {
+      if (b.roundsHit > 0) {
+        expect(b.pct).toBeCloseTo((b.roundsMatched / b.roundsHit) * 100, 5);
+      } else {
+        expect(b.pct).toBe(0);
+      }
+    }
+  });
+
+  it('구간 출현 1회에서 겹침 1회면 조건부 확률은 100%다', () => {
+    const rows = [
+      row(1, 1, 2, 3, 4, 5, 6, 7),
+      row(2, 15, 16, 17, 18, 19, 20, 21),
+    ];
+    const s = runChiSquareDeviationBinWalkForward(rows, {
+      referenceMainNumbers: new Set([15, 16, 17, 18, 19, 20]),
+    });
+    expect(s.targetRoundCount).toBe(1);
+    const found = s.allBins.some((b) => b.roundsHit === 1 && b.roundsMatched === 1 && b.pct === 100);
+    expect(found).toBe(true);
   });
 
   it('전 구간 hits 합은 분모(구간에 넣은 본번호 누적 건수)와 같다', () => {
@@ -138,7 +172,7 @@ describe('runChiSquareDeviationBinWalkForward', () => {
     const binKeys = new Set(s.bins.map((b) => b.binKey));
     for (const ab of s.allBins) {
       const inDisplay = binKeys.has(ab.binKey);
-      if (ab.pct >= 1) {
+      if (ab.roundsHit > 0) {
         expect(inDisplay).toBe(true);
       }
     }
@@ -158,8 +192,8 @@ describe('selectNumbersByDeviationBinMergedRanking', () => {
 
   it('구간 비율이 높은 번호를 먼저 고르고 동일 구간은 번호 오름차순', () => {
     const allBins = [
-      { binKey: 'b_0', label: '', hits: 0, pct: 20 },
-      { binKey: 'b_5', label: '', hits: 0, pct: 10 },
+      { binKey: 'b_0', label: '', hits: 0, roundsHit: 0, roundsMatched: 0, pct: 20 },
+      { binKey: 'b_5', label: '', hits: 0, roundsHit: 0, roundsMatched: 0, pct: 10 },
     ];
     const a = mk(1, 0, 100);
     const b = mk(2, 0, 100);
@@ -168,18 +202,32 @@ describe('selectNumbersByDeviationBinMergedRanking', () => {
     expect(selectNumbersByDeviationBinMergedRanking([c, b, a], allBins, 3)).toEqual([1, 2, 3]);
   });
 
-  it('pct가 같을 때는 통합 구간 순위(binKey 문자열 순)로 구간 간 우선순위를 정한다', () => {
+  it('pct가 같고 구간별 번호 수도 같으면 통합 구간 순위로 구간 간 우선순위를 정한다', () => {
     const allBins = [
-      { binKey: 'b_5', label: '', hits: 0, pct: 15 },
-      { binKey: 'b_0', label: '', hits: 0, pct: 15 },
+      { binKey: 'b_5', label: '', hits: 0, roundsHit: 0, roundsMatched: 0, pct: 15 },
+      { binKey: 'b_0', label: '', hits: 0, roundsHit: 0, roundsMatched: 0, pct: 15 },
     ];
     const n0 = mk(1, 0, 100);
     const n5 = mk(2, 5, 100);
     expect(selectNumbersByDeviationBinMergedRanking([n5, n0], allBins, 2)).toEqual([1, 2]);
   });
 
+  it('동일 pct면 구간에 속한 번호가 적을수록 가중 점수가 커져 먼저 채택된다', () => {
+    const allBins = [
+      { binKey: 'b_0', label: '', hits: 0, roundsHit: 0, roundsMatched: 0, pct: 20 },
+      { binKey: 'b_5', label: '', hits: 0, roundsHit: 0, roundsMatched: 0, pct: 20 },
+    ];
+    const inB0a = mk(1, 0, 100);
+    const inB0b = mk(2, 0, 100);
+    const inB0c = mk(3, 0, 100);
+    const inB5 = mk(4, 5, 100);
+    const results = [inB0a, inB0b, inB0c, inB5];
+    expect(selectNumbersByDeviationBinMergedRanking(results, allBins, 1)).toEqual([4]);
+    expect(selectNumbersByDeviationBinMergedRanking(results, allBins, 4)).toEqual([4, 1, 2, 3]);
+  });
+
   it('동일 구간(동일 pct) 안에서는 번호 오름차순', () => {
-    const allBins = [{ binKey: 'b_0', label: '', hits: 0, pct: 50 }];
+    const allBins = [{ binKey: 'b_0', label: '', hits: 0, roundsHit: 0, roundsMatched: 0, pct: 50 }];
     const r10 = mk(10, 0, 100);
     const r3 = mk(3, 0, 100);
     const r7 = mk(7, 0, 100);
@@ -188,8 +236,8 @@ describe('selectNumbersByDeviationBinMergedRanking', () => {
 
   it('비율이 낮은 편차 구간 번호는 뒤로 간다', () => {
     const allBins = [
-      { binKey: 'b_0', label: '', hits: 0, pct: 50 },
-      { binKey: 'b_10', label: '', hits: 0, pct: 5 },
+      { binKey: 'b_0', label: '', hits: 0, roundsHit: 0, roundsMatched: 0, pct: 50 },
+      { binKey: 'b_10', label: '', hits: 0, roundsHit: 0, roundsMatched: 0, pct: 5 },
     ];
     const hi = mk(1, 0, 100);
     const lo = mk(2, 10, 100);
@@ -228,7 +276,7 @@ describe('isNegativeDeviationBinKey', () => {
 });
 
 describe('splitAndSortDeviationBins', () => {
-  it('음·양 개수 합이 전체 구간 수와 같고 비율 내림차순이다', () => {
+  it('음·양 개수 합이 전체 구간 수와 같고 출현 확률(%) 내림차순이다', () => {
     const rows = [
       row(1, 1, 2, 3, 4, 5, 6, 7),
       row(2, 8, 9, 10, 11, 12, 13, 14),

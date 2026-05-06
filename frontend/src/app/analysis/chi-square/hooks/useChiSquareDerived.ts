@@ -78,12 +78,15 @@ export const useChiSquareDerived = ({
     if (walkForwardRows === null || walkForwardRows.length < 2) {
       return null;
     }
-    const summary = runChiSquareDeviationBinWalkForward([...walkForwardRows], { minPastDraws: 1 });
+    const summary = runChiSquareDeviationBinWalkForward([...walkForwardRows], {
+      minPastDraws: 1,
+      referenceMainNumbers: selectedWinningNumberSet ?? undefined,
+    });
     return {
       presentation: splitAndSortDeviationBins(summary),
       summary,
     };
-  }, [walkForwardRows]);
+  }, [walkForwardRows, selectedWinningNumberSet]);
 
   const relPctBinWalkForwardPresentation = deviationBinWalkForwardBlock?.presentation ?? null;
 

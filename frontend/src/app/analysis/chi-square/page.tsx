@@ -101,6 +101,7 @@ export default function ChiSquarePage() {
             relPctBinWalkForwardPresentation !== null && (
               <RelPctBinWalkForwardTable
                 denominator={relPctBinWalkForwardPresentation.denominator}
+                targetRoundCount={relPctBinWalkForwardPresentation.targetRoundCount}
                 negBins={relPctBinWalkForwardPresentation.negBins}
                 posBins={relPctBinWalkForwardPresentation.posBins}
               />
@@ -127,7 +128,7 @@ export default function ChiSquarePage() {
                 </div>
               )}
               <div className="rounded-xl border border-emerald-400/30 bg-emerald-500/10 p-3 space-y-2">
-                <p className="text-sm font-semibold text-emerald-300">사용 번호 14개 (구간 비율 통합 순위)</p>
+                <p className="text-sm font-semibold text-emerald-300">사용 번호 14개 (구간 조건부 확률 통합 순위)</p>
                 <div className="flex flex-wrap gap-2">
                   {adoptedUsageNumbers.map((n) => (
                     <span
@@ -139,7 +140,7 @@ export default function ChiSquarePage() {
                   ))}
                 </div>
                 <p className="text-xs text-emerald-100/90 leading-relaxed">
-                  편차(O−E) 워크포워드 표와 동일한 집계(최근 {CHI_SQUARE_WALK_FORWARD_RECENT_DRAWS}회, 구간 폭 {CHI_SQUARE_DEVIATION_BIN_WIDTH})로 구간별 비율(%)을 구한 뒤, 음·양 구간을 합쳐 비율이 높은 구간부터 순위를 매깁니다. 조회 시점 각 번호의 편차(O−E)는 검정 결과 표와 같이 전체 누적 기준입니다. 같은 구간이면 번호가 작은 쪽을 먼저 둡니다. 나열 순서는 1순위부터입니다.
+                  편차(O−E) 워크포워드 표와 동일한 집계(최근 {CHI_SQUARE_WALK_FORWARD_RECENT_DRAWS}회, 구간 폭 {CHI_SQUARE_DEVIATION_BIN_WIDTH})로 구간별 조건부 확률(%)을 구한 뒤, 음·양 구간을 합쳐 확률이 높은 구간부터 순위를 매깁니다. 조건부 확률은 해당 구간이 나온 회차 수 대비, 조회 회차 당첨 본번호와 겹친 회차 비율입니다. 조회 시점 각 번호의 편차(O−E)는 검정 결과 표와 같이 전체 누적 기준입니다. 같은 확률의 구간이라도 해당 구간에 속한 번호 수로 나눈 값이 큰 쪽을 우선합니다(구간 풀이 작을수록 가중). 같은 구간이면 번호가 작은 쪽을 먼저 둡니다. 나열 순서는 1순위부터입니다.
                 </p>
               </div>
             </section>
