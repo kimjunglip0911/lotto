@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { isWinningNumberRow, type WinningNumberRow } from '../types';
+import { getTrendExcludedNumbers } from '../logic/trendExclusion';
 
 /**
  * 통합 분석 페이지의 회차 목록·당첨번호 조회 훅.
@@ -24,6 +25,7 @@ type UseFinalPickDataResult = {
   winningNumberError: string | null;
   /** 선택 회차 미만 전체 당첨 행 — 연속 출현 제외 등에서 재사용한다. */
   previousDrawRows: WinningNumberRow[];
+  excludedByTrendNumbers: number[];
   searchedDraw: string;
   isSearching: boolean;
   searchError: string | null;
@@ -45,6 +47,7 @@ export const useFinalPickData = (): UseFinalPickDataResult => {
   const [searchError, setSearchError] = useState<string | null>(null);
 
   const [previousDrawRows, setPreviousDrawRows] = useState<WinningNumberRow[]>([]);
+  const [excludedByTrendNumbers, setExcludedByTrendNumbers] = useState<number[]>([]);
 
   useEffect(() => {
     let isMounted = true;
@@ -95,6 +98,7 @@ export const useFinalPickData = (): UseFinalPickDataResult => {
       setSearchedDraw('');
       resetSelectedWinning();
       setPreviousDrawRows([]);
+      setExcludedByTrendNumbers([]);
       return;
     }
 
@@ -115,12 +119,14 @@ export const useFinalPickData = (): UseFinalPickDataResult => {
         if (!isWinningNumberRow(data)) throw new Error('Winning number response is invalid');
         setSelectedWinningNumber(data);
         setPreviousDrawRows([]);
+        setExcludedByTrendNumbers([]);
         return;
       }
 
-      const [winningNumberRes, rangeRes] = await Promise.all([
+      const [winningNumberRes, rangeRes, trendHistoryRes] = await Promise.all([
         fetch(finalPickApiUrl(`winning-number?draw_no=${drawNo}`)),
         fetch(finalPickApiUrl(`winning-numbers-range?draw_no=${drawNo}`)),
+        fetch(`${process.env.NEXT_PUBLIC_API_URL || ''}/api/analysis/trend/all-history?draw_no=${drawNo}`),
       ]);
 
       if (!winningNumberRes.ok) {
@@ -128,16 +134,21 @@ export const useFinalPickData = (): UseFinalPickDataResult => {
         throw new Error(`Failed to fetch winning number: ${winningNumberRes.status}`);
       }
       if (!rangeRes.ok) throw new Error(`Failed to fetch winning numbers range: ${rangeRes.status}`);
+      if (!trendHistoryRes.ok) throw new Error(`Failed to fetch trend history: ${trendHistoryRes.status}`);
 
       const winningData: unknown = await winningNumberRes.json();
       const rangeData: unknown = await rangeRes.json();
+      const trendHistoryData: unknown = await trendHistoryRes.json();
 
       if (!isWinningNumberRow(winningData)) throw new Error('Winning number response is invalid');
       if (!Array.isArray(rangeData)) throw new Error('Winning numbers range response is not an array');
+      if (!Array.isArray(trendHistoryData)) throw new Error('Trend history response is not an array');
 
       const rows = rangeData.filter(isWinningNumberRow);
+      const trendRows = trendHistoryData.filter(isWinningNumberRow);
       setSelectedWinningNumber(winningData);
       setPreviousDrawRows(rows);
+      setExcludedByTrendNumbers(getTrendExcludedNumbers(trendRows));
     } catch (error) {
       console.error('Error fetching final-pick winning number:', error);
       setSearchError(
@@ -147,6 +158,7 @@ export const useFinalPickData = (): UseFinalPickDataResult => {
       );
       resetSelectedWinning();
       setPreviousDrawRows([]);
+      setExcludedByTrendNumbers([]);
       setSearchedDraw('');
     } finally {
       setIsSearching(false);
@@ -164,6 +176,7 @@ export const useFinalPickData = (): UseFinalPickDataResult => {
     isLoadingWinningNumber,
     winningNumberError,
     previousDrawRows,
+    excludedByTrendNumbers,
     searchedDraw,
     isSearching,
     searchError,

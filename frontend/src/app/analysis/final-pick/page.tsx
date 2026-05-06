@@ -30,6 +30,7 @@ export default function FinalPickPage() {
     searchError,
     handleSearch,
     previousDrawRows,
+    excludedByTrendNumbers,
   } = useFinalPickData();
 
   /** 본번호 6개만 추출(보너스 제외) — 패널/차트 hit 강조용. */
@@ -50,7 +51,6 @@ export default function FinalPickPage() {
 
   // 후속: 나머지 분석 기법의 실제 결과를 채울 placeholder 자리.
   const adoptedAllNumbers: number[] = [];
-  const excludedByTrendNumbers: number[] = [];
   const adoptedByAccumulatedNumbers: number[] = [];
   const adoptedByChiSquareNumbers: number[] = [];
   const comprehensiveCounts: number[] | null = null;
@@ -97,7 +97,7 @@ export default function FinalPickPage() {
 
           <SourceNumbersCard
             title="추세 분석 — 후보 제외"
-            description="추세 점수가 낮아 후보 풀에서 빼는 번호"
+            description="기댓값 대비 EMA 편차 구간 출현확률이 20.00% 이하인 번호 제외 (20.01% 이상은 제외 아님)"
             tone="exclude"
             numbers={excludedByTrendNumbers}
             mainWinningSet={mainWinningNumberSet}
