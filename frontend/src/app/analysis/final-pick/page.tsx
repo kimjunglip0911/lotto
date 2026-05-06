@@ -31,6 +31,7 @@ export default function FinalPickPage() {
     excludedByTrendNumbers,
     excludedByStreakNumbers,
     adoptedByAccumulatedNumbers,
+    adoptedByChiSquareNumbers,
   } = useFinalPickData();
 
   /** 본번호 6개만 추출(보너스 제외) — 패널/차트 hit 강조용. */
@@ -45,7 +46,6 @@ export default function FinalPickPage() {
 
   // 후속: 나머지 분석 기법의 실제 결과를 채울 placeholder 자리.
   const adoptedAllNumbers: number[] = [];
-  const adoptedByChiSquareNumbers: number[] = [];
   const comprehensiveCounts: number[] | null = null;
 
   return (

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { isWinningNumberRow, type WinningNumberRow } from '../types';
 import { getTrendExcludedNumbers } from '../logic/trendExclusion';
 import { getAccumulatedAdoptedNumbers } from '../logic/accumulatedAdoption';
+import { getChiSquareAdoptedNumbers } from '../logic/chiSquareAdoption';
 import { getConsecutivelyAppearedMainNumbers } from '@/app/analysis/absence-streak/logic/streak';
 
 /**
@@ -30,6 +31,7 @@ type UseFinalPickDataResult = {
   excludedByTrendNumbers: number[];
   excludedByStreakNumbers: number[];
   adoptedByAccumulatedNumbers: number[];
+  adoptedByChiSquareNumbers: number[];
   searchedDraw: string;
   isSearching: boolean;
   searchError: string | null;
@@ -67,6 +69,36 @@ export const useFinalPickData = (): UseFinalPickDataResult => {
         excludedByTrendNumbers,
       }).finalNumbers,
     [excludedByStreakNumbers, excludedByTrendNumbers, previousDrawRows],
+  );
+
+  const selectedMainNumbers = useMemo(() => {
+    if (!selectedWinningNumber) return [];
+    return [
+      selectedWinningNumber.num1,
+      selectedWinningNumber.num2,
+      selectedWinningNumber.num3,
+      selectedWinningNumber.num4,
+      selectedWinningNumber.num5,
+      selectedWinningNumber.num6,
+    ];
+  }, [selectedWinningNumber]);
+
+  const adoptedByChiSquareNumbers = useMemo(
+    () =>
+      getChiSquareAdoptedNumbers({
+        previousDrawRows,
+        selectedMainNumbers,
+        excludedByStreakNumbers,
+        excludedByTrendNumbers,
+        adoptedByAccumulatedNumbers,
+      }),
+    [
+      adoptedByAccumulatedNumbers,
+      excludedByStreakNumbers,
+      excludedByTrendNumbers,
+      previousDrawRows,
+      selectedMainNumbers,
+    ],
   );
 
   useEffect(() => {
@@ -199,6 +231,7 @@ export const useFinalPickData = (): UseFinalPickDataResult => {
     excludedByTrendNumbers,
     excludedByStreakNumbers,
     adoptedByAccumulatedNumbers,
+    adoptedByChiSquareNumbers,
     searchedDraw,
     isSearching,
     searchError,
