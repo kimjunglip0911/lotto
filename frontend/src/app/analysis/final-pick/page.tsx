@@ -44,8 +44,10 @@ export default function FinalPickPage() {
     [selectedMainNumbers],
   );
 
-  // 후속: 나머지 분석 기법의 실제 결과를 채울 placeholder 자리.
-  const adoptedAllNumbers: number[] = [];
+  const adoptedAllNumbers = useMemo(
+    () => [...adoptedByAccumulatedNumbers, ...adoptedByChiSquareNumbers].sort((a, b) => a - b),
+    [adoptedByAccumulatedNumbers, adoptedByChiSquareNumbers],
+  );
   const comprehensiveCounts: number[] | null = null;
 
   return (
