@@ -28,7 +28,7 @@ const mainSix = (row: WinningNumberRow): number[] => [
 const naiveBinKey = (pct: number): string => {
   if (pct < -100) return 'tail_low';
   if (pct >= 100) return 'tail_high';
-  const lo = Math.floor(pct / 10) * 10;
+  const lo = Math.floor(pct);
   return `mid_${lo}`;
 };
 
@@ -46,7 +46,7 @@ describe('aggregateDeviationBins', () => {
     const naiveWinningHitDrawCounts = new Map<string, number>();
     let naiveValidDraws = 0;
     let naiveSkippedDraws = 0;
-    const orderedKeys = ['tail_low', ...Array.from({ length: 20 }, (_, i) => `mid_${-100 + i * 10}`), 'tail_high'];
+    const orderedKeys = ['tail_low', ...Array.from({ length: 200 }, (_, i) => `mid_${-100 + i}`), 'tail_high'];
     for (const key of orderedKeys) {
       naiveDrawCounts.set(key, 0);
       naiveWinningHitDrawCounts.set(key, 0);
@@ -74,8 +74,8 @@ describe('aggregateDeviationBins', () => {
           const hit = mainSix(prefix[i]!).includes(n) ? 1 : 0;
           ema = hit * alpha + ema * (1 - alpha);
         }
-        const pct = ((ema - baseline) / baseline) * 100;
-        const key = naiveBinKey(pct);
+        const diff = (ema - baseline) * 100;
+        const key = naiveBinKey(diff);
         presentKeys.add(key);
         if (winningSet.has(n)) winningHitKeys.add(key);
       }
@@ -97,9 +97,9 @@ describe('aggregateDeviationBins', () => {
     }
   });
 
-  it('pct=10 은 10~20% 구간(mid_10)에 속한다', () => {
+  it('diff=10 은 10~11 구간(mid_10)에 속한다', () => {
     expect(naiveBinKey(10)).toBe('mid_10');
-    expect(naiveBinKey(9.999)).toBe('mid_0');
+    expect(naiveBinKey(9.999)).toBe('mid_9');
   });
 
   it('첫 회차만 있으면 prefix 없어 회차가 스킵된다', () => {
@@ -115,11 +115,11 @@ describe('aggregateDeviationBins', () => {
     }
 
     const agg = aggregateDeviationBins(rows, { minDraw: 2, maxDraw: 1001, kTrend: 1 });
-    const tailHigh = agg.rows.find((r) => r.key === 'tail_high');
-    expect(tailHigh).toBeDefined();
-    expect(tailHigh!.drawCount).toBe(1000);
-    expect(tailHigh!.winningHitDrawCount).toBe(1000);
-    expect(tailHigh!.appearanceProbability).toBeCloseTo(100, 10);
+    const mid86 = agg.rows.find((r) => r.key === 'mid_86');
+    expect(mid86).toBeDefined();
+    expect(mid86!.drawCount).toBe(1000);
+    expect(mid86!.winningHitDrawCount).toBe(1000);
+    expect(mid86!.appearanceProbability).toBeCloseTo(100, 10);
   });
 
   it('요구사항 예시: 구간 출현 1000회 중 당첨 포함 100회면 출현확률 10%', () => {
@@ -134,10 +134,10 @@ describe('aggregateDeviationBins', () => {
     }
 
     const agg = aggregateDeviationBins(rows, { minDraw: 2, maxDraw: 1001, kTrend: 1 });
-    const tailHigh = agg.rows.find((r) => r.key === 'tail_high');
-    expect(tailHigh).toBeDefined();
-    expect(tailHigh!.drawCount).toBe(1000);
-    expect(tailHigh!.winningHitDrawCount).toBe(100);
-    expect(tailHigh!.appearanceProbability).toBeCloseTo(10, 10);
+    const mid86 = agg.rows.find((r) => r.key === 'mid_86');
+    expect(mid86).toBeDefined();
+    expect(mid86!.drawCount).toBe(1000);
+    expect(mid86!.winningHitDrawCount).toBe(100);
+    expect(mid86!.appearanceProbability).toBeCloseTo(10, 10);
   });
 });

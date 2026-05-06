@@ -1,6 +1,6 @@
 /**
  * 회차별로 이력(draw_no < 해당 회차)만 반영한 기댓값·EMA와 동일 정의로,
- * 번호별 (EMA−기댓값)/기댓값×100 을 10%p 구간으로 나눠 회차 기준 출현확률을 집계한다.
+ * 번호별 (EMA−기댓값)×100(%p) 을 10 단위 구간으로 나눠 회차 기준 출현확률을 집계한다.
  *
  * 회차 단위 계산:
  * - drawCount: 해당 구간이 그 회차에 1번 이상 나타난 횟수
@@ -8,13 +8,14 @@
  * - appearanceProbability: winningHitDrawCount / drawCount * 100
  *
  * 기댓값이 매우 작을 때: `MIN_BASELINE` 미만이면 해당 회차는 건너뛰고 `skippedDrawCount`에만 반영한다.
- * 꼬리 구간: pct < -100 → "< -100%", pct ≥ 100 → "≥ 100%", 그 외 [-100,100) 에서 10%p 단위 반개구간.
+ * 꼬리 구간: diff < -100 → "< -100", diff ≥ 100 → "≥ 100", 그 외 [-100,100) 에서 10 단위 반개구간.
  */
 import { K_TREND, TOTAL_NUMBERS } from '../constants';
 import type { DeviationBinRow, DeviationBinsSummary, WinningNumberRow } from '../types';
 
 /** 기댓값이 이 값 미만이면 편차%가 불안정해 표본에서 제외한다 */
 export const MIN_BASELINE = 1e-10;
+const BIN_STEP = 1;
 
 const mainSix = (row: WinningNumberRow): readonly number[] => [
   row.num1,
@@ -28,10 +29,10 @@ const mainSix = (row: WinningNumberRow): readonly number[] => [
 /** 구간 표시 순서를 고정하기 위한 키·라벨 목록(중간 구간만) */
 const buildInteriorBinDefs = (): readonly { key: string; label: string; lo: number }[] => {
   const defs: { key: string; label: string; lo: number }[] = [];
-  for (let lo = -100; lo < 100; lo += 10) {
+  for (let lo = -100; lo < 100; lo += BIN_STEP) {
     defs.push({
       key: `mid_${lo}`,
-      label: `${lo}~${lo + 10}%`,
+      label: `${lo}~${lo + BIN_STEP}`,
       lo,
     });
   }
@@ -48,18 +49,18 @@ const ORDERED_KEYS: readonly string[] = [
 
 const KEY_TO_LABEL = ((): Map<string, string> => {
   const m = new Map<string, string>();
-  m.set('tail_low', '< -100%');
+  m.set('tail_low', '< -100');
   for (const d of INTERIOR_DEFS) {
     m.set(d.key, d.label);
   }
-  m.set('tail_high', '≥ 100%');
+  m.set('tail_high', '≥ 100');
   return m;
 })();
 
 const resolveBinKey = (pct: number): string => {
   if (pct < -100) return 'tail_low';
   if (pct >= 100) return 'tail_high';
-  const lo = Math.floor(pct / 10) * 10;
+  const lo = Math.floor(pct / BIN_STEP) * BIN_STEP;
   return `mid_${lo}`;
 };
 
@@ -117,8 +118,8 @@ export const aggregateDeviationBins = (
 
         for (let n = 1; n <= TOTAL_NUMBERS; n += 1) {
           const ema = emaByNum[n - 1]!;
-          const pct = ((ema - baseline) / baseline) * 100;
-          const key = resolveBinKey(pct);
+          const diff = (ema - baseline) * 100;
+          const key = resolveBinKey(diff);
           presentBinKeys.add(key);
 
           if (winningNumSet.has(n)) {
