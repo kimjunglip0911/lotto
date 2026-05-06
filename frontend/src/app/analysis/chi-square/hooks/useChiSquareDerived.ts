@@ -10,7 +10,7 @@ import {
   selectAdoptedBySignedDeviationSkippingExcluded,
 } from '../logic/chiSquare';
 import {
-  runChiSquareRelPct5BinWalkForward,
+  runChiSquareRelPctBinWalkForward,
   splitAndSortRelPctBins,
   type SplitSortedRelPctBins,
 } from '../logic/walkForwardStats';
@@ -94,10 +94,10 @@ export const useChiSquareDerived = ({
     [adoptedUsageNumbers],
   );
 
-  /** 상대편차 5% 구간 워크포워드 요약(음·양 분리·비율 내림차순). 2회차 이상 데이터가 있을 때만 채운다. */
+  /** 상대편차 1% 구간 워크포워드 요약(음·양 분리·비율 내림차순). 2회차 이상 데이터가 있을 때만 채운다. */
   const relPctBinWalkForwardPresentation = useMemo((): SplitSortedRelPctBins | null => {
     if (walkForwardRows === null || walkForwardRows.length < 2) return null;
-    const summary = runChiSquareRelPct5BinWalkForward([...walkForwardRows], { minPastDraws: 1 });
+    const summary = runChiSquareRelPctBinWalkForward([...walkForwardRows], { minPastDraws: 1 });
     return splitAndSortRelPctBins(summary);
   }, [walkForwardRows]);
 

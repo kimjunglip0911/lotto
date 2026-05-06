@@ -109,11 +109,13 @@ export type RunChiSquareWalkForwardOptions = {
   minPastDraws?: number;
 };
 
-const REL_PCT_BIN_WIDTH = 5;
+const REL_PCT_BIN_WIDTH = 1;
 const REL_PCT_BIN_MIN = -100;
 const REL_PCT_BIN_MAX_EXCLUSIVE = 100;
+/** 표에 남길 최소 비율(%). 미만인 구간 행은 제외한다. */
+const REL_PCT_BIN_MIN_DISPLAY_PCT = 1;
 
-/** 상대편차(%)를 5% 폭 반개구간에 매핑한다. `p < -100`, `p ≥ 100`은 별도 키. */
+/** 상대편차(%)를 1% 폭 반개구간에 매핑한다. `p < -100`, `p ≥ 100`은 별도 키. */
 export const relPctToBinKey = (p: number): string => {
   if (p < REL_PCT_BIN_MIN) return 'lt_-100';
   if (p >= REL_PCT_BIN_MAX_EXCLUSIVE) return 'ge_100';
@@ -137,7 +139,7 @@ export type RelPctBinWalkForwardSummary = {
   bins: RelPctBinRow[];
 };
 
-/** 음의 상대편차 구간(`p < −100%`, `[−100%, −95%)` … `[−5%, 0%)`)이면 true. */
+/** 음의 상대편차 구간(`p < −100%`, `[−100%, −99%)` … `[−1%, 0%)`)이면 true. */
 export const isNegativeRelPctBinKey = (binKey: string): boolean => {
   if (binKey === 'lt_-100') return true;
   if (binKey === 'ge_100') return false;
@@ -191,9 +193,10 @@ const labelForRelPctBinKey = (key: string): string => {
 
 /**
  * 워크포워드: 각 목표 회차마다 직전 누적으로 본번호 6개의 상대편차 %를 구한 뒤,
- * **5% 단위 구간**마다「그 구간에 번호가 1개 이상 있으면」해당 회차를 1회 카운트한다(구간 간 중복 가능).
+ * **1% 단위 구간**마다「그 구간에 번호가 1개 이상 있으면」해당 회차를 1회 카운트한다(구간 간 중복 가능).
+ * 반환 `bins`에는 비율(%)이 1% 이상인 구간만 포함한다(1% 미만 구간 행 제외).
  */
-export const runChiSquareRelPct5BinWalkForward = (
+export const runChiSquareRelPctBinWalkForward = (
   sortedRows: WinningNumberRow[],
   options?: RunChiSquareWalkForwardOptions
 ): RelPctBinWalkForwardSummary => {
@@ -230,15 +233,17 @@ export const runChiSquareRelPct5BinWalkForward = (
   }
 
   const pct = (h: number) => (denominator > 0 ? (h / denominator) * 100 : 0);
-  const bins: RelPctBinRow[] = keys.map((binKey) => {
-    const hits = hitMap.get(binKey) ?? 0;
-    return {
-      binKey,
-      label: labelForRelPctBinKey(binKey),
-      hits,
-      pct: pct(hits),
-    };
-  });
+  const bins: RelPctBinRow[] = keys
+    .map((binKey) => {
+      const hits = hitMap.get(binKey) ?? 0;
+      return {
+        binKey,
+        label: labelForRelPctBinKey(binKey),
+        hits,
+        pct: pct(hits),
+      };
+    })
+    .filter((row) => row.pct >= REL_PCT_BIN_MIN_DISPLAY_PCT);
 
   return { denominator, bins };
 };

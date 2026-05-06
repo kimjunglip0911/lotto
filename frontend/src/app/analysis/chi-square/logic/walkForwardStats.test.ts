@@ -6,7 +6,7 @@ import {
   classifyDrawExclusiveBucket,
   isNegativeRelPctBinKey,
   relPctToBinKey,
-  runChiSquareRelPct5BinWalkForward,
+  runChiSquareRelPctBinWalkForward,
   runChiSquareWalkForward,
   splitAndSortRelPctBins,
 } from './walkForwardStats';
@@ -86,26 +86,27 @@ describe('classifyDrawExclusiveBucket', () => {
 });
 
 describe('relPctToBinKey', () => {
-  it('5% 경계·말단 오버플로', () => {
+  it('1% 경계·말단 오버플로', () => {
     expect(relPctToBinKey(-101)).toBe('lt_-100');
     expect(relPctToBinKey(-100)).toBe('b_-100');
-    expect(relPctToBinKey(-95)).toBe('b_-95');
-    expect(relPctToBinKey(-0.1)).toBe('b_-5');
+    expect(relPctToBinKey(-99.1)).toBe('b_-100');
+    expect(relPctToBinKey(-0.1)).toBe('b_-1');
     expect(relPctToBinKey(0)).toBe('b_0');
-    expect(relPctToBinKey(99.9)).toBe('b_95');
+    expect(relPctToBinKey(99.9)).toBe('b_99');
     expect(relPctToBinKey(100)).toBe('ge_100');
   });
 });
 
-describe('runChiSquareRelPct5BinWalkForward', () => {
-  it('분모와 구간 행 개수가 고정 그리드와 같다', () => {
+describe('runChiSquareRelPctBinWalkForward', () => {
+  it('분모는 유효 목표 회차 수이고, 반환 구간은 모두 비율 1% 이상이다', () => {
     const rows = [
       row(1, 1, 2, 3, 4, 5, 6, 7),
       row(2, 8, 9, 10, 11, 12, 13, 14),
     ];
-    const s = runChiSquareRelPct5BinWalkForward(rows);
+    const s = runChiSquareRelPctBinWalkForward(rows);
     expect(s.denominator).toBe(1);
-    expect(s.bins.length).toBe(42);
+    expect(s.bins.length).toBeGreaterThan(0);
+    expect(s.bins.every((b) => b.pct >= 1)).toBe(true);
   });
 });
 
@@ -124,7 +125,7 @@ describe('splitAndSortRelPctBins', () => {
       row(1, 1, 2, 3, 4, 5, 6, 7),
       row(2, 8, 9, 10, 11, 12, 13, 14),
     ];
-    const summary = runChiSquareRelPct5BinWalkForward(rows);
+    const summary = runChiSquareRelPctBinWalkForward(rows);
     const split = splitAndSortRelPctBins(summary);
     expect(split.negBins.length + split.posBins.length).toBe(summary.bins.length);
     for (let i = 1; i < split.negBins.length; i++) {

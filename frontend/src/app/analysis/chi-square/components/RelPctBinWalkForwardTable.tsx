@@ -45,16 +45,19 @@ function BinTable({
   );
 }
 
-/** 워크포워드 기준 상대편차(O−E)/E×100(%)를 5% 구간으로 집계한 요약 표(음·양 좌우). */
+/** 워크포워드 기준 상대편차(O−E)/E×100(%)를 1% 구간으로 집계한 요약 표(음·양 좌우). 비율 1% 미만 구간은 생략. */
 export function RelPctBinWalkForwardTable({ denominator, negBins, posBins }: Props) {
   return (
     <section className="rounded-2xl border border-card-border/30 bg-card-bg/60 p-4 space-y-3">
-      <h3 className="text-xl font-semibold text-white">구간별 회차 분류 (상대편차 5% 단위)</h3>
+      <h3 className="text-xl font-semibold text-white">구간별 회차 분류 (상대편차 1% 단위)</h3>
       <div className="rounded-xl border border-white/10 bg-slate-900/40 px-4 py-3 space-y-2 text-xs text-slate-300 leading-relaxed">
         <p>
           각 목표 회차 직전 누적 집계로 본번호 6개의 상대편차{' '}
           <span className="text-slate-200 font-medium">(O−E)/E×100</span>(%)를 구한 뒤, 구간마다「6개 중 그 구간에
           속하는 번호가 1개 이상이면」해당 회차를 1회 카운트합니다(구간 간 중복 가능).
+        </p>
+        <p className="text-slate-400">
+          비율(%)이 1% 미만인 구간은 표에서 생략합니다.
         </p>
         <p className="text-slate-400">
           분모(유효 목표 회차 수):{' '}
