@@ -4,9 +4,11 @@ import { buildChiSquareResults } from './chiSquare';
 import {
   buildChiSquareResultsFromCounts,
   classifyDrawExclusiveBucket,
+  isNegativeRelPctBinKey,
   relPctToBinKey,
   runChiSquareRelPct5BinWalkForward,
   runChiSquareWalkForward,
+  splitAndSortRelPctBins,
 } from './walkForwardStats';
 
 const row = (
@@ -104,6 +106,33 @@ describe('runChiSquareRelPct5BinWalkForward', () => {
     const s = runChiSquareRelPct5BinWalkForward(rows);
     expect(s.denominator).toBe(1);
     expect(s.bins.length).toBe(42);
+  });
+});
+
+describe('isNegativeRelPctBinKey', () => {
+  it('말단·음의 b_·0 이상은 구분한다', () => {
+    expect(isNegativeRelPctBinKey('lt_-100')).toBe(true);
+    expect(isNegativeRelPctBinKey('b_-5')).toBe(true);
+    expect(isNegativeRelPctBinKey('b_0')).toBe(false);
+    expect(isNegativeRelPctBinKey('ge_100')).toBe(false);
+  });
+});
+
+describe('splitAndSortRelPctBins', () => {
+  it('음·양 개수 합이 전체 구간 수와 같고 비율 내림차순이다', () => {
+    const rows = [
+      row(1, 1, 2, 3, 4, 5, 6, 7),
+      row(2, 8, 9, 10, 11, 12, 13, 14),
+    ];
+    const summary = runChiSquareRelPct5BinWalkForward(rows);
+    const split = splitAndSortRelPctBins(summary);
+    expect(split.negBins.length + split.posBins.length).toBe(summary.bins.length);
+    for (let i = 1; i < split.negBins.length; i++) {
+      expect(split.negBins[i - 1].pct).toBeGreaterThanOrEqual(split.negBins[i].pct);
+    }
+    for (let i = 1; i < split.posBins.length; i++) {
+      expect(split.posBins[i - 1].pct).toBeGreaterThanOrEqual(split.posBins[i].pct);
+    }
   });
 });
 

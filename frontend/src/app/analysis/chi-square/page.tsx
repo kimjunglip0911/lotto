@@ -5,6 +5,7 @@ import { Header } from '@/components/common/Header';
 import { Sidebar } from '@/components/common/Sidebar';
 import { DeviationChart } from './components/DeviationChart';
 import { FrequencySummary } from './components/FrequencySummary';
+import { RelPctBinWalkForwardTable } from './components/RelPctBinWalkForwardTable';
 import { ResultTable } from './components/ResultTable';
 import { SearchControls } from './components/SearchControls';
 import { StatisticalNote } from './components/StatisticalNote';
@@ -29,6 +30,7 @@ export default function ChiSquarePage() {
     analyzedDrawCount,
     chiSquareResults,
     accumulatedFinalNumbers,
+    walkForwardRows,
     handleSearch,
   } = useChiSquareData();
 
@@ -45,9 +47,11 @@ export default function ChiSquarePage() {
     adoptedUsageNumberSet,
     statusMessage,
     chiSquareThreshold,
+    relPctBinWalkForwardPresentation,
   } = useChiSquareDerived({
     analyzedDrawCount,
     chiSquareResults,
+    walkForwardRows,
     accumulatedFinalNumbers,
     selectedWinningNumber,
     searchedDraw,
@@ -89,6 +93,18 @@ export default function ChiSquarePage() {
               chiSquareThreshold={chiSquareThreshold}
             />
           )}
+
+          {hasSearched &&
+            !noHistory &&
+            !isSearching &&
+            !searchError &&
+            relPctBinWalkForwardPresentation !== null && (
+              <RelPctBinWalkForwardTable
+                denominator={relPctBinWalkForwardPresentation.denominator}
+                negBins={relPctBinWalkForwardPresentation.negBins}
+                posBins={relPctBinWalkForwardPresentation.posBins}
+              />
+            )}
 
           {hasSearched && !noHistory && !isSearching && !searchError && adoptedUsageNumbers && (
             <section className="rounded-2xl border border-card-border/30 bg-card-bg/60 p-4 space-y-3">

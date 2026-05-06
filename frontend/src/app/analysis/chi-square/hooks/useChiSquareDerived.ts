@@ -9,11 +9,17 @@ import {
   pickFirstNumbersBySignedDeviationOrder,
   selectAdoptedBySignedDeviationSkippingExcluded,
 } from '../logic/chiSquare';
+import {
+  runChiSquareRelPct5BinWalkForward,
+  splitAndSortRelPctBins,
+  type SplitSortedRelPctBins,
+} from '../logic/walkForwardStats';
 import type { ChiSquareResult, WinningNumberRow } from '../types';
 
 type Params = {
   analyzedDrawCount: number;
   chiSquareResults: ChiSquareResult[];
+  walkForwardRows: readonly WinningNumberRow[] | null;
   /** 길이 4일 때만 사용 번호 4개 채택에서 제외한다. */
   accumulatedFinalNumbers: readonly number[] | null;
   selectedWinningNumber: WinningNumberRow | null;
@@ -29,6 +35,7 @@ type Params = {
 export const useChiSquareDerived = ({
   analyzedDrawCount,
   chiSquareResults,
+  walkForwardRows,
   accumulatedFinalNumbers,
   selectedWinningNumber,
   searchedDraw,
@@ -87,6 +94,13 @@ export const useChiSquareDerived = ({
     [adoptedUsageNumbers],
   );
 
+  /** 상대편차 5% 구간 워크포워드 요약(음·양 분리·비율 내림차순). 2회차 이상 데이터가 있을 때만 채운다. */
+  const relPctBinWalkForwardPresentation = useMemo((): SplitSortedRelPctBins | null => {
+    if (walkForwardRows === null || walkForwardRows.length < 2) return null;
+    const summary = runChiSquareRelPct5BinWalkForward([...walkForwardRows], { minPastDraws: 1 });
+    return splitAndSortRelPctBins(summary);
+  }, [walkForwardRows]);
+
   const statusMessage = isLoadingDraws
     ? '회차 정보를 불러오는 중입니다.'
     : drawLoadError
@@ -114,5 +128,6 @@ export const useChiSquareDerived = ({
     adoptedUsageNumberSet,
     statusMessage,
     chiSquareThreshold: CHI_SQUARE_THRESHOLD,
+    relPctBinWalkForwardPresentation,
   };
 };

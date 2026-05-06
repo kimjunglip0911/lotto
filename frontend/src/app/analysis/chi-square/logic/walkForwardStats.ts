@@ -137,6 +137,38 @@ export type RelPctBinWalkForwardSummary = {
   bins: RelPctBinRow[];
 };
 
+/** 음의 상대편차 구간(`p < −100%`, `[−100%, −95%)` … `[−5%, 0%)`)이면 true. */
+export const isNegativeRelPctBinKey = (binKey: string): boolean => {
+  if (binKey === 'lt_-100') return true;
+  if (binKey === 'ge_100') return false;
+  if (binKey.startsWith('b_')) {
+    const start = Number(binKey.slice(2));
+    return Number.isFinite(start) && start < 0;
+  }
+  return false;
+};
+
+export type SplitSortedRelPctBins = {
+  denominator: number;
+  negBins: RelPctBinRow[];
+  posBins: RelPctBinRow[];
+};
+
+/** 음/양 구간으로 나누고 각각 비율(%) 내림차순으로 정렬한다. */
+export const splitAndSortRelPctBins = (summary: RelPctBinWalkForwardSummary): SplitSortedRelPctBins => {
+  const negBins: RelPctBinRow[] = [];
+  const posBins: RelPctBinRow[] = [];
+  for (const row of summary.bins) {
+    if (isNegativeRelPctBinKey(row.binKey)) negBins.push(row);
+    else posBins.push(row);
+  }
+  const byPctDesc = (a: RelPctBinRow, b: RelPctBinRow) =>
+    b.pct - a.pct || a.binKey.localeCompare(b.binKey);
+  negBins.sort(byPctDesc);
+  posBins.sort(byPctDesc);
+  return { denominator: summary.denominator, negBins, posBins };
+};
+
 const orderedRelPctBinKeys = (): string[] => {
   const keys: string[] = ['lt_-100'];
   for (let start = REL_PCT_BIN_MIN; start < REL_PCT_BIN_MAX_EXCLUSIVE; start += REL_PCT_BIN_WIDTH) {
