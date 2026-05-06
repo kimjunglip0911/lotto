@@ -79,6 +79,10 @@ export default function FinalPickPage() {
           <ComprehensiveChart
             chartData={chiSquareChartData}
             highlightedNumbers={mainWinningNumberSet}
+            accumulatedAdoptedNumbers={adoptedByAccumulatedNumbers}
+            chiSquareAdoptedNumbers={adoptedByChiSquareNumbers}
+            trendExcludedNumbers={excludedByTrendNumbers}
+            streakExcludedNumbers={excludedByStreakNumbers}
           />
 
           <SourceNumbersCard
