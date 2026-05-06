@@ -78,3 +78,35 @@ export const getTop5PctThreshold = (streakResults: StreakResult[]): number => {
   const thresholdIndex = Math.min(Math.ceil(sortedStreaks.length * 0.95) - 1, sortedStreaks.length - 1);
   return sortedStreaks[thresholdIndex];
 };
+
+/** 본번호 6개만 — 통합 분석 제외 로직은 보너스를 비교하지 않는다. */
+const getMainNumbers = (row: WinningNumberRow): number[] => [
+  row.num1,
+  row.num2,
+  row.num3,
+  row.num4,
+  row.num5,
+  row.num6,
+];
+
+/**
+ * 선택 회차 N 직전 (N-1)회에서 끝나는 길이 2 이상 연속 출현에 포함된 본번호를 반환한다.
+ * (N-1)회와 (N-2)회 본번호 교집합으로 판정하며, 더 긴 streak도 동일 조건으로 포함된다.
+ */
+export const getConsecutivelyAppearedMainNumbers = (
+  rows: WinningNumberRow[],
+  selectedDrawNo: number,
+): number[] => {
+  if (selectedDrawNo < 3) return [];
+
+  const prev1 = rows.find((r) => r.draw_no === selectedDrawNo - 1);
+  const prev2 = rows.find((r) => r.draw_no === selectedDrawNo - 2);
+  if (!prev1 || !prev2) return [];
+
+  const prev1Main = new Set(getMainNumbers(prev1).filter(isValidLotteryNumber));
+  const intersected = new Set<number>();
+  for (const n of getMainNumbers(prev2)) {
+    if (isValidLotteryNumber(n) && prev1Main.has(n)) intersected.add(n);
+  }
+  return [...intersected].sort((a, b) => a - b);
+};

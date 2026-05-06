@@ -22,6 +22,8 @@ type UseFinalPickDataResult = {
   selectedWinningNumber: WinningNumberRow | null;
   isLoadingWinningNumber: boolean;
   winningNumberError: string | null;
+  /** 선택 회차 미만 전체 당첨 행 — 연속 출현 제외 등에서 재사용한다. */
+  previousDrawRows: WinningNumberRow[];
   searchedDraw: string;
   isSearching: boolean;
   searchError: string | null;
@@ -41,6 +43,8 @@ export const useFinalPickData = (): UseFinalPickDataResult => {
   const [searchedDraw, setSearchedDraw] = useState<string>('');
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
+
+  const [previousDrawRows, setPreviousDrawRows] = useState<WinningNumberRow[]>([]);
 
   useEffect(() => {
     let isMounted = true;
@@ -90,6 +94,7 @@ export const useFinalPickData = (): UseFinalPickDataResult => {
       setSearchError('유효한 회차를 선택해 주세요.');
       setSearchedDraw('');
       resetSelectedWinning();
+      setPreviousDrawRows([]);
       return;
     }
 
@@ -100,14 +105,39 @@ export const useFinalPickData = (): UseFinalPickDataResult => {
     setSearchedDraw(selectedDraw);
 
     try {
-      const response = await fetch(finalPickApiUrl(`winning-number?draw_no=${drawNo}`));
-      if (!response.ok) {
-        if (response.status === 404) throw new Error('선택한 회차의 당첨번호를 찾을 수 없습니다.');
-        throw new Error(`Failed to fetch winning number: ${response.status}`);
+      if (drawNo === 1) {
+        const response = await fetch(finalPickApiUrl(`winning-number?draw_no=${drawNo}`));
+        if (!response.ok) {
+          if (response.status === 404) throw new Error('선택한 회차의 당첨번호를 찾을 수 없습니다.');
+          throw new Error(`Failed to fetch winning number: ${response.status}`);
+        }
+        const data: unknown = await response.json();
+        if (!isWinningNumberRow(data)) throw new Error('Winning number response is invalid');
+        setSelectedWinningNumber(data);
+        setPreviousDrawRows([]);
+        return;
       }
-      const data: unknown = await response.json();
-      if (!isWinningNumberRow(data)) throw new Error('Winning number response is invalid');
-      setSelectedWinningNumber(data);
+
+      const [winningNumberRes, rangeRes] = await Promise.all([
+        fetch(finalPickApiUrl(`winning-number?draw_no=${drawNo}`)),
+        fetch(finalPickApiUrl(`winning-numbers-range?draw_no=${drawNo}`)),
+      ]);
+
+      if (!winningNumberRes.ok) {
+        if (winningNumberRes.status === 404) throw new Error('선택한 회차의 당첨번호를 찾을 수 없습니다.');
+        throw new Error(`Failed to fetch winning number: ${winningNumberRes.status}`);
+      }
+      if (!rangeRes.ok) throw new Error(`Failed to fetch winning numbers range: ${rangeRes.status}`);
+
+      const winningData: unknown = await winningNumberRes.json();
+      const rangeData: unknown = await rangeRes.json();
+
+      if (!isWinningNumberRow(winningData)) throw new Error('Winning number response is invalid');
+      if (!Array.isArray(rangeData)) throw new Error('Winning numbers range response is not an array');
+
+      const rows = rangeData.filter(isWinningNumberRow);
+      setSelectedWinningNumber(winningData);
+      setPreviousDrawRows(rows);
     } catch (error) {
       console.error('Error fetching final-pick winning number:', error);
       setSearchError(
@@ -116,6 +146,7 @@ export const useFinalPickData = (): UseFinalPickDataResult => {
           : '조회 데이터를 불러오지 못했습니다.',
       );
       resetSelectedWinning();
+      setPreviousDrawRows([]);
       setSearchedDraw('');
     } finally {
       setIsSearching(false);
@@ -132,6 +163,7 @@ export const useFinalPickData = (): UseFinalPickDataResult => {
     selectedWinningNumber,
     isLoadingWinningNumber,
     winningNumberError,
+    previousDrawRows,
     searchedDraw,
     isSearching,
     searchError,
