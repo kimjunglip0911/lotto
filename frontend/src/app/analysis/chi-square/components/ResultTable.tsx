@@ -70,7 +70,7 @@ export function ResultTable({
               {selectedWinningNumberSet && (
                 <span className="flex items-center gap-1.5">
                   <span className="inline-block w-3 h-3 rounded bg-amber-400/40 border border-amber-400/60" />
-                  선택 회차 당첨번호
+                  선택 회차 본번호(보너스 제외)
                 </span>
               )}
               {adoptedUsageNumberSet && adoptedUsageNumberSet.size > 0 && (

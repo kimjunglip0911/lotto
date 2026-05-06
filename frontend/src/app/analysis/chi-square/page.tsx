@@ -10,6 +10,7 @@ import { ResultTable } from './components/ResultTable';
 import { SearchControls } from './components/SearchControls';
 import { StatisticalNote } from './components/StatisticalNote';
 import { SummaryCards } from './components/SummaryCards';
+import { CHI_SQUARE_DEVIATION_BIN_WIDTH, CHI_SQUARE_WALK_FORWARD_RECENT_DRAWS } from './constants';
 import { useChiSquareData } from './hooks/useChiSquareData';
 import { useChiSquareDerived } from './hooks/useChiSquareDerived';
 
@@ -138,7 +139,7 @@ export default function ChiSquarePage() {
                   ))}
                 </div>
                 <p className="text-xs text-emerald-100/90 leading-relaxed">
-                  상대편차 1% 구간 워크포워드 표와 동일한 집계로 구간별 비율(%)을 구한 뒤, 음·양 구간을 합쳐 비율이 높은 구간부터 순위를 매깁니다. 조회 시점 각 번호의 (O−E)/E×100(%)이 속한 구간 비율이 높을수록 먼저 채택하고, 같은 구간이면 번호가 작은 쪽을 먼저 둡니다. 나열 순서는 1순위부터입니다. E가 0 이하여 상대편차를 쓸 수 없는 번호는 맨 뒤로 둡니다.
+                  편차(O−E) 워크포워드 표와 동일한 집계(최근 {CHI_SQUARE_WALK_FORWARD_RECENT_DRAWS}회, 구간 폭 {CHI_SQUARE_DEVIATION_BIN_WIDTH})로 구간별 비율(%)을 구한 뒤, 음·양 구간을 합쳐 비율이 높은 구간부터 순위를 매깁니다. 조회 시점 각 번호의 편차(O−E)는 검정 결과 표와 같이 전체 누적 기준입니다. 같은 구간이면 번호가 작은 쪽을 먼저 둡니다. 나열 순서는 1순위부터입니다.
                 </p>
               </div>
             </section>

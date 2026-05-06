@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { runAccumulatedStrategySelection } from '@/app/analysis/accumulated-numbers/logic/runAccumulatedStrategySelection';
+import { CHI_SQUARE_WALK_FORWARD_RECENT_DRAWS } from '../constants';
 import { buildChiSquareResults } from '../logic/chiSquare';
 import { isWinningNumberRow } from '../logic/guards';
 import type { ChiSquareResult, WinningNumberRow } from '../types';
@@ -20,7 +21,10 @@ type UseChiSquareDataResult = {
   chiSquareResults: ChiSquareResult[];
   /** 누적번호 분석과 동일 로직으로 계산된 최종 4개(없으면 null) */
   accumulatedFinalNumbers: readonly number[] | null;
-  /** 워크포워드 구간 표용: 조회 회차까지 `draw_no` 오름차순 당첨 행(2회차 이상 조회 성공 시만) */
+  /**
+   * 워크포워드·구간 표·사용 번호 채택용: 조회 회차까지 `draw_no` 오름차순 중
+   * 최근 `CHI_SQUARE_WALK_FORWARD_RECENT_DRAWS`회만(2회차 이상 조회 성공 시만).
+   */
   walkForwardRows: readonly WinningNumberRow[] | null;
   handleSearch: () => Promise<void>;
 };
@@ -140,6 +144,10 @@ export const useChiSquareData = (): UseChiSquareDataResult => {
 
       const rows = rangeData.filter(isWinningNumberRow);
       const sortedRows = [...rows].sort((a, b) => a.draw_no - b.draw_no);
+      const walkForwardSource =
+        sortedRows.length <= CHI_SQUARE_WALK_FORWARD_RECENT_DRAWS
+          ? sortedRows
+          : sortedRows.slice(-CHI_SQUARE_WALK_FORWARD_RECENT_DRAWS);
       const { finalNumberPlan } = runAccumulatedStrategySelection(sortedRows);
       const finalFour =
         finalNumberPlan?.finalNumbers.length === 4 ? [...finalNumberPlan.finalNumbers] : null;
@@ -148,7 +156,7 @@ export const useChiSquareData = (): UseChiSquareDataResult => {
       setSelectedWinningNumber(winningData);
       setAnalyzedDrawCount(rows.length);
       setChiSquareResults(buildChiSquareResults(rows));
-      setWalkForwardRows(sortedRows);
+      setWalkForwardRows(walkForwardSource);
     } catch (error) {
       console.error('Error fetching chi-square data:', error);
       setSearchError('조회 데이터를 불러오지 못했습니다.');

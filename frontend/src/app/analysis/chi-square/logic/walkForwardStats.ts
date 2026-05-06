@@ -1,4 +1,11 @@
-import { CHI_SQUARE_THRESHOLD, NUMBERS_PER_DRAW, TOTAL_NUMBERS } from '../constants';
+import {
+  CHI_SQUARE_DEVIATION_BIN_RANGE_MAX_EXCLUSIVE,
+  CHI_SQUARE_DEVIATION_BIN_RANGE_MIN,
+  CHI_SQUARE_DEVIATION_BIN_WIDTH,
+  CHI_SQUARE_THRESHOLD,
+  NUMBERS_PER_DRAW,
+  TOTAL_NUMBERS,
+} from '../constants';
 import type { ChiSquareResult, WinningNumberRow } from '../types';
 import {
   pickFirstNumbersBySignedDeviationDescending,
@@ -109,47 +116,56 @@ export type RunChiSquareWalkForwardOptions = {
   minPastDraws?: number;
 };
 
-const REL_PCT_BIN_WIDTH = 1;
-const REL_PCT_BIN_MIN = -100;
-const REL_PCT_BIN_MAX_EXCLUSIVE = 100;
 /** 표에 남길 최소 비율(%). 미만인 구간 행은 제외한다. */
-const REL_PCT_BIN_MIN_DISPLAY_PCT = 1;
+const DEV_BIN_MIN_DISPLAY_PCT = 1;
 
-/** 상대편차(%)를 1% 폭 반개구간에 매핑한다. `p < -100`, `p ≥ 100`은 별도 키. */
-export const relPctToBinKey = (p: number): string => {
-  if (p < REL_PCT_BIN_MIN) return 'lt_-100';
-  if (p >= REL_PCT_BIN_MAX_EXCLUSIVE) return 'ge_100';
-  const start = Math.floor(p / REL_PCT_BIN_WIDTH) * REL_PCT_BIN_WIDTH;
+const DEV_BIN_LT_KEY = 'lt_tail';
+const DEV_BIN_GE_KEY = 'ge_tail';
+
+/** 편차(O−E) 값을 `CHI_SQUARE_DEVIATION_BIN_WIDTH` 폭 반개구간 키로 매핑한다. 범위 밖은 말단 키. */
+export const deviationToBinKey = (deviation: number): string => {
+  const w = CHI_SQUARE_DEVIATION_BIN_WIDTH;
+  const lo = CHI_SQUARE_DEVIATION_BIN_RANGE_MIN;
+  const hiEx = CHI_SQUARE_DEVIATION_BIN_RANGE_MAX_EXCLUSIVE;
+  if (deviation < lo) {
+    return DEV_BIN_LT_KEY;
+  }
+  if (deviation >= hiEx) {
+    return DEV_BIN_GE_KEY;
+  }
+  const start = Math.floor(deviation / w) * w;
   return `b_${start}`;
 };
 
-export type RelPctBinRow = {
-  /** 정렬용 (예 lt_-100, b_-100, ge_100) */
+export type DeviationBinRow = {
   binKey: string;
-  /** 표시용 구간 문자열 */
   label: string;
-  /** 워크포워드 전 기간 누적: 본번호가 이 구간에 속한 횟수(회차당 동일 구간 여러 번이면 여러 번 가산) */
+  /** 워크포워드 누적: 본번호가 이 편차 구간에 속한 횟수 */
   hits: number;
   /** 분모 대비 비율(%) */
   pct: number;
 };
 
-export type RelPctBinWalkForwardSummary = {
+export type DeviationBinWalkForwardSummary = {
   /**
-   * 비율(%) 분모: 워크포워드 목표 회차마다 본번호 6개 중 상대편차로 구간에 넣은 횟수의 합
+   * 비율(%) 분모: 워크포워드 목표 회차마다 본번호 6개 중 편차 구간에 넣은 횟수의 합
    * (한 회차에서 같은 구간에 여러 번호가 있으면 그만큼 가산, 최대 회차당 6).
    */
   denominator: number;
-  /** 표시용: 비율 1% 이상 구간만. */
-  bins: RelPctBinRow[];
+  /** 표시용: 비율(%)이 `DEV_BIN_MIN_DISPLAY_PCT` 이상인 구간만. */
+  bins: DeviationBinRow[];
   /** 채택·순위용: 필터 없이 전 구간의 비율(%). */
-  allBins: RelPctBinRow[];
+  allBins: DeviationBinRow[];
 };
 
-/** 음의 상대편차 구간(`p < −100%`, `[−100%, −99%)` … `[−1%, 0%)`)이면 true. */
-export const isNegativeRelPctBinKey = (binKey: string): boolean => {
-  if (binKey === 'lt_-100') return true;
-  if (binKey === 'ge_100') return false;
+/** 편차(O−E)가 음쪽 말단·음수 구간이면 true(좌측 표). */
+export const isNegativeDeviationBinKey = (binKey: string): boolean => {
+  if (binKey === DEV_BIN_LT_KEY) {
+    return true;
+  }
+  if (binKey === DEV_BIN_GE_KEY) {
+    return false;
+  }
   if (binKey.startsWith('b_')) {
     const start = Number(binKey.slice(2));
     return Number.isFinite(start) && start < 0;
@@ -157,56 +173,69 @@ export const isNegativeRelPctBinKey = (binKey: string): boolean => {
   return false;
 };
 
-export type SplitSortedRelPctBins = {
+export type SplitSortedDeviationBins = {
   denominator: number;
-  negBins: RelPctBinRow[];
-  posBins: RelPctBinRow[];
+  negBins: DeviationBinRow[];
+  posBins: DeviationBinRow[];
 };
 
 /** 음/양 구간으로 나누고 각각 비율(%) 내림차순으로 정렬한다. */
-export const splitAndSortRelPctBins = (summary: RelPctBinWalkForwardSummary): SplitSortedRelPctBins => {
-  const negBins: RelPctBinRow[] = [];
-  const posBins: RelPctBinRow[] = [];
+export const splitAndSortDeviationBins = (
+  summary: DeviationBinWalkForwardSummary,
+): SplitSortedDeviationBins => {
+  const negBins: DeviationBinRow[] = [];
+  const posBins: DeviationBinRow[] = [];
   for (const row of summary.bins) {
-    if (isNegativeRelPctBinKey(row.binKey)) negBins.push(row);
-    else posBins.push(row);
+    if (isNegativeDeviationBinKey(row.binKey)) {
+      negBins.push(row);
+    } else {
+      posBins.push(row);
+    }
   }
-  const byPctDesc = (a: RelPctBinRow, b: RelPctBinRow) =>
+  const byPctDesc = (a: DeviationBinRow, b: DeviationBinRow) =>
     b.pct - a.pct || a.binKey.localeCompare(b.binKey);
   negBins.sort(byPctDesc);
   posBins.sort(byPctDesc);
   return { denominator: summary.denominator, negBins, posBins };
 };
 
-const orderedRelPctBinKeys = (): string[] => {
-  const keys: string[] = ['lt_-100'];
-  for (let start = REL_PCT_BIN_MIN; start < REL_PCT_BIN_MAX_EXCLUSIVE; start += REL_PCT_BIN_WIDTH) {
+const orderedDeviationBinKeys = (): string[] => {
+  const keys: string[] = [DEV_BIN_LT_KEY];
+  const w = CHI_SQUARE_DEVIATION_BIN_WIDTH;
+  for (let start = CHI_SQUARE_DEVIATION_BIN_RANGE_MIN; start < CHI_SQUARE_DEVIATION_BIN_RANGE_MAX_EXCLUSIVE; start += w) {
     keys.push(`b_${start}`);
   }
-  keys.push('ge_100');
+  keys.push(DEV_BIN_GE_KEY);
   return keys;
 };
 
-const labelForRelPctBinKey = (key: string): string => {
-  if (key === 'lt_-100') return 'p < −100%';
-  if (key === 'ge_100') return 'p ≥ 100%';
+const labelForDeviationBinKey = (key: string): string => {
+  const w = CHI_SQUARE_DEVIATION_BIN_WIDTH;
+  const lo = CHI_SQUARE_DEVIATION_BIN_RANGE_MIN;
+  const hiEx = CHI_SQUARE_DEVIATION_BIN_RANGE_MAX_EXCLUSIVE;
+  if (key === DEV_BIN_LT_KEY) {
+    return `d < ${lo}`;
+  }
+  if (key === DEV_BIN_GE_KEY) {
+    return `d ≥ ${hiEx}`;
+  }
   if (key.startsWith('b_')) {
     const start = Number(key.slice(2));
-    const end = start + REL_PCT_BIN_WIDTH;
-    return `[${start}%, ${end}%)`;
+    const end = start + w;
+    return `[${start}, ${end})`;
   }
   return key;
 };
 
 /**
  * 워크포워드 `allBins`의 구간별 비율(%)을 음·양 합친 직렬 위계로 두고,
- * 현재 `chiSquareResults` 각 번호의 상대편차 구간이 더 높은 비율 구간에 속할수록 먼저 채택한다.
- * 동일 구간(동일 pct)이면 번호 오름차순. 상대편차 불가(E≤0 등)는 최하위.
+ * 현재 `chiSquareResults` 각 번호의 편차(O−E)가 속한 구간 비율이 더 높을수록 먼저 채택한다.
+ * 동일 구간(동일 pct)이면 번호 오름차순.
  */
-export const selectNumbersByRelPctBinMergedRanking = (
+export const selectNumbersByDeviationBinMergedRanking = (
   results: ChiSquareResult[],
-  allBins: readonly RelPctBinRow[],
-  take: number
+  allBins: readonly DeviationBinRow[],
+  take: number,
 ): readonly number[] | null => {
   if (results.length === 0 || take <= 0) {
     return null;
@@ -215,7 +244,6 @@ export const selectNumbersByRelPctBinMergedRanking = (
   for (const b of allBins) {
     pctByBin.set(b.binKey, b.pct);
   }
-  /** 음·양 통합: 비율 내림차순, 동률이면 `binKey` 문자열 순(앞일수록 우선). */
   const mergedBinPriority = new Map<string, number>();
   const mergedOrder = [...allBins].sort(
     (x, y) => y.pct - x.pct || x.binKey.localeCompare(y.binKey),
@@ -224,19 +252,8 @@ export const selectNumbersByRelPctBinMergedRanking = (
     mergedBinPriority.set(row.binKey, idx);
   });
   const sorted = [...results].sort((a, b) => {
-    const pa = relativeDeviationPercent(a);
-    const pb = relativeDeviationPercent(b);
-    if (pa === null && pb === null) {
-      return a.number - b.number;
-    }
-    if (pa === null) {
-      return 1;
-    }
-    if (pb === null) {
-      return -1;
-    }
-    const keyA = relPctToBinKey(pa);
-    const keyB = relPctToBinKey(pb);
+    const keyA = deviationToBinKey(a.deviation);
+    const keyB = deviationToBinKey(b.deviation);
     const pcta = pctByBin.get(keyA) ?? Number.NEGATIVE_INFINITY;
     const pctb = pctByBin.get(keyB) ?? Number.NEGATIVE_INFINITY;
     if (pctb !== pcta) {
@@ -257,22 +274,23 @@ export const selectNumbersByRelPctBinMergedRanking = (
 };
 
 /**
- * 워크포워드: 각 목표 회차마다 직전 누적으로 본번호 6개의 상대편차 %를 구한 뒤,
- * **1% 단위 구간**마다 본번호 **한 개당 1회** 가산한다(같은 회차·같은 구간에 3개면 3회).
- * 비율(%) 분모는 위에서 구간에 넣은 본번호 횟수의 합이다.
- * 반환 `bins`에는 비율(%)이 1% 이상인 구간만 포함한다(1% 미만 구간 행 제외).
+ * 워크포워드: 각 목표 회차마다 직전 누적으로 본번호 6개의 편차(O−E)를 구한 뒤,
+ * `CHI_SQUARE_DEVIATION_BIN_WIDTH` 단위 구간마다 본번호 **한 개당 1회** 가산한다.
+ * 비율(%) 분모는 구간에 넣은 본번호 횟수의 합이다.
  */
-export const runChiSquareRelPctBinWalkForward = (
+export const runChiSquareDeviationBinWalkForward = (
   sortedRows: WinningNumberRow[],
-  options?: RunChiSquareWalkForwardOptions
-): RelPctBinWalkForwardSummary => {
+  options?: RunChiSquareWalkForwardOptions,
+): DeviationBinWalkForwardSummary => {
   const minPastDraws = options?.minPastDraws ?? 1;
   const rows = [...sortedRows].sort((a, b) => a.draw_no - b.draw_no);
   const counts = Array.from({ length: TOTAL_NUMBERS }, () => 0);
 
-  const keys = orderedRelPctBinKeys();
+  const keys = orderedDeviationBinKeys();
   const hitMap = new Map<string, number>();
-  for (const k of keys) hitMap.set(k, 0);
+  for (const k of keys) {
+    hitMap.set(k, 0);
+  }
 
   let classifiedSlotCount = 0;
 
@@ -285,9 +303,7 @@ export const runChiSquareRelPctBinWalkForward = (
       for (const num of mainSix(rows[i])) {
         const r = resultsByNumber.get(num);
         if (!r) continue;
-        const p = relativeDeviationPercent(r);
-        if (p === null) continue;
-        const binKey = relPctToBinKey(p);
+        const binKey = deviationToBinKey(r.deviation);
         hitMap.set(binKey, (hitMap.get(binKey) ?? 0) + 1);
         classifiedSlotCount += 1;
       }
@@ -296,16 +312,16 @@ export const runChiSquareRelPctBinWalkForward = (
   }
 
   const pct = (h: number) => (classifiedSlotCount > 0 ? (h / classifiedSlotCount) * 100 : 0);
-  const allBins: RelPctBinRow[] = keys.map((binKey) => {
+  const allBins: DeviationBinRow[] = keys.map((binKey) => {
     const hits = hitMap.get(binKey) ?? 0;
     return {
       binKey,
-      label: labelForRelPctBinKey(binKey),
+      label: labelForDeviationBinKey(binKey),
       hits,
       pct: pct(hits),
     };
   });
-  const bins = allBins.filter((row) => row.pct >= REL_PCT_BIN_MIN_DISPLAY_PCT);
+  const bins = allBins.filter((row) => row.pct >= DEV_BIN_MIN_DISPLAY_PCT);
 
   return { denominator: classifiedSlotCount, bins, allBins };
 };

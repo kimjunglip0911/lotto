@@ -40,7 +40,7 @@ export function DeviationChart({
           <div className="flex flex-wrap gap-3 text-xs text-slate-400">
             <span className="flex items-center gap-1.5">
               <span className="inline-block w-3 h-3 rounded bg-amber-400/50 border border-amber-400/70" />
-              선택 회차 당첨번호
+              선택 회차 본번호(보너스 제외)
             </span>
             <span className="flex items-center gap-1.5">
               <span className="inline-block w-3 h-3 rounded bg-blue-500/60 border border-blue-500/80" />

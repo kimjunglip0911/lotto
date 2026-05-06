@@ -7,9 +7,9 @@ import {
 } from '../constants';
 import { getMaxAbsDeviation } from '../logic/chiSquare';
 import {
-  runChiSquareRelPctBinWalkForward,
-  selectNumbersByRelPctBinMergedRanking,
-  splitAndSortRelPctBins,
+  runChiSquareDeviationBinWalkForward,
+  selectNumbersByDeviationBinMergedRanking,
+  splitAndSortDeviationBins,
 } from '../logic/walkForwardStats';
 import type { ChiSquareResult, WinningNumberRow } from '../types';
 
@@ -59,6 +59,7 @@ export const useChiSquareDerived = ({
       ]
     : [];
 
+  /** 차트·검정 표 강조용: 본번호 6개만(보너스는 제외). */
   const selectedWinningNumberSet = selectedWinningNumber
     ? new Set([
         selectedWinningNumber.num1,
@@ -67,36 +68,35 @@ export const useChiSquareDerived = ({
         selectedWinningNumber.num4,
         selectedWinningNumber.num5,
         selectedWinningNumber.num6,
-        selectedWinningNumber.bonus_num,
       ])
     : null;
 
   const maxAbsDeviation = useMemo(() => getMaxAbsDeviation(chiSquareResults), [chiSquareResults]);
 
-  /** 상대편차 1% 구간 워크포워드: 표용 분리 + 채택용 전체 구간. 2회차 이상일 때만. */
-  const relPctBinWalkForwardBlock = useMemo(() => {
+  /** 편차(O−E) 구간 워크포워드: 표용 분리 + 채택용 전체 구간. 2회차 이상일 때만. */
+  const deviationBinWalkForwardBlock = useMemo(() => {
     if (walkForwardRows === null || walkForwardRows.length < 2) {
       return null;
     }
-    const summary = runChiSquareRelPctBinWalkForward([...walkForwardRows], { minPastDraws: 1 });
+    const summary = runChiSquareDeviationBinWalkForward([...walkForwardRows], { minPastDraws: 1 });
     return {
-      presentation: splitAndSortRelPctBins(summary),
+      presentation: splitAndSortDeviationBins(summary),
       summary,
     };
   }, [walkForwardRows]);
 
-  const relPctBinWalkForwardPresentation = relPctBinWalkForwardBlock?.presentation ?? null;
+  const relPctBinWalkForwardPresentation = deviationBinWalkForwardBlock?.presentation ?? null;
 
   const adoptedUsageNumbers = useMemo(() => {
-    if (relPctBinWalkForwardBlock === null || chiSquareResults.length === 0) {
+    if (deviationBinWalkForwardBlock === null || chiSquareResults.length === 0) {
       return null;
     }
-    return selectNumbersByRelPctBinMergedRanking(
+    return selectNumbersByDeviationBinMergedRanking(
       chiSquareResults,
-      relPctBinWalkForwardBlock.summary.allBins,
+      deviationBinWalkForwardBlock.summary.allBins,
       ADOPTED_USAGE_NUMBER_COUNT,
     );
-  }, [relPctBinWalkForwardBlock, chiSquareResults]);
+  }, [deviationBinWalkForwardBlock, chiSquareResults]);
 
   const adoptedUsageNumberSet = useMemo(
     () => (adoptedUsageNumbers ? new Set<number>(adoptedUsageNumbers) : null),
