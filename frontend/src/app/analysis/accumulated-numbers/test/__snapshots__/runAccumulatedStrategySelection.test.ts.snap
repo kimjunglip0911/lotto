@@ -21,10 +21,26 @@ exports[`runAccumulatedStrategySelection > matches snapshot for fixed draw histo
           7,
           8,
         ],
-        "strategyKey": "nearestMean4",
-        "strategyLabel": "평균근접",
+        "strategyKey": "nearestMean4TwoYear",
+        "strategyLabel": "평균근접 (2년, 104회차)",
         "windowSizes": [
           104,
+        ],
+      },
+      {
+        "atLeastOneRate": 0.8875,
+        "avgHits": 1.2125,
+        "maxMissStreak": 3,
+        "numbers": [
+          1,
+          2,
+          7,
+          8,
+        ],
+        "strategyKey": "nearestMean4Full",
+        "strategyLabel": "평균근접 (전체 기간)",
+        "windowSizes": [
+          81,
         ],
       },
     ],

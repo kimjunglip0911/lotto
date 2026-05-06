@@ -38,38 +38,62 @@ function buildNearestMean104Chart(
 
 /**
  * 이미 계산된 전략·윈도 지표로 전략 차트·최종 4개를 만든다(스냅샷 일괄 등 증분 평가와 조합).
+ * — 104회차 차트는 2년 구간 표시용, 채택 4개는 선택 회차 직전 전체 이력에 대한 평균근접이다.
  */
 export function buildAccumulatedStrategySelectionFromAggregates(
   rangeRowsSortedAsc: WinningNumberRow[],
   aggregates: StrategyWindowMetrics[]
 ): AccumulatedStrategySelection {
-  const windowSize = ACCUMULATED_STRATEGY_WINDOW_DRAWS;
-  const aggregate = aggregates.find((a) => a.strategy === 'nearestMean4' && a.windowSize === windowSize);
+  const fullWindowSize = rangeRowsSortedAsc.length;
+  const twoYearSize = ACCUMULATED_STRATEGY_WINDOW_DRAWS;
 
-  if (!aggregate) {
+  const aggregateTwoYear = aggregates.find(
+    (a) => a.strategy === 'nearestMean4' && a.windowSize === twoYearSize
+  );
+  const aggregateFull = aggregates.find(
+    (a) => a.strategy === 'nearestMean4' && a.windowSize === fullWindowSize
+  );
+
+  if (!aggregateTwoYear || !aggregateFull) {
     return { strategyCharts: [], finalNumberPlan: null };
   }
 
-  const strategyCharts = [buildNearestMean104Chart(rangeRowsSortedAsc, aggregate)];
+  const strategyCharts = [buildNearestMean104Chart(rangeRowsSortedAsc, aggregateTwoYear)];
 
-  const recommendation = buildStrategyRecommendation({
+  const recommendationTwoYear = buildStrategyRecommendation({
     strategy: 'nearestMean4',
-    windowSize,
+    windowSize: twoYearSize,
     allRowsBeforeSelectedDraw: rangeRowsSortedAsc,
-    aggregate,
+    aggregate: aggregateTwoYear,
   });
 
-  const finalNumbers = [...recommendation.numbers].sort((a, b) => a - b);
+  const recommendationFull = buildStrategyRecommendation({
+    strategy: 'nearestMean4',
+    windowSize: fullWindowSize,
+    allRowsBeforeSelectedDraw: rangeRowsSortedAsc,
+    aggregate: aggregateFull,
+  });
+
+  const finalNumbers = [...recommendationFull.numbers].sort((a, b) => a - b);
 
   const strategyPicks: StrategyNumberPick[] = [
     {
-      strategyKey: 'nearestMean4',
-      strategyLabel: '평균근접',
-      windowSizes: [windowSize],
-      numbers: recommendation.numbers,
-      atLeastOneRate: recommendation.metrics.atLeastOneRate,
-      avgHits: recommendation.metrics.avgHits,
-      maxMissStreak: recommendation.metrics.maxMissStreak,
+      strategyKey: 'nearestMean4TwoYear',
+      strategyLabel: '평균근접 (2년, 104회차)',
+      windowSizes: [twoYearSize],
+      numbers: recommendationTwoYear.numbers,
+      atLeastOneRate: recommendationTwoYear.metrics.atLeastOneRate,
+      avgHits: recommendationTwoYear.metrics.avgHits,
+      maxMissStreak: recommendationTwoYear.metrics.maxMissStreak,
+    },
+    {
+      strategyKey: 'nearestMean4Full',
+      strategyLabel: '평균근접 (전체 기간)',
+      windowSizes: [fullWindowSize],
+      numbers: recommendationFull.numbers,
+      atLeastOneRate: recommendationFull.metrics.atLeastOneRate,
+      avgHits: recommendationFull.metrics.avgHits,
+      maxMissStreak: recommendationFull.metrics.maxMissStreak,
     },
   ];
 
@@ -95,10 +119,13 @@ export function runAccumulatedStrategySelection(
     return { strategyCharts: [], finalNumberPlan: null };
   }
 
+  const fullWindowSize = rangeRowsSortedAsc.length;
+  const windowSizes = [...new Set([ACCUMULATED_STRATEGY_WINDOW_DRAWS, fullWindowSize])].sort((a, b) => a - b);
+
   const { aggregates } = runAccumulatedStrategyEvaluation({
     allRowsSortedAsc: rangeRowsSortedAsc,
     drawNumbersToEvaluate,
-    windowSizes: [ACCUMULATED_STRATEGY_WINDOW_DRAWS],
+    windowSizes,
     strategyKeys: ACCUMULATED_SINGLE_STRATEGY_KEYS,
   });
 

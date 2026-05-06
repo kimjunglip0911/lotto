@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Header } from '@/components/common/Header';
 import { Sidebar } from '@/components/common/Sidebar';
 import { AccumulatedChartSection } from './components/AccumulatedChartSection';
@@ -32,6 +32,9 @@ export default function AccumulatedNumbersPage() {
     strategyCharts: data.strategyCharts,
     finalNumberPlan: data.finalNumberPlan,
   });
+
+  /** 본번호 6개만 — 보너스 제외, 채택 번호 적중 시 노란 공 표시용 */
+  const mainWinningNumberSet = useMemo(() => new Set(selectedMainNumbers), [selectedMainNumbers]);
 
   const canSaveSnapshot =
     hasSearched &&
@@ -87,7 +90,8 @@ export default function AccumulatedNumbersPage() {
           <section className="rounded-2xl border border-card-border/30 bg-card-bg/60 p-4 space-y-4">
             <h2 className="text-lg font-semibold text-slate-100">고도화 전략 분석 (2년 / 평균근접)</h2>
             <p className="text-sm text-slate-300 leading-relaxed">
-              선택 회차 직전 104회차(2년) 누적 출현 분포를 막대 차트로 보고, 평균근접 규칙으로 번호 4개를 채택합니다.
+              상단은 선택 회차 직전 전체 누적, 아래는 직전 104회차(2년) 구간만 막대 차트로 둡니다. 최종 채택 4개는 전체
+              누적 출현 분포에 대해 평균근접 규칙으로 선정합니다.
             </p>
           </section>
 
@@ -108,22 +112,30 @@ export default function AccumulatedNumbersPage() {
 
           {finalNumberPlan && (
             <section className="rounded-2xl border border-card-border/30 bg-card-bg/60 p-4 space-y-4">
-              <h3 className="text-base font-semibold text-slate-100">평균근접 추천 4개 / 최종 채택 4개</h3>
-              <div className="grid gap-3 md:grid-cols-1">
+              <h3 className="text-base font-semibold text-slate-100">평균근접 채택 4개 (2년 · 전체)</h3>
+              <div className="grid gap-3 md:grid-cols-2">
                 {finalNumberPlan.strategyPicks.map((pick) => (
                   <div key={pick.strategyKey} className="rounded-xl border border-white/10 bg-slate-900/50 p-3 space-y-2">
                     <p className="text-sm font-medium text-slate-100">
                       {pick.strategyLabel} (이전 {pick.windowSizes.join(', ')}회)
                     </p>
-                    <div className="flex flex-wrap gap-2">
-                      {pick.numbers.map((n) => (
-                        <span
-                          key={`${pick.strategyKey}-${n}`}
-                          className="px-2 py-1 rounded-md text-xs font-semibold bg-primary/20 text-primary"
-                        >
-                          {n}
-                        </span>
-                      ))}
+                    <div className="flex flex-wrap gap-2 items-center">
+                      {[...pick.numbers].sort((a, b) => a - b).map((n) => {
+                        const isMainWinHit =
+                          hasSearched && selectedSearchDrawNo > 1 && mainWinningNumberSet.has(n);
+                        return (
+                          <span
+                            key={`${pick.strategyKey}-${n}`}
+                            className={
+                              isMainWinHit
+                                ? 'inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-amber-400 text-sm font-bold text-slate-900 shadow-[inset_0_-3px_0_rgba(0,0,0,0.12)] ring-1 ring-amber-200/90'
+                                : 'px-2 py-1 rounded-md text-xs font-semibold bg-primary/20 text-primary'
+                            }
+                          >
+                            {n}
+                          </span>
+                        );
+                      })}
                     </div>
                     <p className="text-xs text-slate-300">
                       ≥1 적중률 {(pick.atLeastOneRate * 100).toFixed(2)}% / 평균 적중 {pick.avgHits.toFixed(3)} /
@@ -146,7 +158,7 @@ export default function AccumulatedNumbersPage() {
                   ))}
                 </div>
                 <p className="text-xs text-emerald-100/90">
-                  직전 104회차(2년) 누적 출현 횟수에 대해 평균근접 규칙으로 선정한 번호입니다.
+                  저장·스냅샷 기준 채택 번호는 전체 기간 평균근접 4개와 동일합니다.
                 </p>
               </div>
             </section>

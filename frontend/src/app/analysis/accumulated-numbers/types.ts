@@ -40,7 +40,8 @@ export type StrategyChartData = {
 };
 
 export type StrategyNumberPick = {
-  strategyKey: 'nearestMean4' | 'twoHotTwoCold';
+  /** UI·스냅샷 구분용(평균근접 2년 vs 전체는 서로 다른 키) */
+  strategyKey: 'nearestMean4TwoYear' | 'nearestMean4Full' | 'twoHotTwoCold';
   strategyLabel: string;
   windowSizes: number[];
   numbers: number[];
