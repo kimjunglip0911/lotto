@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { ADOPTED_USAGE_NUMBER_COUNT } from '../constants';
 import type { ChiSquareResult } from '../types';
 import { buildChiSquareResults } from './chiSquare';
 import {
@@ -8,6 +9,7 @@ import {
   relPctToBinKey,
   runChiSquareRelPctBinWalkForward,
   runChiSquareWalkForward,
+  selectNumbersByRelPctBinMergedRanking,
   splitAndSortRelPctBins,
 } from './walkForwardStats';
 
@@ -107,6 +109,93 @@ describe('runChiSquareRelPctBinWalkForward', () => {
     expect(s.denominator).toBe(1);
     expect(s.bins.length).toBeGreaterThan(0);
     expect(s.bins.every((b) => b.pct >= 1)).toBe(true);
+  });
+
+  it('allBins는 1% 필터 전 전 구간(202개 키)이고 bins는 그 부분집합이다', () => {
+    const rows = [
+      row(1, 1, 2, 3, 4, 5, 6, 7),
+      row(2, 8, 9, 10, 11, 12, 13, 14),
+    ];
+    const s = runChiSquareRelPctBinWalkForward(rows);
+    expect(s.allBins.length).toBe(202);
+    expect(s.bins.length).toBeLessThanOrEqual(s.allBins.length);
+    const binKeys = new Set(s.bins.map((b) => b.binKey));
+    for (const ab of s.allBins) {
+      const inDisplay = binKeys.has(ab.binKey);
+      if (ab.pct >= 1) {
+        expect(inDisplay).toBe(true);
+      }
+    }
+  });
+});
+
+describe('selectNumbersByRelPctBinMergedRanking', () => {
+  const mk = (num: number, dev: number, exp: number): ChiSquareResult => ({
+    number: num,
+    observed: dev + exp,
+    expected: exp,
+    deviation: dev,
+    chiSquare: 0,
+    isLowFreq: false,
+    isHighFreq: false,
+  });
+
+  it('구간 비율이 높은 번호를 먼저 고르고 동일 구간은 번호 오름차순', () => {
+    const allBins = [
+      { binKey: 'b_0', label: '[0%, 1%)', hits: 0, pct: 20 },
+      { binKey: 'b_1', label: '[1%, 2%)', hits: 0, pct: 10 },
+    ];
+    const a = mk(1, 0, 100);
+    const b = mk(2, 0, 100);
+    const c = mk(3, 1, 100);
+    expect(selectNumbersByRelPctBinMergedRanking([c, b, a], allBins, 2)).toEqual([1, 2]);
+    expect(selectNumbersByRelPctBinMergedRanking([c, b, a], allBins, 3)).toEqual([1, 2, 3]);
+  });
+
+  it('pct가 같을 때는 통합 구간 순위(binKey 문자열 순)로 구간 간 우선순위를 정한다', () => {
+    const allBins = [
+      { binKey: 'b_1', label: '', hits: 0, pct: 15 },
+      { binKey: 'b_0', label: '', hits: 0, pct: 15 },
+    ];
+    const inB0 = mk(2, 0, 100);
+    const inB1 = mk(1, 1, 100);
+    expect(selectNumbersByRelPctBinMergedRanking([inB1, inB0], allBins, 2)).toEqual([2, 1]);
+  });
+
+  it('동일 구간(동일 pct) 안에서는 번호 오름차순', () => {
+    const allBins = [{ binKey: 'b_0', label: '', hits: 0, pct: 50 }];
+    const r10 = mk(10, 0, 100);
+    const r3 = mk(3, 0, 100);
+    const r7 = mk(7, 0, 100);
+    expect(selectNumbersByRelPctBinMergedRanking([r10, r7, r3], allBins, 3)).toEqual([3, 7, 10]);
+  });
+
+  it('상대편차 불가(E≤0) 번호는 같은 구간보다 뒤로 간다', () => {
+    const allBins = [{ binKey: 'b_0', label: '', hits: 0, pct: 5 }];
+    const ok = mk(1, 0, 100);
+    const bad = mk(2, 0, 0);
+    expect(selectNumbersByRelPctBinMergedRanking([bad, ok], allBins, 1)).toEqual([1]);
+  });
+
+  it('워크포워드 allBins와 집계 결과로 ADOPTED_USAGE_NUMBER_COUNT개를 반환한다', () => {
+    const rows = [
+      row(1, 1, 2, 3, 4, 5, 6, 7),
+      row(2, 8, 9, 10, 11, 12, 13, 14),
+    ];
+    const s = runChiSquareRelPctBinWalkForward(rows);
+    const counts = Array.from({ length: 45 }, () => 0);
+    for (const n of [1, 2, 3, 4, 5, 6, 7]) {
+      counts[n - 1] += 1;
+    }
+    const results = buildChiSquareResultsFromCounts(counts, 1);
+    const picked = selectNumbersByRelPctBinMergedRanking(
+      results,
+      s.allBins,
+      ADOPTED_USAGE_NUMBER_COUNT,
+    );
+    expect(picked).not.toBeNull();
+    expect(picked!.length).toBe(ADOPTED_USAGE_NUMBER_COUNT);
+    expect(new Set(picked).size).toBe(ADOPTED_USAGE_NUMBER_COUNT);
   });
 });
 

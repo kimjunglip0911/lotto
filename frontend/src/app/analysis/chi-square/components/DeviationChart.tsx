@@ -8,7 +8,7 @@ type Props = {
   searchError: string | null;
   chiSquareResults: ChiSquareResult[];
   selectedWinningNumberSet: Set<number> | null;
-  /** 사용 번호 4개 — 막대·번호에 보조 강조 */
+  /** 사용 번호 14개 — 막대·번호에 보조 강조 */
   adoptedUsageNumberSet?: Set<number> | null;
   maxAbsDeviation: number;
 };
@@ -53,7 +53,7 @@ export function DeviationChart({
             {adoptedUsageNumberSet && adoptedUsageNumberSet.size > 0 && (
               <span className="flex items-center gap-1.5">
                 <span className="inline-block w-3 h-3 rounded ring-2 ring-emerald-400/90 ring-offset-1 ring-offset-slate-900 bg-emerald-500/40" />
-                사용 번호 4개
+                사용 번호 14개
               </span>
             )}
           </div>

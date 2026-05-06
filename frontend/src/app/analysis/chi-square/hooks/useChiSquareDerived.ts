@@ -1,18 +1,15 @@
 import { useMemo } from 'react';
 import {
+  ADOPTED_USAGE_NUMBER_COUNT,
   CHI_SQUARE_THRESHOLD,
   NUMBERS_PER_DRAW,
   TOTAL_NUMBERS,
 } from '../constants';
-import {
-  getMaxAbsDeviation,
-  pickFirstNumbersBySignedDeviationOrder,
-  selectAdoptedBySignedDeviationSkippingExcluded,
-} from '../logic/chiSquare';
+import { getMaxAbsDeviation } from '../logic/chiSquare';
 import {
   runChiSquareRelPctBinWalkForward,
+  selectNumbersByRelPctBinMergedRanking,
   splitAndSortRelPctBins,
-  type SplitSortedRelPctBins,
 } from '../logic/walkForwardStats';
 import type { ChiSquareResult, WinningNumberRow } from '../types';
 
@@ -20,8 +17,6 @@ type Params = {
   analyzedDrawCount: number;
   chiSquareResults: ChiSquareResult[];
   walkForwardRows: readonly WinningNumberRow[] | null;
-  /** 길이 4일 때만 사용 번호 4개 채택에서 제외한다. */
-  accumulatedFinalNumbers: readonly number[] | null;
   selectedWinningNumber: WinningNumberRow | null;
   searchedDraw: string;
   isLoadingDraws: boolean;
@@ -36,7 +31,6 @@ export const useChiSquareDerived = ({
   analyzedDrawCount,
   chiSquareResults,
   walkForwardRows,
-  accumulatedFinalNumbers,
   selectedWinningNumber,
   searchedDraw,
   isLoadingDraws,
@@ -79,27 +73,35 @@ export const useChiSquareDerived = ({
 
   const maxAbsDeviation = useMemo(() => getMaxAbsDeviation(chiSquareResults), [chiSquareResults]);
 
-  const adoptedUsageNumbers = useMemo(() => {
-    const exclude = new Set<number>(pickFirstNumbersBySignedDeviationOrder(chiSquareResults, 4));
-    if (accumulatedFinalNumbers !== null && accumulatedFinalNumbers.length === 4) {
-      for (const n of accumulatedFinalNumbers) {
-        exclude.add(n);
-      }
+  /** 상대편차 1% 구간 워크포워드: 표용 분리 + 채택용 전체 구간. 2회차 이상일 때만. */
+  const relPctBinWalkForwardBlock = useMemo(() => {
+    if (walkForwardRows === null || walkForwardRows.length < 2) {
+      return null;
     }
-    return selectAdoptedBySignedDeviationSkippingExcluded(chiSquareResults, exclude);
-  }, [chiSquareResults, accumulatedFinalNumbers]);
+    const summary = runChiSquareRelPctBinWalkForward([...walkForwardRows], { minPastDraws: 1 });
+    return {
+      presentation: splitAndSortRelPctBins(summary),
+      summary,
+    };
+  }, [walkForwardRows]);
+
+  const relPctBinWalkForwardPresentation = relPctBinWalkForwardBlock?.presentation ?? null;
+
+  const adoptedUsageNumbers = useMemo(() => {
+    if (relPctBinWalkForwardBlock === null || chiSquareResults.length === 0) {
+      return null;
+    }
+    return selectNumbersByRelPctBinMergedRanking(
+      chiSquareResults,
+      relPctBinWalkForwardBlock.summary.allBins,
+      ADOPTED_USAGE_NUMBER_COUNT,
+    );
+  }, [relPctBinWalkForwardBlock, chiSquareResults]);
 
   const adoptedUsageNumberSet = useMemo(
     () => (adoptedUsageNumbers ? new Set<number>(adoptedUsageNumbers) : null),
     [adoptedUsageNumbers],
   );
-
-  /** 상대편차 1% 구간 워크포워드 요약(음·양 분리·비율 내림차순). 2회차 이상 데이터가 있을 때만 채운다. */
-  const relPctBinWalkForwardPresentation = useMemo((): SplitSortedRelPctBins | null => {
-    if (walkForwardRows === null || walkForwardRows.length < 2) return null;
-    const summary = runChiSquareRelPctBinWalkForward([...walkForwardRows], { minPastDraws: 1 });
-    return splitAndSortRelPctBins(summary);
-  }, [walkForwardRows]);
 
   const statusMessage = isLoadingDraws
     ? '회차 정보를 불러오는 중입니다.'

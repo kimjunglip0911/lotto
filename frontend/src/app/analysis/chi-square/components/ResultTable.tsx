@@ -76,7 +76,7 @@ export function ResultTable({
               {adoptedUsageNumberSet && adoptedUsageNumberSet.size > 0 && (
                 <span className="flex items-center gap-1.5">
                   <span className="inline-block w-3 h-3 rounded ring-2 ring-emerald-400/80 ring-offset-1 ring-offset-slate-900 bg-emerald-500/30" />
-                  사용 번호 4개
+                  사용 번호 14개
                 </span>
               )}
             </div>

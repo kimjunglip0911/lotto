@@ -136,7 +136,10 @@ export type RelPctBinRow = {
 
 export type RelPctBinWalkForwardSummary = {
   denominator: number;
+  /** 표시용: 비율 1% 이상 구간만. */
   bins: RelPctBinRow[];
+  /** 채택·순위용: 필터 없이 전 구간의 비율(%). */
+  allBins: RelPctBinRow[];
 };
 
 /** 음의 상대편차 구간(`p < −100%`, `[−100%, −99%)` … `[−1%, 0%)`)이면 true. */
@@ -192,6 +195,64 @@ const labelForRelPctBinKey = (key: string): string => {
 };
 
 /**
+ * 워크포워드 `allBins`의 구간별 비율(%)을 음·양 합친 직렬 위계로 두고,
+ * 현재 `chiSquareResults` 각 번호의 상대편차 구간이 더 높은 비율 구간에 속할수록 먼저 채택한다.
+ * 동일 구간(동일 pct)이면 번호 오름차순. 상대편차 불가(E≤0 등)는 최하위.
+ */
+export const selectNumbersByRelPctBinMergedRanking = (
+  results: ChiSquareResult[],
+  allBins: readonly RelPctBinRow[],
+  take: number
+): readonly number[] | null => {
+  if (results.length === 0 || take <= 0) {
+    return null;
+  }
+  const pctByBin = new Map<string, number>();
+  for (const b of allBins) {
+    pctByBin.set(b.binKey, b.pct);
+  }
+  /** 음·양 통합: 비율 내림차순, 동률이면 `binKey` 문자열 순(앞일수록 우선). */
+  const mergedBinPriority = new Map<string, number>();
+  const mergedOrder = [...allBins].sort(
+    (x, y) => y.pct - x.pct || x.binKey.localeCompare(y.binKey),
+  );
+  mergedOrder.forEach((row, idx) => {
+    mergedBinPriority.set(row.binKey, idx);
+  });
+  const sorted = [...results].sort((a, b) => {
+    const pa = relativeDeviationPercent(a);
+    const pb = relativeDeviationPercent(b);
+    if (pa === null && pb === null) {
+      return a.number - b.number;
+    }
+    if (pa === null) {
+      return 1;
+    }
+    if (pb === null) {
+      return -1;
+    }
+    const keyA = relPctToBinKey(pa);
+    const keyB = relPctToBinKey(pb);
+    const pcta = pctByBin.get(keyA) ?? Number.NEGATIVE_INFINITY;
+    const pctb = pctByBin.get(keyB) ?? Number.NEGATIVE_INFINITY;
+    if (pctb !== pcta) {
+      return pctb - pcta;
+    }
+    const priA = mergedBinPriority.get(keyA) ?? Number.MAX_SAFE_INTEGER;
+    const priB = mergedBinPriority.get(keyB) ?? Number.MAX_SAFE_INTEGER;
+    if (priA !== priB) {
+      return priA - priB;
+    }
+    return a.number - b.number;
+  });
+  const n = Math.min(take, sorted.length);
+  if (n < take) {
+    return null;
+  }
+  return sorted.slice(0, n).map((r) => r.number);
+};
+
+/**
  * 워크포워드: 각 목표 회차마다 직전 누적으로 본번호 6개의 상대편차 %를 구한 뒤,
  * **1% 단위 구간**마다「그 구간에 번호가 1개 이상 있으면」해당 회차를 1회 카운트한다(구간 간 중복 가능).
  * 반환 `bins`에는 비율(%)이 1% 이상인 구간만 포함한다(1% 미만 구간 행 제외).
@@ -233,19 +294,18 @@ export const runChiSquareRelPctBinWalkForward = (
   }
 
   const pct = (h: number) => (denominator > 0 ? (h / denominator) * 100 : 0);
-  const bins: RelPctBinRow[] = keys
-    .map((binKey) => {
-      const hits = hitMap.get(binKey) ?? 0;
-      return {
-        binKey,
-        label: labelForRelPctBinKey(binKey),
-        hits,
-        pct: pct(hits),
-      };
-    })
-    .filter((row) => row.pct >= REL_PCT_BIN_MIN_DISPLAY_PCT);
+  const allBins: RelPctBinRow[] = keys.map((binKey) => {
+    const hits = hitMap.get(binKey) ?? 0;
+    return {
+      binKey,
+      label: labelForRelPctBinKey(binKey),
+      hits,
+      pct: pct(hits),
+    };
+  });
+  const bins = allBins.filter((row) => row.pct >= REL_PCT_BIN_MIN_DISPLAY_PCT);
 
-  return { denominator, bins };
+  return { denominator, bins, allBins };
 };
 
 /**

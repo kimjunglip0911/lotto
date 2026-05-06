@@ -52,7 +52,6 @@ export default function ChiSquarePage() {
     analyzedDrawCount,
     chiSquareResults,
     walkForwardRows,
-    accumulatedFinalNumbers,
     selectedWinningNumber,
     searchedDraw,
     isLoadingDraws,
@@ -122,12 +121,12 @@ export default function ChiSquarePage() {
                     ))}
                   </div>
                   <p className="text-xs text-sky-100/85 leading-relaxed">
-                    누적번호 분석 페이지와 동일한 전략·집계로 조회 시점에 계산된 최종 채택 번호입니다.
+                    누적번호 분석 페이지와 동일한 전략·집계로 조회 시점에 계산된 최종 채택 번호입니다. 아래「사용 번호」채택과는 별도 참고용입니다.
                   </p>
                 </div>
               )}
               <div className="rounded-xl border border-emerald-400/30 bg-emerald-500/10 p-3 space-y-2">
-                <p className="text-sm font-semibold text-emerald-300">사용 번호 4개 (편차 순 이어서)</p>
+                <p className="text-sm font-semibold text-emerald-300">사용 번호 14개 (구간 비율 통합 순위)</p>
                 <div className="flex flex-wrap gap-2">
                   {adoptedUsageNumbers.map((n) => (
                     <span
@@ -139,7 +138,7 @@ export default function ChiSquarePage() {
                   ))}
                 </div>
                 <p className="text-xs text-emerald-100/90 leading-relaxed">
-                  편차(O−E) 값이 가장 작은(가장 음수에 가까운) 4개 번호와 누적번호 분석 최종 4개(있을 때)는 제외합니다. 사용 번호 4개는 전체를 편차 오름차순으로 한 줄 세운 뒤, 제외분을 건너뛰고 그다음 순서에서 4개를 고릅니다(예: −30~−26 제외 후 −25부터). 동률이면 번호가 작은 쪽을 먼저 둡니다.
+                  상대편차 1% 구간 워크포워드 표와 동일한 집계로 구간별 비율(%)을 구한 뒤, 음·양 구간을 합쳐 비율이 높은 구간부터 순위를 매깁니다. 조회 시점 각 번호의 (O−E)/E×100(%)이 속한 구간 비율이 높을수록 먼저 채택하고, 같은 구간이면 번호가 작은 쪽을 먼저 둡니다. 나열 순서는 1순위부터입니다. E가 0 이하여 상대편차를 쓸 수 없는 번호는 맨 뒤로 둡니다.
                 </p>
               </div>
             </section>
