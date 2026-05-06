@@ -6,7 +6,6 @@ import { Sidebar } from '@/components/common/Sidebar';
 import { AdoptedSummaryCard } from './components/AdoptedSummaryCard';
 import { ComprehensiveChart } from './components/ComprehensiveChart';
 import { SearchPanel } from './components/SearchPanel';
-import { getConsecutivelyAppearedMainNumbers } from '@/app/analysis/absence-streak/logic/streak';
 import { SourceNumbersCard } from './components/SourceNumbersCard';
 import { useFinalPickData } from './hooks/useFinalPickData';
 import { extractMainNumbers } from './types';
@@ -29,8 +28,9 @@ export default function FinalPickPage() {
     isSearching,
     searchError,
     handleSearch,
-    previousDrawRows,
     excludedByTrendNumbers,
+    excludedByStreakNumbers,
+    adoptedByAccumulatedNumbers,
   } = useFinalPickData();
 
   /** 본번호 6개만 추출(보너스 제외) — 패널/차트 hit 강조용. */
@@ -43,15 +43,8 @@ export default function FinalPickPage() {
     [selectedMainNumbers],
   );
 
-  /** (N-1)회에서 끝나는 연속 2회 이상 출현(본번호) → 후보 제외. */
-  const excludedByStreakNumbers = useMemo(() => {
-    if (!selectedWinningNumber) return [];
-    return getConsecutivelyAppearedMainNumbers(previousDrawRows, selectedWinningNumber.draw_no);
-  }, [previousDrawRows, selectedWinningNumber]);
-
   // 후속: 나머지 분석 기법의 실제 결과를 채울 placeholder 자리.
   const adoptedAllNumbers: number[] = [];
-  const adoptedByAccumulatedNumbers: number[] = [];
   const adoptedByChiSquareNumbers: number[] = [];
   const comprehensiveCounts: number[] | null = null;
 

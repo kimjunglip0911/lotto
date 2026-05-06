@@ -1,6 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { isWinningNumberRow, type WinningNumberRow } from '../types';
 import { getTrendExcludedNumbers } from '../logic/trendExclusion';
+import { getAccumulatedAdoptedNumbers } from '../logic/accumulatedAdoption';
+import { getConsecutivelyAppearedMainNumbers } from '@/app/analysis/absence-streak/logic/streak';
 
 /**
  * 통합 분석 페이지의 회차 목록·당첨번호 조회 훅.
@@ -26,6 +28,8 @@ type UseFinalPickDataResult = {
   /** 선택 회차 미만 전체 당첨 행 — 연속 출현 제외 등에서 재사용한다. */
   previousDrawRows: WinningNumberRow[];
   excludedByTrendNumbers: number[];
+  excludedByStreakNumbers: number[];
+  adoptedByAccumulatedNumbers: number[];
   searchedDraw: string;
   isSearching: boolean;
   searchError: string | null;
@@ -48,6 +52,22 @@ export const useFinalPickData = (): UseFinalPickDataResult => {
 
   const [previousDrawRows, setPreviousDrawRows] = useState<WinningNumberRow[]>([]);
   const [excludedByTrendNumbers, setExcludedByTrendNumbers] = useState<number[]>([]);
+  const excludedByStreakNumbers = useMemo(() => {
+    if (previousDrawRows.length === 0) return [];
+    const drawNo = Number(searchedDraw);
+    if (!Number.isInteger(drawNo) || drawNo < 2) return [];
+    return getConsecutivelyAppearedMainNumbers(previousDrawRows, drawNo);
+  }, [previousDrawRows, searchedDraw]);
+
+  const adoptedByAccumulatedNumbers = useMemo(
+    () =>
+      getAccumulatedAdoptedNumbers({
+        previousDrawRows,
+        excludedByStreakNumbers,
+        excludedByTrendNumbers,
+      }).finalNumbers,
+    [excludedByStreakNumbers, excludedByTrendNumbers, previousDrawRows],
+  );
 
   useEffect(() => {
     let isMounted = true;
@@ -177,6 +197,8 @@ export const useFinalPickData = (): UseFinalPickDataResult => {
     winningNumberError,
     previousDrawRows,
     excludedByTrendNumbers,
+    excludedByStreakNumbers,
+    adoptedByAccumulatedNumbers,
     searchedDraw,
     isSearching,
     searchError,
