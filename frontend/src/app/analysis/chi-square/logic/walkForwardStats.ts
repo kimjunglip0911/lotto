@@ -128,13 +128,17 @@ export type RelPctBinRow = {
   binKey: string;
   /** 표시용 구간 문자열 */
   label: string;
-  /** 해당 회차에서 본번호 6개 중 이 구간에 속하는 번호가 1개 이상인 회차 수 */
+  /** 워크포워드 전 기간 누적: 본번호가 이 구간에 속한 횟수(회차당 동일 구간 여러 번이면 여러 번 가산) */
   hits: number;
   /** 분모 대비 비율(%) */
   pct: number;
 };
 
 export type RelPctBinWalkForwardSummary = {
+  /**
+   * 비율(%) 분모: 워크포워드 목표 회차마다 본번호 6개 중 상대편차로 구간에 넣은 횟수의 합
+   * (한 회차에서 같은 구간에 여러 번호가 있으면 그만큼 가산, 최대 회차당 6).
+   */
   denominator: number;
   /** 표시용: 비율 1% 이상 구간만. */
   bins: RelPctBinRow[];
@@ -254,7 +258,8 @@ export const selectNumbersByRelPctBinMergedRanking = (
 
 /**
  * 워크포워드: 각 목표 회차마다 직전 누적으로 본번호 6개의 상대편차 %를 구한 뒤,
- * **1% 단위 구간**마다「그 구간에 번호가 1개 이상 있으면」해당 회차를 1회 카운트한다(구간 간 중복 가능).
+ * **1% 단위 구간**마다 본번호 **한 개당 1회** 가산한다(같은 회차·같은 구간에 3개면 3회).
+ * 비율(%) 분모는 위에서 구간에 넣은 본번호 횟수의 합이다.
  * 반환 `bins`에는 비율(%)이 1% 이상인 구간만 포함한다(1% 미만 구간 행 제외).
  */
 export const runChiSquareRelPctBinWalkForward = (
@@ -269,7 +274,7 @@ export const runChiSquareRelPctBinWalkForward = (
   const hitMap = new Map<string, number>();
   for (const k of keys) hitMap.set(k, 0);
 
-  let denominator = 0;
+  let classifiedSlotCount = 0;
 
   for (let i = 0; i < rows.length; i++) {
     if (i >= minPastDraws) {
@@ -277,23 +282,20 @@ export const runChiSquareRelPctBinWalkForward = (
       const results = buildChiSquareResultsFromCounts(counts, pastDraws);
       const resultsByNumber = new Map(results.map((r) => [r.number, r]));
 
-      const touched = new Set<string>();
       for (const num of mainSix(rows[i])) {
         const r = resultsByNumber.get(num);
         if (!r) continue;
         const p = relativeDeviationPercent(r);
         if (p === null) continue;
-        touched.add(relPctToBinKey(p));
+        const binKey = relPctToBinKey(p);
+        hitMap.set(binKey, (hitMap.get(binKey) ?? 0) + 1);
+        classifiedSlotCount += 1;
       }
-      for (const k of touched) {
-        hitMap.set(k, (hitMap.get(k) ?? 0) + 1);
-      }
-      denominator += 1;
     }
     addRowToCounts(rows[i], counts);
   }
 
-  const pct = (h: number) => (denominator > 0 ? (h / denominator) * 100 : 0);
+  const pct = (h: number) => (classifiedSlotCount > 0 ? (h / classifiedSlotCount) * 100 : 0);
   const allBins: RelPctBinRow[] = keys.map((binKey) => {
     const hits = hitMap.get(binKey) ?? 0;
     return {
@@ -305,7 +307,7 @@ export const runChiSquareRelPctBinWalkForward = (
   });
   const bins = allBins.filter((row) => row.pct >= REL_PCT_BIN_MIN_DISPLAY_PCT);
 
-  return { denominator, bins, allBins };
+  return { denominator: classifiedSlotCount, bins, allBins };
 };
 
 /**

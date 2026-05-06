@@ -26,7 +26,7 @@ function BinTable({
           <thead>
             <tr className="border-b border-white/10 text-xs text-slate-400">
               <th className="py-2 pl-4 pr-3 font-medium">상대편차 구간</th>
-              <th className="py-2 pr-3 font-medium text-right">해당 회차 수</th>
+              <th className="py-2 pr-3 font-medium text-right">누적 건수</th>
               <th className="py-2 pr-4 font-medium text-right">비율(%)</th>
             </tr>
           </thead>
@@ -53,16 +53,16 @@ export function RelPctBinWalkForwardTable({ denominator, negBins, posBins }: Pro
       <div className="rounded-xl border border-white/10 bg-slate-900/40 px-4 py-3 space-y-2 text-xs text-slate-300 leading-relaxed">
         <p>
           각 목표 회차 직전 누적 집계로 본번호 6개의 상대편차{' '}
-          <span className="text-slate-200 font-medium">(O−E)/E×100</span>(%)를 구한 뒤, 구간마다「6개 중 그 구간에
-          속하는 번호가 1개 이상이면」해당 회차를 1회 카운트합니다(구간 간 중복 가능).
+          <span className="text-slate-200 font-medium">(O−E)/E×100</span>(%)를 구한 뒤, 구간마다 본번호 한 개당
+          1회씩 누적합니다(같은 회차·같은 구간에 3개면 3회).
         </p>
         <p className="text-slate-400">
           비율(%)이 1% 미만인 구간은 표에서 생략합니다.
         </p>
         <p className="text-slate-400">
-          분모(유효 목표 회차 수):{' '}
+          분모(구간에 넣은 본번호 누적 건수):{' '}
           <span className="font-semibold text-white tabular-nums">{denominator}</span>
-          <span className="text-slate-500 ml-1">(1회차는 이전 누적이 없어 제외)</span>
+          <span className="text-slate-500 ml-1">(1회차는 이전 누적이 없어 제외, 회차당 최대 6)</span>
         </p>
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">

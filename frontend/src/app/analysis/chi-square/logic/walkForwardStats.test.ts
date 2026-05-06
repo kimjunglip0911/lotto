@@ -100,15 +100,25 @@ describe('relPctToBinKey', () => {
 });
 
 describe('runChiSquareRelPctBinWalkForward', () => {
-  it('분모는 유효 목표 회차 수이고, 반환 구간은 모두 비율 1% 이상이다', () => {
+  it('분모는 구간에 넣은 본번호 횟수의 합이고, 반환 구간은 모두 비율 1% 이상이다', () => {
     const rows = [
       row(1, 1, 2, 3, 4, 5, 6, 7),
       row(2, 8, 9, 10, 11, 12, 13, 14),
     ];
     const s = runChiSquareRelPctBinWalkForward(rows);
-    expect(s.denominator).toBe(1);
+    expect(s.denominator).toBe(6);
     expect(s.bins.length).toBeGreaterThan(0);
     expect(s.bins.every((b) => b.pct >= 1)).toBe(true);
+  });
+
+  it('전 구간 hits 합은 분모(구간에 넣은 본번호 누적 건수)와 같다', () => {
+    const rows = [
+      row(1, 1, 2, 3, 4, 5, 6, 7),
+      row(2, 8, 9, 10, 11, 12, 13, 14),
+    ];
+    const s = runChiSquareRelPctBinWalkForward(rows);
+    const sumHits = s.allBins.reduce((acc, b) => acc + b.hits, 0);
+    expect(sumHits).toBe(s.denominator);
   });
 
   it('allBins는 1% 필터 전 전 구간(202개 키)이고 bins는 그 부분집합이다', () => {
