@@ -95,7 +95,7 @@ export default function FinalPickPage() {
 
           <SourceNumbersCard
             title="추세 분석 — 후보 제외"
-            description="기댓값 대비 EMA 편차 구간 출현확률이 20.00% 이하인 번호 제외 (20.01% 이상은 제외 아님)"
+            description="기댓값 대비 EMA 편차 구간 출현확률이 15.00% 이하인 번호 제외 (15.01% 이상은 제외 아님)"
             tone="exclude"
             numbers={excludedByTrendNumbers}
             mainWinningSet={mainWinningNumberSet}
