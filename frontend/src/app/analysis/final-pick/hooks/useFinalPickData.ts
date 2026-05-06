@@ -1,0 +1,140 @@
+import { useEffect, useState } from 'react';
+import { isWinningNumberRow, type WinningNumberRow } from '../types';
+
+/**
+ * 통합 분석 페이지의 회차 목록·당첨번호 조회 훅.
+ *
+ * - 통합 분석 전용 백엔드 라우터는 후속 작업에서 도입하며,
+ *   현재는 가장 가벼운 `absence-streak` 라우터를 재사용한다.
+ * - URL 호출은 본 훅 내부에서만 수행하므로 후속 교체 시 한 곳만 바꾸면 된다.
+ */
+const finalPickApiUrl = (pathWithQuery: string): string => {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+  return `${apiUrl}/api/analysis/absence-streak/${pathWithQuery}`;
+};
+
+type UseFinalPickDataResult = {
+  availableDraws: number[];
+  selectedDraw: string;
+  setSelectedDraw: (draw: string) => void;
+  isLoadingDraws: boolean;
+  drawLoadError: string | null;
+  selectedWinningNumber: WinningNumberRow | null;
+  isLoadingWinningNumber: boolean;
+  winningNumberError: string | null;
+  searchedDraw: string;
+  isSearching: boolean;
+  searchError: string | null;
+  handleSearch: () => Promise<void>;
+};
+
+export const useFinalPickData = (): UseFinalPickDataResult => {
+  const [availableDraws, setAvailableDraws] = useState<number[]>([]);
+  const [selectedDraw, setSelectedDraw] = useState<string>('');
+  const [isLoadingDraws, setIsLoadingDraws] = useState(true);
+  const [drawLoadError, setDrawLoadError] = useState<string | null>(null);
+
+  const [selectedWinningNumber, setSelectedWinningNumber] = useState<WinningNumberRow | null>(null);
+  const [isLoadingWinningNumber, setIsLoadingWinningNumber] = useState(false);
+  const [winningNumberError, setWinningNumberError] = useState<string | null>(null);
+
+  const [searchedDraw, setSearchedDraw] = useState<string>('');
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    const abortController = new AbortController();
+
+    const loadDrawNumbers = async () => {
+      setIsLoadingDraws(true);
+      setDrawLoadError(null);
+      try {
+        const response = await fetch(finalPickApiUrl('draw-numbers'), {
+          signal: abortController.signal,
+        });
+        if (!response.ok) throw new Error(`Failed to fetch draw numbers: ${response.status}`);
+        const data: unknown = await response.json();
+        if (!Array.isArray(data)) throw new Error('Draw numbers response is not an array');
+        const draws = data.filter((item): item is number => typeof item === 'number');
+        if (!isMounted) return;
+        setAvailableDraws(draws);
+        setSelectedDraw((prev) => (prev || draws.length === 0 ? prev : String(draws[0])));
+      } catch (error) {
+        if (abortController.signal.aborted || !isMounted) return;
+        console.error('Error fetching draw numbers:', error);
+        setAvailableDraws([]);
+        setSelectedDraw('');
+        setDrawLoadError('회차 정보를 불러오지 못했습니다.');
+      } finally {
+        if (isMounted) setIsLoadingDraws(false);
+      }
+    };
+
+    void loadDrawNumbers();
+    return () => {
+      isMounted = false;
+      abortController.abort();
+    };
+  }, []);
+
+  const resetSelectedWinning = () => {
+    setSelectedWinningNumber(null);
+    setWinningNumberError(null);
+  };
+
+  const handleSearch = async () => {
+    if (!selectedDraw) return;
+    const drawNo = Number(selectedDraw);
+    if (!Number.isInteger(drawNo) || drawNo < 1) {
+      setSearchError('유효한 회차를 선택해 주세요.');
+      setSearchedDraw('');
+      resetSelectedWinning();
+      return;
+    }
+
+    setIsSearching(true);
+    setIsLoadingWinningNumber(true);
+    setSearchError(null);
+    setWinningNumberError(null);
+    setSearchedDraw(selectedDraw);
+
+    try {
+      const response = await fetch(finalPickApiUrl(`winning-number?draw_no=${drawNo}`));
+      if (!response.ok) {
+        if (response.status === 404) throw new Error('선택한 회차의 당첨번호를 찾을 수 없습니다.');
+        throw new Error(`Failed to fetch winning number: ${response.status}`);
+      }
+      const data: unknown = await response.json();
+      if (!isWinningNumberRow(data)) throw new Error('Winning number response is invalid');
+      setSelectedWinningNumber(data);
+    } catch (error) {
+      console.error('Error fetching final-pick winning number:', error);
+      setSearchError(
+        error instanceof Error && error.message.includes('찾을 수 없습니다')
+          ? error.message
+          : '조회 데이터를 불러오지 못했습니다.',
+      );
+      resetSelectedWinning();
+      setSearchedDraw('');
+    } finally {
+      setIsSearching(false);
+      setIsLoadingWinningNumber(false);
+    }
+  };
+
+  return {
+    availableDraws,
+    selectedDraw,
+    setSelectedDraw,
+    isLoadingDraws,
+    drawLoadError,
+    selectedWinningNumber,
+    isLoadingWinningNumber,
+    winningNumberError,
+    searchedDraw,
+    isSearching,
+    searchError,
+    handleSearch,
+  };
+};
