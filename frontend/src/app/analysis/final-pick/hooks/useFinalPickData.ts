@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { isWinningNumberRow, type WinningNumberRow } from '../types';
 import { getTrendExcludedNumbers } from '../logic/trendExclusion';
 import { getAccumulatedAdoptedNumbers } from '../logic/accumulatedAdoption';
-import { getChiSquareAdoptedNumbers } from '../logic/chiSquareAdoption';
+import { buildChiSquareChartData, getChiSquareAdoptedNumbers, type ChiSquareChartDatum } from '../logic/chiSquareAdoption';
 import { getConsecutivelyAppearedMainNumbers } from '@/app/analysis/absence-streak/logic/streak';
 
 /**
@@ -32,6 +32,7 @@ type UseFinalPickDataResult = {
   excludedByStreakNumbers: number[];
   adoptedByAccumulatedNumbers: number[];
   adoptedByChiSquareNumbers: number[];
+  chiSquareChartData: ChiSquareChartDatum[];
   searchedDraw: string;
   isSearching: boolean;
   searchError: string | null;
@@ -99,6 +100,11 @@ export const useFinalPickData = (): UseFinalPickDataResult => {
       previousDrawRows,
       selectedMainNumbers,
     ],
+  );
+
+  const chiSquareChartData = useMemo(
+    () => buildChiSquareChartData(previousDrawRows, selectedMainNumbers),
+    [previousDrawRows, selectedMainNumbers],
   );
 
   useEffect(() => {
@@ -232,6 +238,7 @@ export const useFinalPickData = (): UseFinalPickDataResult => {
     excludedByStreakNumbers,
     adoptedByAccumulatedNumbers,
     adoptedByChiSquareNumbers,
+    chiSquareChartData,
     searchedDraw,
     isSearching,
     searchError,

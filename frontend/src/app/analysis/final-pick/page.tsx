@@ -32,6 +32,7 @@ export default function FinalPickPage() {
     excludedByStreakNumbers,
     adoptedByAccumulatedNumbers,
     adoptedByChiSquareNumbers,
+    chiSquareChartData,
   } = useFinalPickData();
 
   /** 본번호 6개만 추출(보너스 제외) — 패널/차트 hit 강조용. */
@@ -48,8 +49,6 @@ export default function FinalPickPage() {
     () => [...adoptedByAccumulatedNumbers, ...adoptedByChiSquareNumbers].sort((a, b) => a - b),
     [adoptedByAccumulatedNumbers, adoptedByChiSquareNumbers],
   );
-  const comprehensiveCounts: number[] | null = null;
-
   return (
     <div className="bg-background min-h-screen flex justify-center w-full overflow-x-hidden">
       <div className="bg-background text-foreground font-display min-h-screen flex flex-col w-full lg:w-[95%] xl:w-[95%] 2xl:w-[90%] max-w-[1920px] border-x border-card-border/30 relative shadow-2xl">
@@ -78,7 +77,7 @@ export default function FinalPickPage() {
           />
 
           <ComprehensiveChart
-            counts={comprehensiveCounts}
+            chartData={chiSquareChartData}
             highlightedNumbers={mainWinningNumberSet}
           />
 
