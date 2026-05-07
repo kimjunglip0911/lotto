@@ -3,9 +3,12 @@
 import React, { useState } from 'react';
 import { Header } from '@/components/common/Header';
 import { Sidebar } from '@/components/common/Sidebar';
+import { OddEvenProbabilityTable } from './components/OddEvenProbabilityTable';
+import { useOddEvenProbabilityData } from './hooks/useOddEvenProbabilityData';
 
 export default function CombinationAnalysisPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const { isLoading, loadError, totalDraws, distributionRows } = useOddEvenProbabilityData();
 
   return (
     <div className="bg-background min-h-screen flex justify-center w-full overflow-x-hidden">
@@ -14,7 +17,11 @@ export default function CombinationAnalysisPage() {
         <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
         <main className="flex-1 overflow-y-auto pb-12 px-4 pt-4 space-y-6">
-          {/* 추후 홀짝 / 구간별 번호 / 고저 확률 표 자리 */}
+          {isLoading && <p className="text-sm text-slate-300">데이터를 불러오는 중...</p>}
+          {!isLoading && loadError && <p className="text-sm text-rose-300">{loadError}</p>}
+          {!isLoading && !loadError && (
+            <OddEvenProbabilityTable totalDraws={totalDraws} rows={distributionRows} />
+          )}
         </main>
       </div>
     </div>

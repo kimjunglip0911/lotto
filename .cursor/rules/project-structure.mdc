@@ -117,7 +117,14 @@ lotto/
 │       │   │   │       ├── SearchPanel.tsx
 │       │   │   │       └── SelectedWinningNumbersStrip.tsx
 │       │   │   └── combination/
-│       │   │       └── page.tsx       # 조합 분석(빈 페이지, 추후 홀짝/구간/고저 표 자리)
+│       │   │       ├── page.tsx
+│       │   │       ├── types.ts
+│       │   │       ├── hooks/
+│       │   │       │   └── useOddEvenProbabilityData.ts
+│       │   │       ├── logic/
+│       │   │       │   └── buildOddEvenDistribution.ts
+│       │   │       └── components/
+│       │   │           └── OddEvenProbabilityTable.tsx
 │       │   ├── home/
 │       │   │   ├── page.tsx
 │       │   │   ├── hooks/
