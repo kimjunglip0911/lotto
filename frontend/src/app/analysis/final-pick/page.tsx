@@ -12,7 +12,6 @@ import {
   CHI_SQUARE_WALK_FORWARD_EXCLUSION_MAX_OVERLAP_ROUNDS,
   CHI_SQUARE_WALK_FORWARD_EXCLUSION_MAX_PCT_NUMERATOR,
 } from '@/app/analysis/chi-square/constants';
-import { TREND_EXCLUSION_THRESHOLD_PERCENT } from '@/app/analysis/trend/constants';
 import { useFinalPickData } from './hooks/useFinalPickData';
 import { extractMainNumbers } from './types';
 
@@ -31,7 +30,6 @@ export default function FinalPickPage() {
     isSearching,
     searchError,
     handleSearch,
-    excludedByTrendNumbers,
     excludedByStreakNumbers,
     accumulatedExclusion,
     adoptedByChiSquareNumbers,
@@ -90,7 +88,6 @@ export default function FinalPickPage() {
             highlightedNumbers={mainWinningNumberSet}
             accumulatedExcludedNumbers={accumulatedExclusion.excludedUnique}
             chiSquareAdoptedNumbers={adoptedByChiSquareNumbers}
-            trendExcludedNumbers={excludedByTrendNumbers}
             streakExcludedNumbers={excludedByStreakNumbers}
           />
 
@@ -102,19 +99,11 @@ export default function FinalPickPage() {
             mainWinningSet={mainWinningNumberSet}
           />
 
-          <SourceNumbersCard
-            title="추세 분석 — 후보 제외"
-            description={`기댓값 대비 EMA 편차 구간 출현확률이 ${TREND_EXCLUSION_THRESHOLD_PERCENT.toFixed(2)}% 이하인 번호 제외 (${TREND_EXCLUSION_THRESHOLD_PERCENT + 0.01}% 초과는 제외 아님)`}
-            tone="exclude"
-            numbers={excludedByTrendNumbers}
-            mainWinningSet={mainWinningNumberSet}
-          />
-
           <AccumulatedExclusionCard exclusion={accumulatedExclusion} mainWinningSet={mainWinningNumberSet} />
 
           <SourceNumbersCard
             title="카이제곱 검정 — 제외(조건부 확률)"
-            description={`구간이 나온 회차 대비 조회 당첨 본번호와 겹친 비율이 ${CHI_SQUARE_WALK_FORWARD_EXCLUSION_MAX_PCT_NUMERATOR}% 이하인 경우 (${CHI_SQUARE_WALK_FORWARD_EXCLUSION_MAX_PCT_NUMERATOR}.01% 초과는 제외 아님). 통합 채택은 잔여 번호에 누적·추세·연속 규칙을 적용합니다.`}
+            description={`구간이 나온 회차 대비 조회 당첨 본번호와 겹친 비율이 ${CHI_SQUARE_WALK_FORWARD_EXCLUSION_MAX_PCT_NUMERATOR}% 이하인 경우 (${CHI_SQUARE_WALK_FORWARD_EXCLUSION_MAX_PCT_NUMERATOR}.01% 초과는 제외 아님). 통합 채택은 잔여 번호에 누적·연속 규칙을 적용합니다.`}
             tone="exclude"
             numbers={excludedByChiSquareWalkForwardConditionalPct}
             mainWinningSet={mainWinningNumberSet}

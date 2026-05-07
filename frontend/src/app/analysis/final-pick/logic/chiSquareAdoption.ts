@@ -169,7 +169,7 @@ const buildFinalPickChiSquareWalkForwardContext = (
 };
 
 /**
- * 통합 분석 카드용 — 연속·추세·누적 필터와 무관하게, 워크포워드 규칙만으로 제외된 번호 목록.
+ * 통합 분석 카드용 — 연속·누적 필터와 무관하게, 워크포워드 규칙만으로 제외된 번호 목록.
  */
 export const getChiSquareWalkForwardExcludedNumbersFromPickInput = ({
   previousDrawRows,
@@ -195,14 +195,12 @@ export const getChiSquareFinalPickSlice = ({
   previousDrawRows,
   selectedMainNumbers,
   excludedByStreakNumbers,
-  excludedByTrendNumbers,
   /** 누적 출현 극값으로 정한 번호 — 카이제곱 잔여 후보에서 제외한다. */
   accumulatedExclusionNumbers,
 }: {
   previousDrawRows: WinningNumberRow[];
   selectedMainNumbers: number[];
   excludedByStreakNumbers: number[];
-  excludedByTrendNumbers: number[];
   accumulatedExclusionNumbers: number[];
 }): ChiSquareFinalPickSlice => {
   const ctx = buildFinalPickChiSquareWalkForwardContext(previousDrawRows, selectedMainNumbers);
@@ -214,11 +212,7 @@ export const getChiSquareFinalPickSlice = ({
       walkForwardExcludedByOverlapRounds: [],
     };
   }
-  const excludedSet = new Set<number>([
-    ...excludedByStreakNumbers,
-    ...excludedByTrendNumbers,
-    ...accumulatedExclusionNumbers,
-  ]);
+  const excludedSet = new Set<number>([...excludedByStreakNumbers, ...accumulatedExclusionNumbers]);
   return {
     adopted: ctx.survivors.filter((n) => !excludedSet.has(n)),
     walkForwardExcluded: ctx.walkForwardExcluded,
@@ -289,19 +283,16 @@ export const getChiSquareAdoptedNumbers = ({
   previousDrawRows,
   selectedMainNumbers,
   excludedByStreakNumbers,
-  excludedByTrendNumbers,
   accumulatedExclusionNumbers,
 }: {
   previousDrawRows: WinningNumberRow[];
   selectedMainNumbers: number[];
   excludedByStreakNumbers: number[];
-  excludedByTrendNumbers: number[];
   accumulatedExclusionNumbers: number[];
 }): number[] =>
   getChiSquareFinalPickSlice({
     previousDrawRows,
     selectedMainNumbers,
     excludedByStreakNumbers,
-    excludedByTrendNumbers,
     accumulatedExclusionNumbers,
   }).adopted;

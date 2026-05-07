@@ -12,8 +12,6 @@ type ComprehensiveChartProps = {
   accumulatedExcludedNumbers?: number[];
   /** 카이제곱 검정 채택 번호 — 막대 외곽 빨간색 테두리 */
   chiSquareAdoptedNumbers?: number[];
-  /** 추세 분석 제외 번호 — 막대 위 파란 동그라미 */
-  trendExcludedNumbers?: number[];
   /** 연속 미출현 분석 제외 번호 — 막대 위 하늘색 동그라미 */
   streakExcludedNumbers?: number[];
 };
@@ -28,27 +26,19 @@ function getChiSquareAdoptionBorderClass(number: number, chiSquareSet: Set<numbe
 
 type ExclusionMarkersProps = {
   number: number;
-  trendSet: Set<number>;
   streakSet: Set<number>;
   accumulatedSet: Set<number>;
 };
 
-/** 추세(파랑 위)·연속(가운데)·누적 제외(앰버, 막대에 가장 가까움) 세로 stack. */
-function ExclusionMarkers({ number, trendSet, streakSet, accumulatedSet }: ExclusionMarkersProps) {
-  const trend = trendSet.has(number);
+/** 연속(위)·누적 제외(앰버, 막대에 가장 가까움) 세로 stack. */
+function ExclusionMarkers({ number, streakSet, accumulatedSet }: ExclusionMarkersProps) {
   const streak = streakSet.has(number);
   const accumulated = accumulatedSet.has(number);
   return (
     <div
       className="flex h-[22px] shrink-0 flex-col items-center justify-end gap-0.5"
-      aria-hidden={!trend && !streak && !accumulated}
+      aria-hidden={!streak && !accumulated}
     >
-      {trend ? (
-        <span
-          className="block size-1.5 shrink-0 rounded-full bg-blue-500"
-          aria-label="추세 분석 후보 제외"
-        />
-      ) : null}
       {streak ? (
         <span
           className="block size-1.5 shrink-0 rounded-full bg-sky-400"
@@ -72,14 +62,13 @@ function ExclusionMarkers({ number, trendSet, streakSet, accumulatedSet }: Exclu
  * - 막대 토큰(`w-8`, `h-[145px]`)은 누적 분석의 `AccumulatedChartSection`과 동일하게 맞춰
  *   향후 실데이터를 주입했을 때 시각 일관성이 유지되도록 한다.
  *
- * 기법별 표시: 카이제곱 채택은 막대 외곽 테두리, 추세·연속·누적 제외는 막대 위 동그라미.
+ * 기법별 표시: 카이제곱 채택은 막대 외곽 테두리, 연속·누적 제외는 막대 위 동그라미.
  */
 export function ComprehensiveChart({
   chartData,
   highlightedNumbers,
   accumulatedExcludedNumbers,
   chiSquareAdoptedNumbers,
-  trendExcludedNumbers,
   streakExcludedNumbers,
 }: ComprehensiveChartProps) {
   const hasData = chartData.length === 45;
@@ -94,7 +83,6 @@ export function ComprehensiveChart({
     () => new Set(chiSquareAdoptedNumbers ?? []),
     [chiSquareAdoptedNumbers],
   );
-  const trendSet = useMemo(() => new Set(trendExcludedNumbers ?? []), [trendExcludedNumbers]);
   const streakSet = useMemo(() => new Set(streakExcludedNumbers ?? []), [streakExcludedNumbers]);
 
   return (
@@ -111,10 +99,6 @@ export function ComprehensiveChart({
         <span className="inline-flex items-center gap-1.5">
           <span className="inline-block size-1.5 shrink-0 rounded-full bg-amber-400" />
           누적 제외
-        </span>
-        <span className="inline-flex items-center gap-1.5">
-          <span className="inline-block size-1.5 shrink-0 rounded-full bg-blue-500" />
-          추세 제외
         </span>
         <span className="inline-flex items-center gap-1.5">
           <span className="inline-block size-1.5 shrink-0 rounded-full bg-sky-400" />
@@ -142,7 +126,6 @@ export function ComprehensiveChart({
                     </span>
                     <ExclusionMarkers
                       number={number}
-                      trendSet={trendSet}
                       streakSet={streakSet}
                       accumulatedSet={accumulatedExcludedSet}
                     />
@@ -179,7 +162,6 @@ export function ComprehensiveChart({
                   <span className="text-[11px] leading-none text-slate-500 tabular-nums">·</span>
                   <ExclusionMarkers
                     number={number}
-                    trendSet={trendSet}
                     streakSet={streakSet}
                     accumulatedSet={accumulatedExcludedSet}
                   />

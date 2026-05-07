@@ -42,7 +42,7 @@ const TONE_CLASSES: Record<
  * 통합 분석 페이지의 출처별 번호 카드.
  *
  * - tone에 따라 색조만 바뀌는 동일 마크업이라 단일 컴포넌트로 정리한다.
- *   - `exclude`: 연속 미출현·추세에서 후보 풀에서 빼는 번호 (rose)
+ *   - `exclude`: 연속 미출현 등에서 후보 풀에서 빼는 번호 (rose)
  *   - `adoptAccumulated`: 누적 분석 채택 번호 (emerald)
  *   - `adoptChiSquare`: 카이제곱 채택 번호 (sky)
  * - 빈 상태에는 `targetCount`만큼 dashed 슬롯을 깔아 레이아웃이 무너지지 않도록 한다.

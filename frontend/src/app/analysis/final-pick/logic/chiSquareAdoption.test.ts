@@ -164,7 +164,6 @@ describe('chiSquareAdoption', () => {
       previousDrawRows: createRows(220),
       selectedMainNumbers: [1, 2, 3, 4, 5, 6],
       excludedByStreakNumbers: [],
-      excludedByTrendNumbers: [],
       accumulatedExclusionNumbers: [],
     });
     expect(slice.adopted.length).toBeGreaterThan(0);
@@ -179,7 +178,6 @@ describe('chiSquareAdoption', () => {
       previousDrawRows: createRows(220),
       selectedMainNumbers: [1, 2, 3, 4, 5, 6],
       excludedByStreakNumbers: [],
-      excludedByTrendNumbers: [],
       accumulatedExclusionNumbers: [],
     });
     expect(base.length).toBeGreaterThanOrEqual(4);
@@ -188,8 +186,7 @@ describe('chiSquareAdoption', () => {
     const result = getChiSquareAdoptedNumbers({
       previousDrawRows: createRows(220),
       selectedMainNumbers: [1, 2, 3, 4, 5, 6],
-      excludedByStreakNumbers: [base[0] as number, base[1] as number],
-      excludedByTrendNumbers: [base[2] as number],
+      excludedByStreakNumbers: [base[0] as number, base[1] as number, base[2] as number],
       accumulatedExclusionNumbers: [base[3] as number],
     });
 

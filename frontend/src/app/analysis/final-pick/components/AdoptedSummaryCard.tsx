@@ -23,7 +23,7 @@ export function AdoptedSummaryCard({
       <div className="flex items-baseline justify-between gap-3 flex-wrap">
         <h2 className="text-lg font-semibold text-emerald-200">통합 채택 번호 {targetCount}</h2>
         <span className="text-xs font-medium text-emerald-100/80">
-          워크포워드 잔여 중 연속·추세·누적 출현 극값 제외 후 카이제곱 순위로 남은 번호
+          워크포워드 잔여 중 연속·누적 출현 극값 제외 후 카이제곱 순위로 남은 번호
         </span>
       </div>
 
