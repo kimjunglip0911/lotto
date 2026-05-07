@@ -3,12 +3,15 @@
 import React, { useState } from 'react';
 import { Header } from '@/components/common/Header';
 import { Sidebar } from '@/components/common/Sidebar';
+import { ConsecutiveNumberTable } from './components/ConsecutiveNumberTable';
 import { OddEvenProbabilityTable } from './components/OddEvenProbabilityTable';
-import { useOddEvenProbabilityData } from './hooks/useOddEvenProbabilityData';
+import { PositionBandProbabilityTable } from './components/PositionBandProbabilityTable';
+import { useCombinationAnalysisData } from './hooks/useCombinationAnalysisData';
 
 export default function CombinationAnalysisPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const { isLoading, loadError, totalDraws, distributionRows } = useOddEvenProbabilityData();
+  const { isLoading, loadError, totalDraws, oddEvenRows, consecutiveRows, positionBandRows } =
+    useCombinationAnalysisData();
 
   return (
     <div className="bg-background min-h-screen flex justify-center w-full overflow-x-hidden">
@@ -20,7 +23,15 @@ export default function CombinationAnalysisPage() {
           {isLoading && <p className="text-sm text-slate-300">데이터를 불러오는 중...</p>}
           {!isLoading && loadError && <p className="text-sm text-rose-300">{loadError}</p>}
           {!isLoading && !loadError && (
-            <OddEvenProbabilityTable totalDraws={totalDraws} rows={distributionRows} />
+            <>
+              <div className="flex flex-col lg:flex-row lg:items-start gap-6">
+                <div className="flex-1 min-w-0">
+                  <OddEvenProbabilityTable totalDraws={totalDraws} rows={oddEvenRows} />
+                </div>
+                <ConsecutiveNumberTable totalDraws={totalDraws} rows={consecutiveRows} />
+              </div>
+              <PositionBandProbabilityTable totalDraws={totalDraws} rows={positionBandRows} />
+            </>
           )}
         </main>
       </div>

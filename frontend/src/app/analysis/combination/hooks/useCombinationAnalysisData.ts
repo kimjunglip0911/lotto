@@ -1,22 +1,34 @@
 import { useEffect, useState } from 'react';
 import { isWinningNumberRow } from '@/app/analysis/chi-square/logic/guards';
+import { buildConsecutiveRunDistribution } from '../logic/buildConsecutiveRunDistribution';
 import { buildOddEvenDistribution } from '../logic/buildOddEvenDistribution';
-import type { OddEvenDistributionRow } from '../types';
+import { buildPositionBandDistribution } from '../logic/buildPositionBandDistribution';
+import type {
+  ConsecutiveRunDistributionRow,
+  OddEvenDistributionRow,
+  PositionBandDistributionRow,
+} from '../types';
 
-const EMPTY_ROWS = buildOddEvenDistribution([]).rows;
+const EMPTY_ODD_EVEN = buildOddEvenDistribution([]).rows;
+const EMPTY_CONSECUTIVE = buildConsecutiveRunDistribution([]).rows;
 
-type UseOddEvenProbabilityDataResult = {
+type UseCombinationAnalysisDataResult = {
   isLoading: boolean;
   loadError: string | null;
   totalDraws: number;
-  distributionRows: OddEvenDistributionRow[];
+  oddEvenRows: OddEvenDistributionRow[];
+  consecutiveRows: ConsecutiveRunDistributionRow[];
+  positionBandRows: PositionBandDistributionRow[];
 };
 
-export function useOddEvenProbabilityData(): UseOddEvenProbabilityDataResult {
+export function useCombinationAnalysisData(): UseCombinationAnalysisDataResult {
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [totalDraws, setTotalDraws] = useState(0);
-  const [distributionRows, setDistributionRows] = useState<OddEvenDistributionRow[]>(EMPTY_ROWS);
+  const [oddEvenRows, setOddEvenRows] = useState<OddEvenDistributionRow[]>(EMPTY_ODD_EVEN);
+  const [consecutiveRows, setConsecutiveRows] =
+    useState<ConsecutiveRunDistributionRow[]>(EMPTY_CONSECUTIVE);
+  const [positionBandRows, setPositionBandRows] = useState<PositionBandDistributionRow[]>([]);
 
   useEffect(() => {
     let isMounted = true;
@@ -42,7 +54,9 @@ export function useOddEvenProbabilityData(): UseOddEvenProbabilityDataResult {
 
         if (draws.length === 0) {
           setTotalDraws(0);
-          setDistributionRows(EMPTY_ROWS);
+          setOddEvenRows(EMPTY_ODD_EVEN);
+          setConsecutiveRows(EMPTY_CONSECUTIVE);
+          setPositionBandRows([]);
           return;
         }
 
@@ -59,16 +73,22 @@ export function useOddEvenProbabilityData(): UseOddEvenProbabilityDataResult {
           throw new Error('Winning numbers range response is not an array');
         }
         const validRows = rangePayload.filter(isWinningNumberRow);
-        const { totalDraws: nextTotal, rows } = buildOddEvenDistribution(validRows);
+        const oddEven = buildOddEvenDistribution(validRows);
+        const consecutive = buildConsecutiveRunDistribution(validRows);
+        const positionBand = buildPositionBandDistribution(validRows);
         if (!isMounted) return;
-        setTotalDraws(nextTotal);
-        setDistributionRows(rows);
+        setTotalDraws(oddEven.totalDraws);
+        setOddEvenRows(oddEven.rows);
+        setConsecutiveRows(consecutive.rows);
+        setPositionBandRows(positionBand.rows);
       } catch (error) {
         if (abortController.signal.aborted || !isMounted) return;
-        console.error('Error loading odd/even distribution:', error);
+        console.error('Error loading combination analysis:', error);
         setLoadError('데이터를 불러오지 못했습니다.');
         setTotalDraws(0);
-        setDistributionRows(EMPTY_ROWS);
+        setOddEvenRows(EMPTY_ODD_EVEN);
+        setConsecutiveRows(EMPTY_CONSECUTIVE);
+        setPositionBandRows([]);
       } finally {
         if (isMounted) setIsLoading(false);
       }
@@ -81,5 +101,5 @@ export function useOddEvenProbabilityData(): UseOddEvenProbabilityDataResult {
     };
   }, []);
 
-  return { isLoading, loadError, totalDraws, distributionRows };
+  return { isLoading, loadError, totalDraws, oddEvenRows, consecutiveRows, positionBandRows };
 }
