@@ -7,7 +7,8 @@ export const NUMBER_BAND_LABELS = ['1~9', '10~19', '20~29', '30~39', '40~45'] as
 const BAND_COUNT = NUMBER_BAND_LABELS.length;
 const POSITION_COUNT = 6;
 
-function numberToBandIndex(n: number): number {
+/** 1~45를 5구간 인덱스(0~4)로 매핑 — 조합 세트 검증에서 동일 규칙 재사용 */
+export function numberToBandIndex(n: number): number {
   if (n <= 9) return 0;
   if (n <= 19) return 1;
   if (n <= 29) return 2;

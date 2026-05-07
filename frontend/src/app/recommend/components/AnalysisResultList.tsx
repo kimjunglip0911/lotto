@@ -1,23 +1,16 @@
 'use client';
 
 import React from 'react';
-import { GeneratedSet, RecommendRuleResult } from '@/app/recommend/logic/types';
-import {
-  DEFAULT_RULE_DISPLAY,
-  getAvailableNumbers,
-  getDisplayExcludedNumbers,
-  getGlobalRestoredSet,
-  getStrategyBadge,
-  getStrategyLabel,
-  RULE_DISPLAY,
-} from '@/app/recommend/components/analysisResultView';
+import { GeneratedSet } from '@/app/recommend/logic/types';
+import { getStrategyBadge, getStrategyLabel } from '@/app/recommend/components/analysisResultView';
 
 interface AnalysisResultListProps {
   statusMessage?: string | null;
   targetDrawNo?: number | null;
-  appliedRules?: RecommendRuleResult[];
-  excludedNumbers?: number[];
-  usedNumbers?: number[];
+  /** 통합 분석과 동일 경로의 최종 채택 번호 */
+  adoptedNumbers?: number[];
+  /** 조합 생성 요약(합 구간 등) */
+  combinationSummaryLines?: string[];
   sets?: GeneratedSet[];
   winningNumbers?: number[];
 }
@@ -25,132 +18,67 @@ interface AnalysisResultListProps {
 export const AnalysisResultList: React.FC<AnalysisResultListProps> = ({
   statusMessage,
   targetDrawNo,
-  appliedRules = [],
-  excludedNumbers = [],
-  usedNumbers = [],
+  adoptedNumbers = [],
+  combinationSummaryLines = [],
   sets = [],
   winningNumbers,
 }) => {
-  /** 모든 규칙에서 복원된 번호의 합집합 - 어느 규칙 카드에서도 제외 번호로 표시하지 않는다 */
-  const globalRestoredSet = getGlobalRestoredSet(appliedRules);
   const winningSet = new Set(winningNumbers ?? []);
-  const availableNumbers = getAvailableNumbers(excludedNumbers);
 
   return (
     <div className="mt-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className="rounded-xl border border-card-border/60 bg-card/30 px-5 py-6 text-sm text-slate-300 space-y-4">
-        <h4 className="text-base font-semibold text-white">추천 로직 실행 결과</h4>
-        <p>추천 로직은 제외 번호를 누적한 뒤 최종 추천 세트를 생성 및 저장합니다.</p>
+        <h4 className="text-base font-semibold text-white">추천 생성 결과</h4>
+        <p>
+          통합 분석에서 확정한 채택 번호 풀과 조합 분석(고저 합·홀짝·연속·구간별) 통계를 사용해 세트를
+          만듭니다. 기준 회차에 당첨번호가 DB에 있어야 통합 채택이 계산됩니다.
+        </p>
         {targetDrawNo ? <p className="text-slate-200">기준 회차: {targetDrawNo}회</p> : null}
         {statusMessage ? <p className="text-emerald-300">{statusMessage}</p> : null}
 
-        {/* 누적번호분석 최종 채택 4개 */}
-        <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 px-4 py-3 space-y-2">
-          <p className="text-sm font-semibold text-amber-300">사용 번호 (누적번호분석 최종 4개)</p>
-          {usedNumbers.length > 0 ? (
+        <div className="rounded-lg border border-emerald-400/35 bg-emerald-500/10 px-4 py-3 space-y-2">
+          <p className="text-sm font-semibold text-emerald-200">통합 채택 번호</p>
+          {adoptedNumbers.length > 0 ? (
             <div className="flex flex-wrap gap-1.5">
-              {usedNumbers.map((num) => (
+              {[...adoptedNumbers].sort((a, b) => a - b).map((num) => (
                 <span
-                  key={`used-${num}`}
-                  className={`inline-flex h-7 min-w-7 items-center justify-center rounded-full px-2 text-xs font-bold ${winningSet.has(num) ? 'bg-red-600/80 text-white border border-red-400' : 'bg-amber-500/20 text-amber-200 border border-amber-500/40'}`}
+                  key={`adopted-${num}`}
+                  className={`inline-flex h-7 min-w-7 items-center justify-center rounded-full px-2 text-xs font-bold ${winningSet.has(num) ? 'bg-amber-400/90 text-slate-900 border border-amber-200' : 'bg-emerald-400/20 text-emerald-100 border border-emerald-400/40'}`}
                 >
                   {num}
                 </span>
               ))}
             </div>
           ) : (
-            <p className="text-xs text-slate-500">해당 없음</p>
+            <p className="text-xs text-slate-500">당첨번호 조회 후 채택이 계산되거나, 생성 실행 후 표시됩니다.</p>
           )}
         </div>
 
-        {/* 규칙별 제외 번호 구분 표시 */}
-        {appliedRules.length > 0 ? (
-          <div className="space-y-3">
-            <p className="text-slate-100 font-semibold">적용된 로직</p>
-            {appliedRules.map((rule) => {
-              const display = RULE_DISPLAY[rule.ruleId] ?? DEFAULT_RULE_DISPLAY;
-              /**
-               * 누적 규칙은 복원 대상이 아니므로 필터 없이 그대로 표시.
-               * 나머지 규칙은 복원된 번호를 제거한다.
-               */
-              const displayExcluded = getDisplayExcludedNumbers(rule, globalRestoredSet);
-              return (
-                <div
-                  key={rule.ruleId}
-                  className="rounded-lg border border-white/10 bg-slate-900/40 px-4 py-3 space-y-2"
-                >
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className={`text-sm font-semibold ${display.headerClass}`}>
-                      {display.label}
-                    </span>
-                    <span className="text-xs text-slate-500">({rule.ruleName})</span>
-                  </div>
-                  <p className="text-xs text-slate-400">{rule.reason}</p>
-                  {displayExcluded.length > 0 ? (
-                    <div className="flex flex-wrap gap-1.5">
-                      {displayExcluded.map((num) => (
-                        <span
-                          key={`${rule.ruleId}-${num}`}
-                          className={`inline-flex h-7 min-w-7 items-center justify-center rounded-full px-2 text-xs font-bold ${winningSet.has(num) ? 'bg-red-600/80 text-white border border-red-400' : display.badgeClass}`}
-                        >
-                          {num}
-                        </span>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-xs text-slate-500">해당 없음</p>
-                  )}
-                  {rule.restoredNumbers && rule.restoredNumbers.length > 0 ? (
-                    <div className="mt-2 space-y-1">
-                      <p className="text-xs font-semibold text-emerald-400">추세 복원 번호 (제외 목록에서 제거)</p>
-                      <div className="flex flex-wrap gap-1.5">
-                        {[...new Set(rule.restoredNumbers)].sort((a, b) => a - b).map((num) => (
-                          <span
-                            key={`${rule.ruleId}-restored-${num}`}
-                            className="inline-flex h-7 min-w-7 items-center justify-center rounded-full px-2 text-xs font-bold bg-emerald-500/20 text-emerald-200 border border-emerald-500/40"
-                          >
-                            {num}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  ) : null}
-                </div>
-              );
-            })}
+        {combinationSummaryLines.length > 0 ? (
+          <div className="rounded-lg border border-sky-500/30 bg-sky-500/5 px-4 py-3 space-y-1.5">
+            <p className="text-sm font-semibold text-sky-200">조합 분석 요약</p>
+            <ul className="list-disc list-inside text-xs text-slate-300 space-y-0.5">
+              {combinationSummaryLines.map((line, i) => (
+                <li key={`combo-sum-${i}`}>{line}</li>
+              ))}
+            </ul>
           </div>
         ) : null}
 
-        {/* 전체 사용 가능 번호 */}
-        <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 px-4 py-3 space-y-2">
-          <p className="text-sm font-semibold text-emerald-300">전체 사용 가능 번호</p>
-          {availableNumbers.length > 0 ? (
-            <div className="flex flex-wrap gap-1.5">
-              {availableNumbers.map((num) => (
-                <span
-                  key={`available-${num}`}
-                  className={`inline-flex h-7 min-w-7 items-center justify-center rounded-full px-2 text-xs font-bold ${winningSet.has(num) ? 'bg-red-600/80 text-white border border-red-400' : 'bg-emerald-500/25 text-emerald-200 border border-emerald-500/40'}`}
-                >
-                  {num}
-                </span>
-              ))}
-            </div>
-          ) : (
-            <p className="text-xs text-slate-500">해당 없음</p>
-          )}
-        </div>
-
-        {/* 생성된 추천 세트 */}
         {sets.length > 0 ? (
           <div className="pt-1 space-y-2">
             <p className="text-slate-100 font-semibold">생성된 추천 세트</p>
             <ul className="space-y-1.5">
               {sets.map((set, index) => (
-                <li key={`${set.method}-${index}`} className="flex items-center gap-2 text-slate-200">
+                <li key={`${set.method}-${set.num1}-${set.num2}-${index}`} className="flex items-center gap-2 text-slate-200">
                   <span className="w-6 text-right text-xs text-slate-500 shrink-0">{index + 1}.</span>
-                  <span>{set.num1}, {set.num2}, {set.num3}, {set.num4}, {set.num5}, {set.num6}</span>
+                  <span>
+                    {set.num1}, {set.num2}, {set.num3}, {set.num4}, {set.num5}, {set.num6}
+                  </span>
                   {set.strategy ? (
-                    <span className={`ml-auto shrink-0 inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-semibold border ${getStrategyBadge(set.strategy)}`}>
+                    <span
+                      className={`ml-auto shrink-0 inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-semibold border ${getStrategyBadge(set.strategy)}`}
+                    >
                       {getStrategyLabel(set.strategy)}
                     </span>
                   ) : null}

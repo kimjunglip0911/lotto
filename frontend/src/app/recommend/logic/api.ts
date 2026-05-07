@@ -1,3 +1,5 @@
+import { isWinningNumberRow } from '@/app/analysis/chi-square/logic/guards'
+import type { WinningNumberRow } from '@/app/analysis/chi-square/types'
 import { buildTrendResults, toWinningRows } from '@/app/recommend/logic/trend'
 import {
   ChiSquareHistoryRow,
@@ -34,6 +36,29 @@ export async function fetchDrawNumbers(apiUrl: string): Promise<number[]> {
     throw new Error('Draw numbers response is not an array')
   }
   return data.filter((item): item is number => typeof item === 'number')
+}
+
+/** 조합 분석 페이지와 동일: chi-square 회차 목록 + `max+1` 미만 전체 당첨 행 */
+export async function fetchChiSquareFullHistory(apiUrl: string): Promise<WinningNumberRow[]> {
+  const drawsData = await fetchJson(`${apiUrl}/api/analysis/chi-square/draw-numbers`)
+  if (!Array.isArray(drawsData)) {
+    throw new Error('Draw numbers response is not an array')
+  }
+  const draws = drawsData.filter((item): item is number => typeof item === 'number')
+  if (draws.length === 0) return []
+
+  const maxDraw = Math.max(...draws)
+  const rangeResponse = await fetch(
+    `${apiUrl}/api/analysis/chi-square/winning-numbers-range?draw_no=${maxDraw + 1}`,
+  )
+  if (!rangeResponse.ok) {
+    throw new Error(`Failed to fetch winning numbers range: ${rangeResponse.status}`)
+  }
+  const rangePayload: unknown = await rangeResponse.json()
+  if (!Array.isArray(rangePayload)) {
+    throw new Error('Winning numbers range response is not an array')
+  }
+  return rangePayload.filter(isWinningNumberRow)
 }
 
 export interface RecommendBaseData {

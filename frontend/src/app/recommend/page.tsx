@@ -28,19 +28,19 @@ export default function RecommendPage() {
     setStatusMessage,
     error,
     setError,
-    pipelineResult,
-    setPipelineResult,
     generatedSets,
     setGeneratedSets,
     winningNumbers,
-    usedNumbers,
-    setUsedNumbers,
+    adoptedNumbers,
+    setAdoptedNumbers,
+    combinationSummaryLines,
+    setCombinationSummaryLines,
   } = useRecommendData();
   const { isGenerating, handleGenerateAndSave } = useRecommendGeneration({
     selectedDraw,
-    setPipelineResult,
     setGeneratedSets,
-    setUsedNumbers,
+    setAdoptedNumbers,
+    setCombinationSummaryLines,
     setStatusMessage,
     setError,
   });
@@ -65,9 +65,8 @@ export default function RecommendPage() {
           <AnalysisResultList
             statusMessage={statusMessage}
             targetDrawNo={selectedDraw}
-            appliedRules={pipelineResult?.appliedRules ?? []}
-            excludedNumbers={pipelineResult?.excludedNumbers ?? []}
-            usedNumbers={usedNumbers}
+            adoptedNumbers={adoptedNumbers}
+            combinationSummaryLines={combinationSummaryLines}
             sets={generatedSets}
             winningNumbers={winningNumbers ?? undefined}
           />

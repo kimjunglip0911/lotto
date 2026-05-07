@@ -1,85 +1,105 @@
 'use client'
 
 import { useState } from 'react'
-import { generate20Sets } from '@/app/recommend/logic/generator'
-import { generateAndSaveSets, fetchRecommendBaseData, errorMessage } from '@/app/recommend/logic/api'
-import { toRecommendPipelineBaseContext } from '@/app/recommend/logic/pipelineContext'
-import { runRecommendPipeline } from '@/app/recommend/logic/pipeline'
-import { GeneratedSet, RecommendPipelineResult, TrendNumberResult, WinningHistoryRow } from '@/app/recommend/logic/types'
-import { RECOMMEND_RULES } from '@/app/recommend/hooks/recommendRules'
+import {
+  generateCombinationBasedSets,
+  TARGET_SET_COUNT,
+} from '@/app/recommend/logic/combinationBasedSets'
+import {
+  errorMessage,
+  fetchChiSquareFullHistory,
+  generateAndSaveSets,
+} from '@/app/recommend/logic/api'
+import { fetchFinalPickAdopted } from '@/app/recommend/logic/finalPickAdopted'
+import { GeneratedSet } from '@/app/recommend/logic/types'
 import { useRecommendApiUrl } from '@/app/recommend/hooks/useRecommendApiUrl'
+
+const APPLIED_RULE_IDS = ['final-pick-adopted', 'combination-30sets'] as const
 
 interface UseRecommendGenerationOptions {
   selectedDraw: number | null
-  setPipelineResult: (value: RecommendPipelineResult | null) => void
   setGeneratedSets: (value: GeneratedSet[]) => void
-  setUsedNumbers: (value: number[]) => void
+  setAdoptedNumbers: (value: number[]) => void
+  setCombinationSummaryLines: (value: string[]) => void
   setStatusMessage: (value: string | null) => void
   setError: (value: string | null) => void
 }
 
 export function useRecommendGeneration({
   selectedDraw,
-  setPipelineResult,
   setGeneratedSets,
-  setUsedNumbers,
+  setAdoptedNumbers,
+  setCombinationSummaryLines,
   setStatusMessage,
   setError,
 }: UseRecommendGenerationOptions) {
   const [isGenerating, setIsGenerating] = useState(false)
   const apiUrl = useRecommendApiUrl()
 
-  const buildGeneratedSetsPayload = (
-    pipelineResult: RecommendPipelineResult,
-    trendResults: TrendNumberResult[],
-    allHistoryRows: WinningHistoryRow[],
-  ) => {
-    const excludedSet = new Set(pipelineResult.excludedNumbers)
-    const availableNumbers = Array.from({ length: 45 }, (_, i) => i + 1).filter((n) => !excludedSet.has(n))
-
-    return generate20Sets(availableNumbers, trendResults, allHistoryRows).map((set) => ({
-      ...set,
-      applied_rule_ids: pipelineResult.appliedRules.map((rule) => rule.ruleId),
-      excluded_numbers: pipelineResult.excludedNumbers,
-    }))
-  }
-
   const handleGenerateAndSave = async () => {
     if (!selectedDraw) return
     setIsGenerating(true)
     setError(null)
-    setStatusMessage('분석 기반 제외 후보를 조회하는 중입니다...')
+    setStatusMessage('통합 채택 번호와 조합 통계를 불러오는 중입니다...')
 
     try {
-      const baseData = await fetchRecommendBaseData(apiUrl, selectedDraw)
-      const nextPipelineResult = runRecommendPipeline(toRecommendPipelineBaseContext(baseData), RECOMMEND_RULES)
-      setPipelineResult(nextPipelineResult)
-      setUsedNumbers(baseData.usedNumbersPlan.numbers)
-      setStatusMessage('추천 번호를 생성하고 저장하는 중입니다...')
+      const [adoptedResult, fullHistory] = await Promise.all([
+        fetchFinalPickAdopted(apiUrl, selectedDraw),
+        fetchChiSquareFullHistory(apiUrl),
+      ])
 
-      const generatedSetsPayload = buildGeneratedSetsPayload(
-        nextPipelineResult,
-        baseData.trendResults,
-        baseData.allHistoryRows,
-      )
+      if (adoptedResult.error) {
+        throw new Error(adoptedResult.error)
+      }
+
+      const adopted = adoptedResult.adopted
+      setAdoptedNumbers(adopted)
+
+      if (adopted.length < 6) {
+        throw new Error('통합 채택 번호가 6개 미만입니다. 당첨번호가 등록된 회차인지 확인해 주세요.')
+      }
+
+      setStatusMessage(`조합 제약을 적용해 ${TARGET_SET_COUNT}세트를 생성하는 중입니다...`)
+
+      const { sets, summaryLines, warning } = await generateCombinationBasedSets(fullHistory, adopted)
+      setCombinationSummaryLines([
+        ...(adoptedResult.infoMessage ? [adoptedResult.infoMessage] : []),
+        ...summaryLines,
+      ])
+
+      if (sets.length === 0) {
+        throw new Error(summaryLines.join(' ') || '세트를 생성하지 못했습니다.')
+      }
+
+      const excludedNumbers = Array.from({ length: 45 }, (_, i) => i + 1).filter((n) => !adopted.includes(n))
+
+      const payloadSets = sets.map((set) => ({
+        ...set,
+        applied_rule_ids: [...APPLIED_RULE_IDS],
+        excluded_numbers: excludedNumbers,
+      }))
+
+      setStatusMessage('서버에 저장하는 중입니다...')
 
       const generatedData = await generateAndSaveSets(apiUrl, {
-        drawNo: baseData.exclusionCandidates.drawNo,
-        appliedRuleIds: nextPipelineResult.appliedRules.map((rule) => rule.ruleId),
-        excludedNumbers: nextPipelineResult.excludedNumbers,
-        sets: generatedSetsPayload,
+        drawNo: selectedDraw,
+        appliedRuleIds: [...APPLIED_RULE_IDS],
+        excludedNumbers,
+        sets: payloadSets,
       })
 
       setGeneratedSets(generatedData)
+      const refNote = adoptedResult.infoMessage ? ` ${adoptedResult.infoMessage}` : ''
+      const tail = warning ? ` (${warning})` : ''
       setStatusMessage(
-        `${baseData.exclusionCandidates.drawNo}회차 기준으로 ${generatedData.length}개 추천 세트를 생성 및 저장했습니다.`,
+        `${selectedDraw}회차 기준으로 ${generatedData.length}개 세트를 생성·저장했습니다.${refNote}${tail}`,
       )
     } catch (err: unknown) {
       const msg = errorMessage(err)
       setError(msg)
-      setPipelineResult(null)
       setGeneratedSets([])
-      setUsedNumbers([])
+      setAdoptedNumbers([])
+      setCombinationSummaryLines([])
       setStatusMessage(null)
     } finally {
       setIsGenerating(false)
