@@ -120,11 +120,13 @@ lotto/
 │       │   │       ├── page.tsx
 │       │   │       ├── types.ts
 │       │   │       ├── hooks/
-│       │   │       │   └── useOddEvenProbabilityData.ts
+│       │   │       │   └── useCombinationAnalysisData.ts
 │       │   │       ├── logic/
-│       │   │       │   └── buildOddEvenDistribution.ts
+│       │   │       │   ├── buildOddEvenDistribution.ts
+│       │   │       │   └── buildPositionBandDistribution.ts
 │       │   │       └── components/
-│       │   │           └── OddEvenProbabilityTable.tsx
+│       │   │           ├── OddEvenProbabilityTable.tsx
+│       │   │           └── PositionBandProbabilityTable.tsx
 │       │   ├── home/
 │       │   │   ├── page.tsx
 │       │   │   ├── hooks/

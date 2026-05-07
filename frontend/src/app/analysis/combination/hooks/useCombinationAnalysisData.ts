@@ -3,10 +3,12 @@ import { isWinningNumberRow } from '@/app/analysis/chi-square/logic/guards';
 import { buildConsecutiveRunDistribution } from '../logic/buildConsecutiveRunDistribution';
 import { buildOddEvenDistribution } from '../logic/buildOddEvenDistribution';
 import { buildPositionBandDistribution } from '../logic/buildPositionBandDistribution';
+import { buildSumExtremeStats } from '../logic/buildSumExtremeStats';
 import type {
   ConsecutiveRunDistributionRow,
   OddEvenDistributionRow,
   PositionBandDistributionRow,
+  SumExtremeStats,
 } from '../types';
 
 const EMPTY_ODD_EVEN = buildOddEvenDistribution([]).rows;
@@ -19,6 +21,7 @@ type UseCombinationAnalysisDataResult = {
   oddEvenRows: OddEvenDistributionRow[];
   consecutiveRows: ConsecutiveRunDistributionRow[];
   positionBandRows: PositionBandDistributionRow[];
+  sumExtremeStats: SumExtremeStats | null;
 };
 
 export function useCombinationAnalysisData(): UseCombinationAnalysisDataResult {
@@ -29,6 +32,7 @@ export function useCombinationAnalysisData(): UseCombinationAnalysisDataResult {
   const [consecutiveRows, setConsecutiveRows] =
     useState<ConsecutiveRunDistributionRow[]>(EMPTY_CONSECUTIVE);
   const [positionBandRows, setPositionBandRows] = useState<PositionBandDistributionRow[]>([]);
+  const [sumExtremeStats, setSumExtremeStats] = useState<SumExtremeStats | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -57,6 +61,7 @@ export function useCombinationAnalysisData(): UseCombinationAnalysisDataResult {
           setOddEvenRows(EMPTY_ODD_EVEN);
           setConsecutiveRows(EMPTY_CONSECUTIVE);
           setPositionBandRows([]);
+          setSumExtremeStats(null);
           return;
         }
 
@@ -73,14 +78,17 @@ export function useCombinationAnalysisData(): UseCombinationAnalysisDataResult {
           throw new Error('Winning numbers range response is not an array');
         }
         const validRows = rangePayload.filter(isWinningNumberRow);
-        const oddEven = buildOddEvenDistribution(validRows);
-        const consecutive = buildConsecutiveRunDistribution(validRows);
-        const positionBand = buildPositionBandDistribution(validRows);
+        const sortedRows = [...validRows].sort((a, b) => a.draw_no - b.draw_no);
+        const oddEven = buildOddEvenDistribution(sortedRows);
+        const consecutive = buildConsecutiveRunDistribution(sortedRows);
+        const positionBand = buildPositionBandDistribution(sortedRows);
+        const sumExtreme = buildSumExtremeStats(sortedRows);
         if (!isMounted) return;
         setTotalDraws(oddEven.totalDraws);
         setOddEvenRows(oddEven.rows);
         setConsecutiveRows(consecutive.rows);
         setPositionBandRows(positionBand.rows);
+        setSumExtremeStats(sumExtreme);
       } catch (error) {
         if (abortController.signal.aborted || !isMounted) return;
         console.error('Error loading combination analysis:', error);
@@ -89,6 +97,7 @@ export function useCombinationAnalysisData(): UseCombinationAnalysisDataResult {
         setOddEvenRows(EMPTY_ODD_EVEN);
         setConsecutiveRows(EMPTY_CONSECUTIVE);
         setPositionBandRows([]);
+        setSumExtremeStats(null);
       } finally {
         if (isMounted) setIsLoading(false);
       }
@@ -101,5 +110,13 @@ export function useCombinationAnalysisData(): UseCombinationAnalysisDataResult {
     };
   }, []);
 
-  return { isLoading, loadError, totalDraws, oddEvenRows, consecutiveRows, positionBandRows };
+  return {
+    isLoading,
+    loadError,
+    totalDraws,
+    oddEvenRows,
+    consecutiveRows,
+    positionBandRows,
+    sumExtremeStats,
+  };
 }

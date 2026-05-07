@@ -5,13 +5,21 @@ import { Header } from '@/components/common/Header';
 import { Sidebar } from '@/components/common/Sidebar';
 import { ConsecutiveNumberTable } from './components/ConsecutiveNumberTable';
 import { OddEvenProbabilityTable } from './components/OddEvenProbabilityTable';
+import { HighLowSumTable } from './components/HighLowSumTable';
 import { PositionBandProbabilityTable } from './components/PositionBandProbabilityTable';
 import { useCombinationAnalysisData } from './hooks/useCombinationAnalysisData';
 
 export default function CombinationAnalysisPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const { isLoading, loadError, totalDraws, oddEvenRows, consecutiveRows, positionBandRows } =
-    useCombinationAnalysisData();
+  const {
+    isLoading,
+    loadError,
+    totalDraws,
+    oddEvenRows,
+    consecutiveRows,
+    positionBandRows,
+    sumExtremeStats,
+  } = useCombinationAnalysisData();
 
   return (
     <div className="bg-background min-h-screen flex justify-center w-full overflow-x-hidden">
@@ -31,6 +39,7 @@ export default function CombinationAnalysisPage() {
                 <ConsecutiveNumberTable totalDraws={totalDraws} rows={consecutiveRows} />
               </div>
               <PositionBandProbabilityTable totalDraws={totalDraws} rows={positionBandRows} />
+              <HighLowSumTable stats={sumExtremeStats} />
             </>
           )}
         </main>
