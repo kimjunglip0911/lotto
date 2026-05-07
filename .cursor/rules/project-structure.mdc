@@ -87,35 +87,37 @@ lotto/
 │       │   ├── favicon.ico
 │       │   ├── page.tsx
 │       │   ├── analysis/
-│       │   │   └── accumulated-numbers/
-│       │   │       ├── page.tsx
-│       │   │       ├── api.ts
-│       │   │       ├── constants.ts
-│       │   │       ├── types.ts
-│       │   │       ├── hooks/
-│       │   │       │   ├── useAccumulatedNumbersData.ts
-│       │   │       │   └── useAccumulatedNumbersDerived.ts
-│       │   │       ├── test/
-│       │   │       │   ├── runAccumulatedStrategySelection.test.ts
-│       │   │       │   └── __snapshots__/
-│       │   │       ├── logic/
-│       │   │       │   ├── numberCounts.ts
-│       │   │       │   ├── accumulatedStrategyEvaluation.ts
-│       │   │       │   ├── buildStrategyChartsFromTopWindows.ts
-│       │   │       │   ├── pickFocusStrategyTopWindows.ts
-│       │   │       │   ├── runAccumulatedStrategySelection.ts
-│       │   │       │   └── strategyEvaluation/
-│       │   │       │       ├── types.ts
-│       │   │       │       ├── windowSlice.ts
-│       │   │       │       ├── numberPicking.ts
-│       │   │       │       ├── evaluationRun.ts
-│       │   │       │       ├── windowRanking.ts
-│       │   │       │       └── recommendationSelection.ts
-│       │   │       └── components/
-│       │   │           ├── accumulatedBarChartStats.ts
-│       │   │           ├── AccumulatedChartSection.tsx
-│       │   │           ├── SearchPanel.tsx
-│       │   │           └── SelectedWinningNumbersStrip.tsx
+│       │   │   ├── accumulated-numbers/
+│       │   │   │   ├── page.tsx
+│       │   │   │   ├── api.ts
+│       │   │   │   ├── constants.ts
+│       │   │   │   ├── types.ts
+│       │   │   │   ├── hooks/
+│       │   │   │   │   ├── useAccumulatedNumbersData.ts
+│       │   │   │   │   └── useAccumulatedNumbersDerived.ts
+│       │   │   │   ├── test/
+│       │   │   │   │   ├── runAccumulatedStrategySelection.test.ts
+│       │   │   │   │   └── __snapshots__/
+│       │   │   │   ├── logic/
+│       │   │   │   │   ├── numberCounts.ts
+│       │   │   │   │   ├── accumulatedStrategyEvaluation.ts
+│       │   │   │   │   ├── buildStrategyChartsFromTopWindows.ts
+│       │   │   │   │   ├── pickFocusStrategyTopWindows.ts
+│       │   │   │   │   ├── runAccumulatedStrategySelection.ts
+│       │   │   │   │   └── strategyEvaluation/
+│       │   │   │   │       ├── types.ts
+│       │   │   │   │       ├── windowSlice.ts
+│       │   │   │   │       ├── numberPicking.ts
+│       │   │   │   │       ├── evaluationRun.ts
+│       │   │   │   │       ├── windowRanking.ts
+│       │   │   │   │       └── recommendationSelection.ts
+│       │   │   │   └── components/
+│       │   │   │       ├── accumulatedBarChartStats.ts
+│       │   │   │       ├── AccumulatedChartSection.tsx
+│       │   │   │       ├── SearchPanel.tsx
+│       │   │   │       └── SelectedWinningNumbersStrip.tsx
+│       │   │   └── combination/
+│       │   │       └── page.tsx       # 조합 분석(빈 페이지, 추후 홀짝/구간/고저 표 자리)
 │       │   ├── home/
 │       │   │   ├── page.tsx
 │       │   │   ├── hooks/
@@ -176,4 +178,4 @@ lotto/
 
 ---
 
-*Last Updated: 2026-04-27*
+*Last Updated: 2026-05-07*
