@@ -14,7 +14,7 @@ const toBinKey = (pct: number): string => {
 
 /**
  * trend 이력 기준으로 번호별 편차 구간 요약을 조회해 제외번호를 계산한다.
- * - 출현확률이 임계(기본 15%) 이하이거나, 구간의 당첨 포함 회차가 임계(기본 10) 이하이면 제외
+ * - 출현확률이 임계(`TREND_EXCLUSION_THRESHOLD_PERCENT`%) 이하이거나, 구간의 당첨 포함 회차가 임계(기본 10) 이하이면 제외
  * - 둘 중 하나만 만족해도 제외(OR)
  */
 export const getTrendExcludedNumbers = (rows: WinningNumberRow[]): number[] => {

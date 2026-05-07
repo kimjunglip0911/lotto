@@ -1,16 +1,8 @@
 import { useMemo } from 'react';
-import {
-  ADOPTED_USAGE_NUMBER_COUNT,
-  CHI_SQUARE_THRESHOLD,
-  NUMBERS_PER_DRAW,
-  TOTAL_NUMBERS,
-} from '../constants';
+import { getChiSquareWalkForwardExcludedSplit } from '@/app/analysis/final-pick/logic/chiSquareAdoption';
+import { CHI_SQUARE_THRESHOLD, NUMBERS_PER_DRAW, TOTAL_NUMBERS } from '../constants';
 import { getMaxAbsDeviation } from '../logic/chiSquare';
-import {
-  runChiSquareDeviationBinWalkForward,
-  selectNumbersByDeviationBinMergedRanking,
-  splitAndSortDeviationBins,
-} from '../logic/walkForwardStats';
+import { runChiSquareDeviationBinWalkForward, splitAndSortDeviationBins } from '../logic/walkForwardStats';
 import type { ChiSquareResult, WinningNumberRow } from '../types';
 
 type Params = {
@@ -90,21 +82,24 @@ export const useChiSquareDerived = ({
 
   const relPctBinWalkForwardPresentation = deviationBinWalkForwardBlock?.presentation ?? null;
 
-  const adoptedUsageNumbers = useMemo(() => {
+  /** 워크포워드 제외를 조건부 확률 / 겹침 회차로 나눈 목록(카드). 표·차트는 합집합 강조. */
+  const walkForwardExcludedSplit = useMemo(() => {
     if (deviationBinWalkForwardBlock === null || chiSquareResults.length === 0) {
       return null;
     }
-    return selectNumbersByDeviationBinMergedRanking(
+    return getChiSquareWalkForwardExcludedSplit(
       chiSquareResults,
       deviationBinWalkForwardBlock.summary.allBins,
-      ADOPTED_USAGE_NUMBER_COUNT,
     );
   }, [deviationBinWalkForwardBlock, chiSquareResults]);
 
-  const adoptedUsageNumberSet = useMemo(
-    () => (adoptedUsageNumbers ? new Set<number>(adoptedUsageNumbers) : null),
-    [adoptedUsageNumbers],
-  );
+  const walkForwardExcludedNumberSet = useMemo(() => {
+    if (!walkForwardExcludedSplit) return null;
+    return new Set<number>([
+      ...walkForwardExcludedSplit.byConditionalPct,
+      ...walkForwardExcludedSplit.byOverlapRounds,
+    ]);
+  }, [walkForwardExcludedSplit]);
 
   const statusMessage = isLoadingDraws
     ? '회차 정보를 불러오는 중입니다.'
@@ -129,8 +124,8 @@ export const useChiSquareDerived = ({
     selectedMainNumbers,
     selectedWinningNumberSet,
     maxAbsDeviation,
-    adoptedUsageNumbers,
-    adoptedUsageNumberSet,
+    walkForwardExcludedSplit,
+    walkForwardExcludedNumberSet,
     statusMessage,
     chiSquareThreshold: CHI_SQUARE_THRESHOLD,
     relPctBinWalkForwardPresentation,

@@ -10,7 +10,8 @@ type Props = {
   analyzedDrawCount: number;
   chiSquareThreshold: number;
   selectedWinningNumberSet: Set<number> | null;
-  adoptedUsageNumberSet?: Set<number> | null;
+  /** 워크포워드 제외 규칙에 해당하는 번호 — 행·번호 셀에 보조 강조 */
+  walkForwardExcludedNumberSet?: Set<number> | null;
 };
 
 export function ResultTable({
@@ -23,7 +24,7 @@ export function ResultTable({
   analyzedDrawCount,
   chiSquareThreshold,
   selectedWinningNumberSet,
-  adoptedUsageNumberSet = null,
+  walkForwardExcludedNumberSet = null,
 }: Props) {
   const sortedRows = [...chiSquareResults].sort(
     (a, b) => a.deviation - b.deviation || a.number - b.number
@@ -73,10 +74,10 @@ export function ResultTable({
                   선택 회차 본번호(보너스 제외)
                 </span>
               )}
-              {adoptedUsageNumberSet && adoptedUsageNumberSet.size > 0 && (
+              {walkForwardExcludedNumberSet && walkForwardExcludedNumberSet.size > 0 && (
                 <span className="flex items-center gap-1.5">
-                  <span className="inline-block w-3 h-3 rounded ring-2 ring-emerald-400/80 ring-offset-1 ring-offset-slate-900 bg-emerald-500/30" />
-                  사용 번호 14개
+                  <span className="inline-block w-3 h-3 rounded ring-2 ring-rose-400/80 ring-offset-1 ring-offset-slate-900 bg-rose-500/30" />
+                  워크포워드 제외 번호
                 </span>
               )}
             </div>
@@ -95,7 +96,7 @@ export function ResultTable({
               </thead>
               <tbody>
                 {sortedRows.map((row) => {
-                  const isAdopted = adoptedUsageNumberSet?.has(row.number) ?? false;
+                  const isWalkForwardExcluded = walkForwardExcludedNumberSet?.has(row.number) ?? false;
                   return (
                     <tr
                       key={row.number}
@@ -115,7 +116,7 @@ export function ResultTable({
                               : row.isHighFreq
                                 ? 'bg-blue-500/30 text-blue-200'
                                 : 'bg-white/10 text-white'
-                          } ${isAdopted ? 'ring-2 ring-emerald-400/85 ring-offset-1 ring-offset-slate-900' : ''}`}
+                          } ${isWalkForwardExcluded ? 'ring-2 ring-rose-400/85 ring-offset-1 ring-offset-slate-900' : ''}`}
                         >
                           {row.number}
                         </span>

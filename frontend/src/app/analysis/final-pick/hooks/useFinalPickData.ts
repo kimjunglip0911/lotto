@@ -2,7 +2,11 @@ import { useEffect, useMemo, useState } from 'react';
 import { isWinningNumberRow, type WinningNumberRow } from '../types';
 import { getTrendExcludedNumbers } from '../logic/trendExclusion';
 import { getAccumulatedAdoptedNumbers } from '../logic/accumulatedAdoption';
-import { buildChiSquareChartData, getChiSquareAdoptedNumbers, type ChiSquareChartDatum } from '../logic/chiSquareAdoption';
+import {
+  buildChiSquareChartData,
+  getChiSquareFinalPickSlice,
+  type ChiSquareChartDatum,
+} from '../logic/chiSquareAdoption';
 import { getConsecutivelyAppearedMainNumbers } from '@/app/analysis/absence-streak/logic/streak';
 
 /**
@@ -32,6 +36,10 @@ type UseFinalPickDataResult = {
   excludedByStreakNumbers: number[];
   adoptedByAccumulatedNumbers: number[];
   adoptedByChiSquareNumbers: number[];
+  /** 워크포워드 — 조건부 확률(%) 이하로 제외되는 번호(통합 페이지 카드) */
+  excludedByChiSquareWalkForwardConditionalPct: number[];
+  /** 워크포워드 — 겹침 회차 이하로 제외되는 번호(통합 페이지 카드) */
+  excludedByChiSquareWalkForwardOverlapRounds: number[];
   chiSquareChartData: ChiSquareChartDatum[];
   searchedDraw: string;
   isSearching: boolean;
@@ -84,15 +92,25 @@ export const useFinalPickData = (): UseFinalPickDataResult => {
     ];
   }, [selectedWinningNumber]);
 
-  const adoptedByChiSquareNumbers = useMemo(
-    () =>
-      getChiSquareAdoptedNumbers({
+  const {
+    adoptedByChiSquareNumbers,
+    excludedByChiSquareWalkForwardConditionalPct,
+    excludedByChiSquareWalkForwardOverlapRounds,
+  } = useMemo(
+    () => {
+      const slice = getChiSquareFinalPickSlice({
         previousDrawRows,
         selectedMainNumbers,
         excludedByStreakNumbers,
         excludedByTrendNumbers,
         adoptedByAccumulatedNumbers,
-      }),
+      });
+      return {
+        adoptedByChiSquareNumbers: slice.adopted,
+        excludedByChiSquareWalkForwardConditionalPct: slice.walkForwardExcludedByConditionalPct,
+        excludedByChiSquareWalkForwardOverlapRounds: slice.walkForwardExcludedByOverlapRounds,
+      };
+    },
     [
       adoptedByAccumulatedNumbers,
       excludedByStreakNumbers,
@@ -238,6 +256,8 @@ export const useFinalPickData = (): UseFinalPickDataResult => {
     excludedByStreakNumbers,
     adoptedByAccumulatedNumbers,
     adoptedByChiSquareNumbers,
+    excludedByChiSquareWalkForwardConditionalPct,
+    excludedByChiSquareWalkForwardOverlapRounds,
     chiSquareChartData,
     searchedDraw,
     isSearching,

@@ -8,8 +8,8 @@ type Props = {
   searchError: string | null;
   chiSquareResults: ChiSquareResult[];
   selectedWinningNumberSet: Set<number> | null;
-  /** 사용 번호 14개 — 막대·번호에 보조 강조 */
-  adoptedUsageNumberSet?: Set<number> | null;
+  /** 워크포워드 제외 번호 — 막대·번호에 보조 강조 */
+  walkForwardExcludedNumberSet?: Set<number> | null;
   maxAbsDeviation: number;
 };
 
@@ -20,7 +20,7 @@ export function DeviationChart({
   searchError,
   chiSquareResults,
   selectedWinningNumberSet,
-  adoptedUsageNumberSet = null,
+  walkForwardExcludedNumberSet = null,
   maxAbsDeviation,
 }: Props) {
   const sortedItems = [...chiSquareResults].sort(
@@ -50,10 +50,10 @@ export function DeviationChart({
               <span className="inline-block w-3 h-3 rounded bg-rose-500/60 border border-rose-500/80" />
               − 편차 (적게 나옴)
             </span>
-            {adoptedUsageNumberSet && adoptedUsageNumberSet.size > 0 && (
+            {walkForwardExcludedNumberSet && walkForwardExcludedNumberSet.size > 0 && (
               <span className="flex items-center gap-1.5">
-                <span className="inline-block w-3 h-3 rounded ring-2 ring-emerald-400/90 ring-offset-1 ring-offset-slate-900 bg-emerald-500/40" />
-                사용 번호 14개
+                <span className="inline-block w-3 h-3 rounded ring-2 ring-rose-400/90 ring-offset-1 ring-offset-slate-900 bg-rose-500/40" />
+                워크포워드 제외 번호
               </span>
             )}
           </div>
@@ -75,7 +75,7 @@ export function DeviationChart({
             <ul className="w-max flex gap-1">
               {sortedItems.map((item) => {
                 const isWinningNum = selectedWinningNumberSet?.has(item.number) ?? false;
-                const isAdopted = adoptedUsageNumberSet?.has(item.number) ?? false;
+                const isWalkForwardExcluded = walkForwardExcludedNumberSet?.has(item.number) ?? false;
                 const posBarPx = item.deviation > 0
                   ? Math.max((item.deviation / maxAbsDeviation) * CHART_HALF_H, 2)
                   : 0;
@@ -90,7 +90,7 @@ export function DeviationChart({
                 return (
                   <li
                     key={item.number}
-                    className={`w-8 shrink-0 flex flex-col items-center ${isAdopted ? 'rounded-b-sm pb-0.5 ring-1 ring-emerald-400/70 ring-offset-1 ring-offset-slate-950' : ''}`}
+                    className={`w-8 shrink-0 flex flex-col items-center ${isWalkForwardExcluded ? 'rounded-b-sm pb-0.5 ring-1 ring-rose-400/70 ring-offset-1 ring-offset-slate-950' : ''}`}
                   >
                     <div className="relative w-full flex flex-col justify-end" style={{ height: CHART_HALF_H }}>
                       {item.deviation > 0 && (

@@ -10,7 +10,12 @@ import { ResultTable } from './components/ResultTable';
 import { SearchControls } from './components/SearchControls';
 import { StatisticalNote } from './components/StatisticalNote';
 import { SummaryCards } from './components/SummaryCards';
-import { CHI_SQUARE_DEVIATION_BIN_WIDTH, CHI_SQUARE_WALK_FORWARD_RECENT_DRAWS } from './constants';
+import {
+  CHI_SQUARE_DEVIATION_BIN_WIDTH,
+  CHI_SQUARE_WALK_FORWARD_EXCLUSION_MAX_OVERLAP_ROUNDS,
+  CHI_SQUARE_WALK_FORWARD_EXCLUSION_MAX_PCT_NUMERATOR,
+  CHI_SQUARE_WALK_FORWARD_RECENT_DRAWS,
+} from './constants';
 import { useChiSquareData } from './hooks/useChiSquareData';
 import { useChiSquareDerived } from './hooks/useChiSquareDerived';
 
@@ -44,8 +49,8 @@ export default function ChiSquarePage() {
     selectedMainNumbers,
     selectedWinningNumberSet,
     maxAbsDeviation,
-    adoptedUsageNumbers,
-    adoptedUsageNumberSet,
+    walkForwardExcludedSplit,
+    walkForwardExcludedNumberSet,
     statusMessage,
     chiSquareThreshold,
     relPctBinWalkForwardPresentation,
@@ -107,7 +112,7 @@ export default function ChiSquarePage() {
               />
             )}
 
-          {hasSearched && !noHistory && !isSearching && !searchError && adoptedUsageNumbers && (
+          {hasSearched && !noHistory && !isSearching && !searchError && walkForwardExcludedSplit != null && (
             <section className="rounded-2xl border border-card-border/30 bg-card-bg/60 p-4 space-y-3">
               {accumulatedFinalNumbers && accumulatedFinalNumbers.length === 4 && (
                 <div className="rounded-xl border border-sky-400/30 bg-sky-500/10 p-3 space-y-2">
@@ -123,24 +128,46 @@ export default function ChiSquarePage() {
                     ))}
                   </div>
                   <p className="text-xs text-sky-100/85 leading-relaxed">
-                    누적번호 분석 페이지와 동일한 전략·집계로 조회 시점에 계산된 최종 채택 번호입니다. 아래「사용 번호」채택과는 별도 참고용입니다.
+                    누적번호 분석 페이지와 동일한 전략·집계로 조회 시점에 계산된 최종 채택 번호입니다. 아래 워크포워드 제외 번호 목록과는 별도 참고용입니다.
                   </p>
                 </div>
               )}
-              <div className="rounded-xl border border-emerald-400/30 bg-emerald-500/10 p-3 space-y-2">
-                <p className="text-sm font-semibold text-emerald-300">사용 번호 14개 (구간 조건부 확률 통합 순위)</p>
-                <div className="flex flex-wrap gap-2">
-                  {adoptedUsageNumbers.map((n) => (
-                    <span
-                      key={`adopted-${n}`}
-                      className="inline-flex h-9 min-w-9 items-center justify-center rounded-full bg-emerald-400/25 px-2 text-sm font-bold text-emerald-200"
-                    >
-                      {n}
-                    </span>
-                  ))}
+              <div className="rounded-xl border border-rose-400/30 bg-rose-500/10 p-3 space-y-4">
+                <p className="text-sm font-semibold text-rose-200">워크포워드 후보 제외(사유별)</p>
+                <div className="space-y-2">
+                  <p className="text-xs font-medium text-rose-100/95">
+                    조건부 확률 {CHI_SQUARE_WALK_FORWARD_EXCLUSION_MAX_PCT_NUMERATOR}% 이하 —{' '}
+                    {walkForwardExcludedSplit.byConditionalPct.length}개
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {walkForwardExcludedSplit.byConditionalPct.map((n) => (
+                      <span
+                        key={`wf-ex-pct-${n}`}
+                        className="inline-flex h-9 min-w-9 items-center justify-center rounded-full bg-rose-400/25 px-2 text-sm font-bold text-rose-100"
+                      >
+                        {n}
+                      </span>
+                    ))}
+                  </div>
                 </div>
-                <p className="text-xs text-emerald-100/90 leading-relaxed">
-                  편차(O−E) 워크포워드 표와 동일한 집계(최근 {CHI_SQUARE_WALK_FORWARD_RECENT_DRAWS}회, 구간 폭 {CHI_SQUARE_DEVIATION_BIN_WIDTH})로 구간별 조건부 확률(%)을 구한 뒤, 음·양 구간을 합쳐 확률이 높은 구간부터 순위를 매깁니다. 조건부 확률은 해당 구간이 나온 회차 수 대비, 조회 회차 당첨 본번호와 겹친 회차 비율입니다. 조회 시점 각 번호의 편차(O−E)는 검정 결과 표와 같이 전체 누적 기준입니다. 같은 확률의 구간이라도 해당 구간에 속한 번호 수로 나눈 값이 큰 쪽을 우선합니다(구간 풀이 작을수록 가중). 같은 구간이면 번호가 작은 쪽을 먼저 둡니다. 나열 순서는 1순위부터입니다.
+                <div className="space-y-2 border-t border-rose-400/20 pt-3">
+                  <p className="text-xs font-medium text-rose-100/95">
+                    겹침 회차 {CHI_SQUARE_WALK_FORWARD_EXCLUSION_MAX_OVERLAP_ROUNDS}회 이하 —{' '}
+                    {walkForwardExcludedSplit.byOverlapRounds.length}개
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {walkForwardExcludedSplit.byOverlapRounds.map((n) => (
+                      <span
+                        key={`wf-ex-ov-${n}`}
+                        className="inline-flex h-9 min-w-9 items-center justify-center rounded-full bg-rose-400/20 px-2 text-sm font-bold text-rose-50"
+                      >
+                        {n}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                <p className="text-xs text-rose-100/85 leading-relaxed">
+                  편차(O−E) 워크포워드 표와 동일한 집계(최근 {CHI_SQUARE_WALK_FORWARD_RECENT_DRAWS}회, 구간 폭 {CHI_SQUARE_DEVIATION_BIN_WIDTH})입니다. 한 번호가 두 조건을 모두 만족하면 두 목록에 모두 나옵니다. 조회 시점 각 번호의 편차(O−E)는 검정 결과 표와 같이 전체 누적 기준입니다.
                 </p>
               </div>
             </section>
@@ -153,7 +180,7 @@ export default function ChiSquarePage() {
             searchError={searchError}
             chiSquareResults={chiSquareResults}
             selectedWinningNumberSet={selectedWinningNumberSet}
-            adoptedUsageNumberSet={adoptedUsageNumberSet}
+            walkForwardExcludedNumberSet={walkForwardExcludedNumberSet}
             maxAbsDeviation={maxAbsDeviation}
           />
 
@@ -171,7 +198,7 @@ export default function ChiSquarePage() {
             analyzedDrawCount={analyzedDrawCount}
             chiSquareThreshold={chiSquareThreshold}
             selectedWinningNumberSet={selectedWinningNumberSet}
-            adoptedUsageNumberSet={adoptedUsageNumberSet}
+            walkForwardExcludedNumberSet={walkForwardExcludedNumberSet}
           />
 
           <StatisticalNote />

@@ -31,7 +31,7 @@ describe('getTrendExcludedNumbers', () => {
     expect(getTrendExcludedNumbers([])).toEqual([]);
   });
 
-  it('15.00 경계값은 제외에 포함된다', () => {
+  it('8.00 경계값은 제외에 포함된다', () => {
     const rows: WinningNumberRow[] = [];
     for (let d = 1; d <= 150; d += 1) {
       rows.push(mk(d, [1, 2, 3, 4, 5, 6]));
@@ -48,7 +48,7 @@ describe('getTrendExcludedNumbers', () => {
     expect(excluded.length).toBeGreaterThan(0);
   });
 
-  it('15.01 이상 구간 번호는 제외 대상이 아니다', () => {
+  it('8.01 이상 구간 번호는 제외 대상이 아니다', () => {
     const rows: WinningNumberRow[] = [];
     for (let d = 1; d <= 1200; d += 1) {
       rows.push(mk(d, [1, 2, 3, 4, 5, 6]));

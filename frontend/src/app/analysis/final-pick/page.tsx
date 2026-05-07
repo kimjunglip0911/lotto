@@ -7,12 +7,16 @@ import { AdoptedSummaryCard } from './components/AdoptedSummaryCard';
 import { ComprehensiveChart } from './components/ComprehensiveChart';
 import { SearchPanel } from './components/SearchPanel';
 import { SourceNumbersCard } from './components/SourceNumbersCard';
+import {
+  CHI_SQUARE_WALK_FORWARD_EXCLUSION_MAX_OVERLAP_ROUNDS,
+  CHI_SQUARE_WALK_FORWARD_EXCLUSION_MAX_PCT_NUMERATOR,
+} from '@/app/analysis/chi-square/constants';
+import { TREND_EXCLUSION_THRESHOLD_PERCENT } from '@/app/analysis/trend/constants';
 import { useFinalPickData } from './hooks/useFinalPickData';
 import { extractMainNumbers } from './types';
 
 const ADOPTED_TARGET_COUNT = 18;
 const ACCUMULATED_TARGET_COUNT = 8;
-const CHI_SQUARE_TARGET_COUNT = 10;
 
 export default function FinalPickPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -32,6 +36,8 @@ export default function FinalPickPage() {
     excludedByStreakNumbers,
     adoptedByAccumulatedNumbers,
     adoptedByChiSquareNumbers,
+    excludedByChiSquareWalkForwardConditionalPct,
+    excludedByChiSquareWalkForwardOverlapRounds,
     chiSquareChartData,
   } = useFinalPickData();
 
@@ -49,6 +55,10 @@ export default function FinalPickPage() {
     () => [...adoptedByAccumulatedNumbers, ...adoptedByChiSquareNumbers].sort((a, b) => a - b),
     [adoptedByAccumulatedNumbers, adoptedByChiSquareNumbers],
   );
+
+  const adoptedSummaryTargetCount =
+    adoptedAllNumbers.length > 0 ? adoptedAllNumbers.length : ADOPTED_TARGET_COUNT;
+
   return (
     <div className="bg-background min-h-screen flex justify-center w-full overflow-x-hidden">
       <div className="bg-background text-foreground font-display min-h-screen flex flex-col w-full lg:w-[95%] xl:w-[95%] 2xl:w-[90%] max-w-[1920px] border-x border-card-border/30 relative shadow-2xl">
@@ -72,7 +82,7 @@ export default function FinalPickPage() {
 
           <AdoptedSummaryCard
             numbers={adoptedAllNumbers}
-            targetCount={ADOPTED_TARGET_COUNT}
+            targetCount={adoptedSummaryTargetCount}
             mainWinningSet={mainWinningNumberSet}
           />
 
@@ -95,7 +105,7 @@ export default function FinalPickPage() {
 
           <SourceNumbersCard
             title="추세 분석 — 후보 제외"
-            description="기댓값 대비 EMA 편차 구간 출현확률이 15.00% 이하인 번호 제외 (15.01% 이상은 제외 아님)"
+            description={`기댓값 대비 EMA 편차 구간 출현확률이 ${TREND_EXCLUSION_THRESHOLD_PERCENT.toFixed(2)}% 이하인 번호 제외 (${TREND_EXCLUSION_THRESHOLD_PERCENT + 0.01}% 초과는 제외 아님)`}
             tone="exclude"
             numbers={excludedByTrendNumbers}
             mainWinningSet={mainWinningNumberSet}
@@ -111,11 +121,18 @@ export default function FinalPickPage() {
           />
 
           <SourceNumbersCard
-            title="카이제곱 검정 — 채택"
-            description="구간 조건부 확률 통합 순위 기반 채택 번호"
-            tone="adoptChiSquare"
-            numbers={adoptedByChiSquareNumbers}
-            targetCount={CHI_SQUARE_TARGET_COUNT}
+            title="카이제곱 검정 — 제외(조건부 확률)"
+            description={`구간이 나온 회차 대비 조회 당첨 본번호와 겹친 비율이 ${CHI_SQUARE_WALK_FORWARD_EXCLUSION_MAX_PCT_NUMERATOR}% 이하인 경우 (${CHI_SQUARE_WALK_FORWARD_EXCLUSION_MAX_PCT_NUMERATOR}.01% 초과는 제외 아님). 통합 채택은 잔여 번호에 누적·추세·연속 규칙을 적용합니다.`}
+            tone="exclude"
+            numbers={excludedByChiSquareWalkForwardConditionalPct}
+            mainWinningSet={mainWinningNumberSet}
+          />
+
+          <SourceNumbersCard
+            title="카이제곱 검정 — 제외(겹침 회차)"
+            description={`구간이 나온 회차 중 조회 당첨 본번호와 겹친 회차 수가 ${CHI_SQUARE_WALK_FORWARD_EXCLUSION_MAX_OVERLAP_ROUNDS}회 이하인 경우 (${CHI_SQUARE_WALK_FORWARD_EXCLUSION_MAX_OVERLAP_ROUNDS + 1}회 초과는 이 조건으로 제외 아님). 동일 번호가 위 조건부 확률 제외에도 해당하면 두 카드에 모두 표시됩니다.`}
+            tone="exclude"
+            numbers={excludedByChiSquareWalkForwardOverlapRounds}
             mainWinningSet={mainWinningNumberSet}
           />
         </main>

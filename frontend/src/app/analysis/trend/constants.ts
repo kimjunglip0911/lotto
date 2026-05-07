@@ -5,7 +5,7 @@ export const MAIN_NUMBERS_PER_DRAW = 6;
 export const TOTAL_NUMBERS = 45;
 
 /** 최종 조합 화면: 편차 구간 출현확률(%)이 이 값 이하인 번호를 후보에서 제외할 때 사용 */
-export const TREND_EXCLUSION_THRESHOLD_PERCENT = 15;
+export const TREND_EXCLUSION_THRESHOLD_PERCENT = 8;
 
 /**
  * 최종 조합 `getTrendExcludedNumbers`: 구간별 당첨 포함 회차가 이 값 이하이면 출현확률과 무관하게 제외 후보.

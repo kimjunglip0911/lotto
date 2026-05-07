@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import {
-  ADOPTED_USAGE_NUMBER_COUNT,
   CHI_SQUARE_DEVIATION_BIN_RANGE_MAX_EXCLUSIVE,
   CHI_SQUARE_DEVIATION_BIN_RANGE_MIN,
   CHI_SQUARE_DEVIATION_BIN_WIDTH,
@@ -244,7 +243,7 @@ describe('selectNumbersByDeviationBinMergedRanking', () => {
     expect(selectNumbersByDeviationBinMergedRanking([lo, hi], allBins, 1)).toEqual([1]);
   });
 
-  it('워크포워드 allBins와 집계 결과로 ADOPTED_USAGE_NUMBER_COUNT개를 반환한다', () => {
+  it('워크포워드 allBins와 집계 결과로 merged 순위 상위 14개를 반환한다', () => {
     const rows = [
       row(1, 1, 2, 3, 4, 5, 6, 7),
       row(2, 8, 9, 10, 11, 12, 13, 14),
@@ -255,14 +254,11 @@ describe('selectNumbersByDeviationBinMergedRanking', () => {
       counts[n - 1] += 1;
     }
     const results = buildChiSquareResultsFromCounts(counts, 1);
-    const picked = selectNumbersByDeviationBinMergedRanking(
-      results,
-      s.allBins,
-      ADOPTED_USAGE_NUMBER_COUNT,
-    );
+    const take = 14;
+    const picked = selectNumbersByDeviationBinMergedRanking(results, s.allBins, take);
     expect(picked).not.toBeNull();
-    expect(picked!.length).toBe(ADOPTED_USAGE_NUMBER_COUNT);
-    expect(new Set(picked).size).toBe(ADOPTED_USAGE_NUMBER_COUNT);
+    expect(picked!.length).toBe(take);
+    expect(new Set(picked).size).toBe(take);
   });
 });
 
