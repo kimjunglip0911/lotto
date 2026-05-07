@@ -6,6 +6,7 @@ import { Sidebar } from '@/components/common/Sidebar';
 import { AdoptedSummaryCard } from './components/AdoptedSummaryCard';
 import { ComprehensiveChart } from './components/ComprehensiveChart';
 import { SearchPanel } from './components/SearchPanel';
+import { AccumulatedExclusionCard } from './components/AccumulatedExclusionCard';
 import { SourceNumbersCard } from './components/SourceNumbersCard';
 import {
   CHI_SQUARE_WALK_FORWARD_EXCLUSION_MAX_OVERLAP_ROUNDS,
@@ -16,8 +17,6 @@ import { useFinalPickData } from './hooks/useFinalPickData';
 import { extractMainNumbers } from './types';
 
 const ADOPTED_TARGET_COUNT = 18;
-const ACCUMULATED_TARGET_COUNT = 8;
-
 export default function FinalPickPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const {
@@ -34,7 +33,7 @@ export default function FinalPickPage() {
     handleSearch,
     excludedByTrendNumbers,
     excludedByStreakNumbers,
-    adoptedByAccumulatedNumbers,
+    accumulatedExclusion,
     adoptedByChiSquareNumbers,
     excludedByChiSquareWalkForwardConditionalPct,
     excludedByChiSquareWalkForwardOverlapRounds,
@@ -52,8 +51,8 @@ export default function FinalPickPage() {
   );
 
   const adoptedAllNumbers = useMemo(
-    () => [...adoptedByAccumulatedNumbers, ...adoptedByChiSquareNumbers].sort((a, b) => a - b),
-    [adoptedByAccumulatedNumbers, adoptedByChiSquareNumbers],
+    () => [...adoptedByChiSquareNumbers].sort((a, b) => a - b),
+    [adoptedByChiSquareNumbers],
   );
 
   const adoptedSummaryTargetCount =
@@ -89,7 +88,7 @@ export default function FinalPickPage() {
           <ComprehensiveChart
             chartData={chiSquareChartData}
             highlightedNumbers={mainWinningNumberSet}
-            accumulatedAdoptedNumbers={adoptedByAccumulatedNumbers}
+            accumulatedExcludedNumbers={accumulatedExclusion.excludedUnique}
             chiSquareAdoptedNumbers={adoptedByChiSquareNumbers}
             trendExcludedNumbers={excludedByTrendNumbers}
             streakExcludedNumbers={excludedByStreakNumbers}
@@ -111,14 +110,7 @@ export default function FinalPickPage() {
             mainWinningSet={mainWinningNumberSet}
           />
 
-          <SourceNumbersCard
-            title="누적 번호 분석 — 채택"
-            description="누적 출현 분포 기반 채택 번호"
-            tone="adoptAccumulated"
-            numbers={adoptedByAccumulatedNumbers}
-            targetCount={ACCUMULATED_TARGET_COUNT}
-            mainWinningSet={mainWinningNumberSet}
-          />
+          <AccumulatedExclusionCard exclusion={accumulatedExclusion} mainWinningSet={mainWinningNumberSet} />
 
           <SourceNumbersCard
             title="카이제곱 검정 — 제외(조건부 확률)"

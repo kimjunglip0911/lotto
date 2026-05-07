@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { isWinningNumberRow, type WinningNumberRow } from '../types';
 import { getTrendExcludedNumbers } from '../logic/trendExclusion';
-import { getAccumulatedAdoptedNumbers } from '../logic/accumulatedAdoption';
+import {
+  getAccumulatedExclusionNumbers,
+  type AccumulatedExclusionResult,
+} from '../logic/accumulatedAdoption';
 import {
   buildChiSquareChartData,
   getChiSquareFinalPickSlice,
@@ -34,7 +37,8 @@ type UseFinalPickDataResult = {
   previousDrawRows: WinningNumberRow[];
   excludedByTrendNumbers: number[];
   excludedByStreakNumbers: number[];
-  adoptedByAccumulatedNumbers: number[];
+  /** 누적 출현 극값 제외(2년·전체 슬롯 + 고유 목록). */
+  accumulatedExclusion: AccumulatedExclusionResult;
   adoptedByChiSquareNumbers: number[];
   /** 워크포워드 — 조건부 확률(%) 이하로 제외되는 번호(통합 페이지 카드) */
   excludedByChiSquareWalkForwardConditionalPct: number[];
@@ -70,14 +74,9 @@ export const useFinalPickData = (): UseFinalPickDataResult => {
     return getConsecutivelyAppearedMainNumbers(previousDrawRows, drawNo);
   }, [previousDrawRows, searchedDraw]);
 
-  const adoptedByAccumulatedNumbers = useMemo(
-    () =>
-      getAccumulatedAdoptedNumbers({
-        previousDrawRows,
-        excludedByStreakNumbers,
-        excludedByTrendNumbers,
-      }).finalNumbers,
-    [excludedByStreakNumbers, excludedByTrendNumbers, previousDrawRows],
+  const accumulatedExclusion = useMemo(
+    () => getAccumulatedExclusionNumbers({ previousDrawRows }),
+    [previousDrawRows],
   );
 
   const selectedMainNumbers = useMemo(() => {
@@ -103,7 +102,7 @@ export const useFinalPickData = (): UseFinalPickDataResult => {
         selectedMainNumbers,
         excludedByStreakNumbers,
         excludedByTrendNumbers,
-        adoptedByAccumulatedNumbers,
+        accumulatedExclusionNumbers: accumulatedExclusion.excludedUnique,
       });
       return {
         adoptedByChiSquareNumbers: slice.adopted,
@@ -112,7 +111,7 @@ export const useFinalPickData = (): UseFinalPickDataResult => {
       };
     },
     [
-      adoptedByAccumulatedNumbers,
+      accumulatedExclusion,
       excludedByStreakNumbers,
       excludedByTrendNumbers,
       previousDrawRows,
@@ -254,7 +253,7 @@ export const useFinalPickData = (): UseFinalPickDataResult => {
     previousDrawRows,
     excludedByTrendNumbers,
     excludedByStreakNumbers,
-    adoptedByAccumulatedNumbers,
+    accumulatedExclusion,
     adoptedByChiSquareNumbers,
     excludedByChiSquareWalkForwardConditionalPct,
     excludedByChiSquareWalkForwardOverlapRounds,

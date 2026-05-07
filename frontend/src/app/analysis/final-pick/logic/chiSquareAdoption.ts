@@ -196,13 +196,14 @@ export const getChiSquareFinalPickSlice = ({
   selectedMainNumbers,
   excludedByStreakNumbers,
   excludedByTrendNumbers,
-  adoptedByAccumulatedNumbers,
+  /** 누적 출현 극값으로 정한 번호 — 카이제곱 잔여 후보에서 제외한다. */
+  accumulatedExclusionNumbers,
 }: {
   previousDrawRows: WinningNumberRow[];
   selectedMainNumbers: number[];
   excludedByStreakNumbers: number[];
   excludedByTrendNumbers: number[];
-  adoptedByAccumulatedNumbers: number[];
+  accumulatedExclusionNumbers: number[];
 }): ChiSquareFinalPickSlice => {
   const ctx = buildFinalPickChiSquareWalkForwardContext(previousDrawRows, selectedMainNumbers);
   if (!ctx) {
@@ -216,7 +217,7 @@ export const getChiSquareFinalPickSlice = ({
   const excludedSet = new Set<number>([
     ...excludedByStreakNumbers,
     ...excludedByTrendNumbers,
-    ...adoptedByAccumulatedNumbers,
+    ...accumulatedExclusionNumbers,
   ]);
   return {
     adopted: ctx.survivors.filter((n) => !excludedSet.has(n)),
@@ -289,18 +290,18 @@ export const getChiSquareAdoptedNumbers = ({
   selectedMainNumbers,
   excludedByStreakNumbers,
   excludedByTrendNumbers,
-  adoptedByAccumulatedNumbers,
+  accumulatedExclusionNumbers,
 }: {
   previousDrawRows: WinningNumberRow[];
   selectedMainNumbers: number[];
   excludedByStreakNumbers: number[];
   excludedByTrendNumbers: number[];
-  adoptedByAccumulatedNumbers: number[];
+  accumulatedExclusionNumbers: number[];
 }): number[] =>
   getChiSquareFinalPickSlice({
     previousDrawRows,
     selectedMainNumbers,
     excludedByStreakNumbers,
     excludedByTrendNumbers,
-    adoptedByAccumulatedNumbers,
+    accumulatedExclusionNumbers,
   }).adopted;

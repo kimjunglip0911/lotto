@@ -165,7 +165,7 @@ describe('chiSquareAdoption', () => {
       selectedMainNumbers: [1, 2, 3, 4, 5, 6],
       excludedByStreakNumbers: [],
       excludedByTrendNumbers: [],
-      adoptedByAccumulatedNumbers: [],
+      accumulatedExclusionNumbers: [],
     });
     expect(slice.adopted.length).toBeGreaterThan(0);
     const union = new Set([...slice.walkForwardExcluded, ...slice.adopted]);
@@ -180,7 +180,7 @@ describe('chiSquareAdoption', () => {
       selectedMainNumbers: [1, 2, 3, 4, 5, 6],
       excludedByStreakNumbers: [],
       excludedByTrendNumbers: [],
-      adoptedByAccumulatedNumbers: [],
+      accumulatedExclusionNumbers: [],
     });
     expect(base.length).toBeGreaterThanOrEqual(4);
 
@@ -190,7 +190,7 @@ describe('chiSquareAdoption', () => {
       selectedMainNumbers: [1, 2, 3, 4, 5, 6],
       excludedByStreakNumbers: [base[0] as number, base[1] as number],
       excludedByTrendNumbers: [base[2] as number],
-      adoptedByAccumulatedNumbers: [base[3] as number],
+      accumulatedExclusionNumbers: [base[3] as number],
     });
 
     for (const n of remove) {

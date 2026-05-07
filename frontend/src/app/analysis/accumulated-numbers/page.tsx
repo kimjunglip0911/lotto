@@ -87,11 +87,70 @@ export default function AccumulatedNumbersPage() {
             selectedHighlightNumbers={selectedHighlightNumbers}
           />
 
+          {data.accumulatedCountExclusion && hasSearched && selectedSearchDrawNo > 1 && (
+            <section className="rounded-2xl border border-rose-400/30 bg-rose-500/10 p-4 space-y-3">
+              <h2 className="text-lg font-semibold text-rose-100">누적 출현 극값 — 후보 제외</h2>
+              <p className="text-sm text-rose-100/90 leading-relaxed">
+                직전 104회(2년)·선택 회차 직전 전체 구간에서 본번호 6개만 집계한 출현 횟수 기준입니다. 각 구간마다 최다
+                1개·최소 1개를 고르고(동률 시 번호가 작은 쪽), 네 값을 합친 고유 번호가 제외 후보입니다. 슬롯이 같은
+                번호로 겹치면 고유 개수는 4보다 작을 수 있습니다.
+              </p>
+              <dl className="grid gap-2 text-sm text-slate-200 sm:grid-cols-2">
+                <div>
+                  <dt className="text-xs text-slate-400">2년 최다</dt>
+                  <dd className="font-mono font-semibold">
+                    {data.accumulatedCountExclusion.twoYearHighest ?? '—'}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-xs text-slate-400">2년 최소</dt>
+                  <dd className="font-mono font-semibold">
+                    {data.accumulatedCountExclusion.twoYearLowest ?? '—'}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-xs text-slate-400">전체 최다</dt>
+                  <dd className="font-mono font-semibold">
+                    {data.accumulatedCountExclusion.allTimeHighest ?? '—'}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-xs text-slate-400">전체 최소</dt>
+                  <dd className="font-mono font-semibold">
+                    {data.accumulatedCountExclusion.allTimeLowest ?? '—'}
+                  </dd>
+                </div>
+              </dl>
+              <div>
+                <p className="text-xs font-medium text-rose-200/90 mb-2">고유 제외 번호</p>
+                <div className="flex flex-wrap gap-2">
+                  {data.accumulatedCountExclusion.excludedUnique.map((n) => {
+                    const isMainWinHit =
+                      hasSearched && selectedSearchDrawNo > 1 && mainWinningNumberSet.has(n);
+                    return (
+                      <span
+                        key={`acc-excl-${n}`}
+                        className={
+                          isMainWinHit
+                            ? 'inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-amber-400 text-sm font-bold text-slate-900 shadow-[inset_0_-3px_0_rgba(0,0,0,0.12)] ring-1 ring-amber-200/90'
+                            : 'px-2 py-1 rounded-md text-xs font-semibold bg-rose-400/25 text-rose-100'
+                        }
+                      >
+                        {n}
+                      </span>
+                    );
+                  })}
+                </div>
+              </div>
+            </section>
+          )}
+
           <section className="rounded-2xl border border-card-border/30 bg-card-bg/60 p-4 space-y-4">
             <h2 className="text-lg font-semibold text-slate-100">고도화 전략 분석 (2년 / 평균근접)</h2>
             <p className="text-sm text-slate-300 leading-relaxed">
               상단은 선택 회차 직전 전체 누적, 아래는 직전 104회차(2년) 구간만 막대 차트로 둡니다. 최종 채택 4개는 전체
-              누적 출현 분포에 대해 평균근접 규칙으로 선정합니다.
+              누적 출현 분포에 대해 평균근접 규칙으로 선정합니다. 위 &quot;누적 출현 극값 제외&quot;는 통합 분석 페이지와
+              동일한 별도 규칙입니다.
             </p>
           </section>
 

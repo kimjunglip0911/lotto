@@ -5,7 +5,7 @@ type AdoptedSummaryCardProps = {
 };
 
 /**
- * 4개 분석 기법을 통합해 채택한 번호(기본 18개)를 종합 차트 위에 강조하는 카드.
+ * 통합 분석에서 최종 후보로 남은 번호(현재: 카이제곱 잔여 채택)를 종합 차트 위에 강조하는 카드.
  *
  * - 채택 번호가 비어 있으면 회색 dashed 슬롯 `targetCount`개로 자리만 잡는다.
  * - 본번호 적중 시 amber ring으로 강조(누적 페이지 main hit 톤 재사용).
@@ -21,11 +21,9 @@ export function AdoptedSummaryCard({
   return (
     <section className="rounded-2xl border border-emerald-400/40 bg-emerald-500/10 p-4 space-y-3">
       <div className="flex items-baseline justify-between gap-3 flex-wrap">
-        <h2 className="text-lg font-semibold text-emerald-200">
-          4개 기법 통합 채택 {targetCount}
-        </h2>
+        <h2 className="text-lg font-semibold text-emerald-200">통합 채택 번호 {targetCount}</h2>
         <span className="text-xs font-medium text-emerald-100/80">
-          연속 미출현 · 추세 · 누적 · 카이제곱 결과를 합쳐 좁힌 후보군
+          워크포워드 잔여 중 연속·추세·누적 출현 극값 제외 후 카이제곱 순위로 남은 번호
         </span>
       </div>
 
@@ -60,7 +58,7 @@ export function AdoptedSummaryCard({
             ))}
           </div>
           <p className="text-xs text-emerald-100/70">
-            기준 회차 조회 후 4개 분석 기법의 통합 채택 번호가 표시됩니다. (상세 로직은 후속 작업에서 구현)
+            기준 회차 조회 후 통합 채택 번호가 표시됩니다.
           </p>
         </div>
       )}

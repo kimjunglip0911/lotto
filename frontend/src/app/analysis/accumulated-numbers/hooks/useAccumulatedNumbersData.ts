@@ -13,6 +13,10 @@ import {
   createEmptyWindowCountMap,
   toCountResult,
 } from '../logic/numberCounts';
+import {
+  buildAccumulatedCountExclusionResult,
+  type AccumulatedCountExclusionResult,
+} from '../logic/accumulatedCountExtremes';
 import { runAccumulatedStrategySelection } from '../logic/runAccumulatedStrategySelection';
 import type {
   CountResult,
@@ -47,6 +51,8 @@ export const useAccumulatedNumbersData = () => {
   );
   const [strategyCharts, setStrategyCharts] = useState<StrategyChartData[]>([]);
   const [finalNumberPlan, setFinalNumberPlan] = useState<FinalNumberPlan | null>(null);
+  const [accumulatedCountExclusion, setAccumulatedCountExclusion] =
+    useState<AccumulatedCountExclusionResult | null>(null);
   const [isSavingSnapshot, setIsSavingSnapshot] = useState(false);
   const [saveSnapshotMessage, setSaveSnapshotMessage] = useState<string | null>(null);
   const [saveSnapshotError, setSaveSnapshotError] = useState<string | null>(null);
@@ -99,6 +105,7 @@ export const useAccumulatedNumbersData = () => {
     setWindowCountResultMap(createEmptyWindowCountMap());
     setStrategyCharts([]);
     setFinalNumberPlan(null);
+    setAccumulatedCountExclusion(null);
 
     if (options?.clearWinningNumber) {
       setSelectedWinningNumber(null);
@@ -152,6 +159,7 @@ export const useAccumulatedNumbersData = () => {
     setAllTimeCountResult(toCountResult(rangeRows));
     setWindowCountResultMap(buildWindowCountResultMap(windowRows));
     setSelectedWinningNumber(winningNumber);
+    setAccumulatedCountExclusion(buildAccumulatedCountExclusionResult(rangeRows));
 
     const { strategyCharts, finalNumberPlan } = runAccumulatedStrategySelection(rangeRows);
     setStrategyCharts(strategyCharts);
@@ -231,6 +239,7 @@ export const useAccumulatedNumbersData = () => {
     windowCountResultMap,
     strategyCharts,
     finalNumberPlan,
+    accumulatedCountExclusion,
     handleSearch,
     saveAccumulatedSnapshot,
     isSavingSnapshot,
