@@ -11,14 +11,6 @@ import {
 import type { ChiSquareResult } from '@/app/analysis/chi-square/types';
 import type { WinningNumberRow } from '../types';
 
-const TOTAL_LOTTO_NUMBERS = 45;
-
-export type ChiSquareChartDatum = {
-  number: number;
-  deviation: number;
-  rank: number;
-};
-
 const buildBinPctMap = (allBins: readonly { binKey: string; pct: number }[]): Map<string, number> =>
   new Map(allBins.map((row) => [row.binKey, row.pct] as const));
 
@@ -219,64 +211,6 @@ export const getChiSquareFinalPickSlice = ({
     walkForwardExcludedByConditionalPct: ctx.walkForwardExcludedSplit.byConditionalPct,
     walkForwardExcludedByOverlapRounds: ctx.walkForwardExcludedSplit.byOverlapRounds,
   };
-};
-
-/**
- * 번호별 편차(O-E)와 편차 기준 순위를 차트 표시용으로 생성한다.
- * 순위는 편차 내림차순, 동률이면 번호 오름차순으로 고정한다.
- */
-export const buildChiSquareChartData = (
-  previousDrawRows: WinningNumberRow[],
-  selectedMainNumbers: number[],
-): ChiSquareChartDatum[] => {
-  if (previousDrawRows.length < 2 || selectedMainNumbers.length === 0) return [];
-
-  const sortedRows = [...previousDrawRows].sort((a, b) => a.draw_no - b.draw_no);
-  const chiSquareResults = buildChiSquareResults(sortedRows);
-  const walkForwardSummary = runChiSquareDeviationBinWalkForward(sortedRows, {
-    minPastDraws: 1,
-    referenceMainNumbers: new Set(selectedMainNumbers),
-  });
-  const rankedByConditionalProbability = rankChiSquareNumbersByConditionalProbability(
-    chiSquareResults,
-    walkForwardSummary.allBins,
-  );
-  const normalizedResults =
-    chiSquareResults.length === TOTAL_LOTTO_NUMBERS
-      ? chiSquareResults
-      : Array.from({ length: TOTAL_LOTTO_NUMBERS }, (_, index) => {
-          const number = index + 1;
-          const existing = chiSquareResults.find((row) => row.number === number);
-          return (
-            existing ?? {
-              number,
-              observed: 0,
-              expected: 0,
-              deviation: 0,
-              chiSquare: 0,
-              isLowFreq: false,
-              isHighFreq: false,
-            }
-          );
-        });
-
-  const rankByNumber = new Map<number, number>();
-  rankedByConditionalProbability.forEach((number, index) => {
-    rankByNumber.set(number, index + 1);
-  });
-  normalizedResults.forEach((row) => {
-    if (!rankByNumber.has(row.number)) {
-      rankByNumber.set(row.number, TOTAL_LOTTO_NUMBERS);
-    }
-  });
-
-  return normalizedResults
-    .map((row) => ({
-      number: row.number,
-      deviation: row.deviation,
-      rank: rankByNumber.get(row.number) ?? TOTAL_LOTTO_NUMBERS,
-    }))
-    .sort((a, b) => a.number - b.number);
 };
 
 export const getChiSquareAdoptedNumbers = ({

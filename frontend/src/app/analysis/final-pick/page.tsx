@@ -35,7 +35,8 @@ export default function FinalPickPage() {
     adoptedByChiSquareNumbers,
     excludedByChiSquareWalkForwardConditionalPct,
     excludedByChiSquareWalkForwardOverlapRounds,
-    chiSquareChartData,
+    comprehensiveChartCounts,
+    comprehensiveChartAnalyzedDrawCount,
   } = useFinalPickData();
 
   /** 본번호 6개만 추출(보너스 제외) — 패널/차트 hit 강조용. */
@@ -55,6 +56,18 @@ export default function FinalPickPage() {
 
   const adoptedSummaryTargetCount =
     adoptedAllNumbers.length > 0 ? adoptedAllNumbers.length : ADOPTED_TARGET_COUNT;
+
+  /** 차트 빨간 동그라미 — 워크포워드 제외(두 카드 합집합). */
+  const chiSquareWalkForwardExcludedForChart = useMemo(
+    () =>
+      [
+        ...new Set([
+          ...excludedByChiSquareWalkForwardConditionalPct,
+          ...excludedByChiSquareWalkForwardOverlapRounds,
+        ]),
+      ].sort((a, b) => a - b),
+    [excludedByChiSquareWalkForwardConditionalPct, excludedByChiSquareWalkForwardOverlapRounds],
+  );
 
   return (
     <div className="bg-background min-h-screen flex justify-center w-full overflow-x-hidden">
@@ -84,10 +97,11 @@ export default function FinalPickPage() {
           />
 
           <ComprehensiveChart
-            chartData={chiSquareChartData}
+            counts={comprehensiveChartCounts}
+            analyzedDrawCountForChart={comprehensiveChartAnalyzedDrawCount}
             highlightedNumbers={mainWinningNumberSet}
             accumulatedExcludedNumbers={accumulatedExclusion.excludedUnique}
-            chiSquareAdoptedNumbers={adoptedByChiSquareNumbers}
+            chiSquareWalkForwardExcludedNumbers={chiSquareWalkForwardExcludedForChart}
             streakExcludedNumbers={excludedByStreakNumbers}
           />
 

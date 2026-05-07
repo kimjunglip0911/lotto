@@ -4,12 +4,9 @@ import {
   getAccumulatedExclusionNumbers,
   type AccumulatedExclusionResult,
 } from '../logic/accumulatedAdoption';
-import {
-  buildChiSquareChartData,
-  getChiSquareFinalPickSlice,
-  type ChiSquareChartDatum,
-} from '../logic/chiSquareAdoption';
+import { getChiSquareFinalPickSlice } from '../logic/chiSquareAdoption';
 import { getConsecutivelyAppearedMainNumbers } from '@/app/analysis/absence-streak/logic/streak';
+import { buildNumberCounts } from '@/app/analysis/accumulated-numbers/logic/numberCounts';
 
 /**
  * 통합 분석 페이지의 회차 목록·당첨번호 조회 훅.
@@ -42,7 +39,10 @@ type UseFinalPickDataResult = {
   excludedByChiSquareWalkForwardConditionalPct: number[];
   /** 워크포워드 — 겹침 회차 이하로 제외되는 번호(통합 페이지 카드) */
   excludedByChiSquareWalkForwardOverlapRounds: number[];
-  chiSquareChartData: ChiSquareChartDatum[];
+  /** 이전 회차까지 본번호 누적 출현 횟수(인덱스 0 = 1번) — 종합 차트용 */
+  comprehensiveChartCounts: number[];
+  /** `comprehensiveChartCounts` 집계에 포함된 회차 수 */
+  comprehensiveChartAnalyzedDrawCount: number;
   searchedDraw: string;
   isSearching: boolean;
   searchError: string | null;
@@ -109,10 +109,15 @@ export const useFinalPickData = (): UseFinalPickDataResult => {
     [accumulatedExclusion, excludedByStreakNumbers, previousDrawRows, selectedMainNumbers],
   );
 
-  const chiSquareChartData = useMemo(
-    () => buildChiSquareChartData(previousDrawRows, selectedMainNumbers),
-    [previousDrawRows, selectedMainNumbers],
-  );
+  const { comprehensiveChartCounts, comprehensiveChartAnalyzedDrawCount } = useMemo(() => {
+    if (previousDrawRows.length === 0) {
+      return { comprehensiveChartCounts: [] as number[], comprehensiveChartAnalyzedDrawCount: 0 };
+    }
+    return {
+      comprehensiveChartCounts: buildNumberCounts(previousDrawRows),
+      comprehensiveChartAnalyzedDrawCount: previousDrawRows.length,
+    };
+  }, [previousDrawRows]);
 
   useEffect(() => {
     let isMounted = true;
@@ -237,7 +242,8 @@ export const useFinalPickData = (): UseFinalPickDataResult => {
     adoptedByChiSquareNumbers,
     excludedByChiSquareWalkForwardConditionalPct,
     excludedByChiSquareWalkForwardOverlapRounds,
-    chiSquareChartData,
+    comprehensiveChartCounts,
+    comprehensiveChartAnalyzedDrawCount,
     searchedDraw,
     isSearching,
     searchError,
