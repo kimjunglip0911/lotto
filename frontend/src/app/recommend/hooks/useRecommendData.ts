@@ -5,7 +5,10 @@ import { fetchDrawNumbers, fetchSavedRecommendData } from '@/app/recommend/logic
 import { fetchFinalPickAdopted } from '@/app/recommend/logic/finalPickAdopted'
 import type { GeneratedSet } from '@/app/recommend/logic/types'
 import { useRecommendApiUrl } from '@/app/recommend/hooks/useRecommendApiUrl'
-import { TARGET_SET_COUNT } from '@/app/recommend/logic/combinationBasedSets'
+import {
+  sortGeneratedSetsByComboStrategy,
+  TARGET_SET_COUNT,
+} from '@/app/recommend/logic/combinationBasedSets'
 
 export function useRecommendData() {
   const [availableDraws, setAvailableDraws] = useState<number[]>([])
@@ -41,7 +44,7 @@ export function useRecommendData() {
   ) => {
     setWinningNumbers(winningNumbersData)
     setAdoptedNumbers(adopted)
-    setGeneratedSets(sets)
+    setGeneratedSets(sortGeneratedSetsByComboStrategy(sets))
     setCombinationSummaryLines([])
     if (sets.length > 0) {
       setStatusMessage(`${draw}회차 기준 저장된 ${sets.length}개 추천 세트를 불러왔습니다.`)

@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import {
   generateCombinationBasedSets,
+  sortGeneratedSetsByComboStrategy,
   TARGET_SET_COUNT,
 } from '@/app/recommend/logic/combinationBasedSets'
 import {
@@ -88,7 +89,7 @@ export function useRecommendGeneration({
         sets: payloadSets,
       })
 
-      setGeneratedSets(generatedData)
+      setGeneratedSets(sortGeneratedSetsByComboStrategy(generatedData))
       const refNote = adoptedResult.infoMessage ? ` ${adoptedResult.infoMessage}` : ''
       const tail = warning ? ` (${warning})` : ''
       setStatusMessage(

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { WinningNumberRow } from '@/app/analysis/chi-square/types'
 import {
+  COMBO_RANK_TRIPLE_PRIORITY_ORDER,
   generateCombinationBasedSets,
   TARGET_SET_COUNT,
 } from '@/app/recommend/logic/combinationBasedSets'
@@ -53,6 +54,19 @@ function syntheticHistory(count: number): WinningNumberRow[] {
   return rows
 }
 
+describe('COMBO_RANK_TRIPLE_PRIORITY_ORDER', () => {
+  it('같은 (oe, run)에서 band 1→2→3 다음에 run이 증가한다', () => {
+    expect(COMBO_RANK_TRIPLE_PRIORITY_ORDER.slice(0, 6)).toEqual([
+      [1, 1, 1],
+      [1, 1, 2],
+      [1, 1, 3],
+      [1, 2, 1],
+      [1, 2, 2],
+      [1, 2, 3],
+    ])
+  })
+})
+
 describe('generateCombinationBasedSets', () => {
   it('채택 풀이 6개 미만이면 세트를 만들지 않는다', async () => {
     const hist = syntheticHistory(40)
@@ -73,7 +87,7 @@ describe('generateCombinationBasedSets', () => {
     const adopted = Array.from({ length: 20 }, (_, i) => i + 1)
     const r = await generateCombinationBasedSets(hist, adopted, 0)
     expect(r.sets.length).toBe(TARGET_SET_COUNT)
-    expect(r.sets.every((s) => /^combo:oe\d+-run\d+-band[123]$/.test(s.strategy))).toBe(true)
+    expect(r.sets.every((s) => /^combo:oe\d+-run\d+-band[123]$/.test(s.strategy ?? ''))).toBe(true)
     expect(r.summaryLines.some((l) => l.includes('고저 합산'))).toBe(true)
     expect(r.summaryLines.some((l) => l.includes('세트 구성:'))).toBe(true)
     const keys = new Set(
@@ -91,5 +105,9 @@ describe('generateCombinationBasedSets', () => {
     const distinctUsed = adopted.filter((n) => (usage.get(n) ?? 0) > 0).length
     /** 랭크·겹침 점수로 일부 번호는 안 쓰일 수 있으나, 풀의 상당 부분은 등장해야 한다 */
     expect(distinctUsed).toBeGreaterThanOrEqual(12)
+
+    const strategies = r.sets.map((s) => s.strategy ?? '')
+    expect(strategies.some((v) => v.includes('-band2'))).toBe(true)
+    expect(strategies.some((v) => v.includes('-band3'))).toBe(true)
   })
 })
