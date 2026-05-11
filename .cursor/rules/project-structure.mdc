@@ -15,7 +15,8 @@ lotto/
 ├── .cursor/
 │   ├── rules/
 │   │   ├── rules.mdc
-│   │   ├── 01.plan-document-form.mdc
+│   │   ├── 01.pln-doc.mdc
+│   │   ├── 02.dev-gd.mdc
 │   │   ├── project-structure.mdc
 │   │   ├── components.mdc
 │   │   ├── refactoring-guide.mdc

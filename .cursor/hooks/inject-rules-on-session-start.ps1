@@ -86,7 +86,8 @@ $orderedRuleFiles = @(
   "refactoring-guide.mdc",
   "bug-lessons.mdc",
   "git-commit-guide.mdc",
-  "01.plan-document-form.mdc"
+  "01.pln-doc.mdc",
+  "02.dev-gd.mdc"
 )
 
 $existingOrdered = $orderedRuleFiles |
