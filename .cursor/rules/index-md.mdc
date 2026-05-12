@@ -1,8 +1,19 @@
 ---
+description: 작업 전 — .cursor/rules에서 열 규칙 파일 빠른 선택
 alwaysApply: true
 ---
 
-# 작업 참고 문서를 적재 적소에 사용하기 위한 인덱스 파일.
+# `.cursor/rules` 인덱스
 
-## 실행 시점 및 파일 경로
-1. 
+**어떤 작업이든 시작하기 전**에 아래에서 맞는 파일을 연 뒤 진행한다. 범위는 **`.cursor/rules` 안의 파일만**이다.
+
+| 할 일 | 파일 |
+|:---|:---|
+| 공통 준수·금지 | `rules.mdc` |
+| 플랜(설계서) 작성 | `01.pln-doc.mdc` |
+| 기술 스택·개발 방식·검증 | `02.dev-gd.mdc` |
+| 리팩터링 | `refactoring-guide.mdc` |
+| 디렉터리·트리·경로 | `project-structure.mdc` |
+| UI 컴포넌트 계층·위치 | `components.mdc` |
+| Git 커밋·푸시 | `git-commit-guide.mdc` |
+| 버그 재발 방지 한 줄 기록 | `bug-lessons.mdc` |

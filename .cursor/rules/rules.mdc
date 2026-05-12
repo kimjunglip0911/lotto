@@ -1,5 +1,5 @@
 ---
-description: 개발 프로젝트 필수 규칙
+description: 항상 적용 — 표기·명명·작업 전 index-md·README 유지, MOCA-DB 갱신·삭제 금지·오프라인 사용자 전제
 alwaysApply: true
 ---
 
@@ -18,28 +18,5 @@ alwaysApply: true
 
 다음 행위는 예외 없이 금지한다.
 
-- **MOCA-DB**를 사용할 때는 어떤 경우에도 **데이터 갱신·삭제(UPDATE·DELETE 등)**에 해당하는 명령을 실행하지 않는다.
 - **개발·운영 서버**는 외부 인터넷을 쓸 수 있어 패키지 설치가 가능하지만, **최종 사용자 환경**은 외부 인터넷이 없을 수 있다. 따라서 필요한 **라이브러리 등은 사전에 내려받아** 레포지토리에 포함·적용한다.
 
-
----
-
-## 2. 핵심 기술 스택과 준수
-
-**버전/의존성 정본**(단일 출처): 루트 `package-lock.json`, 루트 `package.json`, `frontend/package.json`, `backend/requirements.txt`. 의존성을 바꾸면 이 파일들과 린트·빌드·관련 `README`를 함께 맞춘다.
-
-**메이저 요약**: Node **20 계열 이상** · 프론트 **Next.js 16**(App Router) · **React 19** · **TypeScript 5** · **Tailwind 4** · **ESLint 9**(`eslint-config-next` 16 계열) · 백엔드 **FastAPI** / **Pydantic** / **Uvicorn**. Python 의존성은 `backend/requirements.txt`의 실제 선언을 정본으로 본다.
-
-**준수**: 해당 메이저의 공식 API와 본 레포 관례를 따른다(App Router·RSC 경계, `fetch`/캐시 의미). Tailwind는 **v4 전제**만 사용한다. `any`·린트 무시 남용 금지. 새 라이브러리는 **npm/pip으로 레포에만** 추가하고, 브라우저가 외부 CDN에서 JS/CSS/폰트를 직접 받게 하지 않는다.
-
-
-## 4. 실행 주소·포트
-
-| 구분 | 값 |
-|:---|:---|
-| **프론트엔드(Next.js 기본 개발 포트)** | **3010** |
-| **백엔드(FastAPI / Uvicorn 개발 포트)** | **8010** |
-
-현재 저장소의 실행 스크립트(`npm run dev`, `npm run dev:backend`)와 프록시 설정(`frontend/next.config.ts`) 기준으로 **3010(프론트), 8010(백엔드)**를 정본으로 한다.
-
----

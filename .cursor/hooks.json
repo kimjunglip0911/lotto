@@ -8,11 +8,10 @@
         "failClosed": false
       }
     ],
-    "preToolUse": [
+    "postToolUse": [
       {
-        "matcher": "CreatePlan",
         "type": "command",
-        "command": ".cursor/hooks/inject-rules-on-session-start.ps1",
+        "command": ".cursor/hooks/inject-rules-on-session-start.ps1 -InjectMode Index",
         "failClosed": false
       }
     ]
