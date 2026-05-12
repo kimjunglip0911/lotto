@@ -77,3 +77,7 @@ alwaysApply: false
 ### Step N. …
 
 ---
+
+## 5. 개발 진행 (AI용)
+
+> **4. 개발 가이드**의 Step을 따라 구현하고, 검증·도구 사용·코딩 관례는 **`.cursor/rules/02.dev-gd.mdc`**를 정본으로 따른다.
