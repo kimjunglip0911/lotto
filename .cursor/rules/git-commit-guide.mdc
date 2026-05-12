@@ -1,149 +1,23 @@
 ---
-description: git commit, 커밋 메시지, 스테이징, amend, merge, rebase, COMMIT_EDITMSG 편집, Signed-off-by, 훅, 커밋
+description: git commit, 푸시, pull, clone, SSH
 alwaysApply: false
 ---
-> **적용 시점**: `lotto` 저장소에서 커밋/푸시 작업을 실행하거나, Git 오류를 복구할 때만 본 가이드를 사용한다.
+> lotto 저장소 커밋·푸시·pull·SSH 시 참고.
 
-# Lotto 저장소 커밋·푸시 가이드 (PowerShell 기준)
+# 커밋·푸시 (PowerShell)
 
-## 0) 이 저장소 기준 고정값
+- **고정**: `C:\Users\김정립\Desktop\OneDrive - 하비앤라이프\01.Development\02.lotto`, 브랜치 `main`, 원격 `git@gitlab.com:my-dev5201918/lotto.git`; `&&` 대신 `;` 또는 줄바꿈.
 
-- 로컬 저장소 경로: `C:\Users\김정립\Desktop\OneDrive - 하비앤라이프\01.Development\02.lotto`
-- 기본 브랜치: `main`
-- 원격 저장소: `git@gitlab.com:my-dev5201918/lotto.git`
-- 셸 기준: Windows PowerShell (`&&` 대신 줄바꿈 또는 `;` 사용)
+- **커밋·푸시**: `cd "...\02.lotto"` → `git status` → `git add …` → `git diff --cached` → `git commit -m "한국어"` → `git push`; 한 커밋 한 논리; 마지막에 `git status`로 clean 확인.
 
-## 1) 일반 커밋 + 푸시 (일상 작업)
+- **업스트림·원격**: `git push -u origin main`; URL 수정 `git remote set-url origin git@gitlab.com:my-dev5201918/lotto.git`.
 
-```powershell
-cd "C:\Users\김정립\Desktop\OneDrive - 하비앤라이프\01.Development\02.lotto"
-git status
-git add <변경파일1> <변경파일2>
-git diff --cached
-git commit -m "커밋 제목(한국어)"
-git push
-```
+- **push 거절**: `git fetch origin` → `git merge origin/main`(필요 시 `--allow-unrelated-histories`); `git push --force` 금지.
 
-- 커밋 메시지는 한국어로 작성한다.
-- 한 커밋에는 한 가지 논리 변경만 담는다.
+- **pull·clone·복구**: `git fetch origin`; 작업 트리 깨끗하면 `git pull --rebase origin main`; 중단 `git rebase --abort`·`git merge --abort`; rebase 잔존 `Remove-Item -LiteralPath .git\rebase-merge -Recurse -Force`; pull 전 `git stash push -u -m temp`→pull→`stash pop`; clone `git clone git@gitlab.com:my-dev5201918/lotto.git`.
 
-## 2) 첫 푸시 또는 업스트림 없는 브랜치
+- **SSH**: 번들 ssh가 `C:\Users\Kimjunglip\.ssh` 등과 실제 `%USERPROFILE%\.ssh`를 달리 보면 `Host key verification failed`·`Permission denied (publickey)` → `git config core.sshCommand "C:/Windows/System32/OpenSSH/ssh.exe"`(전역 동일이면 `--global`) → `ssh -T git@gitlab.com` 후 `git pull`/`git push`.
 
-```powershell
-git branch --show-current
-git push -u origin main
-```
+- **SSH 보조**: `known_hosts` 비면 `ssh-keyscan -t ed25519 gitlab.com` 한 줄을 `%USERPROFILE%\.ssh\known_hosts`에 추가(BOM 없이).
 
-- 이후부터는 `git push`만 사용해도 된다.
-
-## 3) 원격 저장소 주소 점검/수정
-
-```powershell
-git remote -v
-git remote set-url origin git@gitlab.com:my-dev5201918/lotto.git
-git remote -v
-```
-
-- `origin` 주소가 다르면 위 명령으로 고정한다.
-
-## 4) 원격에 초기 커밋이 있어 push 거절될 때
-
-```powershell
-git fetch origin
-git merge origin/main --allow-unrelated-histories -m "merge: GitLab 원격 초기 커밋 병합"
-git push -u origin main
-```
-
-- 메시지 `fetch first` 또는 `non-fast-forward`가 뜰 때 사용한다.
-- `--force`는 사용하지 않는다.
-
-## 5) SSH HOME/known_hosts 경로 꼬임 우회 (이 저장소 실사용값)
-
-```powershell
-$env:GIT_SSH_COMMAND='ssh -i "C:/Users/김정립/.ssh/id_ed25519" -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile="C:/Users/김정립/.ssh/known_hosts"'
-git push -u origin main
-```
-
-- `Could not create directory '/c/Users/.../.ssh'` 또는 `Permission denied (publickey)` 시 사용한다.
-- 우회 후 정상 동작하면 기본 `git push`로 복귀한다.
-
-## 6) rebase/merge 중 작업 꼬였을 때 복구 순서
-
-```powershell
-git status
-git rebase --abort
-git merge --abort
-git status
-```
-
-- `git status`에 `You are currently rebasing`가 남아 있으면 rebase 메타를 정리한다.
-
-```powershell
-Remove-Item -LiteralPath ".git\rebase-merge" -Recurse -Force
-git status
-```
-
-## 7) 커밋 전/후 최소 점검 체크리스트
-
-- 커밋 전: `git status`, `git diff --cached`
-- 푸시 전: `git branch -vv`, `git remote -v`
-- 푸시 후: `git status`가 `working tree clean`인지 확인
-
-## 8) 저장소에서 코드 가져오기 (clone / pull / fetch)
-
-### 8-1) 처음 받아올 때 (clone)
-
-```powershell
-cd "C:\Users\김정립\Desktop\OneDrive - 하비앤라이프\01.Development"
-git clone git@gitlab.com:my-dev5201918/lotto.git
-cd ".\lotto"
-git remote -v
-git branch -a
-```
-
-- 최초 1회만 실행한다.
-- SSH 인증 문제가 있으면 본 문서의 `5)` 우회 명령을 먼저 적용한다.
-
-### 8-2) 기존 로컬 저장소 최신화 (권장 기본)
-
-```powershell
-cd "C:\Users\김정립\Desktop\OneDrive - 하비앤라이프\01.Development\02.lotto"
-git status
-git pull --rebase origin main
-git status
-```
-
-- 로컬 수정사항이 없을 때 가장 안전하다.
-- pull 전 `working tree clean` 상태를 확인한다.
-
-### 8-3) 변경점만 먼저 확인하고 가져오기 (검토용)
-
-```powershell
-git fetch origin
-git log --oneline --decorate --max-count=10 origin/main
-git diff --name-only HEAD..origin/main
-```
-
-- 바로 합치지 않고 원격 변경 파일 목록을 먼저 검토할 때 사용한다.
-
-### 8-4) pull 거절/충돌 시 복구 흐름
-
-```powershell
-git status
-git rebase --abort
-git merge --abort
-git status
-```
-
-- rebase/merge 중단 후에도 `You are currently rebasing`가 남으면 본 문서 `6)`의 rebase 메타 정리 명령을 사용한다.
-
-### 8-5) 로컬 변경을 임시 보관 후 최신 코드 받기
-
-```powershell
-git stash push -u -m "temp-before-pull"
-git pull --rebase origin main
-git stash pop
-```
-
-- 작업 중인 수정본을 잠깐 치워두고 최신 코드를 받아야 할 때 사용한다.
-- `stash pop` 후 충돌이 나면 파일 수정 → `git add`로 정리한다.
+- **SSH 일회**: `$env:GIT_SSH_COMMAND='ssh -i C:/Users/김정립/.ssh/id_ed25519 -o IdentitiesOnly=yes -o UserKnownHostsFile=C:/Users/김정립/.ssh/known_hosts'` 후 git 명령.
