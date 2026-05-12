@@ -20,6 +20,11 @@ __pycache__/
 # Backend runtime
 backend/*.log
 
+# Local database files
+*.db
+*.sqlite
+*.sqlite3
+
 # 누적 스냅샷 스테이징(배치 스크립트 산출물, 커밋 금지)
 frontend/src/app/analysis/accumulated-numbers/accumulated-snapshots-staging.md
 frontend/accumulated-snapshots-staging-test.md

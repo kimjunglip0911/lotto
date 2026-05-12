@@ -8,6 +8,23 @@ import { getChiSquareFinalPickSlice } from '../logic/chiSquareAdoption';
 import { getConsecutivelyAppearedMainNumbers } from '@/app/analysis/absence-streak/logic/streak';
 import { buildNumberCounts } from '@/app/analysis/accumulated-numbers/logic/numberCounts';
 
+const normalizeDrawNumbers = (payload: unknown): number[] => {
+  if (!Array.isArray(payload)) return [];
+
+  const normalized = payload
+    .map((item) => {
+      if (typeof item === 'number') return item;
+      if (typeof item === 'string') {
+        const parsed = Number(item.trim());
+        return Number.isNaN(parsed) ? null : parsed;
+      }
+      return null;
+    })
+    .filter((item): item is number => item !== null && Number.isInteger(item) && item > 0);
+
+  return [...new Set(normalized)].sort((a, b) => b - a);
+};
+
 /**
  * 통합 분석 페이지의 회차 목록·당첨번호 조회 훅.
  *
@@ -18,6 +35,11 @@ import { buildNumberCounts } from '@/app/analysis/accumulated-numbers/logic/numb
 const finalPickApiUrl = (pathWithQuery: string): string => {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
   return `${apiUrl}/api/analysis/absence-streak/${pathWithQuery}`;
+};
+
+const drawNumbersApiUrl = (): string => {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+  return `${apiUrl}/api/drawings/draw-numbers`;
 };
 
 type UseFinalPickDataResult = {
@@ -77,16 +99,28 @@ export const useFinalPickData = (): UseFinalPickDataResult => {
   );
 
   const selectedMainNumbers = useMemo(() => {
-    if (!selectedWinningNumber) return [];
+    if (selectedWinningNumber) {
+      return [
+        selectedWinningNumber.num1,
+        selectedWinningNumber.num2,
+        selectedWinningNumber.num3,
+        selectedWinningNumber.num4,
+        selectedWinningNumber.num5,
+        selectedWinningNumber.num6,
+      ];
+    }
+    if (previousDrawRows.length === 0) return [];
+    // 미추첨 회차에서는 선택 회차-1(마지막 행)의 본번호를 기준값으로 사용해 하단 분석을 유지한다.
+    const latestPreviousDraw = previousDrawRows[previousDrawRows.length - 1];
     return [
-      selectedWinningNumber.num1,
-      selectedWinningNumber.num2,
-      selectedWinningNumber.num3,
-      selectedWinningNumber.num4,
-      selectedWinningNumber.num5,
-      selectedWinningNumber.num6,
+      latestPreviousDraw.num1,
+      latestPreviousDraw.num2,
+      latestPreviousDraw.num3,
+      latestPreviousDraw.num4,
+      latestPreviousDraw.num5,
+      latestPreviousDraw.num6,
     ];
-  }, [selectedWinningNumber]);
+  }, [previousDrawRows, selectedWinningNumber]);
 
   const {
     adoptedByChiSquareNumbers,
@@ -127,16 +161,22 @@ export const useFinalPickData = (): UseFinalPickDataResult => {
       setIsLoadingDraws(true);
       setDrawLoadError(null);
       try {
-        const response = await fetch(finalPickApiUrl('draw-numbers'), {
+        const response = await fetch(drawNumbersApiUrl(), {
           signal: abortController.signal,
+          cache: 'no-store',
         });
         if (!response.ok) throw new Error(`Failed to fetch draw numbers: ${response.status}`);
         const data: unknown = await response.json();
-        if (!Array.isArray(data)) throw new Error('Draw numbers response is not an array');
-        const draws = data.filter((item): item is number => typeof item === 'number');
+        const draws = normalizeDrawNumbers(data);
+        if (draws.length === 0) throw new Error('Draw numbers response does not contain valid draws');
         if (!isMounted) return;
         setAvailableDraws(draws);
-        setSelectedDraw((prev) => (prev || draws.length === 0 ? prev : String(draws[0])));
+        setSelectedDraw((prev) => {
+          if (!prev) return String(draws[0]);
+          const prevDraw = Number(prev);
+          const hasPrevDraw = Number.isInteger(prevDraw) && draws.includes(prevDraw);
+          return hasPrevDraw ? prev : String(draws[0]);
+        });
       } catch (error) {
         if (abortController.signal.aborted || !isMounted) return;
         console.error('Error fetching draw numbers:', error);
@@ -196,28 +236,27 @@ export const useFinalPickData = (): UseFinalPickDataResult => {
         fetch(finalPickApiUrl(`winning-numbers-range?draw_no=${drawNo}`)),
       ]);
 
-      if (!winningNumberRes.ok) {
-        if (winningNumberRes.status === 404) throw new Error('선택한 회차의 당첨번호를 찾을 수 없습니다.');
-        throw new Error(`Failed to fetch winning number: ${winningNumberRes.status}`);
-      }
       if (!rangeRes.ok) throw new Error(`Failed to fetch winning numbers range: ${rangeRes.status}`);
-
-      const winningData: unknown = await winningNumberRes.json();
       const rangeData: unknown = await rangeRes.json();
-
-      if (!isWinningNumberRow(winningData)) throw new Error('Winning number response is invalid');
       if (!Array.isArray(rangeData)) throw new Error('Winning numbers range response is not an array');
 
       const rows = rangeData.filter(isWinningNumberRow);
-      setSelectedWinningNumber(winningData);
       setPreviousDrawRows(rows);
+
+      if (winningNumberRes.ok) {
+        const winningData: unknown = await winningNumberRes.json();
+        if (!isWinningNumberRow(winningData)) throw new Error('Winning number response is invalid');
+        setSelectedWinningNumber(winningData);
+        setWinningNumberError(null);
+      } else if (winningNumberRes.status === 404) {
+        setSelectedWinningNumber(null);
+        setWinningNumberError('해당 회차는 아직 당첨번호가 확정되지 않았습니다.');
+      } else {
+        throw new Error(`Failed to fetch winning number: ${winningNumberRes.status}`);
+      }
     } catch (error) {
       console.error('Error fetching final-pick winning number:', error);
-      setSearchError(
-        error instanceof Error && error.message.includes('찾을 수 없습니다')
-          ? error.message
-          : '조회 데이터를 불러오지 못했습니다.',
-      );
+      setSearchError('조회 데이터를 불러오지 못했습니다.');
       resetSelectedWinning();
       setPreviousDrawRows([]);
       setSearchedDraw('');
