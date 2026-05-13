@@ -98,6 +98,7 @@ lotto/
 │       │   │   │   │   └── useAccumulatedNumbersDerived.ts
 │       │   │   │   ├── test/
 │       │   │   │   │   ├── runAccumulatedStrategySelection.test.ts
+│       │   │   │   │   ├── accumulatedCountExtremes.test.ts
 │       │   │   │   │   └── __snapshots__/
 │       │   │   │   ├── logic/
 │       │   │   │   │   ├── numberCounts.ts

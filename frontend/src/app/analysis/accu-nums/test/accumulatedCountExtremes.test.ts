@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { WinningNumberRow } from '../types';
-import { buildAccumulatedCountExclusionResult } from './accumulatedCountExtremes';
+import { buildAccumulatedCountExclusionResult } from '../logic/accumulatedCountExtremes';
 
 const row = (drawNo: number, nums: [number, number, number, number, number, number]): WinningNumberRow => ({
   draw_no: drawNo,
