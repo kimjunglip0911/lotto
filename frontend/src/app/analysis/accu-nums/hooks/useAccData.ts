@@ -247,3 +247,5 @@ export const useAccData = () => {
     saveSnapshotError,
   };
 };
+
+export type AccuData = ReturnType<typeof useAccData>;

@@ -23,7 +23,7 @@ type Params = {
   finalNumberPlan: FinalNumberPlan | null;
 };
 
-/** 안내 문구 — 분기 순서와 문구는 page.tsx `buildStatusMessage`와 동일해야 한다. */
+/** 안내 문구 — 분기 순서·문구는 이 파일의 `buildStatusMessage`가 단일 출처이다. */
 function buildStatusMessage({
   isLoadingDraws,
   drawLoadError,
@@ -111,6 +111,20 @@ export const useAccView = ({
     [windowCountResultMap]
   );
 
+  const mainWinSet = useMemo(() => new Set(selectedMainNumbers), [selectedMainNumbers]);
+
+  const canSaveSnapshot = useMemo(
+    () =>
+      hasSearched &&
+      !isSearching &&
+      !searchError &&
+      Number.isFinite(selectedSearchDrawNo) &&
+      selectedSearchDrawNo > 1 &&
+      finalNumberPlan != null &&
+      finalNumberPlan.finalNumbers.length === 4,
+    [hasSearched, isSearching, searchError, selectedSearchDrawNo, finalNumberPlan]
+  );
+
   return {
     hasSearched,
     selectedSearchDrawNo,
@@ -120,5 +134,9 @@ export const useAccView = ({
     windowCharts,
     strategyCharts,
     finalNumberPlan,
+    mainWinSet,
+    canSaveSnapshot,
   };
 };
+
+export type AccuView = ReturnType<typeof useAccView>;

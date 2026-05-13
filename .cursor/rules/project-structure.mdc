@@ -89,6 +89,7 @@ lotto/
 │       │   ├── page.tsx
 │       │   ├── analysis/
 │       │   │   ├── accu-nums/
+│       │   │   │   ├── README.md
 │       │   │   │   ├── page.tsx
 │       │   │   │   ├── api.ts
 │       │   │   │   ├── constants.ts
@@ -115,7 +116,15 @@ lotto/
 │       │   │   │   │       └── stratRec.ts
 │       │   │   │   └── components/
 │       │   │   │       ├── accBarStat.ts
+│       │   │   │       ├── AccExclBox.tsx
+│       │   │   │       ├── AccFinalBox.tsx
+│       │   │   │       ├── AccNumHit.tsx
+│       │   │   │       ├── AccSearchBlock.tsx
+│       │   │   │       ├── AccStratCharts.tsx
+│       │   │   │       ├── AccStratNote.tsx
+│       │   │   │       ├── AccStratPick.tsx
 │       │   │   │       ├── AccuChart.tsx
+│       │   │   │       ├── AccuMain.tsx
 │       │   │   │       ├── AccSearch.tsx
 │       │   │   │       └── WinStrip.tsx
 │       │   │   ├── run-streak/
