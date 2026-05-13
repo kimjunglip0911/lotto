@@ -1,11 +1,11 @@
 import type { WinningNumberRow } from '../types';
-import { DrawSelector } from './DrawSelector';
-import { SelectedWinningNumbersPreview } from './SelectedWinningNumbersPreview';
+import { DrawPick } from './DrawPick';
+import { NumPreview } from './NumPreview';
 
 // 회차 선택·조회 영역과 당첨번호 미리보기, 상태 안내를 한 줄에 모아 둔 영역입니다.
-// 실제 UI 구성은 DrawSelector + SelectedWinningNumbersPreview 두 컴포넌트에 위임합니다.
+// 실제 UI 구성은 DrawPick + NumPreview 두 컴포넌트에 위임합니다.
 
-type SearchControlsProps = {
+type SearchBarProps = {
   availableDraws: number[];
   selectedDraw: string;
   onSelectedDrawChange: (draw: string) => void;
@@ -18,7 +18,7 @@ type SearchControlsProps = {
   statusMessage: string | null;
 };
 
-export const SearchControls = ({
+export const SearchBar = ({
   availableDraws,
   selectedDraw,
   onSelectedDrawChange,
@@ -29,10 +29,10 @@ export const SearchControls = ({
   winningNumberError,
   selectedWinningNumber,
   statusMessage,
-}: SearchControlsProps) => (
+}: SearchBarProps) => (
   <section className="rounded-2xl border border-card-border/30 bg-card-bg/60 p-4 space-y-3">
     <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-      <DrawSelector
+      <DrawPick
         availableDraws={availableDraws}
         selectedDraw={selectedDraw}
         onSelectedDrawChange={onSelectedDrawChange}
@@ -40,7 +40,7 @@ export const SearchControls = ({
         isSearching={isSearching}
         onSearch={handleSearch}
       />
-      <SelectedWinningNumbersPreview
+      <NumPreview
         isLoadingWinningNumber={isLoadingWinningNumber}
         winningNumberError={winningNumberError}
         selectedWinningNumber={selectedWinningNumber}

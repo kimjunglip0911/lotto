@@ -1,14 +1,14 @@
 import type { StreakResult, WinningNumberRow } from '../types';
-import { ColdNumbersSection } from './ColdNumbersSection';
-import { SearchControls } from './SearchControls';
-import { StatisticalNote } from './StatisticalNote';
-import { StreakTable } from './StreakTable';
-import { SummaryCards } from './SummaryCards';
+import { ColdNums } from './ColdNums';
+import { SearchBar } from './SearchBar';
+import { StatNote } from './StatNote';
+import { StreakTbl } from './StreakTbl';
+import { SumCards } from './SumCards';
 
 // 화면 본문(main 안쪽) 한 줄을 담당하는 조립 컴포넌트입니다.
 // 검색·요약·평균 초과 연속 출현·표·주의 영역을 순서대로 배치합니다.
 
-export type RunStreakBodyProps = {
+export type StreakMainProps = {
   availableDraws: number[];
   selectedDraw: string;
   setSelectedDraw: (draw: string) => void;
@@ -31,9 +31,9 @@ export type RunStreakBodyProps = {
   streakResults: StreakResult[];
 };
 
-export const RunStreakBody = (p: RunStreakBodyProps) => (
+export const StreakMain = (p: StreakMainProps) => (
   <main className="flex-1 overflow-y-auto pb-12 px-4 pt-4 space-y-6">
-    <SearchControls
+    <SearchBar
       availableDraws={p.availableDraws}
       selectedDraw={p.selectedDraw}
       onSelectedDrawChange={p.setSelectedDraw}
@@ -46,7 +46,7 @@ export const RunStreakBody = (p: RunStreakBodyProps) => (
       statusMessage={p.statusMessage}
     />
     {p.canShowStreakPanels && (
-      <SummaryCards
+      <SumCards
         analyzedDrawCount={p.analyzedDrawCount}
         maxStreak={p.maxStreak}
         averageStreak={p.averageStreak}
@@ -54,14 +54,14 @@ export const RunStreakBody = (p: RunStreakBodyProps) => (
         coldNumbersCount={p.coldNumbers.length}
       />
     )}
-    {p.canShowStreakPanels && <ColdNumbersSection coldNumbers={p.coldNumbers} averageStreak={p.averageStreak} />}
-    <StreakTable
+    {p.canShowStreakPanels && <ColdNums coldNumbers={p.coldNumbers} averageStreak={p.averageStreak} />}
+    <StreakTbl
       hasSearched={p.hasSearched}
       noHistory={p.noHistory}
       isSearching={p.isSearching}
       searchError={p.searchError}
       streakResults={p.streakResults}
     />
-    <StatisticalNote />
+    <StatNote />
   </main>
 );

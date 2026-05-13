@@ -1,11 +1,11 @@
 import type { StreakResult } from '../types';
-import { StreakResultsStatus } from './StreakResultsStatus';
-import { StreakTableRow } from './StreakTableRow';
+import { StreakStat } from './StreakStat';
+import { StreakRow } from './StreakRow';
 
 // 번호별 연속 출현 분석 결과 표 영역입니다.
-// 표 머리글과 상태 분기만 담당하고, 각 줄 그리기는 StreakTableRow에 맡깁니다.
+// 표 머리글과 상태 분기만 담당하고, 각 줄 그리기는 StreakRow에 맡깁니다.
 
-type StreakTableProps = {
+type StreakTblProps = {
   hasSearched: boolean;
   noHistory: boolean;
   isSearching: boolean;
@@ -13,16 +13,16 @@ type StreakTableProps = {
   streakResults: StreakResult[];
 };
 
-export const StreakTable = ({
+export const StreakTbl = ({
   hasSearched,
   noHistory,
   isSearching,
   searchError,
   streakResults,
-}: StreakTableProps) => (
+}: StreakTblProps) => (
   <section className="rounded-2xl border border-card-border/30 bg-card-bg/60 p-4 space-y-3">
     <h3 className="text-xl font-semibold text-white">연속 출현 분석 결과</h3>
-    <StreakResultsStatus
+    <StreakStat
       hasSearched={hasSearched}
       noHistory={noHistory}
       isSearching={isSearching}
@@ -43,11 +43,11 @@ export const StreakTable = ({
           </thead>
           <tbody>
             {streakResults.map((row) => (
-              <StreakTableRow key={row.number} row={row} />
+              <StreakRow key={row.number} row={row} />
             ))}
           </tbody>
         </table>
       </div>
-    </StreakResultsStatus>
+    </StreakStat>
   </section>
 );

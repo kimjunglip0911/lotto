@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 // 차트·테이블 영역의 "지금 보여 줄 내용"을 골라 주는 공통 분기 컴포넌트입니다.
 // 아직 조회 안 함 / 검색 중 / 오류 / 결과 없음 같은 상황별로 안내 문구로 갈아 끼웁니다.
 
-type StreakResultsStatusProps = {
+type StreakStatProps = {
   hasSearched: boolean;
   noHistory: boolean;
   isSearching: boolean;
@@ -20,7 +20,7 @@ type StreakResultsStatusProps = {
  * 연속 출현 테이블 공통: 조회 전/중/오류/무데이터 분기.
  * 분기 순서는 noHistory → 미조회 → 검색중 → 오류 → 빈 결과 → children 고정.
  */
-export const StreakResultsStatus = ({
+export const StreakStat = ({
   hasSearched,
   noHistory,
   isSearching,
@@ -29,7 +29,7 @@ export const StreakResultsStatus = ({
   idleHint,
   loadingHint,
   children,
-}: StreakResultsStatusProps) => {
+}: StreakStatProps) => {
   if (noHistory) {
     return <p className="text-sm text-slate-300">1회는 이전 회차가 없어 집계할 데이터가 없습니다.</p>;
   }

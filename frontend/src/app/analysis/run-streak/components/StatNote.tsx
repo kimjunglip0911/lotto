@@ -1,7 +1,7 @@
 // 화면 맨 아래에 띄우는 통계적 주의사항 안내 문구입니다.
 // 과거 출현 패턴이 미래 확률을 바꾸지 않는다는 점(도박사의 오류)을 짚어 줍니다.
 
-export function StatisticalNote() {
+export function StatNote() {
   return (
     <section className="rounded-2xl border border-white/10 bg-slate-900/40 p-4">
       <p className="text-xs text-slate-400 leading-relaxed">

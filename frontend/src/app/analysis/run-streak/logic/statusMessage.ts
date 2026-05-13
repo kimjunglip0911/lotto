@@ -11,7 +11,7 @@ type StatusMessageParams = {
   hasSearched: boolean;
 };
 
-/** SearchControls 상단 안내 문구 — 분기 순서와 문구는 기존 동작과 동일해야 한다. */
+/** SearchBar 상단 안내 문구 — 분기 순서와 문구는 기존 동작과 동일해야 한다. */
 export const buildStatusMessage = ({
   isLoadingDraws,
   drawLoadError,

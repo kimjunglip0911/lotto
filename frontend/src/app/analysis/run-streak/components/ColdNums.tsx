@@ -5,12 +5,12 @@ import type { StreakResult } from '../types';
 
 // 평균보다 긴 연속 출현(본번호)을 가진 번호만 모아 표시합니다.
 
-type ColdNumbersSectionProps = {
+type ColdNumsProps = {
   coldNumbers: StreakResult[];
   averageStreak: number;
 };
 
-export const ColdNumbersSection = ({ coldNumbers, averageStreak }: ColdNumbersSectionProps) => {
+export const ColdNums = ({ coldNumbers, averageStreak }: ColdNumsProps) => {
   const sortedCold = useMemo(
     () => [...coldNumbers].sort((a, b) => b.streak - a.streak),
     [coldNumbers],

@@ -3,12 +3,12 @@
 import { useState } from 'react';
 import { Header } from '@/components/common/Header';
 import { Sidebar } from '@/components/common/Sidebar';
-import { RunStreakBody } from './components/RunStreakBody';
+import { StreakMain } from './components/StreakMain';
 import { useRunStreakData } from './hooks/useRunStreakData';
 import { useRunStreakDerived } from './hooks/useRunStreakDerived';
 
 // "연속 출현 분석" 화면 전체를 조립하는 파일입니다.
-// 데이터·파생 상태를 두 훅에서 받아 본문 조립 컴포넌트(RunStreakBody)에 넘겨 줍니다.
+// 데이터·파생 상태를 두 훅에서 받아 본문 조립 컴포넌트(StreakMain)에 넘겨 줍니다.
 
 export default function RunStreakPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -20,7 +20,7 @@ export default function RunStreakPage() {
       <div className="bg-background text-foreground font-display min-h-screen flex flex-col w-full lg:w-[95%] xl:w-[95%] 2xl:w-[90%] max-w-[1920px] border-x border-card-border/30 relative shadow-2xl">
         <Header onMenuClick={() => setIsSidebarOpen(true)} />
         <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
-        <RunStreakBody
+        <StreakMain
           availableDraws={data.availableDraws}
           selectedDraw={data.selectedDraw}
           setSelectedDraw={data.setSelectedDraw}

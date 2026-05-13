@@ -134,16 +134,16 @@ lotto/
 │       │   │   │   │   ├── statusMessage.ts
 │       │   │   │   │   └── streak.ts
 │       │   │   │   └── components/
-│       │   │   │       ├── ColdNumbersSection.tsx
-│       │   │   │       ├── DrawSelector.tsx
-│       │   │   │       ├── RunStreakBody.tsx
-│       │   │   │       ├── SearchControls.tsx
-│       │   │   │       ├── SelectedWinningNumbersPreview.tsx
-│       │   │   │       ├── StatisticalNote.tsx
-│       │   │   │       ├── StreakResultsStatus.tsx
-│       │   │   │       ├── StreakTable.tsx
-│       │   │   │       ├── StreakTableRow.tsx
-│       │   │   │       └── SummaryCards.tsx
+│       │   │   │       ├── ColdNums.tsx
+│       │   │   │       ├── DrawPick.tsx
+│       │   │   │       ├── NumPreview.tsx
+│       │   │   │       ├── SearchBar.tsx
+│       │   │   │       ├── StatNote.tsx
+│       │   │   │       ├── StreakMain.tsx
+│       │   │   │       ├── StreakRow.tsx
+│       │   │   │       ├── StreakStat.tsx
+│       │   │   │       ├── StreakTbl.tsx
+│       │   │   │       └── SumCards.tsx
 │       │   │   └── combination/
 │       │   │       ├── page.tsx
 │       │   │       ├── types.ts

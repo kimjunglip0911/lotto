@@ -1,6 +1,6 @@
 // 회차를 고르고 "조회" 버튼을 누르는 영역. 로딩·검색 중이면 버튼이 비활성화됩니다.
 
-type DrawSelectorProps = {
+type DrawPickProps = {
   availableDraws: number[];
   selectedDraw: string;
   onSelectedDrawChange: (draw: string) => void;
@@ -9,14 +9,14 @@ type DrawSelectorProps = {
   onSearch: () => void;
 };
 
-export const DrawSelector = ({
+export const DrawPick = ({
   availableDraws,
   selectedDraw,
   onSelectedDrawChange,
   isLoadingDraws,
   isSearching,
   onSearch,
-}: DrawSelectorProps) => {
+}: DrawPickProps) => {
   const isReady = !!selectedDraw && !isLoadingDraws && availableDraws.length > 0 && !isSearching;
   return (
     <div className="flex flex-col sm:flex-row sm:items-end gap-3">

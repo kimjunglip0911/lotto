@@ -1,6 +1,6 @@
 // 분석 회차 수 / 최장·평균 연속 출현 / 상위 5% / 평균 초과 개수 요약 카드.
 
-type SummaryCardsProps = {
+type SumCardsProps = {
   analyzedDrawCount: number;
   maxStreak: number;
   averageStreak: number;
@@ -8,13 +8,13 @@ type SummaryCardsProps = {
   coldNumbersCount: number;
 };
 
-export const SummaryCards = ({
+export const SumCards = ({
   analyzedDrawCount,
   maxStreak,
   averageStreak,
   top5PctThreshold,
   coldNumbersCount,
-}: SummaryCardsProps) => (
+}: SumCardsProps) => (
   <section className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
     {[
       { label: '분석 회차 수 (N)', value: `${analyzedDrawCount}회` },
