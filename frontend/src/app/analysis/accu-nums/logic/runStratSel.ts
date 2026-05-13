@@ -1,34 +1,39 @@
 import {
+  buildFinalNumberSelection,
   buildStrategyRecommendation,
   runAccumulatedStrategyEvaluation,
   sliceWindowTail,
 } from './stratEval';
 import { buildNumberCounts } from './numCounts';
 import { toAtLeastOneRate, toAvgHits } from './stratCore/winRank';
-import type { StrategyWindowMetrics } from './stratCore/types';
+import type { AccumulatedStrategyKey, StrategyWindowMetrics } from './stratCore/types';
 import type { FinalNumberPlan, StrategyChartData, StrategyNumberPick, WinningNumberRow } from '../types';
 import { ACCUMULATED_STRATEGY_WINDOW_DRAWS } from '../constants';
 
-const ACCUMULATED_SINGLE_STRATEGY_KEYS = ['nearestMean4'] as const;
+/** 누적 화면 전략: 직전 104회·전체 각각 상위4·하위4만 평가한다. */
+const ACCUMULATED_UI_STRATEGY_KEYS: readonly AccumulatedStrategyKey[] = ['top4Frequency', 'bottom4Frequency'];
 
 export type AccumulatedStrategySelection = {
   strategyCharts: StrategyChartData[];
   finalNumberPlan: FinalNumberPlan | null;
 };
 
-function buildNearestMean104Chart(
+function buildStrategy104Chart(
   rangeRowsSortedAsc: WinningNumberRow[],
-  aggregate: StrategyWindowMetrics
+  aggregate: StrategyWindowMetrics,
+  strategy: AccumulatedStrategyKey,
+  strategyLabel: string,
+  bandLabel: string
 ): StrategyChartData {
   const windowSize = ACCUMULATED_STRATEGY_WINDOW_DRAWS;
   const rows = sliceWindowTail(rangeRowsSortedAsc, windowSize);
   return {
-    key: `nearestMean4-${windowSize}`,
-    title: `평균근접 전략 (이전 ${windowSize}회차, 2년)`,
+    key: `${strategy}-${windowSize}`,
+    title: `${strategyLabel} (${bandLabel} · 이전 ${windowSize}회차)`,
     counts: buildNumberCounts(rows),
     analyzedDrawCount: rows.length,
     noDataMessage: `이전 ${windowSize}회차 데이터가 부족해 전략 차트를 표시할 수 없습니다.`,
-    strategyLabel: '평균근접',
+    strategyLabel,
     windowSize,
     atLeastOneRate: toAtLeastOneRate(aggregate),
     avgHits: toAvgHits(aggregate),
@@ -36,9 +41,17 @@ function buildNearestMean104Chart(
   };
 }
 
+function findAgg(
+  aggregates: StrategyWindowMetrics[],
+  strategy: AccumulatedStrategyKey,
+  windowSize: number
+): StrategyWindowMetrics | undefined {
+  return aggregates.find((a) => a.strategy === strategy && a.windowSize === windowSize);
+}
+
 /**
  * 이미 계산된 전략·윈도 지표로 전략 차트·최종 4개를 만든다(스냅샷 일괄 등 증분 평가와 조합).
- * — 104회차 차트는 2년 구간 표시용, 채택 4개는 선택 회차 직전 전체 이력에 대한 평균근접이다.
+ * — 104회차 차트 2개는 2년 구간 상·하 표시용, 최종 4개는 전체 기간 상·하 추천을 `buildFinalNumberSelection`으로 합친 결과다.
  */
 export function buildAccumulatedStrategySelectionFromAggregates(
   rangeRowsSortedAsc: WinningNumberRow[],
@@ -47,60 +60,91 @@ export function buildAccumulatedStrategySelectionFromAggregates(
   const fullWindowSize = rangeRowsSortedAsc.length;
   const twoYearSize = ACCUMULATED_STRATEGY_WINDOW_DRAWS;
 
-  const aggregateTwoYear = aggregates.find(
-    (a) => a.strategy === 'nearestMean4' && a.windowSize === twoYearSize
-  );
-  const aggregateFull = aggregates.find(
-    (a) => a.strategy === 'nearestMean4' && a.windowSize === fullWindowSize
-  );
+  const aggTop2y = findAgg(aggregates, 'top4Frequency', twoYearSize);
+  const aggBot2y = findAgg(aggregates, 'bottom4Frequency', twoYearSize);
+  const aggTopFull = findAgg(aggregates, 'top4Frequency', fullWindowSize);
+  const aggBotFull = findAgg(aggregates, 'bottom4Frequency', fullWindowSize);
 
-  if (!aggregateTwoYear || !aggregateFull) {
+  if (!aggTop2y || !aggBot2y || !aggTopFull || !aggBotFull) {
     return { strategyCharts: [], finalNumberPlan: null };
   }
 
-  const strategyCharts = [buildNearestMean104Chart(rangeRowsSortedAsc, aggregateTwoYear)];
+  const strategyCharts: StrategyChartData[] = [
+    buildStrategy104Chart(rangeRowsSortedAsc, aggTop2y, 'top4Frequency', '상위 출현 4', '2년'),
+    buildStrategy104Chart(rangeRowsSortedAsc, aggBot2y, 'bottom4Frequency', '하위 출현 4', '2년'),
+  ];
 
-  const recommendationTwoYear = buildStrategyRecommendation({
-    strategy: 'nearestMean4',
+  const recTop2y = buildStrategyRecommendation({
+    strategy: 'top4Frequency',
     windowSize: twoYearSize,
     allRowsBeforeSelectedDraw: rangeRowsSortedAsc,
-    aggregate: aggregateTwoYear,
+    aggregate: aggTop2y,
   });
-
-  const recommendationFull = buildStrategyRecommendation({
-    strategy: 'nearestMean4',
+  const recBot2y = buildStrategyRecommendation({
+    strategy: 'bottom4Frequency',
+    windowSize: twoYearSize,
+    allRowsBeforeSelectedDraw: rangeRowsSortedAsc,
+    aggregate: aggBot2y,
+  });
+  const recTopFull = buildStrategyRecommendation({
+    strategy: 'top4Frequency',
     windowSize: fullWindowSize,
     allRowsBeforeSelectedDraw: rangeRowsSortedAsc,
-    aggregate: aggregateFull,
+    aggregate: aggTopFull,
+  });
+  const recBotFull = buildStrategyRecommendation({
+    strategy: 'bottom4Frequency',
+    windowSize: fullWindowSize,
+    allRowsBeforeSelectedDraw: rangeRowsSortedAsc,
+    aggregate: aggBotFull,
   });
 
-  const finalNumbers = [...recommendationFull.numbers].sort((a, b) => a - b);
+  const finalSel = buildFinalNumberSelection(recTopFull, recBotFull);
+  const finalNumbers = [...finalSel.finalNumbers].sort((a, b) => a - b);
 
   const strategyPicks: StrategyNumberPick[] = [
     {
-      strategyKey: 'nearestMean4TwoYear',
-      strategyLabel: '평균근접 (2년, 104회차)',
+      strategyKey: 'top4TwoYear',
+      strategyLabel: '상위 출현 4 (2년, 104회차)',
       windowSizes: [twoYearSize],
-      numbers: recommendationTwoYear.numbers,
-      atLeastOneRate: recommendationTwoYear.metrics.atLeastOneRate,
-      avgHits: recommendationTwoYear.metrics.avgHits,
-      maxMissStreak: recommendationTwoYear.metrics.maxMissStreak,
+      numbers: recTop2y.numbers,
+      atLeastOneRate: recTop2y.metrics.atLeastOneRate,
+      avgHits: recTop2y.metrics.avgHits,
+      maxMissStreak: recTop2y.metrics.maxMissStreak,
     },
     {
-      strategyKey: 'nearestMean4Full',
-      strategyLabel: '평균근접 (전체 기간)',
+      strategyKey: 'bottom4TwoYear',
+      strategyLabel: '하위 출현 4 (2년, 104회차)',
+      windowSizes: [twoYearSize],
+      numbers: recBot2y.numbers,
+      atLeastOneRate: recBot2y.metrics.atLeastOneRate,
+      avgHits: recBot2y.metrics.avgHits,
+      maxMissStreak: recBot2y.metrics.maxMissStreak,
+    },
+    {
+      strategyKey: 'top4Full',
+      strategyLabel: '상위 출현 4 (전체 기간)',
       windowSizes: [fullWindowSize],
-      numbers: recommendationFull.numbers,
-      atLeastOneRate: recommendationFull.metrics.atLeastOneRate,
-      avgHits: recommendationFull.metrics.avgHits,
-      maxMissStreak: recommendationFull.metrics.maxMissStreak,
+      numbers: recTopFull.numbers,
+      atLeastOneRate: recTopFull.metrics.atLeastOneRate,
+      avgHits: recTopFull.metrics.avgHits,
+      maxMissStreak: recTopFull.metrics.maxMissStreak,
+    },
+    {
+      strategyKey: 'bottom4Full',
+      strategyLabel: '하위 출현 4 (전체 기간)',
+      windowSizes: [fullWindowSize],
+      numbers: recBotFull.numbers,
+      atLeastOneRate: recBotFull.metrics.atLeastOneRate,
+      avgHits: recBotFull.metrics.avgHits,
+      maxMissStreak: recBotFull.metrics.maxMissStreak,
     },
   ];
 
   return {
     strategyCharts,
     finalNumberPlan: {
-      commonNumbers: [],
+      commonNumbers: finalSel.commonNumbers,
       finalNumbers,
       strategyPicks,
     },
@@ -126,7 +170,7 @@ export function runAccumulatedStrategySelection(
     allRowsSortedAsc: rangeRowsSortedAsc,
     drawNumbersToEvaluate,
     windowSizes,
-    strategyKeys: ACCUMULATED_SINGLE_STRATEGY_KEYS,
+    strategyKeys: ACCUMULATED_UI_STRATEGY_KEYS,
   });
 
   return buildAccumulatedStrategySelectionFromAggregates(rangeRowsSortedAsc, aggregates);

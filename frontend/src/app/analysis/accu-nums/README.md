@@ -2,7 +2,7 @@
 
 ## 목적
 
-선택한 회차 **직전까지** 저장된 당첨번호로 번호별 누적 출현 횟수를 보여 주고, 직전 104회(2년)·전체 구간 차트, 누적 출현 극값 제외, 평균근접으로 고른 최종 4개를 함께 확인합니다.
+선택한 회차 **직전까지** 저장된 당첨번호로 번호별 누적 출현 횟수를 보여 주고, 직전 104회(2년)·전체 구간 차트, 누적 출현 극값 제외, **2년·전체 상·하 출현 전략**과 그에 따른 최종 4개를 함께 확인합니다.
 
 ## 주요 파일
 
@@ -12,7 +12,7 @@
 | `components/AccuMain.tsx` | 본문 `<main>` 안 섹션 순서 조립(하위 폴더 컴포넌트만 import) |
 | `components/chart/` | 누적 막대 차트(`AccumulatedChartSection`)·표시용 통계 `toChartStats` |
 | `components/search/` | 회차 검색 패널(`SearchPanel`)·상태 안내(`AccSearchBlock`)·당첨 스트립 |
-| `components/strategy/` | 전략 안내·2년 등 차트 나열·극값 제외·평균근접 채택 블록 |
+| `components/strategy/` | 전략 안내·2년 상·하 차트·극값 제외·전략 채택 블록 |
 | `components/chip/AccNumHit.tsx` | 번호 칩(제외·전략·적중 표시) |
 | `hooks/useAccData.ts` | 회차 목록·조회·스냅샷 훅을 한 객체로 묶는 조립 훅 |
 | `hooks/useAccDrawList.ts` | 조회 가능 회차 목록 로딩·선택 회차 문자열 |
@@ -21,6 +21,9 @@
 | `hooks/useAccView.ts` | 안내 문구·차트용 파생값·스냅샷 저장 가능 여부 |
 | `logic/parseSelDraw.ts` | 선택 회차 문자열을 숫자로 바꿀 때의 검증 |
 | `logic/runAccSearch.ts` | 조회 API 병렬 호출·1회차 분기·집계·전략 실행 |
+| `logic/runStratSel.ts` | 상·하(`top4`/`bottom4`) 전략 차트·최종 4개·`strategyPicks` 조립 |
+| `logic/stratEval.ts` | 전략·윈도 평가 모듈 공개 진입점(추천 화면과 공유) |
+| `logic/stratCore/` | rolling 평가(`evalRun`·`evalBucket`·`evalAcc`), 번호·랭킹·전략 추천(`stratRec*`·`numPick` 등) |
 | `logic/accSrchStDef.ts` / `accSrchRed.ts` / `accSrchRedApply.ts` | 조회 전용 상태 초기값·리듀서 |
 | `logic/accStatusMsg.ts` | 상단 안내 문구 분기 |
 | `logic/mapWinCharts.ts` | 윈도 집계 맵 → 차트 행 배열 |
@@ -37,4 +40,4 @@
 
 ## 주의
 
-- 스냅샷 저장은 조회가 끝나고 오류가 없으며, 평균근접 **최종 4개**가 계산된 경우에만 버튼이 활성화됩니다.
+- 스냅샷 저장은 조회가 끝나고 오류가 없으며, **최종 채택 4개**가 계산된 경우에만 버튼이 활성화됩니다.

@@ -1,6 +1,6 @@
 import type { WinningNumberRow } from '../../types';
 
-/** 누적 집계(본번호+보너스)로 번호 4개를 고르는 규칙 키 */
+/** 본번호 6개 출현 누적 집계로 번호 4개를 고르는 규칙 키 */
 export type AccumulatedStrategyKey =
   | 'top4Frequency'
   | 'bottom4Frequency'

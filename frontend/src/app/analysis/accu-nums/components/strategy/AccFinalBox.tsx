@@ -1,7 +1,7 @@
 import type { FinalNumberPlan } from '../../types';
 import { AccStratPick } from './AccStratPick';
 
-/** 평균근접으로 고른 전략별 번호와 최종 채택 4개를 카드 형태로 보여 줍니다. */
+/** 상·하위 출현 전략별 번호와 최종 채택 4개를 카드 형태로 보여 줍니다. */
 
 type Props = {
   plan: FinalNumberPlan;
@@ -14,7 +14,7 @@ export const AccFinalBox = ({ plan, hasSearched, drawNo, mainWinSet }: Props) =>
   const showHit = hasSearched && drawNo > 1;
   return (
     <section className="rounded-2xl border border-card-border/30 bg-card-bg/60 p-4 space-y-4">
-      <h3 className="text-base font-semibold text-slate-100">평균근접 채택 4개 (2년 · 전체)</h3>
+      <h3 className="text-base font-semibold text-slate-100">전략 채택 (2년 · 전체 상·하)</h3>
       <div className="grid gap-3 md:grid-cols-2">
         {plan.strategyPicks.map((pick) => (
           <AccStratPick key={pick.strategyKey} pick={pick} showHit={showHit} mainWinSet={mainWinSet} />
@@ -33,7 +33,9 @@ export const AccFinalBox = ({ plan, hasSearched, drawNo, mainWinSet }: Props) =>
             </span>
           ))}
         </div>
-        <p className="text-xs text-emerald-100/90">저장·스냅샷 기준 채택 번호는 전체 기간 평균근접 4개와 동일합니다.</p>
+        <p className="text-xs text-emerald-100/90">
+          저장·스냅샷 기준 채택 번호는 전체 기간 상위·하위 출현 4개 조합 규칙으로 고른 최종 4개와 동일합니다.
+        </p>
       </div>
     </section>
   );

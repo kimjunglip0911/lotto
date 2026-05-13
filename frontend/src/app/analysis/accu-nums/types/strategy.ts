@@ -1,4 +1,5 @@
-/** 평균근접 전략 차트와 최종 채택 번호 묶음 타입. */
+/** 전략 구간 막대 차트와 최종 채택 번호 묶음 타입. */
+
 export type StrategyChartData = {
   key: string;
   title: string;
@@ -13,8 +14,8 @@ export type StrategyChartData = {
 };
 
 export type StrategyNumberPick = {
-  /** UI·스냅샷 구분용(평균근접 2년 vs 전체는 서로 다른 키) */
-  strategyKey: 'nearestMean4TwoYear' | 'nearestMean4Full' | 'twoHotTwoCold';
+  /** UI·스냅샷 구분용(상·하 × 2년·전체) */
+  strategyKey: 'top4TwoYear' | 'bottom4TwoYear' | 'top4Full' | 'bottom4Full';
   strategyLabel: string;
   windowSizes: number[];
   numbers: number[];
