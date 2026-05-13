@@ -1,0 +1,58 @@
+/** 조회 버튼·세션·누적 집계 상태를 묶고, API 결과를 한 번에 반영한다. */
+
+import { useCallback, useReducer, useRef } from 'react';
+
+import { accSrchRed } from '../logic/accSrchRed';
+import { mkAccSrchInit } from '../logic/accSrchStDef';
+import { parseSelDraw } from '../logic/parseSelDraw';
+import { runAccSearch } from '../logic/runAccSearch';
+
+type Opts = { selectedDraw: string; onSearchStart?: () => void };
+
+export const useAccSrch = ({ selectedDraw, onSearchStart }: Opts) => {
+  const [st, dispatch] = useReducer(accSrchRed, undefined, mkAccSrchInit);
+  const searchSessionRef = useRef(0);
+
+  const resetSearchResults = useCallback((options?: { clearWinningNumber?: boolean }) => {
+    dispatch({ type: 'resetDerived', clearWin: options?.clearWinningNumber });
+  }, []);
+
+  const handleSearch = useCallback(async () => {
+    if (!selectedDraw) {
+      return;
+    }
+
+    const selectedDrawNo = parseSelDraw(selectedDraw);
+    if (selectedDrawNo === null) {
+      dispatch({ type: 'invalidSel' });
+      return;
+    }
+
+    onSearchStart?.();
+    const session = ++searchSessionRef.current;
+    dispatch({ type: 'start', draw: selectedDraw });
+
+    try {
+      const out = await runAccSearch(selectedDrawNo);
+      if (session !== searchSessionRef.current) {
+        return;
+      }
+      dispatch({ type: 'apply', out });
+    } catch (error) {
+      console.error('Error fetching accumulated numbers search data:', error);
+      if (session === searchSessionRef.current) {
+        dispatch({ type: 'fail' });
+      }
+    } finally {
+      if (session === searchSessionRef.current) {
+        dispatch({ type: 'end' });
+      }
+    }
+  }, [selectedDraw, onSearchStart]);
+
+  return {
+    ...st,
+    handleSearch,
+    resetSearchResults,
+  };
+};

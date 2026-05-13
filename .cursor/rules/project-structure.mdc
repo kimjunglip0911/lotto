@@ -113,15 +113,27 @@ lotto/
 │       │   │   │   │   └── schema.ts
 │       │   │   │   ├── hooks/
 │       │   │   │   │   ├── useAccData.ts
+│       │   │   │   │   ├── useAccDrawList.ts
+│       │   │   │   │   ├── useAccSnap.ts
+│       │   │   │   │   ├── useAccSrch.ts
 │       │   │   │   │   └── useAccView.ts
 │       │   │   │   ├── test/
 │       │   │   │   │   ├── runAccumulatedStrategySelection.test.ts
 │       │   │   │   │   ├── accumulatedCountExtremes.test.ts
 │       │   │   │   │   └── __snapshots__/
 │       │   │   │   ├── logic/
+│       │   │   │   │   ├── accStatusMsg.ts
+│       │   │   │   │   ├── accSrchRed.ts
+│       │   │   │   │   ├── accSrchRedApply.ts
+│       │   │   │   │   ├── accSrchStDef.ts
+│       │   │   │   │   ├── accViewIn.ts
 │       │   │   │   │   ├── accuCntExt.ts
+│       │   │   │   │   ├── canSnap.ts
+│       │   │   │   │   ├── mapWinCharts.ts
 │       │   │   │   │   ├── numCounts.ts
+│       │   │   │   │   ├── parseSelDraw.ts
 │       │   │   │   │   ├── pickTopWin.ts
+│       │   │   │   │   ├── runAccSearch.ts
 │       │   │   │   │   ├── runStratSel.ts
 │       │   │   │   │   ├── stratEval.ts
 │       │   │   │   │   └── stratCore/

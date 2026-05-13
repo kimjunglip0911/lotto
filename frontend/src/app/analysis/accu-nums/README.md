@@ -14,8 +14,18 @@
 | `components/search/` | 회차 검색 패널(`SearchPanel`)·상태 안내(`AccSearchBlock`)·당첨 스트립 |
 | `components/strategy/` | 전략 안내·2년 등 차트 나열·극값 제외·평균근접 채택 블록 |
 | `components/chip/AccNumHit.tsx` | 번호 칩(제외·전략·적중 표시) |
-| `hooks/useAccData.ts` | API·검색 세션·집계 상태 |
-| `hooks/useAccView.ts` | 안내 문구·차트용 파생값·스냅샷 저장 가능 여부 등 |
+| `hooks/useAccData.ts` | 회차 목록·조회·스냅샷 훅을 한 객체로 묶는 조립 훅 |
+| `hooks/useAccDrawList.ts` | 조회 가능 회차 목록 로딩·선택 회차 문자열 |
+| `hooks/useAccSrch.ts` | 조회 세션·누적 집계·전략 상태(`useReducer`) |
+| `hooks/useAccSnap.ts` | 스냅샷 저장 호출·로딩·성공·오류 메시지 |
+| `hooks/useAccView.ts` | 안내 문구·차트용 파생값·스냅샷 저장 가능 여부 |
+| `logic/parseSelDraw.ts` | 선택 회차 문자열을 숫자로 바꿀 때의 검증 |
+| `logic/runAccSearch.ts` | 조회 API 병렬 호출·1회차 분기·집계·전략 실행 |
+| `logic/accSrchStDef.ts` / `accSrchRed.ts` / `accSrchRedApply.ts` | 조회 전용 상태 초기값·리듀서 |
+| `logic/accStatusMsg.ts` | 상단 안내 문구 분기 |
+| `logic/mapWinCharts.ts` | 윈도 집계 맵 → 차트 행 배열 |
+| `logic/accViewIn.ts` | `useAccView` 입력 타입 |
+| `logic/canSnap.ts` | 스냅샷 버튼 활성 조건 |
 | `api/` | 백엔드 API 호출(URL 빌더·레거시 폴백·응답 파서·엔드포인트 5종) 분할. 외부 진입점은 `api/index.ts` |
 | `types.ts` | 누적 번호 분석 타입 공개 진입점 |
 | `types/` | API 행·윈도우·전략·집계·스냅샷 스키마 타입 |
