@@ -18,6 +18,14 @@ Open [http://localhost:3010](http://localhost:3010) with your browser to see the
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
+### Windows·OneDrive에서 `EPERM` … `unlink` `.next` 오류
+
+Next가 캐시를 갱신할 때 `.next` 아래 항목을 지우지 못하면 `EPERM: operation not permitted, unlink …\\.next\\…` 가 날 수 있습니다. 보통 **다른 터미널의 `npm run dev`**, **백그라운드 Node**, **OneDrive 동기화**가 폴더를 잡고 있을 때입니다.
+
+1. 실행 중인 `next dev`(루트의 `npm run dev` 포함)를 **모두 종료**한다.
+2. 저장소 루트에서 `npm run dev:clean -w frontend`로 **`.next` 삭제 후** 개발 서버를 다시 띄운다. (또는 `frontend` 폴더에서 `npm run dev:clean`.)
+3. 반복되면 해당 프로젝트를 OneDrive 밖 경로로 두거나, 동기화·백신 실시간 검사에서 워크스페이스를 제외하는 것을 검토한다.
+
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
 ## Learn More

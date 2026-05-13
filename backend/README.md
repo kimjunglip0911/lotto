@@ -26,7 +26,7 @@ backend/
 
 - **SQLite 경로**: [`DB/database.py`](DB/database.py)의 `get_db_path()`는 기본 `DB/lotto.db`이며, 환경 변수 `LOTTO_DB_PATH`가 있으면 그 절대 경로를 씁니다.
 - **공통 Pydantic**: [`domain/models/schemas.py`](domain/models/schemas.py)를 단일 정본으로 사용하며, `MessageResponse`, `GenerateSaveRequest`, 누적번호 최종 4개 저장(`AccumulatedNumberSnapshotSaveRequest` 등)을 포함합니다.
-- **누적번호 분석 API**: [`router/analysis/accu-nums/router.py`](router/analysis/accu-nums/router.py), SQL [`queries.py`](router/analysis/accu-nums/queries.py), 최종 번호 4개만 DB에 쓰는 [`repository.py`](router/analysis/accu-nums/repository.py).
+- **누적번호 분석 API**: [`router/analysis/accu-nums/router.py`](router/analysis/accu-nums/router.py), SQL [`queries.py`](router/analysis/accu-nums/queries.py), 최종 번호 4개만 DB에 쓰는 [`repository.py`](router/analysis/accu-nums/repository.py). 베이스 경로는 `/api/analysis/accu-nums/`이며, 구 URL `/api/analysis/accumulated-numbers/`도 동일 동작으로 유지한다(OpenAPI에는 신규만 표시). 저장소를 당겨온 뒤에는 Uvicorn 프로세스를 재기동해야 새 경로가 반영된다.
 - **Home API 추가/수정** → `backend/router/home/router.py`
 - **Home SQL 쿼리 수정** → `backend/router/home/queries.py`
 - **Recommend API 추가/수정** → `backend/router/recommend/router.py`

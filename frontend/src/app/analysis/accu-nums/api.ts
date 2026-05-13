@@ -18,6 +18,30 @@ export const accumulatedNumbersApiUrl = (pathWithQuery: string, baseUrl?: string
   return `${apiUrl}/api/analysis/accu-nums/${pathWithQuery}`;
 };
 
+const _ACCU_API_SEG = '/api/analysis/accu-nums/';
+const _LEGACY_API_SEG = '/api/analysis/accumulated-numbers/';
+
+const _legacyAccumUrl = (primaryUrl: string): string | null =>
+  primaryUrl.includes(_ACCU_API_SEG) ? primaryUrl.replace(_ACCU_API_SEG, _LEGACY_API_SEG) : null;
+
+/** 구 Uvicorn(예전 경로만 등록) 호환: 신규 URL이 404일 때 한 번만 예전 경로로 재시도 */
+const fetchAccumulatedApi = async (
+  pathWithQuery: string,
+  init: RequestInit,
+  baseUrl?: string
+): Promise<Response> => {
+  const primary = accumulatedNumbersApiUrl(pathWithQuery, baseUrl);
+  const first = await fetch(primary, init);
+  if (first.status !== 404) {
+    return first;
+  }
+  const legacy = _legacyAccumUrl(primary);
+  if (!legacy || legacy === primary) {
+    return first;
+  }
+  return fetch(legacy, init);
+};
+
 export const parseNumberArrayResponse = (data: unknown, invalidMessage: string): number[] => {
   if (!Array.isArray(data)) {
     throw new Error(invalidMessage);
@@ -37,10 +61,7 @@ export const parseWinningNumberRowsResponse = (data: unknown, invalidMessage: st
 export const fetchDrawNumbers = async (ctx?: AccumulatedNumbersFetchContext): Promise<number[]> => {
   const signal = ctx?.signal;
   const baseUrl = ctx?.baseUrl;
-  const response = await fetch(accumulatedNumbersApiUrl('draw-numbers', baseUrl), {
-    signal,
-    cache: 'no-store',
-  });
+  const response = await fetchAccumulatedApi('draw-numbers', { signal, cache: 'no-store' }, baseUrl);
 
   if (!response.ok) {
     throw new Error(`Failed to fetch draw numbers: ${response.status}`);
@@ -51,9 +72,7 @@ export const fetchDrawNumbers = async (ctx?: AccumulatedNumbersFetchContext): Pr
 };
 
 export const fetchWinningNumberByDraw = async (drawNo: number): Promise<WinningNumberRow> => {
-  const response = await fetch(accumulatedNumbersApiUrl(`winning-number?draw_no=${drawNo}`), {
-    cache: 'no-store',
-  });
+  const response = await fetchAccumulatedApi(`winning-number?draw_no=${drawNo}`, { cache: 'no-store' });
 
   if (!response.ok) {
     if (response.status === 404) {
@@ -74,9 +93,7 @@ export const fetchWinningNumbersRange = async (
   drawNo: number,
   ctx?: Pick<AccumulatedNumbersFetchContext, 'baseUrl'>
 ): Promise<WinningNumberRow[]> => {
-  const response = await fetch(accumulatedNumbersApiUrl(`winning-numbers-range?draw_no=${drawNo}`, ctx?.baseUrl), {
-    cache: 'no-store',
-  });
+  const response = await fetchAccumulatedApi(`winning-numbers-range?draw_no=${drawNo}`, { cache: 'no-store' }, ctx?.baseUrl);
 
   if (!response.ok) {
     throw new Error(`Failed to fetch winning numbers range: ${response.status}`);
@@ -90,8 +107,8 @@ export const fetchWinningNumbersWindow = async (
   drawNo: number,
   windowSize: number
 ): Promise<WinningNumberRow[]> => {
-  const response = await fetch(
-    accumulatedNumbersApiUrl(`winning-numbers-window?draw_no=${drawNo}&window_size=${windowSize}`),
+  const response = await fetchAccumulatedApi(
+    `winning-numbers-window?draw_no=${drawNo}&window_size=${windowSize}`,
     { cache: 'no-store' },
   );
 
@@ -126,16 +143,20 @@ export const saveAccumulatedNumbersSnapshot = async (
 ): Promise<MessageResponse> => {
   const signal = ctx?.signal;
   const baseUrl = ctx?.baseUrl;
-  const response = await fetch(accumulatedNumbersApiUrl('snapshot', baseUrl), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    signal,
-    body: JSON.stringify({
-      anchor_draw_no: anchorDrawNo,
-      schema_version: ACCUMULATED_SNAPSHOT_SCHEMA_VERSION,
-      final_numbers: [...finalNumbers],
-    }),
-  });
+  const response = await fetchAccumulatedApi(
+    'snapshot',
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      signal,
+      body: JSON.stringify({
+        anchor_draw_no: anchorDrawNo,
+        schema_version: ACCUMULATED_SNAPSHOT_SCHEMA_VERSION,
+        final_numbers: [...finalNumbers],
+      }),
+    },
+    baseUrl,
+  );
 
   if (!response.ok) {
     let detail = `저장 요청 실패 (${response.status})`;
