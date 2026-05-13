@@ -6,5 +6,3 @@ export { parseNumberArrayResponse, parseWinningNumberRowsResponse } from './pars
 export { fetchDrawNumbers } from './endpoints/drawNums';
 export { fetchWinningNumberByDraw } from './endpoints/winByDraw';
 export { fetchWinningNumbersRange } from './endpoints/winRange';
-export { fetchWinningNumbersWindow } from './endpoints/winWindow';
-export { saveAccumulatedNumbersSnapshot } from './endpoints/snapSave';

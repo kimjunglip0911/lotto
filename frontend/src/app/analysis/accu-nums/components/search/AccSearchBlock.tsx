@@ -17,13 +17,6 @@ export const AccSearchBlock = ({ data, view }: { data: AccuData; view: AccuView 
       selectedWinningNumberError={data.selectedWinningNumberError}
       selectedWinningNumber={data.selectedWinningNumber}
       selectedMainNumbers={view.selectedMainNumbers}
-      showSaveSnapshot={view.canSaveSnapshot}
-      onSaveSnapshot={() => {
-        void data.saveAccumulatedSnapshot();
-      }}
-      isSavingSnapshot={data.isSavingSnapshot}
-      saveSnapshotMessage={data.saveSnapshotMessage}
-      saveSnapshotError={data.saveSnapshotError}
     />
     <section className="rounded-2xl border border-card-border/30 bg-card-bg/60 p-4 space-y-3">
       {view.statusMessage && <p className="text-slate-300 text-sm leading-relaxed">{view.statusMessage}</p>}

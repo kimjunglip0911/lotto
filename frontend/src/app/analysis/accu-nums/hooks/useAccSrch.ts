@@ -7,9 +7,9 @@ import { mkAccSrchInit } from '../logic/accSrchStDef';
 import { parseSelDraw } from '../logic/parseSelDraw';
 import { runAccSearch } from '../logic/runAccSearch';
 
-type Opts = { selectedDraw: string; onSearchStart?: () => void };
+type Opts = { selectedDraw: string };
 
-export const useAccSrch = ({ selectedDraw, onSearchStart }: Opts) => {
+export const useAccSrch = ({ selectedDraw }: Opts) => {
   const [st, dispatch] = useReducer(accSrchRed, undefined, mkAccSrchInit);
   const searchSessionRef = useRef(0);
 
@@ -28,7 +28,6 @@ export const useAccSrch = ({ selectedDraw, onSearchStart }: Opts) => {
       return;
     }
 
-    onSearchStart?.();
     const session = ++searchSessionRef.current;
     dispatch({ type: 'start', draw: selectedDraw });
 
@@ -48,7 +47,7 @@ export const useAccSrch = ({ selectedDraw, onSearchStart }: Opts) => {
         dispatch({ type: 'end' });
       }
     }
-  }, [selectedDraw, onSearchStart]);
+  }, [selectedDraw]);
 
   return {
     ...st,

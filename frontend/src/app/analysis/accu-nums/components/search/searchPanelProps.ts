@@ -13,11 +13,6 @@ export type SearchPanelProps = {
   selectedWinningNumberError: string | null;
   selectedWinningNumber: WinningNumberRow | null;
   selectedMainNumbers: number[];
-  showSaveSnapshot?: boolean;
-  onSaveSnapshot?: () => void;
-  isSavingSnapshot?: boolean;
-  saveSnapshotMessage?: string | null;
-  saveSnapshotError?: string | null;
 };
 
 export type SearchTopRowProps = Pick<
@@ -31,11 +26,7 @@ export type SearchTopRowProps = Pick<
   | 'selectedWinningNumberError'
   | 'selectedWinningNumber'
   | 'selectedMainNumbers'
-  | 'showSaveSnapshot'
-  | 'onSaveSnapshot'
-  | 'isSavingSnapshot'
 > & {
   isDrawSelectDisabled: boolean;
   isSearchDisabled: boolean;
-  isSaveDisabled: boolean;
 };

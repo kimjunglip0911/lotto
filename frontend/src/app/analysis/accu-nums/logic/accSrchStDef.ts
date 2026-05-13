@@ -2,14 +2,8 @@
 
 import type { AccSearchOut } from './runAccSearch';
 import type { AccumulatedCountExclusionResult } from './accuCntExt';
-import { createEmptyCountResult, createEmptyWindowCountMap } from './numCounts';
-import type {
-  CountResult,
-  FinalNumberPlan,
-  StrategyChartData,
-  WinningNumberRow,
-  WindowCountResultMap,
-} from '../types';
+import { createEmptyCountResult } from './numCounts';
+import type { CountResult, WinningNumberRow } from '../types';
 
 export type AccSrchSt = {
   searchedDraw: string;
@@ -19,9 +13,6 @@ export type AccSrchSt = {
   isLoadingSelectedWinningNumber: boolean;
   selectedWinningNumberError: string | null;
   allTimeCountResult: CountResult;
-  windowCountResultMap: WindowCountResultMap;
-  strategyCharts: StrategyChartData[];
-  finalNumberPlan: FinalNumberPlan | null;
   accumulatedCountExclusion: AccumulatedCountExclusionResult | null;
 };
 
@@ -33,9 +24,6 @@ export const mkAccSrchInit = (): AccSrchSt => ({
   isLoadingSelectedWinningNumber: false,
   selectedWinningNumberError: null,
   allTimeCountResult: createEmptyCountResult(),
-  windowCountResultMap: createEmptyWindowCountMap(),
-  strategyCharts: [],
-  finalNumberPlan: null,
   accumulatedCountExclusion: null,
 });
 

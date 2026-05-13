@@ -1,11 +1,6 @@
 /** useAccView에 넘기는 입력 필드 목록 타입만 둔다. */
 
-import type {
-  FinalNumberPlan,
-  StrategyChartData,
-  WinningNumberRow,
-  WindowCountResultMap,
-} from '../types';
+import type { WinningNumberRow } from '../types';
 
 export type AccViewIn = {
   availableDraws: number[];
@@ -16,7 +11,4 @@ export type AccViewIn = {
   searchError: string | null;
   searchedDraw: string;
   selectedWinningNumber: WinningNumberRow | null;
-  windowCountResultMap: WindowCountResultMap;
-  strategyCharts: StrategyChartData[];
-  finalNumberPlan: FinalNumberPlan | null;
 };

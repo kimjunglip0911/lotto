@@ -100,21 +100,17 @@ lotto/
 │       │   │   │   │   └── endpoints/
 │       │   │   │   │       ├── drawNums.ts
 │       │   │   │   │       ├── winByDraw.ts
-│       │   │   │   │       ├── winRange.ts
-│       │   │   │   │       ├── winWindow.ts
-│       │   │   │   │       └── snapSave.ts
+│       │   │   │   │       └── winRange.ts
 │       │   │   │   ├── constants.ts
 │       │   │   │   ├── types.ts
 │       │   │   │   ├── types/
 │       │   │   │   │   ├── rows.ts
 │       │   │   │   │   ├── window.ts
 │       │   │   │   │   ├── strategy.ts
-│       │   │   │   │   ├── count.ts
-│       │   │   │   │   └── schema.ts
+│       │   │   │   │   └── count.ts
 │       │   │   │   ├── hooks/
 │       │   │   │   │   ├── useAccData.ts
 │       │   │   │   │   ├── useAccDrawList.ts
-│       │   │   │   │   ├── useAccSnap.ts
 │       │   │   │   │   ├── useAccSrch.ts
 │       │   │   │   │   └── useAccView.ts
 │       │   │   │   ├── test/
@@ -128,8 +124,6 @@ lotto/
 │       │   │   │   │   ├── accSrchStDef.ts
 │       │   │   │   │   ├── accViewIn.ts
 │       │   │   │   │   ├── accuCntExt.ts
-│       │   │   │   │   ├── canSnap.ts
-│       │   │   │   │   ├── mapWinCharts.ts
 │       │   │   │   │   ├── numCounts.ts
 │       │   │   │   │   ├── parseSelDraw.ts
 │       │   │   │   │   ├── pickTopWin.ts
@@ -157,8 +151,6 @@ lotto/
 │       │   │   │       │   ├── AccuChart.tsx
 │       │   │   │       │   ├── AccumChartBars.tsx
 │       │   │   │       │   └── AccumChartFacet.tsx
-│       │   │   │       ├── chip/
-│       │   │   │       │   └── AccNumHit.tsx
 │       │   │   │       ├── search/
 │       │   │   │       │   ├── AccSearch.tsx
 │       │   │   │       │   ├── AccSearchBlock.tsx
@@ -168,14 +160,7 @@ lotto/
 │       │   │   │       │   ├── SearchDrawSelect.tsx
 │       │   │   │       │   ├── SearchTopRow.tsx
 │       │   │   │       │   ├── SearchWinPreview.tsx
-│       │   │   │       │   ├── SnapSaveMsgs.tsx
 │       │   │   │       │   └── WinStrip.tsx
-│       │   │   │       └── strategy/
-│       │   │   │           ├── AccExclBox.tsx
-│       │   │   │           ├── AccFinalBox.tsx
-│       │   │   │           ├── AccStratCharts.tsx
-│       │   │   │           ├── AccStratNote.tsx
-│       │   │   │           └── AccStratPick.tsx
 │       │   │   ├── run-streak/
 │       │   │   │   ├── page.tsx
 │       │   │   │   ├── types.ts

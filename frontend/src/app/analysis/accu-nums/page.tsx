@@ -22,9 +22,6 @@ export default function AccumulatedNumbersPage() {
     searchError: data.searchError,
     searchedDraw: data.searchedDraw,
     selectedWinningNumber: data.selectedWinningNumber,
-    windowCountResultMap: data.windowCountResultMap,
-    strategyCharts: data.strategyCharts,
-    finalNumberPlan: data.finalNumberPlan,
   });
 
   return (

@@ -1,4 +1,4 @@
-import { searchRunBtnCls, snapSaveBtnCls } from './searchBtnCls';
+import { searchRunBtnCls } from './searchBtnCls';
 import type { SearchTopRowProps } from './searchPanelProps';
 import { SearchDrawBar } from './SearchDrawBar';
 import { SearchWinPreview } from './SearchWinPreview';
@@ -15,12 +15,8 @@ export const SearchTopRow = ({
   selectedWinningNumberError,
   selectedWinningNumber,
   selectedMainNumbers,
-  showSaveSnapshot,
-  onSaveSnapshot,
-  isSavingSnapshot,
   isDrawSelectDisabled,
   isSearchDisabled,
-  isSaveDisabled,
 }: SearchTopRowProps) => (
   <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
     <SearchDrawBar
@@ -32,11 +28,6 @@ export const SearchTopRow = ({
       isDrawSelectDisabled={isDrawSelectDisabled}
       isSearchDisabled={isSearchDisabled}
       searchButtonClassName={searchRunBtnCls(!isSearchDisabled)}
-      showSaveSnapshot={!!showSaveSnapshot}
-      onSaveSnapshot={onSaveSnapshot}
-      isSaveDisabled={isSaveDisabled}
-      saveButtonClassName={snapSaveBtnCls(!isSaveDisabled)}
-      isSavingSnapshot={isSavingSnapshot ?? false}
     />
     <SearchWinPreview
       isLoadingSelectedWinningNumber={isLoadingSelectedWinningNumber}
