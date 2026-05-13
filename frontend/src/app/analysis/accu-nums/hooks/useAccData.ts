@@ -12,12 +12,12 @@ import {
   createEmptyCountResult,
   createEmptyWindowCountMap,
   toCountResult,
-} from '../logic/numberCounts';
+} from '../logic/numCounts';
 import {
   buildAccumulatedCountExclusionResult,
   type AccumulatedCountExclusionResult,
-} from '../logic/accumulatedCountExtremes';
-import { runAccumulatedStrategySelection } from '../logic/runAccumulatedStrategySelection';
+} from '../logic/accuCntExt';
+import { runAccumulatedStrategySelection } from '../logic/runStratSel';
 import type {
   CountResult,
   FinalNumberPlan,

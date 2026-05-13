@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { WinningNumberRow } from '../types';
-import { runAccumulatedStrategySelection } from '../logic/runAccumulatedStrategySelection';
+import { runAccumulatedStrategySelection } from '../logic/runStratSel';
 
 /** 회차별 고정 패턴(본번호 6 + 보너스) — 스냅샷 회귀용 최소 이력 */
 function makeRow(drawNo: number): WinningNumberRow {

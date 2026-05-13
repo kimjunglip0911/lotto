@@ -1,4 +1,4 @@
-import { pickFocusStrategyTopWindows } from '@/app/analysis/accu-nums/logic/pickFocusStrategyTopWindows'
+import { pickFocusStrategyTopWindows } from '@/app/analysis/accu-nums/logic/pickTopWin'
 import type { WinningHistoryRow } from '@/app/recommend/logic/types'
 import {
   ACCUMULATED_FOCUS_STRATEGY_KEYS,
@@ -7,7 +7,7 @@ import {
   combineStrategyRecommendations,
   getDefaultEvaluationWindowSizes,
   runAccumulatedStrategyEvaluation,
-} from '@/app/analysis/accu-nums/logic/accumulatedStrategyEvaluation'
+} from '@/app/analysis/accu-nums/logic/stratEval'
 
 const EXTENDED_WINDOW_MAX = 1208
 

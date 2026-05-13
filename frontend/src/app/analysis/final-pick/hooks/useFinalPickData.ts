@@ -6,7 +6,7 @@ import {
 } from '../logic/accumulatedAdoption';
 import { getChiSquareFinalPickSlice } from '../logic/chiSquareAdoption';
 import { getConsecutivelyAppearedMainNumbers } from '@/app/analysis/run-streak/logic/streak/consec';
-import { buildNumberCounts } from '@/app/analysis/accu-nums/logic/numberCounts';
+import { buildNumberCounts } from '@/app/analysis/accu-nums/logic/numCounts';
 
 const normalizeDrawNumbers = (payload: unknown): number[] => {
   if (!Array.isArray(payload)) return [];

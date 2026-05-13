@@ -1,4 +1,4 @@
-import { isWinningNumberRow } from './logic/numberCounts';
+import { isWinningNumberRow } from './logic/numCounts';
 import { ACCUMULATED_SNAPSHOT_SCHEMA_VERSION, type WinningNumberRow } from './types';
 
 /** 백테스트 스크립트 등에서 베이스 URL 오버라이드 시 사용. 미지정이면 NEXT_PUBLIC_API_URL */

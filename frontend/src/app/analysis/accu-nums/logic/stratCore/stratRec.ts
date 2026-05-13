@@ -1,5 +1,5 @@
 import type { WinningNumberRow } from '../../types';
-import { buildNumberCounts } from '../numberCounts';
+import { buildNumberCounts } from '../numCounts';
 import { pickFourByStrategy } from './numPick';
 import type {
   AccumulatedStrategyKey,

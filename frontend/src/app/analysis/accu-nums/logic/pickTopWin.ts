@@ -1,5 +1,5 @@
-import { pickAdaptiveWindowsByStrategy, pickTopWindowsByStrategy } from './strategyEvaluation/winRank';
-import type { StrategyTopWindow, StrategyWindowMetrics } from './strategyEvaluation/types';
+import { pickAdaptiveWindowsByStrategy, pickTopWindowsByStrategy } from './stratCore/winRank';
+import type { StrategyTopWindow, StrategyWindowMetrics } from './stratCore/types';
 
 /**
  * UI·추천과 동일: 평균근접(nearestMean4) 단기 2윈도 + 상2하2(twoHotTwoCold) 장기 2윈도를 고른다.

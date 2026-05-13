@@ -2,10 +2,10 @@ import {
   buildStrategyRecommendation,
   runAccumulatedStrategyEvaluation,
   sliceWindowTail,
-} from './accumulatedStrategyEvaluation';
-import { buildNumberCounts } from './numberCounts';
-import { toAtLeastOneRate, toAvgHits } from './strategyEvaluation/winRank';
-import type { StrategyWindowMetrics } from './strategyEvaluation/types';
+} from './stratEval';
+import { buildNumberCounts } from './numCounts';
+import { toAtLeastOneRate, toAvgHits } from './stratCore/winRank';
+import type { StrategyWindowMetrics } from './stratCore/types';
 import type { FinalNumberPlan, StrategyChartData, StrategyNumberPick, WinningNumberRow } from '../types';
 import { ACCUMULATED_STRATEGY_WINDOW_DRAWS } from '../constants';
 

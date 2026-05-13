@@ -101,12 +101,12 @@ lotto/
 │       │   │   │   │   ├── accumulatedCountExtremes.test.ts
 │       │   │   │   │   └── __snapshots__/
 │       │   │   │   ├── logic/
-│       │   │   │   │   ├── numberCounts.ts
-│       │   │   │   │   ├── accumulatedStrategyEvaluation.ts
-│       │   │   │   │   ├── buildStrategyChartsFromTopWindows.ts
-│       │   │   │   │   ├── pickFocusStrategyTopWindows.ts
-│       │   │   │   │   ├── runAccumulatedStrategySelection.ts
-│       │   │   │   │   └── strategyEvaluation/
+│       │   │   │   │   ├── accuCntExt.ts
+│       │   │   │   │   ├── numCounts.ts
+│       │   │   │   │   ├── pickTopWin.ts
+│       │   │   │   │   ├── runStratSel.ts
+│       │   │   │   │   ├── stratEval.ts
+│       │   │   │   │   └── stratCore/
 │       │   │   │   │       ├── types.ts
 │       │   │   │   │       ├── winSlice.ts
 │       │   │   │   │       ├── numPick.ts

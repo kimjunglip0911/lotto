@@ -1,6 +1,6 @@
 import { ACCUMULATED_STRATEGY_WINDOW_DRAWS } from '../constants';
 import type { WinningNumberRow } from '../types';
-import { buildNumberCounts } from './numberCounts';
+import { buildNumberCounts } from './numCounts';
 
 /** 2년·전체 구간 각 출현 최다/최소로 뽑은 네 슬롯과 고유 제외 번호 목록. */
 export type AccumulatedCountExclusionResult = {

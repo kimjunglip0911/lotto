@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { WINDOW_CONFIGS } from '../constants';
-import { createEmptyCountResult, toSelectedHighlightNumbers, toSelectedMainNumbers } from '../logic/numberCounts';
+import { createEmptyCountResult, toSelectedHighlightNumbers, toSelectedMainNumbers } from '../logic/numCounts';
 import type {
   FinalNumberPlan,
   StrategyChartData,

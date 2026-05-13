@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { runAccumulatedStrategySelection } from '@/app/analysis/accu-nums/logic/runAccumulatedStrategySelection';
+import { runAccumulatedStrategySelection } from '@/app/analysis/accu-nums/logic/runStratSel';
 import { CHI_SQUARE_WALK_FORWARD_RECENT_DRAWS } from '../constants';
 import { buildChiSquareResults } from '../logic/chiSquare';
 import { isWinningNumberRow } from '../logic/guards';

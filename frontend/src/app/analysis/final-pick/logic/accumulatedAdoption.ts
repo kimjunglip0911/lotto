@@ -1,7 +1,7 @@
 import {
   buildAccumulatedCountExclusionResult,
   type AccumulatedCountExclusionResult,
-} from '@/app/analysis/accu-nums/logic/accumulatedCountExtremes';
+} from '@/app/analysis/accu-nums/logic/accuCntExt';
 import type { WinningNumberRow } from '../types';
 
 export type AccumulatedExclusionResult = AccumulatedCountExclusionResult;
