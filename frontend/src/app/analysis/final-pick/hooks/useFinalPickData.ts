@@ -5,7 +5,7 @@ import {
   type AccumulatedExclusionResult,
 } from '../logic/accumulatedAdoption';
 import { getChiSquareFinalPickSlice } from '../logic/chiSquareAdoption';
-import { getConsecutivelyAppearedMainNumbers } from '@/app/analysis/absence-streak/logic/streak';
+import { getConsecutivelyAppearedMainNumbers } from '@/app/analysis/absence-streak/logic/consecutive';
 import { buildNumberCounts } from '@/app/analysis/accumulated-numbers/logic/numberCounts';
 
 const normalizeDrawNumbers = (payload: unknown): number[] => {

@@ -1,3 +1,7 @@
+// 연속 미출현 분석 화면이 공통으로 쓰는 데이터 형태를 모아 둔 파일입니다.
+// 당첨번호 한 줄(WinningNumberRow), 번호별 분석 결과(StreakResult)와
+// 응답이 올바른지 검사하는 가드(isWinningNumberRow)·집합 변환 헬퍼를 함께 둡니다.
+
 export type WinningNumberRow = {
   draw_no: number;
   num1: number;

@@ -1,5 +1,8 @@
 import type { ReactNode } from 'react';
 
+// 차트·테이블 영역의 "지금 보여 줄 내용"을 골라 주는 공통 분기 컴포넌트입니다.
+// 아직 조회 안 함 / 검색 중 / 오류 / 결과 없음 같은 상황별로 안내 문구로 갈아 끼웁니다.
+
 type StreakResultsStatusProps = {
   hasSearched: boolean;
   noHistory: boolean;

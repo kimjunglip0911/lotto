@@ -3,6 +3,9 @@
 import { useMemo } from 'react';
 import type { StreakResult } from '../types';
 
+// 평균보다 더 오래 안 나온 번호("저빈도 후보")만 모아 보여 주는 영역입니다.
+// 미출현 길이가 긴 순서로 정렬해 어떤 번호가 가장 오래 잠잠한지 바로 보입니다.
+
 type ColdNumbersSectionProps = {
   coldNumbers: StreakResult[];
   averageStreak: number;

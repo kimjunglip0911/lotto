@@ -1,39 +1,32 @@
 import type { StreakResult, WinningNumberRow } from '../types';
 
+// 번호별로 "마지막 출현 뒤 몇 회차나 안 나왔는지"를 계산하는 코드입니다.
+// 평균을 넘긴 번호는 "저빈도 후보(isCold)"로 표시되고, 상위 5% 임계값도 함께 계산합니다.
+
 const TOTAL_NUMBERS = 45;
 const WINNING_NUMBER_MIN = 1;
 
 type StreakBaseResult = Omit<StreakResult, 'isCold'>;
 
 const getWinningNumbers = (row: WinningNumberRow): number[] => [
-  row.num1,
-  row.num2,
-  row.num3,
-  row.num4,
-  row.num5,
-  row.num6,
-  row.bonus_num,
+  row.num1, row.num2, row.num3, row.num4, row.num5, row.num6, row.bonus_num,
 ];
 
-const isValidLotteryNumber = (number: number): boolean =>
-  number >= WINNING_NUMBER_MIN && number <= TOTAL_NUMBERS;
+const isValidLotteryNumber = (n: number): boolean =>
+  n >= WINNING_NUMBER_MIN && n <= TOTAL_NUMBERS;
 
 const updateLastSeenByRow = (lastSeen: Array<number | null>, row: WinningNumberRow): void => {
-  const winningNumbers = getWinningNumbers(row);
-  for (const number of winningNumbers) {
-    if (!isValidLotteryNumber(number)) continue;
-
-    const numberIndex = number - WINNING_NUMBER_MIN;
-    const previousDrawNo = lastSeen[numberIndex];
-    if (previousDrawNo === null || row.draw_no > previousDrawNo) {
-      lastSeen[numberIndex] = row.draw_no;
-    }
+  for (const n of getWinningNumbers(row)) {
+    if (!isValidLotteryNumber(n)) continue;
+    const idx = n - WINNING_NUMBER_MIN;
+    const prev = lastSeen[idx];
+    if (prev === null || row.draw_no > prev) lastSeen[idx] = row.draw_no;
   }
 };
 
 const buildBaseStreakResults = (
   lastSeen: Array<number | null>,
-  selectedDrawNo: number
+  selectedDrawNo: number,
 ): StreakBaseResult[] =>
   lastSeen.map((lastDrawNo, index) => ({
     number: index + WINNING_NUMBER_MIN,
@@ -41,72 +34,26 @@ const buildBaseStreakResults = (
     streak: lastDrawNo === null ? selectedDrawNo : selectedDrawNo - lastDrawNo,
   }));
 
-const getAverageStreakFromBaseResults = (baseResults: StreakBaseResult[]): number =>
-  baseResults.length > 0
-    ? baseResults.reduce((sum, result) => sum + result.streak, 0) / baseResults.length
-    : 0;
+/** streak 필드를 가진 배열의 평균 — base/StreakResult 양쪽에서 재사용. */
+const meanStreak = <T extends { streak: number }>(rows: T[]): number =>
+  rows.length > 0 ? rows.reduce((s, r) => s + r.streak, 0) / rows.length : 0;
 
 export const buildStreakResults = (rows: WinningNumberRow[], selectedDrawNo: number): StreakResult[] => {
   const lastSeen: Array<number | null> = Array.from({ length: TOTAL_NUMBERS }, () => null);
-  for (const row of rows) {
-    updateLastSeenByRow(lastSeen, row);
-  }
-
-  const baseResults = buildBaseStreakResults(lastSeen, selectedDrawNo);
-  const averageStreak = getAverageStreakFromBaseResults(baseResults);
-
-  return baseResults.map((result) => ({
-    ...result,
-    isCold: averageStreak > 0 && result.streak > averageStreak,
-  }));
+  for (const row of rows) updateLastSeenByRow(lastSeen, row);
+  const base = buildBaseStreakResults(lastSeen, selectedDrawNo);
+  const avg = meanStreak(base);
+  return base.map((r) => ({ ...r, isCold: avg > 0 && r.streak > avg }));
 };
 
-export const getAverageStreak = (streakResults: StreakResult[]): number =>
-  streakResults.length > 0
-    ? streakResults.reduce((sum, r) => sum + r.streak, 0) / streakResults.length
-    : 0;
+export const getAverageStreak = (results: StreakResult[]): number => meanStreak(results);
 
-export const getMaxStreak = (streakResults: StreakResult[]): number =>
-  streakResults.length > 0
-    ? streakResults.reduce((max, result) => (result.streak > max ? result.streak : max), 0)
-    : 0;
+export const getMaxStreak = (results: StreakResult[]): number =>
+  results.length > 0 ? results.reduce((m, r) => (r.streak > m ? r.streak : m), 0) : 0;
 
-export const getTop5PctThreshold = (streakResults: StreakResult[]): number => {
-  if (streakResults.length === 0) return 0;
-
-  const sortedStreaks = streakResults.map((result) => result.streak).sort((a, b) => a - b);
-  const thresholdIndex = Math.min(Math.ceil(sortedStreaks.length * 0.95) - 1, sortedStreaks.length - 1);
-  return sortedStreaks[thresholdIndex];
-};
-
-/** 본번호 6개만 — 통합 분석 제외 로직은 보너스를 비교하지 않는다. */
-const getMainNumbers = (row: WinningNumberRow): number[] => [
-  row.num1,
-  row.num2,
-  row.num3,
-  row.num4,
-  row.num5,
-  row.num6,
-];
-
-/**
- * 선택 회차 N 직전 (N-1)회에서 끝나는 길이 2 이상 연속 출현에 포함된 본번호를 반환한다.
- * (N-1)회와 (N-2)회 본번호 교집합으로 판정하며, 더 긴 streak도 동일 조건으로 포함된다.
- */
-export const getConsecutivelyAppearedMainNumbers = (
-  rows: WinningNumberRow[],
-  selectedDrawNo: number,
-): number[] => {
-  if (selectedDrawNo < 3) return [];
-
-  const prev1 = rows.find((r) => r.draw_no === selectedDrawNo - 1);
-  const prev2 = rows.find((r) => r.draw_no === selectedDrawNo - 2);
-  if (!prev1 || !prev2) return [];
-
-  const prev1Main = new Set(getMainNumbers(prev1).filter(isValidLotteryNumber));
-  const intersected = new Set<number>();
-  for (const n of getMainNumbers(prev2)) {
-    if (isValidLotteryNumber(n) && prev1Main.has(n)) intersected.add(n);
-  }
-  return [...intersected].sort((a, b) => a - b);
+export const getTop5PctThreshold = (results: StreakResult[]): number => {
+  if (results.length === 0) return 0;
+  const sorted = results.map((r) => r.streak).sort((a, b) => a - b);
+  const idx = Math.min(Math.ceil(sorted.length * 0.95) - 1, sorted.length - 1);
+  return sorted[idx];
 };

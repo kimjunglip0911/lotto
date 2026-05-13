@@ -1,5 +1,9 @@
 import type { WinningNumberRow } from '../types';
+import { DrawSelector } from './DrawSelector';
 import { SelectedWinningNumbersPreview } from './SelectedWinningNumbersPreview';
+
+// 회차 선택·조회 영역과 당첨번호 미리보기, 상태 안내를 한 줄에 모아 둔 영역입니다.
+// 실제 UI 구성은 DrawSelector + SelectedWinningNumbersPreview 두 컴포넌트에 위임합니다.
 
 type SearchControlsProps = {
   availableDraws: number[];
@@ -28,45 +32,20 @@ export const SearchControls = ({
 }: SearchControlsProps) => (
   <section className="rounded-2xl border border-card-border/30 bg-card-bg/60 p-4 space-y-3">
     <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-      <div className="flex flex-col sm:flex-row sm:items-end gap-3">
-        <label className="flex flex-col gap-2 text-sm text-slate-300 min-w-[180px]">
-          <span className="font-medium">회차 선택</span>
-          <select
-            value={selectedDraw}
-            onChange={(e) => onSelectedDrawChange(e.target.value)}
-            disabled={isLoadingDraws || availableDraws.length === 0}
-            className="bg-slate-900 border border-white/20 rounded-xl px-4 py-2.5 text-white font-semibold focus:border-primary outline-none transition-all cursor-pointer shadow-inner"
-          >
-            {isLoadingDraws && <option value="">회차 정보를 불러오는 중...</option>}
-            {!isLoadingDraws && availableDraws.length === 0 && <option value="">조회 가능한 회차 없음</option>}
-            {availableDraws.map((drawNo) => (
-              <option key={drawNo} value={drawNo}>
-                {drawNo}회
-              </option>
-            ))}
-          </select>
-        </label>
-        <button
-          type="button"
-          onClick={handleSearch}
-          disabled={!selectedDraw || isLoadingDraws || availableDraws.length === 0 || isSearching}
-          className={`h-[44px] px-5 rounded-xl font-semibold text-sm transition-all ${
-            selectedDraw && !isLoadingDraws && availableDraws.length > 0 && !isSearching
-              ? 'bg-primary/20 text-primary border border-primary/40 hover:bg-primary/30 hover:border-primary/60 cursor-pointer'
-              : 'bg-white/5 text-white/30 border border-white/10 cursor-not-allowed'
-          }`}
-        >
-          조회
-        </button>
-      </div>
-
+      <DrawSelector
+        availableDraws={availableDraws}
+        selectedDraw={selectedDraw}
+        onSelectedDrawChange={onSelectedDrawChange}
+        isLoadingDraws={isLoadingDraws}
+        isSearching={isSearching}
+        onSearch={handleSearch}
+      />
       <SelectedWinningNumbersPreview
         isLoadingWinningNumber={isLoadingWinningNumber}
         winningNumberError={winningNumberError}
         selectedWinningNumber={selectedWinningNumber}
       />
     </div>
-
     {statusMessage && <p className="text-slate-300 text-sm leading-relaxed">{statusMessage}</p>}
   </section>
 );

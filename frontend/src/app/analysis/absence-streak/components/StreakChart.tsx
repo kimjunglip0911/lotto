@@ -1,5 +1,10 @@
 import type { StreakResult } from '../types';
+import { StreakChartBars } from './StreakChartBars';
+import { StreakChartLegend } from './StreakChartLegend';
 import { StreakResultsStatus } from './StreakResultsStatus';
+
+// "번호별 연속 미출현 기간 차트" 영역 전체 틀입니다.
+// 헤더(제목/범례)와 본문(막대 + 점선)을 합치고, 조회 상태에 따라 안내 문구로 갈아 끼웁니다.
 
 type StreakChartProps = {
   hasSearched: boolean;
@@ -11,8 +16,6 @@ type StreakChartProps = {
   top5PctThreshold: number;
   selectedWinningNumberSet: Set<number> | null;
 };
-
-const CHART_H = 160;
 
 export const StreakChart = ({
   hasSearched,
@@ -27,26 +30,7 @@ export const StreakChart = ({
   <section className="rounded-2xl border border-card-border/30 bg-card-bg/60 p-3 space-y-2.5">
     <div className="flex flex-wrap items-center justify-between gap-2">
       <h3 className="text-xl font-semibold text-white">번호별 연속 미출현 기간 차트</h3>
-      {hasSearched && !noHistory && streakResults.length > 0 && (
-        <div className="flex flex-wrap gap-3 text-xs text-slate-400">
-          <span className="flex items-center gap-1.5">
-            <span className="inline-block w-3 h-3 rounded bg-amber-400/50 border border-amber-400/70" />
-            선택 회차 당첨번호
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span className="inline-block w-3 h-3 rounded bg-orange-500/70 border border-orange-500/90" />
-            저빈도 후보 (평균 초과)
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span className="inline-block w-3 h-3 rounded bg-indigo-500/60 border border-indigo-500/80" />
-            일반 미출현
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span className="inline-block w-6 border-t-2 border-dashed border-violet-400/80" />
-            상위 5%
-          </span>
-        </div>
-      )}
+      {hasSearched && !noHistory && streakResults.length > 0 && <StreakChartLegend />}
     </div>
     <StreakResultsStatus
       hasSearched={hasSearched}
@@ -57,45 +41,12 @@ export const StreakChart = ({
       idleHint="조회를 실행하면 번호별 연속 미출현 기간 차트가 표시됩니다."
       loadingHint="차트 데이터를 계산하는 중입니다..."
     >
-      <div className="overflow-x-auto pb-0.5">
-        <div className="relative w-max">
-          {top5PctThreshold > 0 && maxStreak > 0 && (
-            <div
-              className="pointer-events-none absolute inset-x-0 z-10"
-              style={{ top: Math.round(CHART_H - (top5PctThreshold / maxStreak) * CHART_H) }}
-            >
-              <div className="w-full border-t-2 border-dashed border-violet-400/80" />
-              <span className="absolute -top-5 left-0 rounded bg-violet-500/20 px-2 py-0.5 text-[11px] font-medium text-violet-300 whitespace-nowrap">
-                상위 5% {top5PctThreshold}회차
-              </span>
-            </div>
-          )}
-          <ul className="w-max flex gap-1 items-end" style={{ height: CHART_H + 32 }}>
-            {streakResults.map((item) => {
-              const isWinningNum = selectedWinningNumberSet?.has(item.number) ?? false;
-              const barPx = maxStreak > 0 ? Math.max((item.streak / maxStreak) * CHART_H, 2) : 2;
-              const barColor = isWinningNum
-                ? 'bg-amber-400/90'
-                : item.isCold
-                  ? 'bg-orange-500/90'
-                  : 'bg-indigo-500/60';
-              const numColor = isWinningNum
-                ? 'text-amber-300 font-bold'
-                : item.isCold
-                  ? 'text-orange-300 font-bold'
-                  : 'text-slate-300 font-medium';
-
-              return (
-                <li key={item.number} className="w-8 shrink-0 flex flex-col items-center justify-end" style={{ height: CHART_H + 32 }}>
-                  <span className="text-[10px] text-slate-200 tabular-nums leading-none mb-0.5">{item.streak}</span>
-                  <div className={`w-full rounded-t-sm ${barColor}`} style={{ height: barPx }} />
-                  <span className={`text-[11px] leading-none mt-1 ${numColor}`}>{item.number}</span>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-      </div>
+      <StreakChartBars
+        streakResults={streakResults}
+        maxStreak={maxStreak}
+        top5PctThreshold={top5PctThreshold}
+        selectedWinningNumberSet={selectedWinningNumberSet}
+      />
     </StreakResultsStatus>
   </section>
 );

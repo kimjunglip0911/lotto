@@ -1,3 +1,6 @@
+// 화면 맨 아래에 띄우는 통계적 주의사항 안내 문구입니다.
+// "과거 미출현이 미래 확률을 바꾸지 않는다(도박사의 오류)"는 점을 분명히 짚어 줍니다.
+
 export function StatisticalNote() {
   return (
     <section className="rounded-2xl border border-white/10 bg-slate-900/40 p-4">

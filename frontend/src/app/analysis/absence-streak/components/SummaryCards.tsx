@@ -1,3 +1,6 @@
+// 분석 결과 요약을 5장의 카드로 한눈에 보여 주는 영역입니다.
+// 분석 회차 수 / 최장 연속 미출현 / 평균 / 상위 5% / 저빈도 후보 개수를 표시합니다.
+
 type SummaryCardsProps = {
   analyzedDrawCount: number;
   maxStreak: number;
