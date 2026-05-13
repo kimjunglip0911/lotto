@@ -1,9 +1,9 @@
 import { useMemo } from 'react';
 import { getMaxStreak } from '../logic/streak';
 import { buildStatusMessage } from '../logic/statusMessage';
-import { winningNumbersToSet, type StreakResult, type WinningNumberRow } from '../types';
+import type { StreakResult } from '../types';
 
-// 조회 결과를 화면 표시 형태(저빈도 후보 목록, 안내 문구 등)로 가공하는 코드입니다.
+// 조회 결과를 화면 표시 형태(평균 초과 연속 출현 목록, 안내 문구 등)로 가공하는 코드입니다.
 // 원본 데이터는 그대로 두고, 화면이 바로 쓸 수 있는 형태로 다듬어 돌려줍니다.
 
 type Params = {
@@ -11,19 +11,17 @@ type Params = {
   selectedDraw: string;
   isLoadingDraws: boolean;
   drawLoadError: string | null;
-  selectedWinningNumber: WinningNumberRow | null;
   searchedDraw: string;
   isSearching: boolean;
   searchError: string | null;
   streakResults: StreakResult[];
 };
 
-export const useAbsenceStreakDerived = ({
+export const useRunStreakDerived = ({
   availableDraws,
   selectedDraw,
   isLoadingDraws,
   drawLoadError,
-  selectedWinningNumber,
   searchedDraw,
   isSearching,
   searchError,
@@ -31,10 +29,6 @@ export const useAbsenceStreakDerived = ({
 }: Params) => {
   const hasSearched = searchedDraw !== '';
   const noHistory = hasSearched && Number(searchedDraw) <= 1;
-
-  const selectedWinningNumberSet = selectedWinningNumber
-    ? winningNumbersToSet(selectedWinningNumber)
-    : null;
 
   const maxStreak = useMemo(() => getMaxStreak(streakResults), [streakResults]);
   const coldNumbers = useMemo(() => streakResults.filter((r) => r.isCold), [streakResults]);
@@ -52,5 +46,5 @@ export const useAbsenceStreakDerived = ({
     hasSearched,
   });
 
-  return { hasSearched, noHistory, selectedWinningNumberSet, maxStreak, coldNumbers, canShowStreakPanels, statusMessage };
+  return { hasSearched, noHistory, maxStreak, coldNumbers, canShowStreakPanels, statusMessage };
 };

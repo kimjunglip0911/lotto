@@ -3,24 +3,24 @@
 import { useState } from 'react';
 import { Header } from '@/components/common/Header';
 import { Sidebar } from '@/components/common/Sidebar';
-import { AbsenceStreakBody } from './components/AbsenceStreakBody';
-import { useAbsenceStreakData } from './hooks/useAbsenceStreakData';
-import { useAbsenceStreakDerived } from './hooks/useAbsenceStreakDerived';
+import { RunStreakBody } from './components/RunStreakBody';
+import { useRunStreakData } from './hooks/useRunStreakData';
+import { useRunStreakDerived } from './hooks/useRunStreakDerived';
 
-// "연속 미출현 분석" 화면 전체를 조립하는 파일입니다.
-// 데이터·파생 상태를 두 훅에서 받아 본문 조립 컴포넌트(AbsenceStreakBody)에 넘겨 줍니다.
+// "연속 출현 분석" 화면 전체를 조립하는 파일입니다.
+// 데이터·파생 상태를 두 훅에서 받아 본문 조립 컴포넌트(RunStreakBody)에 넘겨 줍니다.
 
-export default function AbsenceStreakPage() {
+export default function RunStreakPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const data = useAbsenceStreakData();
-  const derived = useAbsenceStreakDerived(data);
+  const data = useRunStreakData();
+  const derived = useRunStreakDerived(data);
 
   return (
     <div className="bg-background min-h-screen flex justify-center w-full overflow-x-hidden">
       <div className="bg-background text-foreground font-display min-h-screen flex flex-col w-full lg:w-[95%] xl:w-[95%] 2xl:w-[90%] max-w-[1920px] border-x border-card-border/30 relative shadow-2xl">
         <Header onMenuClick={() => setIsSidebarOpen(true)} />
         <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
-        <AbsenceStreakBody
+        <RunStreakBody
           availableDraws={data.availableDraws}
           selectedDraw={data.selectedDraw}
           setSelectedDraw={data.setSelectedDraw}
@@ -41,7 +41,6 @@ export default function AbsenceStreakPage() {
           noHistory={derived.noHistory}
           searchError={data.searchError}
           streakResults={data.streakResults}
-          selectedWinningNumberSet={derived.selectedWinningNumberSet}
         />
       </div>
     </div>

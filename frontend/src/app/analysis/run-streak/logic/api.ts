@@ -1,10 +1,10 @@
 // 이 파일은 회차/당첨번호 데이터를 서버에서 받아오는 입구입니다.
 // 화면 코드 곳곳에서 직접 fetch 하지 않도록 URL 만들기와 응답 받기를 한곳에 모아 둡니다.
 
-const API_BASE = '/api/analysis/absence-streak/';
+const API_BASE = '/api/analysis/run-streak/';
 
-/** `/api/analysis/absence-streak/` 이하 경로·쿼리(예: `draw-numbers`, `winning-number?draw_no=1`) */
-export const absenceStreakApiUrl = (pathWithQuery: string): string => {
+/** `/api/analysis/run-streak/` 이하 경로·쿼리(예: `draw-numbers`, `winning-number?draw_no=1`) */
+export const runStreakUrl = (pathWithQuery: string): string => {
   const root = process.env.NEXT_PUBLIC_API_URL || '';
   return `${root}${API_BASE}${pathWithQuery}`;
 };

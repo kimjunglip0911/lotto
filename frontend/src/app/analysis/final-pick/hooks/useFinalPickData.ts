@@ -5,7 +5,7 @@ import {
   type AccumulatedExclusionResult,
 } from '../logic/accumulatedAdoption';
 import { getChiSquareFinalPickSlice } from '../logic/chiSquareAdoption';
-import { getConsecutivelyAppearedMainNumbers } from '@/app/analysis/absence-streak/logic/consecutive';
+import { getConsecutivelyAppearedMainNumbers } from '@/app/analysis/run-streak/logic/consecutive';
 import { buildNumberCounts } from '@/app/analysis/accumulated-numbers/logic/numberCounts';
 
 const normalizeDrawNumbers = (payload: unknown): number[] => {
@@ -29,12 +29,12 @@ const normalizeDrawNumbers = (payload: unknown): number[] => {
  * 통합 분석 페이지의 회차 목록·당첨번호 조회 훅.
  *
  * - 통합 분석 전용 백엔드 라우터는 후속 작업에서 도입하며,
- *   현재는 가장 가벼운 `absence-streak` 라우터를 재사용한다.
+ *   현재는 가장 가벼운 `run-streak` 라우터를 재사용한다.
  * - URL 호출은 본 훅 내부에서만 수행하므로 후속 교체 시 한 곳만 바꾸면 된다.
  */
 const finalPickApiUrl = (pathWithQuery: string): string => {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
-  return `${apiUrl}/api/analysis/absence-streak/${pathWithQuery}`;
+  return `${apiUrl}/api/analysis/run-streak/${pathWithQuery}`;
 };
 
 const drawNumbersApiUrl = (): string => {

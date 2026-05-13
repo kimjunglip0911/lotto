@@ -17,7 +17,7 @@ type StreakResultsStatusProps = {
 };
 
 /**
- * 연속 미출현 차트·테이블 공통: 조회 전/중/오류/무데이터 분기.
+ * 연속 출현 테이블 공통: 조회 전/중/오류/무데이터 분기.
  * 분기 순서는 noHistory → 미조회 → 검색중 → 오류 → 빈 결과 → children 고정.
  */
 export const StreakResultsStatus = ({

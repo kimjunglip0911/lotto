@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { absenceStreakApiUrl, fetchJson } from '../logic/api';
+import { fetchJson, runStreakUrl } from '../logic/api';
 
 // 페이지에 접속하면 회차 목록을 한 번 불러와 셀렉트 박스를 채워 줍니다.
 // 실패하면 "회차 정보를 불러오지 못했습니다." 안내를 화면에 보여 줍니다.
@@ -26,7 +26,7 @@ export const useDrawList = (): UseDrawListResult => {
       setIsLoadingDraws(true);
       setDrawLoadError(null);
       try {
-        const data = await fetchJson<unknown>(absenceStreakApiUrl('draw-numbers'), {
+        const data = await fetchJson<unknown>(runStreakUrl('draw-numbers'), {
           signal: controller.signal,
         });
         if (!Array.isArray(data)) throw new Error('Draw numbers response is not an array');

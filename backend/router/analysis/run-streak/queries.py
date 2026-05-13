@@ -1,4 +1,4 @@
-# absence-streak 분석 라우터 전용 SQL 상수
+# run-streak(연속 출현) 분석 라우터 전용 SQL 상수
 GET_AVAILABLE_DRAW_NOS = """
 SELECT draw_no
 FROM lotto_winners

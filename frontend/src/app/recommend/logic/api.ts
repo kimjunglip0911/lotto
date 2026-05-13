@@ -65,18 +65,18 @@ export interface RecommendBaseData {
   exclusionCandidates: ExclusionCandidatesResponse
   usedNumbersPlan: UsedNumbersPlan
   chiSquareRows: ChiSquareHistoryRow[]
-  absenceStreakRows: ChiSquareHistoryRow[]
+  runStreakRows: ChiSquareHistoryRow[]
   trendResults: TrendNumberResult[]
   /** 최근 회차 당첨 이력(생성기 이력 신호용). `trend/all-history` 기반 */
   allHistoryRows: WinningHistoryRow[]
 }
 
 export async function fetchRecommendBaseData(apiUrl: string, drawNo: number): Promise<RecommendBaseData> {
-  const [exclusionResponse, chiSquareRangeResponse, absenceStreakRangeResponse, allHistoryResponse] =
+  const [exclusionResponse, chiSquareRangeResponse, runStreakRangeResponse, allHistoryResponse] =
     await Promise.all([
       fetch(`${apiUrl}/api/recommend/exclusion-candidates?draw_no=${drawNo}`),
       fetch(`${apiUrl}/api/analysis/chi-square/winning-numbers-range?draw_no=${drawNo}`),
-      fetch(`${apiUrl}/api/analysis/absence-streak/winning-numbers-range?draw_no=${drawNo}`),
+      fetch(`${apiUrl}/api/analysis/run-streak/winning-numbers-range?draw_no=${drawNo}`),
       fetch(`${apiUrl}/api/analysis/trend/all-history?draw_no=${drawNo}`),
     ])
 
@@ -84,7 +84,7 @@ export async function fetchRecommendBaseData(apiUrl: string, drawNo: number): Pr
     throw new Error(`Failed to fetch exclusion candidates: ${exclusionResponse.status}`)
   }
 
-  const [exclusionData, chiSquareRangeData, absenceStreakRangeData, allHistoryData]: [
+  const [exclusionData, chiSquareRangeData, runStreakRangeData, allHistoryData]: [
     unknown,
     unknown,
     unknown,
@@ -92,7 +92,7 @@ export async function fetchRecommendBaseData(apiUrl: string, drawNo: number): Pr
   ] = await Promise.all([
     exclusionResponse.json(),
     chiSquareRangeResponse.ok ? chiSquareRangeResponse.json() : Promise.resolve([]),
-    absenceStreakRangeResponse.ok ? absenceStreakRangeResponse.json() : Promise.resolve([]),
+    runStreakRangeResponse.ok ? runStreakRangeResponse.json() : Promise.resolve([]),
     allHistoryResponse.ok ? allHistoryResponse.json() : Promise.resolve([]),
   ])
 
@@ -101,8 +101,8 @@ export async function fetchRecommendBaseData(apiUrl: string, drawNo: number): Pr
   }
 
   const chiSquareRows = Array.isArray(chiSquareRangeData) ? chiSquareRangeData.filter(isChiSquareHistoryRow) : []
-  const absenceStreakRows = Array.isArray(absenceStreakRangeData)
-    ? absenceStreakRangeData.filter(isChiSquareHistoryRow)
+  const runStreakRows = Array.isArray(runStreakRangeData)
+    ? runStreakRangeData.filter(isChiSquareHistoryRow)
     : []
   const allHistoryRows = toWinningRows(allHistoryData)
   const usedNumbers = deriveUsedNumbers(exclusionData.drawNo, allHistoryRows)
@@ -114,7 +114,7 @@ export async function fetchRecommendBaseData(apiUrl: string, drawNo: number): Pr
       numbers: usedNumbers,
     },
     chiSquareRows,
-    absenceStreakRows,
+    runStreakRows,
     trendResults: buildTrendResults(allHistoryRows),
     allHistoryRows,
   }

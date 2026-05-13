@@ -65,11 +65,11 @@ app.include_router(
 )
 app.include_router(
     load_router_from_file(
-        "backend.router.analysis.absence_streak.router",
+        "backend.router.analysis.run_streak.router",
         Path(__file__).resolve().parent
         / "router"
         / "analysis"
-        / "absence-streak"
+        / "run-streak"
         / "router.py",
     )
 )

@@ -52,7 +52,7 @@ export interface RecommendRuleContext {
   currentExcludedNumbers: number[]
   chiSquareRows?: ChiSquareHistoryRow[]
   trendResults?: TrendNumberResult[]
-  absenceStreakRows?: ChiSquareHistoryRow[]
+  runStreakRows?: ChiSquareHistoryRow[]
   appliedRuleResults?: RecommendRuleResult[]
 }
 

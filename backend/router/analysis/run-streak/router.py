@@ -10,8 +10,8 @@ from backend.router.analysis._shared import (
 )
 
 router = APIRouter(tags=["analysis"])
-QUERIES_MODULE_NAME = "backend.router.analysis.absence_streak.queries"
-QUERIES_RELATIVE_PATH = ("router", "analysis", "absence-streak", "queries.py")
+QUERIES_MODULE_NAME = "backend.router.analysis.run_streak.queries"
+QUERIES_RELATIVE_PATH = ("router", "analysis", "run-streak", "queries.py")
 NOT_FOUND_DETAIL = "선택한 회차의 당첨번호를 찾을 수 없습니다."
 
 
@@ -25,12 +25,12 @@ def _load_queries_module():
 queries = _load_queries_module()
 
 
-@router.get("/api/analysis/absence-streak/draw-numbers", response_model=List[int])
+@router.get("/api/analysis/run-streak/draw-numbers", response_model=List[int])
 def get_draw_numbers():
     return fetch_draw_numbers(queries.GET_AVAILABLE_DRAW_NOS)
 
 
-@router.get("/api/analysis/absence-streak/winning-number", response_model=dict)
+@router.get("/api/analysis/run-streak/winning-number", response_model=dict)
 def get_winning_number(draw_no: int = Query(..., ge=1, description="선택 회차")):
     return fetch_dict_or_404(
         queries.GET_WINNING_NUMBERS_BY_DRAW,
@@ -39,7 +39,7 @@ def get_winning_number(draw_no: int = Query(..., ge=1, description="선택 회�
     )
 
 
-@router.get("/api/analysis/absence-streak/winning-numbers-range", response_model=List[dict])
+@router.get("/api/analysis/run-streak/winning-numbers-range", response_model=List[dict])
 def get_winning_numbers_range(draw_no: int = Query(..., ge=1, description="선택 회차")):
     if draw_no <= 1:
         return []

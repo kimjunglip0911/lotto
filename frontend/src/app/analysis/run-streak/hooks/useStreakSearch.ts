@@ -1,14 +1,14 @@
 import { useState } from 'react';
-import { absenceStreakApiUrl, fetchJson } from '../logic/api';
+import { fetchJson, runStreakUrl } from '../logic/api';
 import { buildStreakResults } from '../logic/streak';
 import { isWinningNumberRow, type StreakResult, type WinningNumberRow } from '../types';
 
 // 조회 버튼을 누르면 선택한 회차의 당첨번호와 이전 회차들을 받아 와
-// 번호별 "연속 미출현 결과"를 만들어 화면에 넘겨 주는 코드입니다.
+// 번호별 연속 출현(본 6개) 결과를 만들어 화면에 넘겨 주는 코드입니다.
 
 /** 1회차 단독 조회: 당첨번호만 받아오고 streak 결과는 비워 둔다. */
 const fetchFirstDraw = async (drawNo: number): Promise<WinningNumberRow> => {
-  const data = await fetchJson<unknown>(absenceStreakApiUrl(`winning-number?draw_no=${drawNo}`));
+  const data = await fetchJson<unknown>(runStreakUrl(`winning-number?draw_no=${drawNo}`));
   if (!isWinningNumberRow(data)) throw new Error('Winning number response is invalid');
   return data;
 };
@@ -16,8 +16,8 @@ const fetchFirstDraw = async (drawNo: number): Promise<WinningNumberRow> => {
 /** 일반 회차 조회: 당첨번호 + 이전 회차 범위를 동시에 받아 온다. */
 const fetchWithHistory = async (drawNo: number) => {
   const [winRes, rangeRes] = await Promise.all([
-    fetch(absenceStreakApiUrl(`winning-number?draw_no=${drawNo}`)),
-    fetch(absenceStreakApiUrl(`winning-numbers-range?draw_no=${drawNo}`)),
+    fetch(runStreakUrl(`winning-number?draw_no=${drawNo}`)),
+    fetch(runStreakUrl(`winning-numbers-range?draw_no=${drawNo}`)),
   ]);
   if (!winRes.ok) {
     if (winRes.status === 404) throw new Error('선택한 회차의 당첨번호를 찾을 수 없습니다.');
@@ -74,7 +74,7 @@ export const useStreakSearch = (selectedDraw: string) => {
       setAnalyzedDrawCount(rows.length);
       setStreakResults(buildStreakResults(rows, drawNo));
     } catch (error) {
-      console.error('Error fetching absence streak data:', error);
+      console.error('Error fetching consecutive appearance data:', error);
       setSearchError('조회 데이터를 불러오지 못했습니다.');
       resetResults();
       setSearchedDraw('');

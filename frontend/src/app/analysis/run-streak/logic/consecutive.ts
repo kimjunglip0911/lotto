@@ -9,8 +9,8 @@ const WINNING_NUMBER_MIN = 1;
 const isValidLotteryNumber = (n: number): boolean =>
   n >= WINNING_NUMBER_MIN && n <= TOTAL_NUMBERS;
 
-/** 본번호 6개만 — 통합 분석 제외 로직은 보너스를 비교하지 않는다. */
-const getMainNumbers = (row: WinningNumberRow): number[] => [
+/** 본번호 6개만 — 연속 출현·제외 후보 로직은 보너스를 비교하지 않는다. */
+export const getMainNumbers = (row: WinningNumberRow): number[] => [
   row.num1,
   row.num2,
   row.num3,
