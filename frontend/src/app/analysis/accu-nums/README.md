@@ -14,6 +14,7 @@
 | `components/AccSearchBlock.tsx` | 회차 검색 패널·상태 안내 |
 | `hooks/useAccData.ts` | API·검색 세션·집계 상태 |
 | `hooks/useAccView.ts` | 안내 문구·차트용 파생값·스냅샷 저장 가능 여부 등 |
+| `api/` | 백엔드 API 호출(URL 빌더·레거시 폴백·응답 파서·엔드포인트 5종) 분할. 외부 진입점은 `api/index.ts` |
 | `types.ts` | 누적 번호 분석 타입 공개 진입점 |
 | `types/` | API 행·윈도우·전략·집계·스냅샷 스키마 타입 |
 | `test/` | 극값 제외·전략 선정 단위 테스트 |
