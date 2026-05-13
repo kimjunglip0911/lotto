@@ -22,10 +22,8 @@ export {
 } from './stratCore/types';
 
 export { accumulateStrategyEvaluationRounds } from './stratCore/eval/evalAcc';
-export {
-  aggregatesFromEvaluationBucket,
-  buildDrawNoToWinningRowMap,
-} from './stratCore/eval/evalBucket';
+export { aggregatesFromEvaluationBucket } from './stratCore/eval/evalAgg';
+export { buildDrawNoToWinningRowMap } from './stratCore/eval/evalWinMap';
 export { runAccumulatedStrategyEvaluation } from './stratCore/eval/evalRun';
 
 export {

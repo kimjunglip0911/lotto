@@ -4,7 +4,8 @@ import type {
   StrategyWindowMetrics,
 } from '../types';
 import { accumulateStrategyEvaluationRounds } from './evalAcc';
-import { aggregatesFromEvaluationBucket, buildDrawNoToWinningRowMap } from './evalBucket';
+import { aggregatesFromEvaluationBucket } from './evalAgg';
+import { buildDrawNoToWinningRowMap } from './evalWinMap';
 
 /** 여러 회차에 대해 “직전 누적만으로 4개를 찍었을 때” 본번호 6개와의 적중을 한꺼번에 집계한다. 윈도 집계는 당첨 6개 누적과 같은 방식이다. */
 export function runAccumulatedStrategyEvaluation(
