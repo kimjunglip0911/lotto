@@ -1,5 +1,7 @@
 import type { WinningNumberRow } from '../../types';
 
+/** 누적 번호 전략 평가에 쓰는 타입·상수(전략 키, 윈도 지표, 추천·버킷 등)를 한곳에 둔다. */
+
 /** 본번호 6개 출현 누적 집계로 번호 4개를 고르는 규칙 키 */
 export type AccumulatedStrategyKey =
   | 'top4Frequency'

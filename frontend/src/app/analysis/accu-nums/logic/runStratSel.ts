@@ -5,7 +5,7 @@ import {
   sliceWindowTail,
 } from './stratEval';
 import { buildNumberCounts } from './numCounts';
-import { toAtLeastOneRate, toAvgHits } from './stratCore/winRank';
+import { toAtLeastOneRate, toAvgHits } from './stratCore/window/winRank';
 import type { AccumulatedStrategyKey, StrategyWindowMetrics } from './stratCore/types';
 import type { FinalNumberPlan, StrategyChartData, StrategyNumberPick, WinningNumberRow } from '../types';
 import { ACCUMULATED_STRATEGY_WINDOW_DRAWS } from '../constants';

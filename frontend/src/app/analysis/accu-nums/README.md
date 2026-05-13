@@ -19,7 +19,7 @@
 | `logic/parseSelDraw.ts` | 선택 회차 문자열을 숫자로 바꿀 때의 검증 |
 | `logic/runAccSearch.ts` | 당첨 범위·해당 회차 당첨 API 병렬 호출·1회차 분기·집계·극값 제외 |
 | `logic/accuCntExt.ts` | 극값 제외 계산(통합 분석 `accumulatedAdoption`과 동일 함수 사용) |
-| `logic/runStratSel.ts` / `logic/stratEval.ts` / `logic/stratCore/` | 카이제곱·추천 화면과 공유하는 전략 평가(이 페이지 조회 경로에서는 호출하지 않음) |
+| `logic/runStratSel.ts` / `logic/stratEval.ts` / `logic/stratCore/` | 전략 평가 공용 로직. `stratCore`는 `eval`(rolling 집계), `window`(윈도·랭킹), `pick`(4개 뽑기), `rec`(추천·최종 4개), 루트 `types.ts`로 역할을 나눈다(추천·카이제곱과 공유; 이 페이지 조회 경로에서는 호출하지 않음) |
 | `logic/accSrchStDef.ts` / `accSrchRed.ts` / `accSrchRedApply.ts` | 조회 전용 상태 초기값·리듀서 |
 | `logic/accStatusMsg.ts` | 상단 안내 문구 분기 |
 | `logic/accViewIn.ts` | `useAccView` 입력 타입 |

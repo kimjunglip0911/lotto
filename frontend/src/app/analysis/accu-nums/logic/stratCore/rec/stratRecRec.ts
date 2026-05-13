@@ -1,15 +1,11 @@
-/** 단일 전략·기간에 대한 추천 4개·점수 부여 */
+import type { WinningNumberRow } from '../../../types';
+import { buildNumberCounts } from '../../numCounts';
+import { pickFourByStrategy } from '../pick/numPick';
+import type { AccumulatedStrategyKey, StrategyRecommendation, StrategyWindowMetrics } from '../types';
+import { sliceWindowTail } from '../window/winSlice';
+import { toAtLeastOneRate, toAvgHits } from '../window/winRankMetrics';
 
-import type { WinningNumberRow } from '../../types';
-import { buildNumberCounts } from '../numCounts';
-import { pickFourByStrategy } from './numPick';
-import type {
-  AccumulatedStrategyKey,
-  StrategyRecommendation,
-  StrategyWindowMetrics,
-} from './types';
-import { sliceWindowTail } from './winSlice';
-import { toAtLeastOneRate, toAvgHits } from './winRank';
+/** 선택 회차 이전 당첨만으로, 한 전략·한 기간(예: 직전 104회)에 대한 추천 4개와 점수표를 만든다. */
 
 function toScoreByNumber(
   strategy: AccumulatedStrategyKey,
@@ -23,7 +19,6 @@ function toScoreByNumber(
   return Object.fromEntries(entries) as Record<number, number>;
 }
 
-/** 선택 draw 이전 데이터에서 특정 전략/기간으로 추천 4개를 만든다. */
 export function buildStrategyRecommendation(params: {
   strategy: AccumulatedStrategyKey;
   windowSize: number;

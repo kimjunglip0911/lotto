@@ -1,4 +1,4 @@
-/** 최종 4개 조합에 쓰는 자리대·홀짝·연속 등 하드 제약 검사 */
+/** 최종 4개 조합이 “너무 치우치지 않았는지” 자리대·홀짝·연속으로 검사한다. */
 
 export function bandIndex(n: number): number {
   if (n <= 15) return 0;

@@ -1,6 +1,6 @@
 /**
  * 누적 번호 전략·윈도 과거 평가(rolling evaluation) 엔트리.
- * 구현은 `stratCore/` 하위 모듈에 분리되어 있다.
+ * 구현은 `stratCore/` 아래 eval·window·pick·rec 폴더에 나뉘어 있다.
  */
 
 export type {
@@ -21,18 +21,18 @@ export {
   ACCUMULATED_STRATEGY_KEYS,
 } from './stratCore/types';
 
+export { accumulateStrategyEvaluationRounds } from './stratCore/eval/evalAcc';
 export {
-  accumulateStrategyEvaluationRounds,
   aggregatesFromEvaluationBucket,
   buildDrawNoToWinningRowMap,
-  runAccumulatedStrategyEvaluation,
-} from './stratCore/evalRun';
+} from './stratCore/eval/evalBucket';
+export { runAccumulatedStrategyEvaluation } from './stratCore/eval/evalRun';
 
 export {
   getDefaultEvaluationWindowSizes,
   sliceWindowTail,
   upperBoundDrawNo,
-} from './stratCore/winSlice';
+} from './stratCore/window/winSlice';
 
 export {
   countMainHits,
@@ -41,17 +41,17 @@ export {
   pickNearestMean4,
   pickTop4ByFrequency,
   pickTwoHotTwoCold,
-} from './stratCore/numPick';
+} from './stratCore/pick/numPick';
 
 export {
   pickAdaptiveWindowsByStrategy,
   pickTopWindowsByStrategy,
   toAtLeastOneRate,
   toAvgHits,
-} from './stratCore/winRank';
+} from './stratCore/window/winRank';
 
 export {
   buildFinalNumberSelection,
   buildStrategyRecommendation,
   combineStrategyRecommendations,
-} from './stratCore/stratRec';
+} from './stratCore/rec/stratRec';

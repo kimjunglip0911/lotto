@@ -1,4 +1,4 @@
-/** 전략 추천·통합·최종 4개 선택 — 구현은 역할별 파일에 분리 */
+/** 전략 추천·기간 통합·최종 4개까지의 진입점(실제 코드는 옆 파일들에 나뉜다). */
 
 export { buildStrategyRecommendation } from './stratRecRec';
 export { combineStrategyRecommendations } from './stratRecMrg';

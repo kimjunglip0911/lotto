@@ -1,19 +1,12 @@
-/**
- * 회차별 rolling 예측 4개 vs 해당 회차 본번호 6개 적중을 집계한다.
- * 윈도 집계 `counts`는 `buildNumberCounts`와 동일하게 본번호 6개 출현 누적이다.
- */
-
-export { aggregatesFromEvaluationBucket, buildDrawNoToWinningRowMap } from './evalBucket';
-export { accumulateStrategyEvaluationRounds } from './evalAcc';
-
-import { accumulateStrategyEvaluationRounds } from './evalAcc';
-import { aggregatesFromEvaluationBucket, buildDrawNoToWinningRowMap } from './evalBucket';
 import type {
   AccumulatedEvaluationBucket,
   RunAccumulatedStrategyEvaluationParams,
   StrategyWindowMetrics,
-} from './types';
+} from '../types';
+import { accumulateStrategyEvaluationRounds } from './evalAcc';
+import { aggregatesFromEvaluationBucket, buildDrawNoToWinningRowMap } from './evalBucket';
 
+/** 여러 회차에 대해 “직전 누적만으로 4개를 찍었을 때” 본번호 6개와의 적중을 한꺼번에 집계한다. 윈도 집계는 당첨 6개 누적과 같은 방식이다. */
 export function runAccumulatedStrategyEvaluation(
   params: RunAccumulatedStrategyEvaluationParams
 ): {

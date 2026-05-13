@@ -1,38 +1,9 @@
-/** 두 전략 추천 번호 풀에서 점수·조합 탐색으로 최종 4개를 고른다. */
-
-import type { StrategyRecommendation } from './types';
+import type { StrategyRecommendation } from '../types';
 import { hasValidHardConstraints } from './stratRecHard';
+import { mergeStrategyRecScores } from './stratRecMerge';
+import { enumerateFourCombos } from './stratRecEnum';
 
-function mergeScores(
-  strategyA: StrategyRecommendation,
-  strategyB: StrategyRecommendation
-): {
-  candidatePool: number[];
-  candidateScore: Map<number, number>;
-  merged: number[];
-} {
-  const scoreMap = new Map<number, number>();
-  for (const [nStr, score] of Object.entries(strategyA.scoreByNumber)) {
-    scoreMap.set(Number(nStr), (scoreMap.get(Number(nStr)) ?? 0) + score);
-  }
-  for (const [nStr, score] of Object.entries(strategyB.scoreByNumber)) {
-    scoreMap.set(Number(nStr), (scoreMap.get(Number(nStr)) ?? 0) + score);
-  }
-
-  const merged = [...new Set([...strategyA.numbers, ...strategyB.numbers])].sort((a, b) => {
-    const diff = (scoreMap.get(b) ?? 0) - (scoreMap.get(a) ?? 0);
-    if (diff !== 0) return diff;
-    return a - b;
-  });
-
-  const candidatePool = [...new Set([...strategyA.numbers, ...strategyB.numbers])];
-  const candidateScore = new Map<number, number>();
-  for (const n of candidatePool) {
-    candidateScore.set(n, scoreMap.get(n) ?? 0);
-  }
-
-  return { candidatePool, candidateScore, merged };
-}
+/** 두 전략 점수를 합친 뒤, 규칙을 지키는 4개 조합 가운데 가장 나은 것을 고른다. */
 
 export function pickBestFinalFourPair(
   strategyA: StrategyRecommendation,
@@ -41,7 +12,7 @@ export function pickBestFinalFourPair(
   const bSet = new Set(strategyB.numbers);
   const commonNumbers = strategyA.numbers.filter((n) => bSet.has(n)).sort((x, y) => x - y);
 
-  const { candidatePool, candidateScore, merged } = mergeScores(strategyA, strategyB);
+  const { candidatePool, candidateScore, merged } = mergeStrategyRecScores(strategyA, strategyB);
 
   const pickByScore = (numbers: number[]): number[] =>
     [...numbers]
@@ -52,21 +23,8 @@ export function pickBestFinalFourPair(
       })
       .slice(0, 4);
 
-  const generated: number[] = [];
-  const combos: number[][] = [];
   const sortedPool = [...candidatePool].sort((a, b) => a - b);
-  const dfs = (start: number) => {
-    if (generated.length === 4) {
-      combos.push([...generated]);
-      return;
-    }
-    for (let i = start; i < sortedPool.length; i += 1) {
-      generated.push(sortedPool[i]);
-      dfs(i + 1);
-      generated.pop();
-    }
-  };
-  dfs(0);
+  const combos = enumerateFourCombos(sortedPool);
 
   const preferred = combos
     .filter((c) => commonNumbers.every((n) => c.includes(n)))

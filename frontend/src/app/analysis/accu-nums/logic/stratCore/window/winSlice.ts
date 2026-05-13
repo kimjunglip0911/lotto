@@ -1,6 +1,8 @@
-import { WINDOW_CONFIGS } from '../../constants';
-import type { WinningNumberRow } from '../../types';
-import type { EvaluationWindowSweepOptions } from './types';
+import { WINDOW_CONFIGS } from '../../../constants';
+import type { WinningNumberRow } from '../../../types';
+import type { EvaluationWindowSweepOptions } from '../types';
+
+/** 과거 당첨만 잘라 쓸 “직전 N회” 구간을 정할 때 쓰는 윈도 크기 후보와 슬라이스 유틸이다. */
 
 /**
  * UI에 정의된 윈도우 + 다구간 스윕 후보를 생성한다.

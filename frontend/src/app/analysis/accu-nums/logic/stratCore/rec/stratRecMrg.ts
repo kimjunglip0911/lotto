@@ -1,8 +1,7 @@
-/** 같은 전략의 여러 기간 추천을 점수 합산으로 통합 */
+import type { StrategyRecommendation } from '../types';
 
-import type { StrategyRecommendation } from './types';
+/** 같은 전략 이름으로 여러 기간 추천이 있을 때, 번호별 점수를 더해 하나의 4개 추천으로 합친다. */
 
-/** 같은 전략의 여러 기간 추천을 점수 합산으로 통합해 최종 4개를 만든다. */
 export function combineStrategyRecommendations(
   recommendations: StrategyRecommendation[]
 ): StrategyRecommendation | null {

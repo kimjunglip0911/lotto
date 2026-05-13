@@ -1,23 +1,7 @@
-import type { AccumulatedStrategyKey } from './types';
+import type { AccumulatedStrategyKey } from '../types';
+import { countAt, sortByCountAscThenNumberAsc, sortByCountDescThenNumberAsc } from './numPickSort';
 
-const countAt = (counts: number[], number1To45: number): number =>
-  counts[number1To45 - 1] ?? 0;
-
-/** 출현 횟수 내림차순, 동률이면 번호 오름차순 */
-function sortByCountDescThenNumberAsc(counts: number[]): { number: number; count: number }[] {
-  return Array.from({ length: 45 }, (_, i) => ({
-    number: i + 1,
-    count: countAt(counts, i + 1),
-  })).sort((a, b) => b.count - a.count || a.number - b.number);
-}
-
-/** 출현 횟수 오름차순, 동률이면 번호 오름차순 */
-function sortByCountAscThenNumberAsc(counts: number[]): { number: number; count: number }[] {
-  return Array.from({ length: 45 }, (_, i) => ({
-    number: i + 1,
-    count: countAt(counts, i + 1),
-  })).sort((a, b) => a.count - b.count || a.number - b.number);
-}
+/** 전략 이름에 맞춰 “이번에 쓸 4개 번호”를 뽑고, 실제 당첨과 몇 개 겹쳤는지 센다. */
 
 export function pickTop4ByFrequency(counts: number[]): number[] {
   return sortByCountDescThenNumberAsc(counts)
@@ -57,7 +41,6 @@ export function pickTwoHotTwoCold(counts: number[]): number[] {
       picked.add(e.number);
     }
   }
-  // 이론상 45개 중 4개 미만이 될 수 없음 — 안전하게 부족하면 desc 순으로 채움
   for (const e of desc) {
     if (picked.size >= 4) break;
     picked.add(e.number);
