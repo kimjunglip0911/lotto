@@ -108,11 +108,11 @@ lotto/
 │       │   │   │   │   ├── runAccumulatedStrategySelection.ts
 │       │   │   │   │   └── strategyEvaluation/
 │       │   │   │   │       ├── types.ts
-│       │   │   │   │       ├── windowSlice.ts
-│       │   │   │   │       ├── numberPicking.ts
-│       │   │   │   │       ├── evaluationRun.ts
-│       │   │   │   │       ├── windowRanking.ts
-│       │   │   │   │       └── recommendationSelection.ts
+│       │   │   │   │       ├── winSlice.ts
+│       │   │   │   │       ├── numPick.ts
+│       │   │   │   │       ├── evalRun.ts
+│       │   │   │   │       ├── winRank.ts
+│       │   │   │   │       └── stratRec.ts
 │       │   │   │   └── components/
 │       │   │   │       ├── accBarStat.ts
 │       │   │   │       ├── AccuChart.tsx

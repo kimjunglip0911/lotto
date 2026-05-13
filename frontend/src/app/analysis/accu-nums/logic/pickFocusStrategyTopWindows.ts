@@ -1,4 +1,4 @@
-import { pickAdaptiveWindowsByStrategy, pickTopWindowsByStrategy } from './strategyEvaluation/windowRanking';
+import { pickAdaptiveWindowsByStrategy, pickTopWindowsByStrategy } from './strategyEvaluation/winRank';
 import type { StrategyTopWindow, StrategyWindowMetrics } from './strategyEvaluation/types';
 
 /**

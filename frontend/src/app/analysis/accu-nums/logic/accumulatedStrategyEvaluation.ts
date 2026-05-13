@@ -26,13 +26,13 @@ export {
   aggregatesFromEvaluationBucket,
   buildDrawNoToWinningRowMap,
   runAccumulatedStrategyEvaluation,
-} from './strategyEvaluation/evaluationRun';
+} from './strategyEvaluation/evalRun';
 
 export {
   getDefaultEvaluationWindowSizes,
   sliceWindowTail,
   upperBoundDrawNo,
-} from './strategyEvaluation/windowSlice';
+} from './strategyEvaluation/winSlice';
 
 export {
   countMainHits,
@@ -41,17 +41,17 @@ export {
   pickNearestMean4,
   pickTop4ByFrequency,
   pickTwoHotTwoCold,
-} from './strategyEvaluation/numberPicking';
+} from './strategyEvaluation/numPick';
 
 export {
   pickAdaptiveWindowsByStrategy,
   pickTopWindowsByStrategy,
   toAtLeastOneRate,
   toAvgHits,
-} from './strategyEvaluation/windowRanking';
+} from './strategyEvaluation/winRank';
 
 export {
   buildFinalNumberSelection,
   buildStrategyRecommendation,
   combineStrategyRecommendations,
-} from './strategyEvaluation/recommendationSelection';
+} from './strategyEvaluation/stratRec';

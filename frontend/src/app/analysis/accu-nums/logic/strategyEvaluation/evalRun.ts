@@ -1,13 +1,13 @@
 import type { WinningNumberRow } from '../../types';
 import { buildNumberCounts, toMainNumbersOnly } from '../numberCounts';
-import { countMainHits, pickFourByStrategy } from './numberPicking';
+import { countMainHits, pickFourByStrategy } from './numPick';
 import type {
   AccumulatedEvaluationBucket,
   AccumulatedStrategyKey,
   RunAccumulatedStrategyEvaluationParams,
   StrategyWindowMetrics,
 } from './types';
-import { sliceWindowTail, upperBoundDrawNo } from './windowSlice';
+import { sliceWindowTail, upperBoundDrawNo } from './winSlice';
 
 const evaluationAggKey = (s: AccumulatedStrategyKey, w: number) => `${s}\t${w}`;
 

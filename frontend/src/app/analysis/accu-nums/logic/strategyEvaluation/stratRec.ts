@@ -1,14 +1,14 @@
 import type { WinningNumberRow } from '../../types';
 import { buildNumberCounts } from '../numberCounts';
-import { pickFourByStrategy } from './numberPicking';
+import { pickFourByStrategy } from './numPick';
 import type {
   AccumulatedStrategyKey,
   FinalNumberSelection,
   StrategyRecommendation,
   StrategyWindowMetrics,
 } from './types';
-import { sliceWindowTail } from './windowSlice';
-import { toAtLeastOneRate, toAvgHits } from './windowRanking';
+import { sliceWindowTail } from './winSlice';
+import { toAtLeastOneRate, toAvgHits } from './winRank';
 
 function toScoreByNumber(
   strategy: AccumulatedStrategyKey,
