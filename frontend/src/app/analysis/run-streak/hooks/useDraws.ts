@@ -4,7 +4,7 @@ import { fetchJson, runStreakUrl } from '../logic/api';
 // 페이지에 접속하면 회차 목록을 한 번 불러와 셀렉트 박스를 채워 줍니다.
 // 실패하면 "회차 정보를 불러오지 못했습니다." 안내를 화면에 보여 줍니다.
 
-type UseDrawListResult = {
+type UseDrawsResult = {
   availableDraws: number[];
   selectedDraw: string;
   setSelectedDraw: (draw: string) => void;
@@ -12,7 +12,7 @@ type UseDrawListResult = {
   drawLoadError: string | null;
 };
 
-export const useDrawList = (): UseDrawListResult => {
+export const useDraws = (): UseDrawsResult => {
   const [availableDraws, setAvailableDraws] = useState<number[]>([]);
   const [selectedDraw, setSelectedDraw] = useState<string>('');
   const [isLoadingDraws, setIsLoadingDraws] = useState(true);

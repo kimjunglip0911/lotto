@@ -31,7 +31,7 @@ const fetchWithHistory = async (drawNo: number) => {
   return { winning, rows: range.filter(isWinningNumberRow) };
 };
 
-export const useStreakSearch = (selectedDraw: string) => {
+export const useStFetch = (selectedDraw: string) => {
   const [selectedWinningNumber, setSelectedWinningNumber] = useState<WinningNumberRow | null>(null);
   const [isLoadingWinningNumber, setIsLoadingWinningNumber] = useState(false);
   const [winningNumberError, setWinningNumberError] = useState<string | null>(null);

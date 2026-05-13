@@ -4,16 +4,16 @@ import { useState } from 'react';
 import { Header } from '@/components/common/Header';
 import { Sidebar } from '@/components/common/Sidebar';
 import { StreakMain } from './components/StreakMain';
-import { useRunStreakData } from './hooks/useRunStreakData';
-import { useRunStreakDerived } from './hooks/useRunStreakDerived';
+import { useStData } from './hooks/useStData';
+import { useStView } from './hooks/useStView';
 
 // "연속 출현 분석" 화면 전체를 조립하는 파일입니다.
-// 데이터·파생 상태를 두 훅에서 받아 본문 조립 컴포넌트(StreakMain)에 넘겨 줍니다.
+// 데이터·파생 상태를 두 훅(useStData, useStView)에서 받아 본문 조립 컴포넌트(StreakMain)에 넘겨 줍니다.
 
 export default function RunStreakPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const data = useRunStreakData();
-  const derived = useRunStreakDerived(data);
+  const data = useStData();
+  const derived = useStView(data);
 
   return (
     <div className="bg-background min-h-screen flex justify-center w-full overflow-x-hidden">

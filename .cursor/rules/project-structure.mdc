@@ -121,10 +121,10 @@ lotto/
 │       │   │   │   ├── page.tsx
 │       │   │   │   ├── types.ts
 │       │   │   │   ├── hooks/
-│       │   │   │   │   ├── useDrawList.ts
-│       │   │   │   │   ├── useRunStreakData.ts
-│       │   │   │   │   ├── useRunStreakDerived.ts
-│       │   │   │   │   └── useStreakSearch.ts
+│       │   │   │   │   ├── useDraws.ts
+│       │   │   │   │   ├── useStData.ts
+│       │   │   │   │   ├── useStFetch.ts
+│       │   │   │   │   └── useStView.ts
 │       │   │   │   ├── test/
 │       │   │   │   │   ├── consecutive.test.ts
 │       │   │   │   │   └── streak.test.ts

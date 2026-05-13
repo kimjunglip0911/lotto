@@ -17,7 +17,7 @@ type Params = {
   streakResults: StreakResult[];
 };
 
-export const useRunStreakDerived = ({
+export const useStView = ({
   availableDraws,
   selectedDraw,
   isLoadingDraws,
