@@ -5,7 +5,7 @@ import {
   getAverageStreak,
   getMaxStreak,
   getTop5PctThreshold,
-} from './streak';
+} from '../logic/streak';
 
 function makeRow(draw_no: number, main: number[], bonus_num = 1): WinningNumberRow {
   const [num1, num2, num3, num4, num5, num6] = main;

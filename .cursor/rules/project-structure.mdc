@@ -117,6 +117,33 @@ lotto/
 │       │   │   │       ├── AccumulatedChartSection.tsx
 │       │   │   │       ├── SearchPanel.tsx
 │       │   │   │       └── SelectedWinningNumbersStrip.tsx
+│       │   │   ├── run-streak/
+│       │   │   │   ├── page.tsx
+│       │   │   │   ├── types.ts
+│       │   │   │   ├── hooks/
+│       │   │   │   │   ├── useDrawList.ts
+│       │   │   │   │   ├── useRunStreakData.ts
+│       │   │   │   │   ├── useRunStreakDerived.ts
+│       │   │   │   │   └── useStreakSearch.ts
+│       │   │   │   ├── test/
+│       │   │   │   │   ├── consecutive.test.ts
+│       │   │   │   │   └── streak.test.ts
+│       │   │   │   ├── logic/
+│       │   │   │   │   ├── api.ts
+│       │   │   │   │   ├── consecutive.ts
+│       │   │   │   │   ├── statusMessage.ts
+│       │   │   │   │   └── streak.ts
+│       │   │   │   └── components/
+│       │   │   │       ├── ColdNumbersSection.tsx
+│       │   │   │       ├── DrawSelector.tsx
+│       │   │   │       ├── RunStreakBody.tsx
+│       │   │   │       ├── SearchControls.tsx
+│       │   │   │       ├── SelectedWinningNumbersPreview.tsx
+│       │   │   │       ├── StatisticalNote.tsx
+│       │   │   │       ├── StreakResultsStatus.tsx
+│       │   │   │       ├── StreakTable.tsx
+│       │   │   │       ├── StreakTableRow.tsx
+│       │   │   │       └── SummaryCards.tsx
 │       │   │   └── combination/
 │       │   │       ├── page.tsx
 │       │   │       ├── types.ts
@@ -188,4 +215,4 @@ lotto/
 
 ---
 
-*Last Updated: 2026-05-07*
+*Last Updated: 2026-05-13*
