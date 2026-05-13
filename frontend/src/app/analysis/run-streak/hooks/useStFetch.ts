@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { loadStreakSearch, parseStDrawNo } from '../logic/stSearch';
+import { loadStreakSearch, parseStDrawNo } from '../logic/streak/stSearch';
 import type { StreakResult, WinningNumberRow } from '../types';
 
 // 조회 시 서버에서 당첨번호·이전 회차를 받아 연속 출현(본번호 6개) 결과를 만들어 화면에 넘깁니다.

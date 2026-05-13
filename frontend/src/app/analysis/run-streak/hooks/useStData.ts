@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { getAverageStreak } from '../logic/streak';
+import { getAverageStreak } from '../logic/streak/streak';
 import { useDraws } from './useDraws';
 import { useStFetch } from './useStFetch';
 

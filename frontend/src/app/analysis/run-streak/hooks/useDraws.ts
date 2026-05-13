@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { loadDrawNumbers } from '../logic/streakFetch';
+import { loadDrawNumbers } from '../logic/fetch/streakFetch';
 
 // 처음 들어올 때 한 번만 서버에서 회차 목록을 받아 셀렉트 박스를 채웁니다.
 // 실패하면 “회차 정보를 불러오지 못했습니다.” 안내가 뜨도록 합니다.

@@ -1,4 +1,4 @@
-import { getMainNumbers } from '../../logic/consec';
+import { getMainNumbers } from '../../logic/streak/consec';
 import type { WinningNumberRow } from '../../types';
 
 // 조회한 회차의 당첨번호(본번호 6 + 보너스 1)를 미리 보여 줍니다. 불러오는 동안은 안내 문구만 보입니다.

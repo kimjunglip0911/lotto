@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { getMaxStreak } from '../logic/streak';
+import { getMaxStreak } from '../logic/streak/streak';
 import { buildStatusMessage } from '../logic/hintLine';
 import type { StreakResult } from '../types';
 

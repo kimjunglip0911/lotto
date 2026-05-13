@@ -1,13 +1,8 @@
-import type { WinningNumberRow } from '../types';
+import type { WinningNumberRow } from '../../types';
+import { isValidLotteryNumber } from './lotNums';
 
 // 직전 두 회차에 연달아 나온 본번호를 찾아내는 코드입니다.
 // 추천 화면과 최종 4개 화면이 "이번에 빼고 갈 번호" 후보로 이 결과를 사용합니다.
-
-const TOTAL_NUMBERS = 45;
-const WINNING_NUMBER_MIN = 1;
-
-const isValidLotteryNumber = (n: number): boolean =>
-  n >= WINNING_NUMBER_MIN && n <= TOTAL_NUMBERS;
 
 /** 본번호 6개만 — 연속 출현·제외 후보 로직은 보너스를 비교하지 않는다. */
 export const getMainNumbers = (row: WinningNumberRow): number[] => [

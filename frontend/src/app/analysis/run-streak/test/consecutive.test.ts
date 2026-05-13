@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { WinningNumberRow } from '../types';
-import { getConsecutivelyAppearedMainNumbers } from '../logic/consec';
+import { getConsecutivelyAppearedMainNumbers } from '../logic/streak/consec';
 
 /** 테스트용 당첨 행 — 보너스는 제외 로직에서 사용하지 않으나 스키마상 필수. */
 function makeRow(

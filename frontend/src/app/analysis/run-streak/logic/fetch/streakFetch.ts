@@ -1,5 +1,5 @@
 import { fetchJson, runStreakUrl } from './api';
-import { isWinningNumberRow, type WinningNumberRow } from '../types';
+import { isWinningNumberRow, type WinningNumberRow } from '../../types';
 
 // 연속 출현 화면 전용입니다. 회차 번호 목록·당첨 한 줄·과거 당첨 목록을 서버에서 가져오고,
 // 숫자·배열 형태가 맞는지 여기서 확인한 뒤 화면 쪽으로 넘깁니다.
