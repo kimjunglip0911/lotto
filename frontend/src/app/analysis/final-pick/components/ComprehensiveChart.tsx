@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import { toChartStats } from '@/app/analysis/accu-nums/components/accBarStat';
+import { toChartStats, type AccumulatedBarChartStats } from '@/app/analysis/accu-nums/components/chart/accBarStat';
 
 type ComprehensiveChartProps = {
   /** 이전 회차까지 본번호 누적 출현 횟수(길이 45, 인덱스 0 = 1번). */
@@ -76,9 +76,14 @@ export function ComprehensiveChart({
   streakExcludedNumbers,
 }: ComprehensiveChartProps) {
   const hasData = counts.length === 45 && analyzedDrawCountForChart > 0;
+  const emptyStats: AccumulatedBarChartStats = {
+    averageCount: 0,
+    averageLineBottomPx: 0,
+    chartRows: [],
+  };
   const { averageCount, averageLineBottomPx, chartRows } = hasData
     ? toChartStats(counts, analyzedDrawCountForChart)
-    : { averageCount: 0, averageLineBottomPx: 0, chartRows: [] };
+    : emptyStats;
 
   const accumulatedExcludedSet = useMemo(
     () => new Set(accumulatedExcludedNumbers ?? []),

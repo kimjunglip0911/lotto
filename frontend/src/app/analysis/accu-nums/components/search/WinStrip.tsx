@@ -1,4 +1,4 @@
-import type { WinningNumberRow } from '../types';
+import type { WinningNumberRow } from '../../types';
 
 export type SelectedWinningNumbersStripProps = {
   isLoadingSelectedWinningNumber: boolean;

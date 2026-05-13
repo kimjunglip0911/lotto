@@ -132,18 +132,31 @@ lotto/
 │       │   │   │   │       ├── winRank.ts
 │       │   │   │   │       └── stratRec.ts
 │       │   │   │   └── components/
-│       │   │   │       ├── accBarStat.ts
-│       │   │   │       ├── AccExclBox.tsx
-│       │   │   │       ├── AccFinalBox.tsx
-│       │   │   │       ├── AccNumHit.tsx
-│       │   │   │       ├── AccSearchBlock.tsx
-│       │   │   │       ├── AccStratCharts.tsx
-│       │   │   │       ├── AccStratNote.tsx
-│       │   │   │       ├── AccStratPick.tsx
-│       │   │   │       ├── AccuChart.tsx
 │       │   │   │       ├── AccuMain.tsx
-│       │   │   │       ├── AccSearch.tsx
-│       │   │   │       └── WinStrip.tsx
+│       │   │   │       ├── chart/
+│       │   │   │       │   ├── accBarStat.ts
+│       │   │   │       │   ├── AccuChart.tsx
+│       │   │   │       │   ├── AccumChartBars.tsx
+│       │   │   │       │   └── AccumChartFacet.tsx
+│       │   │   │       ├── chip/
+│       │   │   │       │   └── AccNumHit.tsx
+│       │   │   │       ├── search/
+│       │   │   │       │   ├── AccSearch.tsx
+│       │   │   │       │   ├── AccSearchBlock.tsx
+│       │   │   │       │   ├── searchBtnCls.ts
+│       │   │   │       │   ├── searchPanelProps.ts
+│       │   │   │       │   ├── SearchDrawBar.tsx
+│       │   │   │       │   ├── SearchDrawSelect.tsx
+│       │   │   │       │   ├── SearchTopRow.tsx
+│       │   │   │       │   ├── SearchWinPreview.tsx
+│       │   │   │       │   ├── SnapSaveMsgs.tsx
+│       │   │   │       │   └── WinStrip.tsx
+│       │   │   │       └── strategy/
+│       │   │   │           ├── AccExclBox.tsx
+│       │   │   │           ├── AccFinalBox.tsx
+│       │   │   │           ├── AccStratCharts.tsx
+│       │   │   │           ├── AccStratNote.tsx
+│       │   │   │           └── AccStratPick.tsx
 │       │   │   ├── run-streak/
 │       │   │   │   ├── page.tsx
 │       │   │   │   ├── types.ts

@@ -1,5 +1,5 @@
-import type { AccumulatedCountExclusionResult } from '../logic/accuCntExt';
-import { AccNumHit } from './AccNumHit';
+import type { AccumulatedCountExclusionResult } from '../../logic/accuCntExt';
+import { AccNumHit } from '../chip/AccNumHit';
 
 /** 누적 출현 극값으로 뽑은 제외 후보(2년·전체 각 최다·최소)와 고유 제외 번호를 보여 줍니다. */
 

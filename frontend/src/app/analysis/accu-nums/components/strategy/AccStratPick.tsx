@@ -1,5 +1,5 @@
-import type { StrategyNumberPick } from '../types';
-import { AccNumHit } from './AccNumHit';
+import type { StrategyNumberPick } from '../../types';
+import { AccNumHit } from '../chip/AccNumHit';
 
 /** 평균근접 전략 한 줄(번호 칩·지표)을 카드로 보여 줍니다. */
 

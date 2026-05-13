@@ -9,9 +9,11 @@
 | 경로 | 역할 |
 |:---|:---|
 | `page.tsx` | 레이아웃·`Header`/`Sidebar`·`useAccData`/`useAccView`·`AccuMain` 조립 |
-| `components/AccuMain.tsx` | 본문 `<main>` 안 섹션 순서 조립 |
-| `components/AccStratPick.tsx` | 전략별 평균근접 번호 카드 한 장 |
-| `components/AccSearchBlock.tsx` | 회차 검색 패널·상태 안내 |
+| `components/AccuMain.tsx` | 본문 `<main>` 안 섹션 순서 조립(하위 폴더 컴포넌트만 import) |
+| `components/chart/` | 누적 막대 차트(`AccumulatedChartSection`)·표시용 통계 `toChartStats` |
+| `components/search/` | 회차 검색 패널(`SearchPanel`)·상태 안내(`AccSearchBlock`)·당첨 스트립 |
+| `components/strategy/` | 전략 안내·2년 등 차트 나열·극값 제외·평균근접 채택 블록 |
+| `components/chip/AccNumHit.tsx` | 번호 칩(제외·전략·적중 표시) |
 | `hooks/useAccData.ts` | API·검색 세션·집계 상태 |
 | `hooks/useAccView.ts` | 안내 문구·차트용 파생값·스냅샷 저장 가능 여부 등 |
 | `api/` | 백엔드 API 호출(URL 빌더·레거시 폴백·응답 파서·엔드포인트 5종) 분할. 외부 진입점은 `api/index.ts` |

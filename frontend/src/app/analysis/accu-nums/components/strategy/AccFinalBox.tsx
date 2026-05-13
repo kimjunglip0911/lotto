@@ -1,4 +1,4 @@
-import type { FinalNumberPlan } from '../types';
+import type { FinalNumberPlan } from '../../types';
 import { AccStratPick } from './AccStratPick';
 
 /** 평균근접으로 고른 전략별 번호와 최종 채택 4개를 카드 형태로 보여 줍니다. */

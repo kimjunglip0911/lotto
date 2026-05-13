@@ -1,11 +1,11 @@
 import type { AccuData } from '../hooks/useAccData';
 import type { AccuView } from '../hooks/useAccView';
-import { AccumulatedChartSection } from './AccuChart';
-import { AccExclBox } from './AccExclBox';
-import { AccFinalBox } from './AccFinalBox';
-import { AccSearchBlock } from './AccSearchBlock';
-import { AccStratCharts } from './AccStratCharts';
-import { AccStratNote } from './AccStratNote';
+import { AccumulatedChartSection } from './chart/AccuChart';
+import { AccSearchBlock } from './search/AccSearchBlock';
+import { AccExclBox } from './strategy/AccExclBox';
+import { AccFinalBox } from './strategy/AccFinalBox';
+import { AccStratCharts } from './strategy/AccStratCharts';
+import { AccStratNote } from './strategy/AccStratNote';
 
 /** 누적 번호 분석 화면의 본문(main)을 조립합니다. 검색·안내·차트·극값 제외·전략·채택 블록 순으로 배치합니다. */
 

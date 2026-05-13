@@ -1,5 +1,5 @@
-import type { AccuData } from '../hooks/useAccData';
-import type { AccuView } from '../hooks/useAccView';
+import type { AccuData } from '../../hooks/useAccData';
+import type { AccuView } from '../../hooks/useAccView';
 import { SearchPanel } from './AccSearch';
 
 /** 회차 선택·조회와 그 아래 상태 안내 문구만 모은 블록입니다. */

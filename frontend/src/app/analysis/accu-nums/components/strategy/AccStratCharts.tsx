@@ -1,6 +1,6 @@
-import type { AccuData } from '../hooks/useAccData';
-import type { AccuView } from '../hooks/useAccView';
-import { AccumulatedChartSection } from './AccuChart';
+import type { AccuData } from '../../hooks/useAccData';
+import type { AccuView } from '../../hooks/useAccView';
+import { AccumulatedChartSection } from '../chart/AccuChart';
 
 /** 2년·기타 창별 누적 막대 차트를 `strategyCharts` 순서대로 그립니다. */
 
