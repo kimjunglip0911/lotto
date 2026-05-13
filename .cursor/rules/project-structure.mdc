@@ -94,8 +94,8 @@ lotto/
 │       │   │   │   ├── constants.ts
 │       │   │   │   ├── types.ts
 │       │   │   │   ├── hooks/
-│       │   │   │   │   ├── useAccumulatedNumbersData.ts
-│       │   │   │   │   └── useAccumulatedNumbersDerived.ts
+│       │   │   │   │   ├── useAccData.ts
+│       │   │   │   │   └── useAccView.ts
 │       │   │   │   ├── test/
 │       │   │   │   │   ├── runAccumulatedStrategySelection.test.ts
 │       │   │   │   │   ├── accumulatedCountExtremes.test.ts

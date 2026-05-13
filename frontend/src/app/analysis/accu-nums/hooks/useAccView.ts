@@ -68,7 +68,7 @@ function buildStatusMessage({
   return '회차를 선택한 뒤 조회 버튼을 누르면 해당 회차 기준 분석을 시작합니다.';
 }
 
-export const useAccumulatedNumbersDerived = ({
+export const useAccView = ({
   availableDraws,
   selectedDraw,
   isLoadingDraws,

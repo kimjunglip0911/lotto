@@ -21,4 +21,4 @@ alwaysApply: false
 | 추천 페이지 초기 진입, `backend/DB/database.py` | DB 파일만 있다고 가정하고 스키마 적용 없이 조회 쿼리를 즉시 실행하기 | `db_session()`/`_open_sqlite_connection()`에서 `schema.sql`을 1회 자동 적용해 테이블 부재(`no such table`) 500을 사전에 차단 |
 | 추천 세트 조회, `backend/router/recommend/queries.py` | 스키마 변경(`strategy` 컬럼 추가) 후 구버전 DB 마이그레이션 없이 새 컬럼을 즉시 조회하기 | 연결 시 `PRAGMA table_info`로 컬럼 존재를 확인하고 누락 시 `ALTER TABLE`로 자동 보정 |
 | 누적번호 스냅샷 저장·동시 다건 API, `backend/DB/database.py` | 요청마다 SQLite 연결을 동시에 열어 두고 `busy_timeout`만으로 잠금을 기대하기 | 단일 프로세스에서는 `db_session()`으로 open~close를 `threading.Lock`으로 직렬화하고, 여전히 잠기면 WAL·DB 경로(동기화 폴더 회피)·백엔드 다중 프로세스 여부를 검토 |
-| 누적번호 조회·차트, `accu-nums/hooks/useAccumulatedNumbersData.ts` | 조회를 연속 호출할 때 이전 `async` 요청이 나중에 끝나며 `setState`로 최신 회차 결과를 덮어쓰기 | `searchSessionRef` 등으로 세션 번호를 매겨 완료 시점에만 적용·`finally`에서도 최신 세션일 때만 로딩 해제; GET `fetch`에는 `cache: 'no-store'`로 중간 캐시 의심 제거 |
+| 누적번호 조회·차트, `accu-nums/hooks/useAccData.ts` | 조회를 연속 호출할 때 이전 `async` 요청이 나중에 끝나며 `setState`로 최신 회차 결과를 덮어쓰기 | `searchSessionRef` 등으로 세션 번호를 매겨 완료 시점에만 적용·`finally`에서도 최신 세션일 때만 로딩 해제; GET `fetch`에는 `cache: 'no-store'`로 중간 캐시 의심 제거 |

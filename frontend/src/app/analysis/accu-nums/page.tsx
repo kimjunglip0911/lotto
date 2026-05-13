@@ -5,12 +5,12 @@ import { Header } from '@/components/common/Header';
 import { Sidebar } from '@/components/common/Sidebar';
 import { AccumulatedChartSection } from './components/AccuChart';
 import { SearchPanel } from './components/AccSearch';
-import { useAccumulatedNumbersData } from './hooks/useAccumulatedNumbersData';
-import { useAccumulatedNumbersDerived } from './hooks/useAccumulatedNumbersDerived';
+import { useAccData } from './hooks/useAccData';
+import { useAccView } from './hooks/useAccView';
 
 export default function AccumulatedNumbersPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const data = useAccumulatedNumbersData();
+  const data = useAccData();
   const {
     hasSearched,
     selectedSearchDrawNo,
@@ -19,7 +19,7 @@ export default function AccumulatedNumbersPage() {
     statusMessage,
     strategyCharts,
     finalNumberPlan,
-  } = useAccumulatedNumbersDerived({
+  } = useAccView({
     availableDraws: data.availableDraws,
     selectedDraw: data.selectedDraw,
     isLoadingDraws: data.isLoadingDraws,

@@ -34,7 +34,7 @@ const parseSelectedDrawNo = (selectedDraw: string) => {
   return selectedDrawNo;
 };
 
-export const useAccumulatedNumbersData = () => {
+export const useAccData = () => {
   const [availableDraws, setAvailableDraws] = useState<number[]>([]);
   const [selectedDraw, setSelectedDraw] = useState('');
   const [searchedDraw, setSearchedDraw] = useState('');
