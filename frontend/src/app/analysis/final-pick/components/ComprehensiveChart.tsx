@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import { toChartStats } from '@/app/analysis/accu-nums/components/accumulatedBarChartStats';
+import { toChartStats } from '@/app/analysis/accu-nums/components/accBarStat';
 
 type ComprehensiveChartProps = {
   /** 이전 회차까지 본번호 누적 출현 횟수(길이 45, 인덱스 0 = 1번). */
@@ -64,7 +64,7 @@ function ExclusionMarkers({ number, streakSet, accumulatedSet, chiSquareExcluded
  * 1~45번을 가로로 나열한 종합 막대 차트(이전 회차까지 누적 출현).
  *
  * - 집계 회차가 없을 때는 회색 빈 막대 + 안내 문구를 보여 자리만 잡는다.
- * - 막대 토큰(`w-8`, `h-[145px]`)은 누적 분석 `AccumulatedChartSection`과 동일하게 맞춘다.
+ * - 막대 토큰(`w-8`, `h-[145px]`)은 누적 분석 `AccuChart`와 동일하게 맞춘다.
  * - 카이제곱 워크포워드 제외·연속·누적 제외는 막대 위 동그라미로 표시한다.
  */
 export function ComprehensiveChart({

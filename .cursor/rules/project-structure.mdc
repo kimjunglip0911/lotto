@@ -114,10 +114,10 @@ lotto/
 │       │   │   │   │       ├── windowRanking.ts
 │       │   │   │   │       └── recommendationSelection.ts
 │       │   │   │   └── components/
-│       │   │   │       ├── accumulatedBarChartStats.ts
-│       │   │   │       ├── AccumulatedChartSection.tsx
-│       │   │   │       ├── SearchPanel.tsx
-│       │   │   │       └── SelectedWinningNumbersStrip.tsx
+│       │   │   │       ├── accBarStat.ts
+│       │   │   │       ├── AccuChart.tsx
+│       │   │   │       ├── AccSearch.tsx
+│       │   │   │       └── WinStrip.tsx
 │       │   │   ├── run-streak/
 │       │   │   │   ├── page.tsx
 │       │   │   │   ├── types.ts

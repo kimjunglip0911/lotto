@@ -3,8 +3,8 @@
 import React, { useMemo, useState } from 'react';
 import { Header } from '@/components/common/Header';
 import { Sidebar } from '@/components/common/Sidebar';
-import { AccumulatedChartSection } from './components/AccumulatedChartSection';
-import { SearchPanel } from './components/SearchPanel';
+import { AccumulatedChartSection } from './components/AccuChart';
+import { SearchPanel } from './components/AccSearch';
 import { useAccumulatedNumbersData } from './hooks/useAccumulatedNumbersData';
 import { useAccumulatedNumbersDerived } from './hooks/useAccumulatedNumbersDerived';
 

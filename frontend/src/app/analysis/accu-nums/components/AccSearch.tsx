@@ -1,5 +1,5 @@
 import type { WinningNumberRow } from '../types';
-import { SelectedWinningNumbersStrip } from './SelectedWinningNumbersStrip';
+import { SelectedWinningNumbersStrip } from './WinStrip';
 
 type SearchPanelProps = {
   availableDraws: number[];
@@ -21,7 +21,7 @@ type SearchPanelProps = {
 
 /**
  * 누적 번호 분석 상단 패널: 기준 회차 선택 → 조회 → (조건 충족 시) 분석 결과 저장.
- * 선택 회차의 당첨번호 미리보기는 `SelectedWinningNumbersStrip`에 위임합니다.
+ * 선택 회차의 당첨번호 미리보기는 `WinStrip`에 위임합니다.
  */
 export function SearchPanel({
   availableDraws,

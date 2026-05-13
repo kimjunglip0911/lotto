@@ -1,4 +1,4 @@
-import { toChartStats } from './accumulatedBarChartStats';
+import { toChartStats } from './accBarStat';
 
 type AccumulatedChartSectionProps = {
   title: string;
