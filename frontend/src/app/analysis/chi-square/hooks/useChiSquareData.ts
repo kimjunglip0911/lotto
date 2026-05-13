@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { runAccumulatedStrategySelection } from '@/app/analysis/accu-nums/logic/runStratSel';
+import { buildAccumulatedCountExclusionResult } from '@/app/analysis/accu-nums/logic/accuCntExt';
 import { CHI_SQUARE_WALK_FORWARD_RECENT_DRAWS } from '../constants';
 import { buildChiSquareResults } from '../logic/chiSquare';
 import { isWinningNumberRow } from '../logic/guards';
@@ -19,7 +19,7 @@ type UseChiSquareDataResult = {
   searchError: string | null;
   analyzedDrawCount: number;
   chiSquareResults: ChiSquareResult[];
-  /** 누적번호 분석과 동일 로직으로 계산된 최종 4개(없으면 null) */
+  /** 통합 분석과 동일한 누적 출현 극값 제외 고유 번호(없으면 null) */
   accumulatedFinalNumbers: readonly number[] | null;
   /**
    * 워크포워드·구간 표·사용 번호 채택용: 조회 회차까지 `draw_no` 오름차순 중
@@ -148,10 +148,8 @@ export const useChiSquareData = (): UseChiSquareDataResult => {
         sortedRows.length <= CHI_SQUARE_WALK_FORWARD_RECENT_DRAWS
           ? sortedRows
           : sortedRows.slice(-CHI_SQUARE_WALK_FORWARD_RECENT_DRAWS);
-      const { finalNumberPlan } = runAccumulatedStrategySelection(sortedRows);
-      const finalFour =
-        finalNumberPlan?.finalNumbers.length === 4 ? [...finalNumberPlan.finalNumbers] : null;
-      setAccumulatedFinalNumbers(finalFour);
+      const { excludedUnique } = buildAccumulatedCountExclusionResult(sortedRows);
+      setAccumulatedFinalNumbers(excludedUnique.length > 0 ? [...excludedUnique] : null);
 
       setSelectedWinningNumber(winningData);
       setAnalyzedDrawCount(rows.length);

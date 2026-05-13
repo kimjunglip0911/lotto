@@ -1,9 +1,5 @@
-import {
-  buildFinalNumberSelection,
-  buildStrategyRecommendation,
-  runAccumulatedStrategyEvaluation,
-  sliceWindowTail,
-} from './stratEval';
+import { buildStrategyRecommendation, runAccumulatedStrategyEvaluation, sliceWindowTail } from './stratEval';
+import { buildAccumulatedCountExclusionResult } from './accuCntExt';
 import { buildNumberCounts } from './numCounts';
 import { toAtLeastOneRate, toAvgHits } from './stratCore/window/winRank';
 import type { AccumulatedStrategyKey, StrategyWindowMetrics } from './stratCore/types';
@@ -50,8 +46,8 @@ function findAgg(
 }
 
 /**
- * 이미 계산된 전략·윈도 지표로 전략 차트·최종 4개를 만든다(스냅샷 일괄 등 증분 평가와 조합).
- * — 104회차 차트 2개는 2년 구간 상·하 표시용, 최종 4개는 전체 기간 상·하 추천을 `buildFinalNumberSelection`으로 합친 결과다.
+ * 이미 계산된 전략·윈도 지표로 전략 차트·누적 극값 제외 번호를 만든다(스냅샷 일괄 등 증분 평가와 조합).
+ * — 104회차 차트 2개는 2년 구간 상·하 표시용, `finalNumbers`는 통합 분석과 동일한 `buildAccumulatedCountExclusionResult`(2년·전체 각 최다·최소)의 고유 목록이다.
  */
 export function buildAccumulatedStrategySelectionFromAggregates(
   rangeRowsSortedAsc: WinningNumberRow[],
@@ -99,8 +95,8 @@ export function buildAccumulatedStrategySelectionFromAggregates(
     aggregate: aggBotFull,
   });
 
-  const finalSel = buildFinalNumberSelection(recTopFull, recBotFull);
-  const finalNumbers = [...finalSel.finalNumbers].sort((a, b) => a - b);
+  const { excludedUnique } = buildAccumulatedCountExclusionResult(rangeRowsSortedAsc);
+  const finalNumbers = [...excludedUnique];
 
   const strategyPicks: StrategyNumberPick[] = [
     {
@@ -144,7 +140,7 @@ export function buildAccumulatedStrategySelectionFromAggregates(
   return {
     strategyCharts,
     finalNumberPlan: {
-      commonNumbers: finalSel.commonNumbers,
+      commonNumbers: [],
       finalNumbers,
       strategyPicks,
     },
@@ -152,7 +148,7 @@ export function buildAccumulatedStrategySelectionFromAggregates(
 }
 
 /**
- * 선택 회차 기준 이전 당첨 행만으로 전략 차트·최종 4개를 계산한다.
+ * 선택 회차 기준 이전 당첨 행만으로 전략 차트·통합과 동일한 누적 극값 제외 번호를 계산한다.
  * `draw_no < anchor` 구간이 오름차순으로 정렬된 배열을 넘긴다.
  */
 export function runAccumulatedStrategySelection(

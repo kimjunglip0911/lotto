@@ -25,7 +25,9 @@ export type StrategyNumberPick = {
 };
 
 export type FinalNumberPlan = {
+  /** 상·하 전략 교집합(통합 극값 제외 기준에서는 사용하지 않으며 빈 배열). */
   commonNumbers: number[];
+  /** 통합 분석과 동일: 직전 104회·전체 각 최다·최소 슬롯의 고유 번호(1~4개, 오름차순). */
   finalNumbers: number[];
   strategyPicks: StrategyNumberPick[];
 };

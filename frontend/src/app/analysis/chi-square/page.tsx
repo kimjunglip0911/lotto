@@ -114,9 +114,9 @@ export default function ChiSquarePage() {
 
           {hasSearched && !noHistory && !isSearching && !searchError && walkForwardExcludedSplit != null && (
             <section className="rounded-2xl border border-card-border/30 bg-card-bg/60 p-4 space-y-3">
-              {accumulatedFinalNumbers && accumulatedFinalNumbers.length === 4 && (
+              {accumulatedFinalNumbers && accumulatedFinalNumbers.length > 0 && (
                 <div className="rounded-xl border border-sky-400/30 bg-sky-500/10 p-3 space-y-2">
-                  <p className="text-sm font-semibold text-sky-200">누적번호 분석 최종 4개</p>
+                  <p className="text-sm font-semibold text-sky-200">누적 출현 극값 제외(통합 분석과 동일)</p>
                   <div className="flex flex-wrap gap-2">
                     {accumulatedFinalNumbers.map((n) => (
                       <span
@@ -128,7 +128,7 @@ export default function ChiSquarePage() {
                     ))}
                   </div>
                   <p className="text-xs text-sky-100/85 leading-relaxed">
-                    누적번호 분석 페이지와 동일한 전략·집계로 조회 시점에 계산된 최종 채택 번호입니다. 아래 워크포워드 제외 번호 목록과는 별도 참고용입니다.
+                    직전 104회·전체 구간 각각 출현 최다·최소 1개씩 뽑은 네 슬롯의 고유 번호입니다. 통합 분석 페이지의 누적 제외와 동일한 계산입니다. 아래 워크포워드 제외와는 별도입니다.
                   </p>
                 </div>
               )}

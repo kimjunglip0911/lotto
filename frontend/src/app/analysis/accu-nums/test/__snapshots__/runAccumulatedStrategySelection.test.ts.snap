@@ -5,10 +5,8 @@ exports[`runAccumulatedStrategySelection > matches snapshot for fixed draw histo
   "finalNumberPlan": {
     "commonNumbers": [],
     "finalNumbers": [
-      1,
-      5,
+      3,
       43,
-      44,
     ],
     "strategyPicks": [
       {
