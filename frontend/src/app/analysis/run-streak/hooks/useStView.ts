@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { getMaxStreak } from '../logic/streak';
-import { buildStatusMessage } from '../logic/statusMessage';
+import { buildStatusMessage } from '../logic/hintLine';
 import type { StreakResult } from '../types';
 
 // 조회 결과를 화면 표시 형태(평균 초과 연속 출현 목록, 안내 문구 등)로 가공하는 코드입니다.

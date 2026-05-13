@@ -1,5 +1,5 @@
 import type { StreakResult, WinningNumberRow } from '../types';
-import { getMainNumbers } from './consecutive';
+import { getMainNumbers } from './consec';
 
 // 선택 회차 N 직전 (N-1)회부터 역순으로 본번호 6개에 연속 포함된 **회차 수**를 센 뒤,
 // 화면 값 streak = max(0, 그 회차 수 − 1)으로 둔다. (직전 1회만 출현 → 0, 2회 연속 출현 → 1)
