@@ -32,7 +32,6 @@ export type StreakSearchProps = {
   isSearching: boolean;
   handleSearch: () => void;
   isLoadingWinningNumber: boolean;
-  winningNumberError: string | null;
   selectedWinningNumber: WinningNumberRow | null;
   statusMessage: string | null;
 };

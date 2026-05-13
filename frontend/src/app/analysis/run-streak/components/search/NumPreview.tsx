@@ -1,17 +1,15 @@
 import { getMainNumbers } from '../../logic/consec';
 import type { WinningNumberRow } from '../../types';
 
-// 선택 회차의 당첨번호(본번호 6 + 보너스 1)를 미리 보여 주는 카드. 로딩·오류 시 안내로 교체됩니다.
+// 조회한 회차의 당첨번호(본번호 6 + 보너스 1)를 미리 보여 줍니다. 불러오는 동안은 안내 문구만 보입니다.
 
 type NumPreviewProps = {
   isLoadingWinningNumber: boolean;
-  winningNumberError: string | null;
   selectedWinningNumber: WinningNumberRow | null;
 };
 
 export const NumPreview = ({
   isLoadingWinningNumber,
-  winningNumberError,
   selectedWinningNumber,
 }: NumPreviewProps) => {
   const mainNumbers = selectedWinningNumber ? getMainNumbers(selectedWinningNumber) : [];
@@ -20,8 +18,6 @@ export const NumPreview = ({
       <p className="text-xs font-medium text-slate-300 mb-2">선택 회차 당첨번호 (보너스 포함)</p>
       {isLoadingWinningNumber ? (
         <p className="text-sm text-slate-300">당첨번호를 불러오는 중입니다...</p>
-      ) : winningNumberError ? (
-        <p className="text-sm text-rose-300">{winningNumberError}</p>
       ) : selectedWinningNumber ? (
         <div className="flex flex-wrap items-center gap-2">
           {mainNumbers.map((num, index) => (

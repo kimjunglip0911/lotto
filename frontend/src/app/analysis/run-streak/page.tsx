@@ -30,7 +30,6 @@ export default function RunStreakPage() {
             isSearching: data.isSearching,
             handleSearch: () => void data.handleSearch(),
             isLoadingWinningNumber: data.isLoadingWinningNumber,
-            winningNumberError: data.winningNumberError,
             selectedWinningNumber: data.selectedWinningNumber,
             statusMessage: derived.statusMessage,
           }}

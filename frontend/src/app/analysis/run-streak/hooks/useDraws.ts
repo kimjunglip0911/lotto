@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import { fetchJson, runStreakUrl } from '../logic/api';
+import { loadDrawNumbers } from '../logic/streakFetch';
 
-// 페이지에 접속하면 회차 목록을 한 번 불러와 셀렉트 박스를 채워 줍니다.
-// 실패하면 "회차 정보를 불러오지 못했습니다." 안내를 화면에 보여 줍니다.
+// 처음 들어올 때 한 번만 서버에서 회차 목록을 받아 셀렉트 박스를 채웁니다.
+// 실패하면 “회차 정보를 불러오지 못했습니다.” 안내가 뜨도록 합니다.
 
 type UseDrawsResult = {
   availableDraws: number[];
@@ -26,11 +26,7 @@ export const useDraws = (): UseDrawsResult => {
       setIsLoadingDraws(true);
       setDrawLoadError(null);
       try {
-        const data = await fetchJson<unknown>(runStreakUrl('draw-numbers'), {
-          signal: controller.signal,
-        });
-        if (!Array.isArray(data)) throw new Error('Draw numbers response is not an array');
-        const draws = data.filter((item): item is number => typeof item === 'number');
+        const draws = await loadDrawNumbers({ signal: controller.signal });
         if (!isMounted) return;
         setAvailableDraws(draws);
         setSelectedDraw((prev) => (prev || draws.length === 0 ? prev : String(draws[0])));

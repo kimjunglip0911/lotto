@@ -3,8 +3,7 @@ import { getMaxStreak } from '../logic/streak';
 import { buildStatusMessage } from '../logic/hintLine';
 import type { StreakResult } from '../types';
 
-// 조회 결과를 화면 표시 형태(평균 초과 연속 출현 목록, 안내 문구 등)로 가공하는 코드입니다.
-// 원본 데이터는 그대로 두고, 화면이 바로 쓸 수 있는 형태로 다듬어 돌려줍니다.
+// 조회된 데이터를 카드·표·상단 안내 문구에 맞게 가공한 값만 돌려 줍니다.
 
 type Params = {
   availableDraws: number[];

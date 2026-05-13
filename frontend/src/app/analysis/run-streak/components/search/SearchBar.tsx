@@ -13,7 +13,6 @@ type SearchBarProps = {
   isSearching: boolean;
   handleSearch: () => void;
   isLoadingWinningNumber: boolean;
-  winningNumberError: string | null;
   selectedWinningNumber: WinningNumberRow | null;
   statusMessage: string | null;
 };
@@ -26,7 +25,6 @@ export const SearchBar = ({
   isSearching,
   handleSearch,
   isLoadingWinningNumber,
-  winningNumberError,
   selectedWinningNumber,
   statusMessage,
 }: SearchBarProps) => (
@@ -42,7 +40,6 @@ export const SearchBar = ({
       />
       <NumPreview
         isLoadingWinningNumber={isLoadingWinningNumber}
-        winningNumberError={winningNumberError}
         selectedWinningNumber={selectedWinningNumber}
       />
     </div>
