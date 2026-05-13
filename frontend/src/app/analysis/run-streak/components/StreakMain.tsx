@@ -1,67 +1,28 @@
-import type { StreakResult, WinningNumberRow } from '../types';
-import { ColdNums } from './ColdNums';
-import { SearchBar } from './SearchBar';
+import type { StreakSearchProps, StreakSummaryProps, StreakTableProps } from '../types';
+import { SearchBar } from './search/SearchBar';
+import { ColdNums } from './summary/ColdNums';
+import { SumCards } from './summary/SumCards';
+import { StreakTbl } from './table/StreakTbl';
 import { StatNote } from './StatNote';
-import { StreakTbl } from './StreakTbl';
-import { SumCards } from './SumCards';
 
-// 화면 본문(main 안쪽) 한 줄을 담당하는 조립 컴포넌트입니다.
-// 검색·요약·평균 초과 연속 출현·표·주의 영역을 순서대로 배치합니다.
+// 화면 본문(main 안쪽)을 조립하는 컴포넌트입니다.
+// 검색·요약·표 세 묶음의 props를 받아 순서대로 배치합니다.
 
 export type StreakMainProps = {
-  availableDraws: number[];
-  selectedDraw: string;
-  setSelectedDraw: (draw: string) => void;
-  isLoadingDraws: boolean;
-  isSearching: boolean;
-  handleSearch: () => void;
-  isLoadingWinningNumber: boolean;
-  winningNumberError: string | null;
-  selectedWinningNumber: WinningNumberRow | null;
-  statusMessage: string | null;
-  canShowStreakPanels: boolean;
-  analyzedDrawCount: number;
-  maxStreak: number;
-  averageStreak: number;
-  top5PctThreshold: number;
-  coldNumbers: StreakResult[];
-  hasSearched: boolean;
-  noHistory: boolean;
-  searchError: string | null;
-  streakResults: StreakResult[];
+  search: StreakSearchProps;
+  summary: StreakSummaryProps;
+  table: StreakTableProps;
 };
 
-export const StreakMain = (p: StreakMainProps) => (
-  <main className="flex-1 overflow-y-auto pb-12 px-4 pt-4 space-y-6">
-    <SearchBar
-      availableDraws={p.availableDraws}
-      selectedDraw={p.selectedDraw}
-      onSelectedDrawChange={p.setSelectedDraw}
-      isLoadingDraws={p.isLoadingDraws}
-      isSearching={p.isSearching}
-      handleSearch={p.handleSearch}
-      isLoadingWinningNumber={p.isLoadingWinningNumber}
-      winningNumberError={p.winningNumberError}
-      selectedWinningNumber={p.selectedWinningNumber}
-      statusMessage={p.statusMessage}
-    />
-    {p.canShowStreakPanels && (
-      <SumCards
-        analyzedDrawCount={p.analyzedDrawCount}
-        maxStreak={p.maxStreak}
-        averageStreak={p.averageStreak}
-        top5PctThreshold={p.top5PctThreshold}
-        coldNumbersCount={p.coldNumbers.length}
-      />
-    )}
-    {p.canShowStreakPanels && <ColdNums coldNumbers={p.coldNumbers} averageStreak={p.averageStreak} />}
-    <StreakTbl
-      hasSearched={p.hasSearched}
-      noHistory={p.noHistory}
-      isSearching={p.isSearching}
-      searchError={p.searchError}
-      streakResults={p.streakResults}
-    />
-    <StatNote />
-  </main>
-);
+export const StreakMain = ({ search, summary, table }: StreakMainProps) => {
+  const { canShowStreakPanels, coldNumbers, averageStreak, analyzedDrawCount, maxStreak } = summary;
+  return (
+    <main className="flex-1 overflow-y-auto pb-12 px-4 pt-4 space-y-6">
+      <SearchBar {...search} />
+      {canShowStreakPanels && <SumCards analyzedDrawCount={analyzedDrawCount} maxStreak={maxStreak} />}
+      {canShowStreakPanels && <ColdNums coldNumbers={coldNumbers} averageStreak={averageStreak} />}
+      <StreakTbl {...table} />
+      <StatNote />
+    </main>
+  );
+};

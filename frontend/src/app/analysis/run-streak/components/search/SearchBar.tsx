@@ -1,4 +1,4 @@
-import type { WinningNumberRow } from '../types';
+import type { WinningNumberRow } from '../../types';
 import { DrawPick } from './DrawPick';
 import { NumPreview } from './NumPreview';
 
@@ -8,7 +8,7 @@ import { NumPreview } from './NumPreview';
 type SearchBarProps = {
   availableDraws: number[];
   selectedDraw: string;
-  onSelectedDrawChange: (draw: string) => void;
+  setSelectedDraw: (draw: string) => void;
   isLoadingDraws: boolean;
   isSearching: boolean;
   handleSearch: () => void;
@@ -21,7 +21,7 @@ type SearchBarProps = {
 export const SearchBar = ({
   availableDraws,
   selectedDraw,
-  onSelectedDrawChange,
+  setSelectedDraw,
   isLoadingDraws,
   isSearching,
   handleSearch,
@@ -35,7 +35,7 @@ export const SearchBar = ({
       <DrawPick
         availableDraws={availableDraws}
         selectedDraw={selectedDraw}
-        onSelectedDrawChange={onSelectedDrawChange}
+        onSelectedDrawChange={setSelectedDraw}
         isLoadingDraws={isLoadingDraws}
         isSearching={isSearching}
         onSearch={handleSearch}

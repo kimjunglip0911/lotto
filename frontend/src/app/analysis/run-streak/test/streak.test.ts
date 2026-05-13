@@ -1,11 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { WinningNumberRow } from '../types';
-import {
-  buildStreakResults,
-  getAverageStreak,
-  getMaxStreak,
-  getTop5PctThreshold,
-} from '../logic/streak';
+import { buildStreakResults, getAverageStreak, getMaxStreak } from '../logic/streak';
 
 function makeRow(draw_no: number, main: number[], bonus_num = 1): WinningNumberRow {
   const [num1, num2, num3, num4, num5, num6] = main;
@@ -52,6 +47,5 @@ describe('buildStreakResults', () => {
   it('빈 결과에 대한 통계 함수는 0을 반환', () => {
     expect(getAverageStreak([])).toBe(0);
     expect(getMaxStreak([])).toBe(0);
-    expect(getTop5PctThreshold([])).toBe(0);
   });
 });

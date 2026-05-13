@@ -134,16 +134,19 @@ lotto/
 │       │   │   │   │   ├── hintLine.ts
 │       │   │   │   │   └── streak.ts
 │       │   │   │   └── components/
-│       │   │   │       ├── ColdNums.tsx
-│       │   │   │       ├── DrawPick.tsx
-│       │   │   │       ├── NumPreview.tsx
-│       │   │   │       ├── SearchBar.tsx
-│       │   │   │       ├── StatNote.tsx
 │       │   │   │       ├── StreakMain.tsx
-│       │   │   │       ├── StreakRow.tsx
-│       │   │   │       ├── StreakStat.tsx
-│       │   │   │       ├── StreakTbl.tsx
-│       │   │   │       └── SumCards.tsx
+│       │   │   │       ├── StatNote.tsx
+│       │   │   │       ├── search/
+│       │   │   │       │   ├── SearchBar.tsx
+│       │   │   │       │   ├── DrawPick.tsx
+│       │   │   │       │   └── NumPreview.tsx
+│       │   │   │       ├── summary/
+│       │   │   │       │   ├── SumCards.tsx
+│       │   │   │       │   └── ColdNums.tsx
+│       │   │   │       └── table/
+│       │   │   │           ├── StreakTbl.tsx
+│       │   │   │           ├── StreakRow.tsx
+│       │   │   │           └── StreakStat.tsx
 │       │   │   └── combination/
 │       │   │       ├── page.tsx
 │       │   │       ├── types.ts

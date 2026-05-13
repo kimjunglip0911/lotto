@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import type { StreakResult } from '../types';
+import type { StreakResult } from '../../types';
 
 // 평균보다 긴 연속 출현(본번호)을 가진 번호만 모아 표시합니다.
 

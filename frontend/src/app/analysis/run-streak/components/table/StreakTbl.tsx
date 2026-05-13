@@ -1,6 +1,6 @@
-import type { StreakResult } from '../types';
-import { StreakStat } from './StreakStat';
+import type { StreakResult } from '../../types';
 import { StreakRow } from './StreakRow';
+import { StreakStat } from './StreakStat';
 
 // 번호별 연속 출현 분석 결과 표 영역입니다.
 // 표 머리글과 상태 분기만 담당하고, 각 줄 그리기는 StreakRow에 맡깁니다.

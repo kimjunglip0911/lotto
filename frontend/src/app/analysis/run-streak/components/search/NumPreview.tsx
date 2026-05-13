@@ -1,4 +1,5 @@
-import type { WinningNumberRow } from '../types';
+import { getMainNumbers } from '../../logic/consec';
+import type { WinningNumberRow } from '../../types';
 
 // 선택 회차의 당첨번호(본번호 6 + 보너스 1)를 미리 보여 주는 카드. 로딩·오류 시 안내로 교체됩니다.
 
@@ -8,10 +9,6 @@ type NumPreviewProps = {
   selectedWinningNumber: WinningNumberRow | null;
 };
 
-const getMainNumbers = (row: WinningNumberRow): number[] =>
-  [row.num1, row.num2, row.num3, row.num4, row.num5, row.num6];
-
-/** 선택 회차 당첨번호(본번호 + 보너스) 미리보기 블록 */
 export const NumPreview = ({
   isLoadingWinningNumber,
   winningNumberError,
