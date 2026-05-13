@@ -35,11 +35,11 @@ app.include_router(home_router)
 app.include_router(recommend_router)
 app.include_router(
     load_router_from_file(
-        "backend.router.analysis.accumulated_numbers.router",
+        "backend.router.analysis.accu_nums.router",
         Path(__file__).resolve().parent
         / "router"
         / "analysis"
-        / "accumulated-numbers"
+        / "accu-nums"
         / "router.py",
     )
 )

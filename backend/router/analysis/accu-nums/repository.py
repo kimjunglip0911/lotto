@@ -8,8 +8,8 @@ from backend.DB.database import db_session, run_in_db_session_with_retry
 from backend.router.analysis._shared import load_queries_module
 
 _QUERIES = load_queries_module(
-    "backend.router.analysis.accumulated_numbers.queries",
-    ("router", "analysis", "accumulated-numbers", "queries.py"),
+    "backend.router.analysis.accu_nums.queries",
+    ("router", "analysis", "accu-nums", "queries.py"),
 )
 
 

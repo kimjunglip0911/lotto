@@ -12,10 +12,10 @@ const resolveApiBaseUrl = (baseUrl?: string): string => {
   return raw;
 };
 
-/** `/api/analysis/accumulated-numbers/` 이하 경로·쿼리(예: `draw-numbers`, `winning-number?draw_no=1`) */
+/** `/api/analysis/accu-nums/` 이하 경로·쿼리(예: `draw-numbers`, `winning-number?draw_no=1`) */
 export const accumulatedNumbersApiUrl = (pathWithQuery: string, baseUrl?: string): string => {
   const apiUrl = resolveApiBaseUrl(baseUrl);
-  return `${apiUrl}/api/analysis/accumulated-numbers/${pathWithQuery}`;
+  return `${apiUrl}/api/analysis/accu-nums/${pathWithQuery}`;
 };
 
 export const parseNumberArrayResponse = (data: unknown, invalidMessage: string): number[] => {

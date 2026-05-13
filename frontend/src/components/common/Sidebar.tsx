@@ -31,7 +31,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       children: [
         { title: '통합 분석', href: '/analysis/final-pick' },
         { title: '조합 분석', href: '/analysis/combination' },
-        { title: '누적 번호 분석', href: '/analysis/accumulated-numbers' },
+        { title: '누적 번호 분석', href: '/analysis/accu-nums' },
         { title: '카이제곱 검정', href: '/analysis/chi-square' },
         { title: '추세 분석', href: '/analysis/trend' },
         { title: '연속 출현 분석', href: '/analysis/run-streak' },

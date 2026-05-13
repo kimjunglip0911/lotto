@@ -52,7 +52,7 @@ lotto/
 │   │   │   ├── chi-square/
 │   │   │   │   ├── router.py
 │   │   │   │   └── queries.py
-│   │   │   ├── accumulated-numbers/
+│   │   │   ├── accu-nums/
 │   │   │   │   ├── router.py
 │   │   │   │   └── queries.py
 │   │   │   └── _shared.py
@@ -88,7 +88,7 @@ lotto/
 │       │   ├── favicon.ico
 │       │   ├── page.tsx
 │       │   ├── analysis/
-│       │   │   ├── accumulated-numbers/
+│       │   │   ├── accu-nums/
 │       │   │   │   ├── page.tsx
 │       │   │   │   ├── api.ts
 │       │   │   │   ├── constants.ts

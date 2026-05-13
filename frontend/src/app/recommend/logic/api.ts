@@ -31,7 +31,7 @@ async function fetchJson(url: string): Promise<unknown> {
 }
 
 export async function fetchDrawNumbers(apiUrl: string): Promise<number[]> {
-  const data = await fetchJson(`${apiUrl}/api/analysis/accumulated-numbers/draw-numbers`)
+  const data = await fetchJson(`${apiUrl}/api/analysis/accu-nums/draw-numbers`)
   if (!Array.isArray(data)) {
     throw new Error('Draw numbers response is not an array')
   }
@@ -128,7 +128,7 @@ export interface SavedRecommendData extends RecommendBaseData {
 export async function fetchSavedRecommendData(apiUrl: string, drawNo: number): Promise<SavedRecommendData> {
   const [drawingsResponse, winningNumberResponse, baseData] = await Promise.all([
     fetch(`${apiUrl}/api/recommend/drawings?draw_no=${drawNo}`),
-    fetch(`${apiUrl}/api/analysis/accumulated-numbers/winning-number?draw_no=${drawNo}`),
+    fetch(`${apiUrl}/api/analysis/accu-nums/winning-number?draw_no=${drawNo}`),
     fetchRecommendBaseData(apiUrl, drawNo),
   ])
 

@@ -31,7 +31,7 @@ export const useLotteryGridData = (options?: UseLotteryGridDataOptions) => {
 
     const loadDrawNumbers = async () => {
       try {
-        const response = await fetch(`${API_BASE}/api/analysis/accumulated-numbers/draw-numbers`);
+        const response = await fetch(`${API_BASE}/api/analysis/accu-nums/draw-numbers`);
         if (!response.ok || cancelled) return;
 
         const data = await response.json();
