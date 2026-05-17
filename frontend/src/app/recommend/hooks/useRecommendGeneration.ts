@@ -15,7 +15,7 @@ import { fetchFinalPickAdopted } from '@/app/recommend/logic/finalPickAdopted'
 import { GeneratedSet } from '@/app/recommend/logic/types'
 import { useRecommendApiUrl } from '@/app/recommend/hooks/useRecommendApiUrl'
 
-const APPLIED_RULE_IDS = ['final-pick-adopted', 'combination-30sets'] as const
+const APPLIED_RULE_IDS = ['final-pick-adopted', 'combination-20sets'] as const
 
 interface UseRecommendGenerationOptions {
   selectedDraw: number | null

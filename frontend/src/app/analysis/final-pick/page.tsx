@@ -117,7 +117,7 @@ export default function FinalPickPage() {
 
           <SourceNumbersCard
             title="카이제곱 검정 — 제외(조건부 확률)"
-            description={`구간이 나온 회차 대비 조회 당첨 본번호와 겹친 비율이 ${CHI_SQUARE_WALK_FORWARD_EXCLUSION_MAX_PCT_NUMERATOR}% 이하인 경우 (${CHI_SQUARE_WALK_FORWARD_EXCLUSION_MAX_PCT_NUMERATOR}.01% 초과는 제외 아님). 통합 채택은 잔여 번호에 누적·연속 규칙을 적용합니다.`}
+            titleHint={`조건부 확률 ${CHI_SQUARE_WALK_FORWARD_EXCLUSION_MAX_PCT_NUMERATOR}% 이하`}
             tone="exclude"
             numbers={excludedByChiSquareWalkForwardConditionalPct}
             mainWinningSet={mainWinningNumberSet}
@@ -125,7 +125,7 @@ export default function FinalPickPage() {
 
           <SourceNumbersCard
             title="카이제곱 검정 — 제외(겹침 회차)"
-            description={`구간이 나온 회차 중 조회 당첨 본번호와 겹친 회차 수가 ${CHI_SQUARE_WALK_FORWARD_EXCLUSION_MAX_OVERLAP_ROUNDS}회 이하인 경우 (${CHI_SQUARE_WALK_FORWARD_EXCLUSION_MAX_OVERLAP_ROUNDS + 1}회 초과는 이 조건으로 제외 아님). 동일 번호가 위 조건부 확률 제외에도 해당하면 두 카드에 모두 표시됩니다.`}
+            titleHint={`구간 출현 중 당첨 본번호 겹침 ${CHI_SQUARE_WALK_FORWARD_EXCLUSION_MAX_OVERLAP_ROUNDS}회 이하`}
             tone="exclude"
             numbers={excludedByChiSquareWalkForwardOverlapRounds}
             mainWinningSet={mainWinningNumberSet}

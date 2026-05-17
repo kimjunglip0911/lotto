@@ -37,8 +37,6 @@ export const useChiSquareDerived = ({
   const noHistory = hasSearched && searchedDrawNo <= 1;
 
   const expected = analyzedDrawCount > 0 ? (analyzedDrawCount * NUMBERS_PER_DRAW) / TOTAL_NUMBERS : 0;
-  const lowFreqNumbers = chiSquareResults.filter((r) => r.isLowFreq);
-  const highFreqNumbers = chiSquareResults.filter((r) => r.isHighFreq);
 
   const selectedMainNumbers = selectedWinningNumber
     ? [
@@ -119,8 +117,6 @@ export const useChiSquareDerived = ({
     hasSearched,
     noHistory,
     expected,
-    lowFreqNumbers,
-    highFreqNumbers,
     selectedMainNumbers,
     selectedWinningNumberSet,
     maxAbsDeviation,

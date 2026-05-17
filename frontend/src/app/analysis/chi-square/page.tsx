@@ -4,7 +4,6 @@ import React, { useState } from 'react';
 import { Header } from '@/components/common/Header';
 import { Sidebar } from '@/components/common/Sidebar';
 import { DeviationChart } from './components/DeviationChart';
-import { FrequencySummary } from './components/FrequencySummary';
 import { RelPctBinWalkForwardTable } from './components/RelPctBinWalkForwardTable';
 import { ResultTable } from './components/ResultTable';
 import { SearchControls } from './components/SearchControls';
@@ -14,7 +13,6 @@ import {
   CHI_SQUARE_DEVIATION_BIN_WIDTH,
   CHI_SQUARE_WALK_FORWARD_EXCLUSION_MAX_OVERLAP_ROUNDS,
   CHI_SQUARE_WALK_FORWARD_EXCLUSION_MAX_PCT_NUMERATOR,
-  CHI_SQUARE_WALK_FORWARD_RECENT_DRAWS,
 } from './constants';
 import { useChiSquareData } from './hooks/useChiSquareData';
 import { useChiSquareDerived } from './hooks/useChiSquareDerived';
@@ -35,7 +33,6 @@ export default function ChiSquarePage() {
     searchError,
     analyzedDrawCount,
     chiSquareResults,
-    accumulatedFinalNumbers,
     walkForwardRows,
     handleSearch,
   } = useChiSquareData();
@@ -44,8 +41,6 @@ export default function ChiSquarePage() {
     hasSearched,
     noHistory,
     expected,
-    lowFreqNumbers,
-    highFreqNumbers,
     selectedMainNumbers,
     selectedWinningNumberSet,
     maxAbsDeviation,
@@ -114,24 +109,6 @@ export default function ChiSquarePage() {
 
           {hasSearched && !noHistory && !isSearching && !searchError && walkForwardExcludedSplit != null && (
             <section className="rounded-2xl border border-card-border/30 bg-card-bg/60 p-4 space-y-3">
-              {accumulatedFinalNumbers && accumulatedFinalNumbers.length > 0 && (
-                <div className="rounded-xl border border-sky-400/30 bg-sky-500/10 p-3 space-y-2">
-                  <p className="text-sm font-semibold text-sky-200">누적 출현 극값 제외(통합 분석과 동일)</p>
-                  <div className="flex flex-wrap gap-2">
-                    {accumulatedFinalNumbers.map((n) => (
-                      <span
-                        key={`accum-final-${n}`}
-                        className="inline-flex h-9 min-w-9 items-center justify-center rounded-full bg-sky-400/25 px-2 text-sm font-bold text-sky-100"
-                      >
-                        {n}
-                      </span>
-                    ))}
-                  </div>
-                  <p className="text-xs text-sky-100/85 leading-relaxed">
-                    직전 104회·전체 구간 각각 출현 최다·최소 1개씩 뽑은 네 슬롯의 고유 번호입니다. 통합 분석 페이지의 누적 제외와 동일한 계산입니다. 아래 워크포워드 제외와는 별도입니다.
-                  </p>
-                </div>
-              )}
               <div className="rounded-xl border border-rose-400/30 bg-rose-500/10 p-3 space-y-4">
                 <p className="text-sm font-semibold text-rose-200">워크포워드 후보 제외(사유별)</p>
                 <div className="space-y-2">
@@ -167,7 +144,7 @@ export default function ChiSquarePage() {
                   </div>
                 </div>
                 <p className="text-xs text-rose-100/85 leading-relaxed">
-                  편차(O−E) 워크포워드 표와 동일한 집계(최근 {CHI_SQUARE_WALK_FORWARD_RECENT_DRAWS}회, 구간 폭 {CHI_SQUARE_DEVIATION_BIN_WIDTH})입니다. 한 번호가 두 조건을 모두 만족하면 두 목록에 모두 나옵니다. 조회 시점 각 번호의 편차(O−E)는 검정 결과 표와 같이 전체 누적 기준입니다.
+                  편차(O−E) 워크포워드 표와 동일한 집계(조회 회차 직전까지 전체 기간, 구간 폭 {CHI_SQUARE_DEVIATION_BIN_WIDTH})입니다. 한 번호가 두 조건을 모두 만족하면 두 목록에 모두 나옵니다. 조회 시점 각 번호의 편차(O−E)는 검정 결과 표와 같이 전체 누적 기준입니다.
                 </p>
               </div>
             </section>
@@ -183,10 +160,6 @@ export default function ChiSquarePage() {
             walkForwardExcludedNumberSet={walkForwardExcludedNumberSet}
             maxAbsDeviation={maxAbsDeviation}
           />
-
-          {hasSearched && !noHistory && !isSearching && !searchError && chiSquareResults.length > 0 && (
-            <FrequencySummary lowFreqNumbers={lowFreqNumbers} highFreqNumbers={highFreqNumbers} />
-          )}
 
           <ResultTable
             hasSearched={hasSearched}

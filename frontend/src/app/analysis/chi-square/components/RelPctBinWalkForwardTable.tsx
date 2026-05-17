@@ -1,7 +1,4 @@
-import {
-  CHI_SQUARE_DEVIATION_BIN_WIDTH,
-  CHI_SQUARE_WALK_FORWARD_RECENT_DRAWS,
-} from '../constants';
+import { CHI_SQUARE_DEVIATION_BIN_WIDTH } from '../constants';
 import type { DeviationBinRow } from '../logic/walkForwardStats';
 
 type Props = {
@@ -68,9 +65,8 @@ export function RelPctBinWalkForwardTable({
       </h3>
       <div className="rounded-xl border border-white/10 bg-slate-900/40 px-4 py-3 space-y-2 text-xs text-slate-300 leading-relaxed">
         <p className="text-slate-400">
-          집계 구간: 조회 회차까지 당첨 데이터 중 <span className="text-slate-200 font-medium">최근 {CHI_SQUARE_WALK_FORWARD_RECENT_DRAWS}회</span>
-          만 사용합니다(주 1회 추첨 가정 시 약{' '}
-          {Math.round(CHI_SQUARE_WALK_FORWARD_RECENT_DRAWS / 52)}년).
+          집계 구간: 조회 회차 <span className="text-slate-200 font-medium">직전까지 전체</span> 당첨 데이터를
+          사용합니다.
         </p>
         <p>
           각 목표 회차 직전 누적 집계로 본번호 6개의 편차{' '}

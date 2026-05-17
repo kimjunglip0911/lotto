@@ -1,6 +1,4 @@
 import { useEffect, useState } from 'react';
-import { buildAccumulatedCountExclusionResult } from '@/app/analysis/accu-nums/logic/accuCntExt';
-import { CHI_SQUARE_WALK_FORWARD_RECENT_DRAWS } from '../constants';
 import { buildChiSquareResults } from '../logic/chiSquare';
 import { isWinningNumberRow } from '../logic/guards';
 import type { ChiSquareResult, WinningNumberRow } from '../types';
@@ -19,11 +17,8 @@ type UseChiSquareDataResult = {
   searchError: string | null;
   analyzedDrawCount: number;
   chiSquareResults: ChiSquareResult[];
-  /** 통합 분석과 동일한 누적 출현 극값 제외 고유 번호(없으면 null) */
-  accumulatedFinalNumbers: readonly number[] | null;
   /**
-   * 워크포워드·구간 표·사용 번호 채택용: 조회 회차까지 `draw_no` 오름차순 중
-   * 최근 `CHI_SQUARE_WALK_FORWARD_RECENT_DRAWS`회만(2회차 이상 조회 성공 시만).
+   * 워크포워드·구간 표용: 조회 회차 직전까지 전체 당첨 행(`draw_no` 오름차순, 2회차 이상 조회 시).
    */
   walkForwardRows: readonly WinningNumberRow[] | null;
   handleSearch: () => Promise<void>;
@@ -45,7 +40,6 @@ export const useChiSquareData = (): UseChiSquareDataResult => {
 
   const [analyzedDrawCount, setAnalyzedDrawCount] = useState(0);
   const [chiSquareResults, setChiSquareResults] = useState<ChiSquareResult[]>([]);
-  const [accumulatedFinalNumbers, setAccumulatedFinalNumbers] = useState<readonly number[] | null>(null);
   const [walkForwardRows, setWalkForwardRows] = useState<readonly WinningNumberRow[] | null>(null);
 
   useEffect(() => {
@@ -90,7 +84,6 @@ export const useChiSquareData = (): UseChiSquareDataResult => {
     setChiSquareResults([]);
     setSelectedWinningNumber(null);
     setWinningNumberError(null);
-    setAccumulatedFinalNumbers(null);
     setWalkForwardRows(null);
   };
 
@@ -144,17 +137,10 @@ export const useChiSquareData = (): UseChiSquareDataResult => {
 
       const rows = rangeData.filter(isWinningNumberRow);
       const sortedRows = [...rows].sort((a, b) => a.draw_no - b.draw_no);
-      const walkForwardSource =
-        sortedRows.length <= CHI_SQUARE_WALK_FORWARD_RECENT_DRAWS
-          ? sortedRows
-          : sortedRows.slice(-CHI_SQUARE_WALK_FORWARD_RECENT_DRAWS);
-      const { excludedUnique } = buildAccumulatedCountExclusionResult(sortedRows);
-      setAccumulatedFinalNumbers(excludedUnique.length > 0 ? [...excludedUnique] : null);
-
       setSelectedWinningNumber(winningData);
       setAnalyzedDrawCount(rows.length);
       setChiSquareResults(buildChiSquareResults(rows));
-      setWalkForwardRows(walkForwardSource);
+      setWalkForwardRows(sortedRows);
     } catch (error) {
       console.error('Error fetching chi-square data:', error);
       setSearchError('조회 데이터를 불러오지 못했습니다.');
@@ -180,7 +166,6 @@ export const useChiSquareData = (): UseChiSquareDataResult => {
     searchError,
     analyzedDrawCount,
     chiSquareResults,
-    accumulatedFinalNumbers,
     walkForwardRows,
     handleSearch,
   };

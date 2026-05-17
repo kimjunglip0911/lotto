@@ -39,15 +39,11 @@ export function AccumulatedExclusionCard({ exclusion, mainWinningSet }: Accumula
 
   return (
     <section className="rounded-2xl border border-rose-400/30 bg-rose-500/5 p-4 space-y-4">
-      <div className="space-y-1">
-        <h3 className="text-base font-semibold text-rose-200">
-          누적 번호 분석 — 후보 제외
-          <span className="ml-2 text-xs font-medium text-slate-300">슬롯 기준 최대 4개(고유)</span>
-        </h3>
-        <p className="text-xs font-medium text-rose-100/80 leading-relaxed">
-          직전 104회(2년)·전체 구간 각 출현 횟수 최다 1·최소 1. 동률 시 번호가 작은 쪽. 슬롯이 겹치면 고유 번호는 4개 미만일 수 있습니다.
-        </p>
-      </div>
+      <h3 className="text-base font-semibold text-rose-200 flex flex-wrap items-baseline gap-x-2 gap-y-1">
+        <span>누적 번호 분석 — 후보 제외</span>
+        <span className="text-xs font-medium text-slate-300">슬롯 기준 최대 4개(고유)</span>
+        <span className="text-xs font-medium text-rose-100/80">2년·전체 각 최다·최소 1</span>
+      </h3>
 
       {hasAny ? (
         <div className="grid gap-6 md:grid-cols-2 md:gap-8">
@@ -89,29 +85,6 @@ export function AccumulatedExclusionCard({ exclusion, mainWinningSet }: Accumula
           <p className="text-xs text-slate-400">기준 회차 조회 후 표시됩니다.</p>
         </div>
       )}
-
-      {exclusion.excludedUnique.length > 0 ? (
-        <div className="border-t border-rose-400/20 pt-3 space-y-2">
-          <p className="text-xs font-medium text-rose-200/90">통합 필터에 쓰는 고유 제외 번호</p>
-          <div className="flex flex-wrap gap-2">
-            {exclusion.excludedUnique.map((n) => {
-              const hit = mainWinningSet?.has(n) ?? false;
-              return (
-                <span
-                  key={`acc-ex-uniq-${n}`}
-                  className={
-                    hit
-                      ? `${chipBase} ${chipHit}`
-                      : `${chipBase} border border-rose-300/40 bg-rose-500/15 text-rose-50`
-                  }
-                >
-                  {n}
-                </span>
-              );
-            })}
-          </div>
-        </div>
-      ) : null}
     </section>
   );
 }
