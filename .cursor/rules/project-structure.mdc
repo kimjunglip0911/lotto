@@ -277,6 +277,8 @@ lotto/
 - 개발 포트: 프론트 `3010`, 백엔드 `8010`
 - Python 패키지 정책: `__init__.py` 미사용, `__pycache__` 생성 방지/제외
 - 구조 변경 시 함께 갱신: `backend/README.md`, 기능별 `README.md`, 본 파일
+- **기능 폴더 8대표 구조**: 신규/리팩터링 시 각 기능 폴더 루트(`frontend/src/app/<route>/`)는 `refactoring-guide.mdc` `## 핵심 4`에 따라 다음 8개 폴더(`api/`, `ui/`, `hooks/`, `logic/`, `helpers/`, `types/`, `constants/`, `tests/`)를 항상 생성한다(빈 폴더는 `.gitkeep` 유지). 루트에는 `page.tsx`와 `README.md`만 둔다.
+- 페이지 전용 UI 위치는 `components.mdc`(3계층: `app/<route>/ui/`)와 일치시킨다.
 
 ---
 
