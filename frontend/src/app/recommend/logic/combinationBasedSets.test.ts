@@ -7,6 +7,47 @@ import {
 } from '@/app/recommend/logic/combinationBasedSets'
 import type { GeneratedSet } from '@/app/recommend/logic/types'
 
+function sortedSix(s: GeneratedSet): number[] {
+  return [s.num1, s.num2, s.num3, s.num4, s.num5, s.num6].sort((a, b) => a - b)
+}
+
+function intersectionSize(a: readonly number[], b: readonly number[]): number {
+  let i = 0
+  let j = 0
+  let c = 0
+  while (i < 6 && j < 6) {
+    if (a[i] === b[j]) {
+      c++
+      i++
+      j++
+    } else if (a[i] < b[j]) {
+      i++
+    } else {
+      j++
+    }
+  }
+  return c
+}
+
+function maxSameStrategyOverlap(sets: GeneratedSet[]): number {
+  const byStrategy = new Map<string, number[][]>()
+  for (const s of sets) {
+    const key = s.strategy ?? ''
+    const list = byStrategy.get(key) ?? []
+    list.push(sortedSix(s))
+    byStrategy.set(key, list)
+  }
+  let max = 0
+  for (const sixes of byStrategy.values()) {
+    for (let i = 0; i < sixes.length; i++) {
+      for (let j = i + 1; j < sixes.length; j++) {
+        max = Math.max(max, intersectionSize(sixes[i], sixes[j]))
+      }
+    }
+  }
+  return max
+}
+
 function countUsageInPool(sets: GeneratedSet[], pool: number[]): Map<number, number> {
   const u = new Map<number, number>(pool.map((n) => [n, 0]))
   for (const s of sets) {
@@ -109,5 +150,8 @@ describe('generateCombinationBasedSets', () => {
     const strategies = r.sets.map((s) => s.strategy ?? '')
     expect(strategies.some((v) => v.includes('-band2'))).toBe(true)
     expect(strategies.some((v) => v.includes('-band3'))).toBe(true)
+
+    /** 같은 oe-run-band 조합이 2회 이상 나오면 주6 겹침은 최대 1개 이하를 목표로 한다 */
+    expect(maxSameStrategyOverlap(r.sets)).toBeLessThanOrEqual(1)
   })
 })

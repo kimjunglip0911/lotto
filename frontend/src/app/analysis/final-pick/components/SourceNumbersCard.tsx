@@ -2,7 +2,9 @@ type CardTone = 'exclude' | 'adoptAccumulated' | 'adoptChiSquare';
 
 type SourceNumbersCardProps = {
   title: string;
-  description: string;
+  /** 제목 오른쪽에 붙는 한 줄 요약(조건부 확률 등). */
+  titleHint?: string;
+  description?: string;
   tone: CardTone;
   numbers: number[];
   /** 채택/제외 목표 개수. placeholder 슬롯 수와 카드 라벨에 활용. */
@@ -49,6 +51,7 @@ const TONE_CLASSES: Record<
  */
 export function SourceNumbersCard({
   title,
+  titleHint,
   description,
   tone,
   numbers,
@@ -64,13 +67,18 @@ export function SourceNumbersCard({
   return (
     <section className={`rounded-2xl border ${styles.card} p-4 space-y-3`}>
       <div className="flex items-baseline justify-between gap-3 flex-wrap">
-        <h3 className={`text-base font-semibold ${styles.title}`}>
-          {title}
+        <h3 className={`text-base font-semibold ${styles.title} flex flex-wrap items-baseline gap-x-2 gap-y-1`}>
+          <span>{title}</span>
+          {titleHint ? (
+            <span className={`text-xs font-medium ${styles.description}`}>{titleHint}</span>
+          ) : null}
           {typeof targetCount === 'number' && (
-            <span className="ml-2 text-xs font-medium text-slate-300">목표 {targetCount}개</span>
+            <span className="text-xs font-medium text-slate-300">목표 {targetCount}개</span>
           )}
         </h3>
-        <span className={`text-xs font-medium ${styles.description}`}>{description}</span>
+        {description ? (
+          <span className={`text-xs font-medium ${styles.description}`}>{description}</span>
+        ) : null}
       </div>
 
       {hasNumbers ? (

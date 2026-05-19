@@ -13,13 +13,13 @@ import type { GeneratedSet } from '@/app/recommend/logic/types'
 const METHOD_JL = 'JL Wheel Method'
 
 /** 추천 페이지에서 생성·저장할 목표 세트 수 */
-export const TARGET_SET_COUNT = 30
+export const TARGET_SET_COUNT = 20
 
 /**
  * (oddRank, consecRank, bandTier) 우선순위 — 숫자가 작을수록 높은 순위.
  * band1~3: 각 당첨번호 **자리(1~6)**마다 번호대(1~9, 10~19, …) 비율을 내림차순 정렬했을 때 **1·2·3등 구간 하나만** 정확히 맞춘다.
  * 어떤 자리에서 3등이 없으면 그 자리만 1등 구간을 쓴다.
- * 30세트가 부족하면 이 순서를 **여러 라운드** 반복한다(합·랭크 제약 유지).
+ * 목표 세트 수가 부족하면 이 순서를 **여러 라운드** 반복한다(합·랭크 제약 유지).
  * 한 라운드에서 하나도 추가되지 않으면 중단한다.
  */
 const MAX_PRIORITY_ROUNDS = 24
@@ -53,8 +53,11 @@ export const COMBO_RANK_TRIPLE_PRIORITY_ORDER = buildComboRankTriplePriorityOrde
  */
 const MIN_RANKABLE_PERCENT = 10
 
-/** 기존 세트와의 최대 겹침(주6 교집합 크기)에 대한 점수 가중 — 제곱과 곱해 과도한 번호 중복을 억제 */
+/** 기존 세트(다른 조합 방식)와의 최대 겹침(주6 교집합 크기) 패널티 가중 */
 const OVERLAP_PENALTY_WEIGHT = 32
+
+/** 동일 조합 방식(oe-run-band) 세트끼리 겹치는 번호 — 같은 strategy가 이미 있을 때 우선 억제 */
+const SAME_STRATEGY_OVERLAP_WEIGHT = 512
 
 /**
  * 긴 C(n,6) 순회로 메인 스레드가 막히면 Chrome이 '페이지 나가기/대기' 대화상자를 띄운다.
@@ -244,18 +247,46 @@ function intersectionSizeSorted(a: readonly number[], b: readonly number[]): num
   return c
 }
 
-/** 사용 빈도 + 이미 뽑은 세트와의 최대 겹침(낮을수록 유리한 후보) */
+function overlapPenaltySum(
+  sorted: readonly number[],
+  priorSortedSixes: readonly number[][],
+  weight: number,
+): number {
+  let sum = 0
+  for (const six of priorSortedSixes) {
+    const o = intersectionSizeSorted(sorted, six)
+    sum += o * o
+  }
+  return weight * sum
+}
+
+/**
+ * 사용 빈도 + 겹침 패널티(낮을수록 유리).
+ * 동일 조합 방식 세트가 이미 있으면 그 세트들과의 겹침을 우선 억제하고,
+ * 없으면 다른 방식 세트 전체와의 겹침을 본다.
+ */
 function pickScore(
   sorted: readonly number[],
   usage: ReadonlyMap<number, number>,
   chosenSortedSixes: readonly number[][],
+  sameStrategySortedSixes: readonly number[][],
 ): number {
-  let maxOv = 0
-  for (const six of chosenSortedSixes) {
-    const o = intersectionSizeSorted(sorted, six)
-    if (o > maxOv) maxOv = o
-  }
-  return diversityScore(sorted, usage) + OVERLAP_PENALTY_WEIGHT * maxOv * maxOv
+  const samePenalty =
+    sameStrategySortedSixes.length > 0
+      ? overlapPenaltySum(sorted, sameStrategySortedSixes, SAME_STRATEGY_OVERLAP_WEIGHT)
+      : 0
+  const generalPenalty =
+    sameStrategySortedSixes.length > 0
+      ? 0
+      : overlapPenaltySum(sorted, chosenSortedSixes, OVERLAP_PENALTY_WEIGHT)
+  return diversityScore(sorted, usage) + samePenalty + generalPenalty
+}
+
+function sameStrategySortedSixes(
+  priorChosen: readonly GeneratedSet[],
+  strategy: string,
+): number[][] {
+  return priorChosen.filter((s) => s.strategy === strategy).map(sortedSixFromGeneratedSet)
 }
 
 function lexLess(a: readonly number[], b: readonly number[]): boolean {
@@ -325,6 +356,7 @@ async function pickBestComboForProfile(
   usedKeys: Set<string>,
   usage: ReadonlyMap<number, number>,
   chosenSortedSixes: readonly number[][],
+  sameStrategySortedSixes: readonly number[][],
   yieldEvery: number,
 ): Promise<number[] | null> {
   let best: number[] | null = null
@@ -345,7 +377,8 @@ async function pickBestComboForProfile(
        * 폴백(번호 교체)에서는 자리대 불일치가 적은 후보를 먼저 고른다.
        * 동일 불일치 수준에서는 기존 다양화 점수로 선택한다.
        */
-      const sc = mismatch * 10000 + pickScore(sorted, usage, chosenSortedSixes)
+      const sc =
+        mismatch * 10000 + pickScore(sorted, usage, chosenSortedSixes, sameStrategySortedSixes)
       if (isBetterPick(sc, sorted, bestScore, best)) {
         bestScore = sc
         best = sorted
@@ -376,8 +409,9 @@ async function findOneSetForRanks(
   if (evenT === null || runT === null) return null
   if (bandTargets.length !== 6) return null
 
-  const chosenSixes = priorChosen.map(sortedSixFromGeneratedSet)
   const baseStrategy = `combo:oe${oddRank}-run${consecRank}-band${bandTier}`
+  const chosenSixes = priorChosen.map(sortedSixFromGeneratedSet)
+  const sameStrategySixes = sameStrategySortedSixes(priorChosen, baseStrategy)
   let best: number[] | null = null
   /**
    * 기본은 자리대 완전 일치(0)로 시도하고, 실패 시 불일치 허용을 늘려
@@ -395,6 +429,7 @@ async function findOneSetForRanks(
       usedKeys,
       usage,
       chosenSixes,
+      sameStrategySixes,
       yieldEvery,
     )
     if (best) break
@@ -417,8 +452,8 @@ export type CombinationGenerationResult = {
  * 전체 당첨 이력 + 통합 채택 풀로 조합 분석 제약을 만족하는 세트를 최대 TARGET_SET_COUNT개까지 생성.
  * 고저 합산 허용 구간은 모든 세트에 공통으로 적용한다.
  * 홀짝·연속 랭크는 비율 10% 초과 범주만 쓴다. 자리대는 band1~3으로 자리마다 비율 1·2·3등 **구간 하나**만 정확히 맞추고, 3등이 없는 자리는 1등 구간만 쓴다.
- * 30개가 모자라면 (홀짝·연속·band) 우선순위 삼중항 순서를 라운드 반복해 추가한다(진전 없으면 중단).
- * 후보는 사용 빈도와 기존 세트와의 겹침(교집합) 패널티로 고른다.
+ * 목표 개수가 모자라면 (홀짝·연속·band) 우선순위 삼중항 순서를 라운드 반복해 추가한다(진전 없으면 중단).
+ * 후보는 사용 빈도와 겹침 패널티로 고른다. 조합 방식(strategy)이 같으면 그 방식의 기존 세트와 번호 겹침을 우선 억제한다.
  * **주6에 쓰는 번호는 통합 분석에서 채택된 번호만** 사용한다(1~45 중 채택 풀 밖 번호는 넣지 않음).
  * @param adoptedPool 통합 페이지(final-pick) 채택 번호와 동일한 풀
  * @param comboYieldEvery C(n,6) 순회 중 몇 회마다 메인 스레드에 양보할지(0이면 양보 없음·테스트용)

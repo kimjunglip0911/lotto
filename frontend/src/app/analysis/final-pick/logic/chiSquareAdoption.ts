@@ -134,7 +134,7 @@ type FinalPickChiSquareWalkForwardContext = {
   walkForwardExcludedSplit: ChiSquareWalkForwardExcludedSplit;
 };
 
-/** 통합 분석용: 동일 워크포워드 집계로 잔여·제외 번호를 한 번에 만든다. */
+/** 통합 분석용: 카이제곱 페이지와 동일(직전 전체 기간 WF + 전체 누적 편차)으로 잔여·제외를 만든다. */
 const buildFinalPickChiSquareWalkForwardContext = (
   previousDrawRows: WinningNumberRow[],
   selectedMainNumbers: number[],
