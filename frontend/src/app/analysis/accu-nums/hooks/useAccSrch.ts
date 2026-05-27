@@ -4,8 +4,8 @@ import { useCallback, useReducer, useRef } from 'react';
 
 import { accSrchRed } from '../logic/accSrchRed';
 import { mkAccSrchInit } from '../logic/accSrchStDef';
+import { execAccSearch } from '../logic/execAccSrch';
 import { parseSelDraw } from '../logic/parseSelDraw';
-import { runAccSearch } from '../logic/runAccSearch';
 
 type Opts = { selectedDraw: string };
 
@@ -32,11 +32,10 @@ export const useAccSrch = ({ selectedDraw }: Opts) => {
     dispatch({ type: 'start', draw: selectedDraw });
 
     try {
-      const out = await runAccSearch(selectedDrawNo);
-      if (session !== searchSessionRef.current) {
-        return;
+      const out = await execAccSearch(selectedDrawNo, session, searchSessionRef);
+      if (out) {
+        dispatch({ type: 'apply', out });
       }
-      dispatch({ type: 'apply', out });
     } catch (error) {
       console.error('Error fetching accumulated numbers search data:', error);
       if (session === searchSessionRef.current) {
@@ -49,9 +48,5 @@ export const useAccSrch = ({ selectedDraw }: Opts) => {
     }
   }, [selectedDraw]);
 
-  return {
-    ...st,
-    handleSearch,
-    resetSearchResults,
-  };
+  return { ...st, handleSearch, resetSearchResults };
 };

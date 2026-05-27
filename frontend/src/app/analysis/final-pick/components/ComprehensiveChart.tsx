@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import { toChartStats, type AccumulatedBarChartStats } from '@/app/analysis/accu-nums/components/chart/accBarStat';
+import { toChartStats, type AccumulatedBarChartStats } from '@/app/analysis/accu-nums/ui/chart/accBarStat';
 
 type ComprehensiveChartProps = {
   /** 이전 회차까지 본번호 누적 출현 횟수(길이 45, 인덱스 0 = 1번). */

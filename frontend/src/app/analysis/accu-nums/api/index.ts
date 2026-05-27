@@ -3,6 +3,6 @@
 export type { AccumulatedNumbersFetchContext, MessageResponse } from './types';
 export { accumulatedNumbersApiUrl } from './url';
 export { parseNumberArrayResponse, parseWinningNumberRowsResponse } from './parse';
-export { fetchDrawNumbers } from './endpoints/drawNums';
-export { fetchWinningNumberByDraw } from './endpoints/winByDraw';
-export { fetchWinningNumbersRange } from './endpoints/winRange';
+export { fetchDrawNumbers } from './draw/drawNums';
+export { fetchWinningNumberByDraw } from './win/winByDraw';
+export { fetchWinningNumbersRange } from './win/winRange';

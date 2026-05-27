@@ -1,6 +1,6 @@
 /**
  * 누적 번호 전략·윈도 과거 평가(rolling evaluation) 엔트리.
- * 구현은 `stratCore/` 아래 eval·window·pick·rec 폴더에 나뉘어 있다.
+ * 구현은 `eval`·`window`·`pick`·`rec` 폴더에 나뉘어 있다.
  */
 
 export type {
@@ -14,23 +14,23 @@ export type {
   StrategyRecommendation,
   StrategyTopWindow,
   StrategyWindowMetrics,
-} from './stratCore/types';
+} from '../types/stratEval';
 
 export {
   ACCUMULATED_FOCUS_STRATEGY_KEYS,
   ACCUMULATED_STRATEGY_KEYS,
-} from './stratCore/types';
+} from '../constants/strategy';
 
-export { accumulateStrategyEvaluationRounds } from './stratCore/eval/evalAcc';
-export { aggregatesFromEvaluationBucket } from './stratCore/eval/evalAgg';
-export { buildDrawNoToWinningRowMap } from './stratCore/eval/evalWinMap';
-export { runAccumulatedStrategyEvaluation } from './stratCore/eval/evalRun';
+export { accumulateStrategyEvaluationRounds } from './eval/evalAcc';
+export { aggregatesFromEvaluationBucket } from './eval/evalAgg';
+export { buildDrawNoToWinningRowMap } from './eval/evalWinMap';
+export { runAccumulatedStrategyEvaluation } from './eval/evalRun';
 
 export {
   getDefaultEvaluationWindowSizes,
   sliceWindowTail,
   upperBoundDrawNo,
-} from './stratCore/window/winSlice';
+} from './window/winSlice';
 
 export {
   countMainHits,
@@ -39,17 +39,17 @@ export {
   pickNearestMean4,
   pickTop4ByFrequency,
   pickTwoHotTwoCold,
-} from './stratCore/pick/numPick';
+} from './pick/numPick';
 
 export {
   pickAdaptiveWindowsByStrategy,
   pickTopWindowsByStrategy,
   toAtLeastOneRate,
   toAvgHits,
-} from './stratCore/window/winRank';
+} from './window/winRank';
 
 export {
   buildFinalNumberSelection,
   buildStrategyRecommendation,
   combineStrategyRecommendations,
-} from './stratCore/rec/stratRec';
+} from './rec/stratRec';

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 
-import { fetchDrawNumbers } from '../api';
+import { loadAccDrawNumbers } from '../logic/loadDrawList';
 
 export const useAccDrawList = () => {
   const [availableDraws, setAvailableDraws] = useState<number[]>([]);
@@ -18,27 +18,22 @@ export const useAccDrawList = () => {
       setIsLoadingDraws(true);
       setDrawLoadError(null);
 
-      try {
-        const draws = await fetchDrawNumbers({ signal: abortController.signal });
-        if (!isMounted) {
-          return;
-        }
+      const { draws, error } = await loadAccDrawNumbers(abortController.signal);
+      if (!isMounted || abortController.signal.aborted) {
+        return;
+      }
 
-        setAvailableDraws(draws);
-        setSelectedDraw((prev) => (prev || draws.length === 0 ? prev : String(draws[0])));
-      } catch (error) {
-        if (abortController.signal.aborted || !isMounted) {
-          return;
-        }
-
-        console.error('Error fetching draw numbers:', error);
+      if (error) {
         setAvailableDraws([]);
         setSelectedDraw('');
-        setDrawLoadError('회차 정보를 불러오지 못했습니다.');
-      } finally {
-        if (isMounted) {
-          setIsLoadingDraws(false);
-        }
+        setDrawLoadError(error);
+      } else {
+        setAvailableDraws(draws);
+        setSelectedDraw((prev) => (prev || draws.length === 0 ? prev : String(draws[0])));
+      }
+
+      if (isMounted) {
+        setIsLoadingDraws(false);
       }
     };
 

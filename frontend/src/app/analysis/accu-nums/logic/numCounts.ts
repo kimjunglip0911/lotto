@@ -1,31 +1,10 @@
 import { NUMBER_RANGE_MAX, createEmptyCounts } from '../constants';
 import type { CountResult, WinningNumberRow } from '../types';
+import { toMainNumbersOnly } from './numCountsRow';
 
-const MAIN_NUMBER_KEYS = ['num1', 'num2', 'num3', 'num4', 'num5', 'num6'] as const;
+export { isWinningNumberRow, toMainNumbersOnly } from './numCountsRow';
 
-/** 본번호 6개만(보너스 제외). 적중 판정·누적 출현 집계 모두 동일 기준을 쓴다. */
-export const toMainNumbersOnly = (row: WinningNumberRow): number[] =>
-  MAIN_NUMBER_KEYS.map((key) => row[key]);
-
-export const isWinningNumberRow = (value: unknown): value is WinningNumberRow => {
-  if (typeof value !== 'object' || value === null) {
-    return false;
-  }
-
-  const candidate = value as Partial<WinningNumberRow>;
-  return (
-    typeof candidate.draw_no === 'number' &&
-    typeof candidate.num1 === 'number' &&
-    typeof candidate.num2 === 'number' &&
-    typeof candidate.num3 === 'number' &&
-    typeof candidate.num4 === 'number' &&
-    typeof candidate.num5 === 'number' &&
-    typeof candidate.num6 === 'number' &&
-    typeof candidate.bonus_num === 'number'
-  );
-};
-
-/** 선택 구간 내 번호별 출현 횟수 — 회차당 본번호 6개만 반영(보너스 제외). */
+/** 선택 구간 내 번호별 출현 횟수(보너스 제외). */
 export const buildNumberCounts = (rows: WinningNumberRow[]) => {
   const counts = createEmptyCounts();
 

@@ -31,3 +31,8 @@ export type FinalNumberPlan = {
   finalNumbers: number[];
   strategyPicks: StrategyNumberPick[];
 };
+
+export type AccumulatedStrategySelection = {
+  strategyCharts: StrategyChartData[];
+  finalNumberPlan: FinalNumberPlan | null;
+};
