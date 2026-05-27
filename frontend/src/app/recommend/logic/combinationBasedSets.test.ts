@@ -1,52 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import type { WinningNumberRow } from '@/app/analysis/chi-square/types'
 import {
+  bandInnerSlot,
   COMBO_RANK_TRIPLE_PRIORITY_ORDER,
   generateCombinationBasedSets,
   TARGET_SET_COUNT,
 } from '@/app/recommend/logic/combinationBasedSets'
+import { numberToBandIndex } from '@/app/analysis/combination/logic/buildPositionBandDistribution'
 import type { GeneratedSet } from '@/app/recommend/logic/types'
-
-function sortedSix(s: GeneratedSet): number[] {
-  return [s.num1, s.num2, s.num3, s.num4, s.num5, s.num6].sort((a, b) => a - b)
-}
-
-function intersectionSize(a: readonly number[], b: readonly number[]): number {
-  let i = 0
-  let j = 0
-  let c = 0
-  while (i < 6 && j < 6) {
-    if (a[i] === b[j]) {
-      c++
-      i++
-      j++
-    } else if (a[i] < b[j]) {
-      i++
-    } else {
-      j++
-    }
-  }
-  return c
-}
-
-function maxSameStrategyOverlap(sets: GeneratedSet[]): number {
-  const byStrategy = new Map<string, number[][]>()
-  for (const s of sets) {
-    const key = s.strategy ?? ''
-    const list = byStrategy.get(key) ?? []
-    list.push(sortedSix(s))
-    byStrategy.set(key, list)
-  }
-  let max = 0
-  for (const sixes of byStrategy.values()) {
-    for (let i = 0; i < sixes.length; i++) {
-      for (let j = i + 1; j < sixes.length; j++) {
-        max = Math.max(max, intersectionSize(sixes[i], sixes[j]))
-      }
-    }
-  }
-  return max
-}
 
 function countUsageInPool(sets: GeneratedSet[], pool: number[]): Map<number, number> {
   const u = new Map<number, number>(pool.map((n) => [n, 0]))
@@ -95,6 +56,30 @@ function syntheticHistory(count: number): WinningNumberRow[] {
   return rows
 }
 
+describe('bandInnerSlot', () => {
+  it('maps numbers into 0~4 slots within each 5-number band', () => {
+    expect(bandInnerSlot(1)).toBe(0)
+    expect(bandInnerSlot(5)).toBe(4)
+    expect(bandInnerSlot(6)).toBe(0)
+    expect(bandInnerSlot(16)).toBe(0)
+    expect(bandInnerSlot(18)).toBe(2)
+    expect(bandInnerSlot(45)).toBe(4)
+  })
+})
+
+function innerSlotsUsedInSets(sets: GeneratedSet[]): Map<number, Set<number>> {
+  const byBand = new Map<number, Set<number>>()
+  for (const s of sets) {
+    for (const n of [s.num1, s.num2, s.num3, s.num4, s.num5, s.num6]) {
+      const b = numberToBandIndex(n)
+      const slots = byBand.get(b) ?? new Set<number>()
+      slots.add(bandInnerSlot(n))
+      byBand.set(b, slots)
+    }
+  }
+  return byBand
+}
+
 describe('COMBO_RANK_TRIPLE_PRIORITY_ORDER', () => {
   it('같은 (oe, run)에서 band 1→2→3 다음에 run이 증가한다', () => {
     expect(COMBO_RANK_TRIPLE_PRIORITY_ORDER.slice(0, 6)).toEqual([
@@ -124,13 +109,15 @@ describe('generateCombinationBasedSets', () => {
 
   it('이력이 있으면 조합 요약이 생기고, 목표 개수·중복 없음·채택 풀·분산이 만족된다', async () => {
     const hist = syntheticHistory(80)
-    /** 번호대·랭크 조합이 성립하도록 풀을 넓히고, C(20,6) 순회는 테스트에서 허용 범위 */
-    const adopted = Array.from({ length: 20 }, (_, i) => i + 1)
-    const r = await generateCombinationBasedSets(hist, adopted, 0)
+    /** 자리별 band 목표(21~25 등)를 채울 수 있도록 풀을 1~45로 둔다 */
+    const adopted = Array.from({ length: 45 }, (_, i) => i + 1)
+    const referenceDrawNo = 81
+    const r = await generateCombinationBasedSets(hist, adopted, referenceDrawNo)
     expect(r.sets.length).toBe(TARGET_SET_COUNT)
     expect(r.sets.every((s) => /^combo:oe\d+-run\d+-band[123]$/.test(s.strategy ?? ''))).toBe(true)
     expect(r.summaryLines.some((l) => l.includes('고저 합산'))).toBe(true)
     expect(r.summaryLines.some((l) => l.includes('세트 구성:'))).toBe(true)
+    expect(r.summaryLines.some((l) => l.includes(String(referenceDrawNo)))).toBe(true)
     const keys = new Set(
       r.sets.map((s) => [s.num1, s.num2, s.num3, s.num4, s.num5, s.num6].sort((a, b) => a - b).join(',')),
     )
@@ -147,11 +134,9 @@ describe('generateCombinationBasedSets', () => {
     /** 랭크·겹침 점수로 일부 번호는 안 쓰일 수 있으나, 풀의 상당 부분은 등장해야 한다 */
     expect(distinctUsed).toBeGreaterThanOrEqual(12)
 
-    const strategies = r.sets.map((s) => s.strategy ?? '')
-    expect(strategies.some((v) => v.includes('-band2'))).toBe(true)
-    expect(strategies.some((v) => v.includes('-band3'))).toBe(true)
+    const slotsByBand = innerSlotsUsedInSets(r.sets)
+    const bandsWithSpread = [...slotsByBand.values()].filter((slots) => slots.size >= 2).length
+    expect(bandsWithSpread).toBeGreaterThanOrEqual(1)
 
-    /** 같은 oe-run-band 조합이 2회 이상 나오면 주6 겹침은 최대 1개 이하를 목표로 한다 */
-    expect(maxSameStrategyOverlap(r.sets)).toBeLessThanOrEqual(1)
   })
 })

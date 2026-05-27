@@ -62,7 +62,11 @@ export function useRecommendGeneration({
 
       setStatusMessage(`조합 제약을 적용해 ${TARGET_SET_COUNT}세트를 생성하는 중입니다...`)
 
-      const { sets, summaryLines, warning } = await generateCombinationBasedSets(fullHistory, adopted)
+      const { sets, summaryLines, warning } = await generateCombinationBasedSets(
+        fullHistory,
+        adopted,
+        selectedDraw,
+      )
       setCombinationSummaryLines([
         ...(adoptedResult.infoMessage ? [adoptedResult.infoMessage] : []),
         ...summaryLines,

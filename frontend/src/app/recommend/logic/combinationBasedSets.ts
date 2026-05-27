@@ -9,6 +9,12 @@ import {
 import { buildSumExtremeStats } from '@/app/analysis/combination/logic/buildSumExtremeStats'
 import type { PositionBandDistributionRow } from '@/app/analysis/combination/types'
 import type { GeneratedSet } from '@/app/recommend/logic/types'
+import {
+  buildHistCounts,
+  buildPoolByBand,
+  tryBuildOneSet,
+  type ProfileConstraints,
+} from '@/app/recommend/logic/combinationBandRepair'
 
 const METHOD_JL = 'JL Wheel Method'
 
@@ -17,21 +23,13 @@ export const TARGET_SET_COUNT = 20
 
 /**
  * (oddRank, consecRank, bandTier) 우선순위 — 숫자가 작을수록 높은 순위.
- * band1~3: 각 당첨번호 **자리(1~6)**마다 번호대(1~9, 10~19, …) 비율을 내림차순 정렬했을 때 **1·2·3등 구간 하나만** 정확히 맞춘다.
- * 어떤 자리에서 3등이 없으면 그 자리만 1등 구간을 쓴다.
- * 목표 세트 수가 부족하면 이 순서를 **여러 라운드** 반복한다(합·랭크 제약 유지).
- * 한 라운드에서 하나도 추가되지 않으면 중단한다.
+ * band1~3: 각 당첨번호 **자리(1~6)**마다 번호대(1~5, 6~10, …) 비율을 내림차순 정렬했을 때 **1·2·3등 구간 하나만** 정확히 맞춘다.
  */
 const MAX_PRIORITY_ROUNDS = 24
 
-/** 자리대 band 차원: 1, 2, 3만 사용(기존 삼중항 구조 유지) */
 const BAND_TIER_MIN = 1
 const BAND_TIER_MAX = 3
 
-/**
- * (oddRank, consecRank, bandTier) 시도 순서: **같은 (oe, run)에서 band 1→2→3을 먼저** 쓰고,
- * 그다음 run+1로 넘어간다(그래야 band 조합이 골고루 나온다).
- */
 function buildComboRankTriplePriorityOrder(): [number, number, number][] {
   const out: [number, number, number][] = []
   for (let oe = 1; oe <= 7; oe++) {
@@ -44,26 +42,11 @@ function buildComboRankTriplePriorityOrder(): [number, number, number][] {
   return out
 }
 
-/** 단위 테스트·문서용: 생성 루프와 동일한 삼중항 우선순위 */
 export const COMBO_RANK_TRIPLE_PRIORITY_ORDER = buildComboRankTriplePriorityOrder()
 
-/**
- * 랭크 후보로 쓸 분포 행의 최소 비율(초과만 허용).
- * 10% 이하(≤10.00)는 제외하고, 10.1% 같은 값은 사용한다.
- */
 const MIN_RANKABLE_PERCENT = 10
 
-/** 기존 세트(다른 조합 방식)와의 최대 겹침(주6 교집합 크기) 패널티 가중 */
-const OVERLAP_PENALTY_WEIGHT = 32
-
-/** 동일 조합 방식(oe-run-band) 세트끼리 겹치는 번호 — 같은 strategy가 이미 있을 때 우선 억제 */
-const SAME_STRATEGY_OVERLAP_WEIGHT = 512
-
-/**
- * 긴 C(n,6) 순회로 메인 스레드가 막히면 Chrome이 '페이지 나가기/대기' 대화상자를 띄운다.
- * 일정 간격으로 이벤트 루프에 양보해 UI·fetch가 응답 가능하게 유지한다.
- */
-const DEFAULT_COMBO_YIELD_EVERY = 4096
+const DEFAULT_REPAIR_YIELD_EVERY = 64
 
 async function yieldToMain(): Promise<void> {
   const sched = (globalThis as { scheduler?: { yield?: () => Promise<void> } }).scheduler
@@ -76,7 +59,6 @@ async function yieldToMain(): Promise<void> {
   })
 }
 
-/** 조합 페이지 주석(오름차순 주6)과 생성 검증을 맞추기 위해 당첨 행 본번호를 정렬해 둔다. */
 function withSortedMains(row: WinningNumberRow): WinningNumberRow {
   const m = [row.num1, row.num2, row.num3, row.num4, row.num5, row.num6].sort((a, b) => a - b)
   return {
@@ -90,28 +72,27 @@ function withSortedMains(row: WinningNumberRow): WinningNumberRow {
   }
 }
 
-/** 정렬된 주6에서 인접 차이 1인 구간 중 최장 길이(최소 1) */
-function maxConsecutiveRunLength(sorted: readonly number[]): number {
-  let maxRun = 1
-  let current = 1
-  for (let i = 0; i < sorted.length - 1; i++) {
-    if (sorted[i + 1] === sorted[i] + 1) {
-      current++
-    } else {
-      if (current > maxRun) maxRun = current
-      current = 1
-    }
-  }
-  if (current > maxRun) maxRun = current
-  return maxRun
-}
-
 function bandIndexFromRow(row: PositionBandDistributionRow): number {
   const idx = NUMBER_BAND_LABELS.indexOf(row.bandLabel as (typeof NUMBER_BAND_LABELS)[number])
   return idx >= 0 ? idx : 0
 }
 
-/** 비율 내림차순, 동률 시 보조키 오름차순으로 정렬된 순서에서 rank(1기반)에 해당하는 값 */
+/** 5단위 번호구간의 시작 번호(1, 6, 11, …) */
+export function bandStartForIndex(bandIndex: number): number {
+  return bandIndex * 5 + 1
+}
+
+/** 5단위 구간 내 칸(0~4). 0=하·4=상에 대응 */
+export function bandInnerSlot(n: number): number {
+  return n - bandStartForIndex(numberToBandIndex(n))
+}
+
+/** 구간×칸 사용 빈도 Map 키 */
+export function innerSlotKey(n: number): string {
+  const b = numberToBandIndex(n)
+  return `${b}:${n - bandStartForIndex(b)}`
+}
+
 function evenCountAtRank(
   rows: ReturnType<typeof buildOddEvenDistribution>['rows'],
   rank1: number,
@@ -139,10 +120,6 @@ function maxRunAtRank(
   return v !== undefined ? v : null
 }
 
-/**
- * 자리(1~6)마다 번호대별 비율 내림차순 정렬 후, bandTier등(1~3)에 해당하는 번호대 인덱스(0~4) 하나씩.
- * band3인데 해당 자리에 3등 행이 없으면 그 자리만 1등 구간 인덱스를 쓴다(2등 부재도 동일하게 1등).
- */
 function buildBandTargetsPerPosition(
   flat: readonly PositionBandDistributionRow[],
   bandTier: number,
@@ -163,23 +140,12 @@ function buildBandTargetsPerPosition(
   return targets
 }
 
-/** 자리대 목표와 실제 번호대가 다른 자리 개수(0이면 완전 일치) */
-function bandMismatchCount(sortedSix: readonly number[], bandTargets: readonly number[]): number {
-  if (bandTargets.length !== 6) return 6
-  let mismatch = 0
-  for (let i = 0; i < 6; i++) {
-    if (numberToBandIndex(sortedSix[i]) !== bandTargets[i]) mismatch++
-  }
-  return mismatch
-}
-
 function setKey(nums: number[]): string {
   return [...nums].sort((a, b) => a - b).join(',')
 }
 
 const COMBO_STRATEGY_RE = /^combo:oe(\d+)-run(\d+)-band(\d+)$/
 
-/** strategy 문자열에서 (oe, run, band) 순위 — 파싱 실패 시 맨 뒤로 보내기 위한 큰 값 */
 export function parseComboStrategyRanks(strategy: string | undefined): [number, number, number] {
   if (!strategy) return [999, 999, 999]
   const m = COMBO_STRATEGY_RE.exec(strategy)
@@ -187,7 +153,6 @@ export function parseComboStrategyRanks(strategy: string | undefined): [number, 
   return [Number(m[1]), Number(m[2]), Number(m[3])]
 }
 
-/** 목록 표시·저장 조회 후에도 oe → run → band 순으로 정렬 */
 export function sortGeneratedSetsByComboStrategy(sets: readonly GeneratedSet[]): GeneratedSet[] {
   return [...sets].sort((x, y) => {
     const [a1, a2, a3] = parseComboStrategyRanks(x.strategy)
@@ -215,182 +180,20 @@ function toGeneratedSet(nums: number[], strategy: string): GeneratedSet {
   }
 }
 
-/** 낮을수록 덜 쓰인 번호 위주의 조합(세트 간 다양화) */
-function diversityScore(sorted: readonly number[], usage: ReadonlyMap<number, number>): number {
-  let s = 0
-  for (const n of sorted) {
-    const c = usage.get(n) ?? 0
-    s += c * c
-  }
-  return s
-}
-
-function sortedSixFromGeneratedSet(s: GeneratedSet): number[] {
-  return [s.num1, s.num2, s.num3, s.num4, s.num5, s.num6].sort((a, b) => a - b)
-}
-
-function intersectionSizeSorted(a: readonly number[], b: readonly number[]): number {
-  let i = 0
-  let j = 0
-  let c = 0
-  while (i < 6 && j < 6) {
-    if (a[i] === b[j]) {
-      c++
-      i++
-      j++
-    } else if (a[i] < b[j]) {
-      i++
-    } else {
-      j++
-    }
-  }
-  return c
-}
-
-function overlapPenaltySum(
+function bumpUsage(
   sorted: readonly number[],
-  priorSortedSixes: readonly number[][],
-  weight: number,
-): number {
-  let sum = 0
-  for (const six of priorSortedSixes) {
-    const o = intersectionSizeSorted(sorted, six)
-    sum += o * o
-  }
-  return weight * sum
-}
-
-/**
- * 사용 빈도 + 겹침 패널티(낮을수록 유리).
- * 동일 조합 방식 세트가 이미 있으면 그 세트들과의 겹침을 우선 억제하고,
- * 없으면 다른 방식 세트 전체와의 겹침을 본다.
- */
-function pickScore(
-  sorted: readonly number[],
-  usage: ReadonlyMap<number, number>,
-  chosenSortedSixes: readonly number[][],
-  sameStrategySortedSixes: readonly number[][],
-): number {
-  const samePenalty =
-    sameStrategySortedSixes.length > 0
-      ? overlapPenaltySum(sorted, sameStrategySortedSixes, SAME_STRATEGY_OVERLAP_WEIGHT)
-      : 0
-  const generalPenalty =
-    sameStrategySortedSixes.length > 0
-      ? 0
-      : overlapPenaltySum(sorted, chosenSortedSixes, OVERLAP_PENALTY_WEIGHT)
-  return diversityScore(sorted, usage) + samePenalty + generalPenalty
-}
-
-function sameStrategySortedSixes(
-  priorChosen: readonly GeneratedSet[],
-  strategy: string,
-): number[][] {
-  return priorChosen.filter((s) => s.strategy === strategy).map(sortedSixFromGeneratedSet)
-}
-
-function lexLess(a: readonly number[], b: readonly number[]): boolean {
-  for (let i = 0; i < 6; i++) {
-    if (a[i] !== b[i]) return a[i] < b[i]
-  }
-  return false
-}
-
-function isBetterPick(
-  score: number,
-  sorted: number[],
-  bestScore: number,
-  best: number[] | null,
-): boolean {
-  if (best === null) return true
-  if (score < bestScore) return true
-  if (score > bestScore) return false
-  return lexLess(sorted, best)
-}
-
-function bumpUsage(sorted: readonly number[], usage: Map<number, number>): void {
+  usage: Map<number, number>,
+  innerSlotUsage: Map<string, number>,
+): void {
   for (const n of sorted) {
     usage.set(n, (usage.get(n) ?? 0) + 1)
+    const key = innerSlotKey(n)
+    innerSlotUsage.set(key, (innerSlotUsage.get(key) ?? 0) + 1)
   }
-}
-
-/** C(n,6) 순회 — 결정론적 순서(오름차순 인덱스 조합). yieldEvery>0이면 주기적으로 메인 스레드 양보 */
-async function forEachCombination6(
-  poolSorted: number[],
-  fn: (combo: number[]) => void,
-  yieldEvery: number,
-): Promise<void> {
-  const n = poolSorted.length
-  if (n < 6) return
-  const idx = [0, 1, 2, 3, 4, 5]
-  let done = false
-  let seen = 0
-  while (!done) {
-    fn(idx.map((i) => poolSorted[i]))
-    seen++
-    if (yieldEvery > 0 && seen % yieldEvery === 0) {
-      await yieldToMain()
-    }
-    let k = 5
-    while (k >= 0 && idx[k] === k + n - 6) k--
-    if (k < 0) {
-      done = true
-    } else {
-      idx[k] += 1
-      for (let j = k + 1; j < 6; j++) {
-        idx[j] = idx[j - 1] + 1
-      }
-    }
-  }
-}
-
-/** 프로필·합·중복·점수까지 반영해 최적 주6 후보만 고른다(usedKeys/usage는 변경하지 않음). */
-async function pickBestComboForProfile(
-  poolSorted: number[],
-  minSum: number,
-  maxSum: number,
-  evenT: number,
-  runT: number,
-  bandTargets: readonly number[],
-  maxBandMismatch: number,
-  usedKeys: Set<string>,
-  usage: ReadonlyMap<number, number>,
-  chosenSortedSixes: readonly number[][],
-  sameStrategySortedSixes: readonly number[][],
-  yieldEvery: number,
-): Promise<number[] | null> {
-  let best: number[] | null = null
-  let bestScore = Infinity
-  await forEachCombination6(
-    poolSorted,
-    (combo) => {
-      const sorted = [...combo].sort((a, b) => a - b)
-      const sum = sorted.reduce((a, b) => a + b, 0)
-      if (sum < minSum || sum > maxSum) return
-      if (sorted.filter((n) => n % 2 === 0).length !== evenT) return
-      if (maxConsecutiveRunLength(sorted) !== runT) return
-      const mismatch = bandMismatchCount(sorted, bandTargets)
-      if (mismatch > maxBandMismatch) return
-      const key = setKey(sorted)
-      if (usedKeys.has(key)) return
-      /**
-       * 폴백(번호 교체)에서는 자리대 불일치가 적은 후보를 먼저 고른다.
-       * 동일 불일치 수준에서는 기존 다양화 점수로 선택한다.
-       */
-      const sc =
-        mismatch * 10000 + pickScore(sorted, usage, chosenSortedSixes, sameStrategySortedSixes)
-      if (isBetterPick(sc, sorted, bestScore, best)) {
-        bestScore = sc
-        best = sorted
-      }
-    },
-    yieldEvery,
-  )
-  return best
 }
 
 async function findOneSetForRanks(
-  poolSorted: number[],
+  poolByBand: ReadonlyMap<number, number[]>,
   minSum: number,
   maxSum: number,
   oddRank: number,
@@ -399,69 +202,56 @@ async function findOneSetForRanks(
   oddRows: ReturnType<typeof buildOddEvenDistribution>['rows'],
   consecRows: ReturnType<typeof buildConsecutiveRunDistribution>['rows'],
   bandTargets: readonly number[],
+  histCounts: readonly number[],
   usedKeys: Set<string>,
   usage: Map<number, number>,
-  priorChosen: readonly GeneratedSet[],
-  yieldEvery: number,
+  innerSlotUsage: Map<string, number>,
+  repairYieldEvery: number,
 ): Promise<GeneratedSet | null> {
   const evenT = evenCountAtRank(oddRows, oddRank)
   const runT = maxRunAtRank(consecRows, consecRank)
   if (evenT === null || runT === null) return null
   if (bandTargets.length !== 6) return null
 
-  const baseStrategy = `combo:oe${oddRank}-run${consecRank}-band${bandTier}`
-  const chosenSixes = priorChosen.map(sortedSixFromGeneratedSet)
-  const sameStrategySixes = sameStrategySortedSixes(priorChosen, baseStrategy)
-  let best: number[] | null = null
-  /**
-   * 기본은 자리대 완전 일치(0)로 시도하고, 실패 시 불일치 허용을 늘려
-   * 막히는 번호 조합을 교체해도 세트를 완성한다.
-   */
-  for (let allowedMismatch = 0; allowedMismatch <= 6; allowedMismatch++) {
-    best = await pickBestComboForProfile(
-      poolSorted,
-      minSum,
-      maxSum,
-      evenT,
-      runT,
-      bandTargets,
-      allowedMismatch,
-      usedKeys,
-      usage,
-      chosenSixes,
-      sameStrategySixes,
-      yieldEvery,
-    )
-    if (best) break
+  const constraints: ProfileConstraints = {
+    minSum,
+    maxSum,
+    evenT,
+    runT,
+    bandTargets,
   }
 
-  if (!best) return null
-  usedKeys.add(setKey(best))
-  bumpUsage(best, usage)
-  return toGeneratedSet(best, baseStrategy)
+  if (repairYieldEvery > 0) {
+    await yieldToMain()
+  }
+  const sorted = tryBuildOneSet(poolByBand, constraints, histCounts)
+  if (!sorted) return null
+
+  const key = setKey(sorted)
+  if (usedKeys.has(key)) return null
+
+  const baseStrategy = `combo:oe${oddRank}-run${consecRank}-band${bandTier}`
+  usedKeys.add(key)
+  bumpUsage(sorted, usage, innerSlotUsage)
+  return toGeneratedSet(sorted, baseStrategy)
 }
 
 export type CombinationGenerationResult = {
   sets: GeneratedSet[]
-  /** UI·저장용 메타 */
   summaryLines: string[]
   warning: string | null
 }
 
 /**
- * 전체 당첨 이력 + 통합 채택 풀로 조합 분석 제약을 만족하는 세트를 최대 TARGET_SET_COUNT개까지 생성.
- * 고저 합산 허용 구간은 모든 세트에 공통으로 적용한다.
- * 홀짝·연속 랭크는 비율 10% 초과 범주만 쓴다. 자리대는 band1~3으로 자리마다 비율 1·2·3등 **구간 하나**만 정확히 맞추고, 3등이 없는 자리는 1등 구간만 쓴다.
- * 목표 개수가 모자라면 (홀짝·연속·band) 우선순위 삼중항 순서를 라운드 반복해 추가한다(진전 없으면 중단).
- * 후보는 사용 빈도와 겹침 패널티로 고른다. 조합 방식(strategy)이 같으면 그 방식의 기존 세트와 번호 겹침을 우선 억제한다.
- * **주6에 쓰는 번호는 통합 분석에서 채택된 번호만** 사용한다(1~45 중 채택 풀 밖 번호는 넣지 않음).
- * @param adoptedPool 통합 페이지(final-pick) 채택 번호와 동일한 풀
- * @param comboYieldEvery C(n,6) 순회 중 몇 회마다 메인 스레드에 양보할지(0이면 양보 없음·테스트용)
+ * 통합 채택 풀 + 전체 이력 통계로 조합 세트를 최대 TARGET_SET_COUNT개 생성.
+ * 각 프로필마다 band 목표 구간에서 랜덤 6개 시드 후, 합·홀짝·연속 불일치 시
+ * 해당 자리 band 구간 안에서 기준 회차 이전 누적 출현이 적은 번호로 교체한다.
  */
 export async function generateCombinationBasedSets(
   fullHistory: readonly WinningNumberRow[],
   adoptedPool: readonly number[],
-  comboYieldEvery: number = DEFAULT_COMBO_YIELD_EVERY,
+  referenceDrawNo: number,
+  repairYieldEvery: number = DEFAULT_REPAIR_YIELD_EVERY,
 ): Promise<CombinationGenerationResult> {
   const summaryLines: string[] = []
   if (adoptedPool.length < 6) {
@@ -501,8 +291,12 @@ export async function generateCombinationBasedSets(
     }
   }
 
+  const histCounts = buildHistCounts(sortedHistory, referenceDrawNo)
+  const poolByBand = buildPoolByBand(poolSorted)
+
   const usage = new Map<number, number>()
   for (const n of poolSorted) usage.set(n, 0)
+  const innerSlotUsage = new Map<string, number>()
 
   const usedKeys = new Set<string>()
   const sets: GeneratedSet[] = []
@@ -524,7 +318,7 @@ export async function generateCombinationBasedSets(
       if (sets.length >= TARGET_SET_COUNT) break
       const bandTargets = targetsByBandTier[c - 1]
       const one = await findOneSetForRanks(
-        poolSorted,
+        poolByBand,
         minSum,
         maxSum,
         a,
@@ -533,10 +327,11 @@ export async function generateCombinationBasedSets(
         oddEven.rows,
         consecutive.rows,
         bandTargets,
+        histCounts,
         usedKeys,
         usage,
-        sets,
-        comboYieldEvery,
+        innerSlotUsage,
+        repairYieldEvery,
       )
       if (one) sets.push(one)
     }
@@ -544,7 +339,7 @@ export async function generateCombinationBasedSets(
   }
 
   summaryLines.push(
-    `세트 구성: 통합 채택 번호만 사용·홀짝·연속·자리대(band1~3=자리별 비율 1·2·3등 구간 우선, 필요 시 자리대 불일치 허용으로 번호 교체) ${sets.length}개 (우선순위 라운드 최대 ${MAX_PRIORITY_ROUNDS}회·고저 합 구간 공통 적용).`,
+    `세트 구성: 통합 채택 번호만 사용·자리별 band 구간 랜덤 시드 후 합·홀짝·연속 맞춤(교체 시 ${referenceDrawNo}회차 미만 누적 출현 최소·동일 자리 band 구간)·${sets.length}개 (우선순위 라운드 최대 ${MAX_PRIORITY_ROUNDS}회).`,
   )
 
   const warning =

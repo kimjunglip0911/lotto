@@ -1,19 +1,27 @@
 import type { WinningNumberRow } from '@/app/analysis/chi-square/types';
 import type { PositionBandDistributionRow } from '../types';
 
-/** 번호대 라벨(1~45를 5구간으로 분할) */
-export const NUMBER_BAND_LABELS = ['1~9', '10~19', '20~29', '30~39', '40~45'] as const;
+/** 번호대 라벨(1~45를 5개 번호 단위 9구간으로 분할) */
+export const NUMBER_BAND_LABELS = [
+  '1~5',
+  '6~10',
+  '11~15',
+  '16~20',
+  '21~25',
+  '26~30',
+  '31~35',
+  '36~40',
+  '41~45',
+] as const;
 
 const BAND_COUNT = NUMBER_BAND_LABELS.length;
 const POSITION_COUNT = 6;
+const BAND_WIDTH = 5;
 
-/** 1~45를 5구간 인덱스(0~4)로 매핑 — 조합 세트 검증에서 동일 규칙 재사용 */
+/** 1~45를 5단위 구간 인덱스(0~8)로 매핑 — 조합 세트 검증에서 동일 규칙 재사용 */
 export function numberToBandIndex(n: number): number {
-  if (n <= 9) return 0;
-  if (n <= 19) return 1;
-  if (n <= 29) return 2;
-  if (n <= 39) return 3;
-  return 4;
+  const clamped = Math.min(45, Math.max(1, Math.round(n)));
+  return Math.floor((clamped - 1) / BAND_WIDTH);
 }
 
 /**
@@ -54,7 +62,7 @@ export function buildPositionBandDistribution(rows: readonly WinningNumberRow[])
     return { totalDraws: 0, rows: [] };
   }
 
-  /** [position 0~5][band 0~4] */
+  /** [position 0~5][band 0~8] */
   const grid: number[][] = Array.from({ length: POSITION_COUNT }, () =>
     Array.from({ length: BAND_COUNT }, () => 0),
   );

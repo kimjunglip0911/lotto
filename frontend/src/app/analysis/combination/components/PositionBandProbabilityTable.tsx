@@ -18,6 +18,7 @@ export function PositionBandProbabilityTable({ totalDraws, rows }: Props) {
         <h3 className="text-xl font-semibold text-white">구간별 번호 확률</h3>
         <p className="text-xs text-slate-400 mt-1">
           표본: DB에 저장된 전체 회차의 당첨 주번호 6개(num1~num6)만 사용합니다. 보너스 번호는 제외합니다.
+          번호구간은 5개 번호 단위(1~5, 6~10, …, 41~45)로 집계합니다.
           각 행의 비율은 해당 구간(자리) 안에서만 합산하여 100%입니다.
         </p>
       </div>
