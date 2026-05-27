@@ -6,7 +6,7 @@ import {
   generateCombinationBasedSets,
   TARGET_SET_COUNT,
 } from '@/app/recommend/logic/combinationBasedSets'
-import { numberToBandIndex } from '@/app/analysis/combination/logic/buildPositionBandDistribution'
+import { numberToBandIndex } from '@/app/analysis/combination/logic/numberToBand'
 import type { GeneratedSet } from '@/app/recommend/logic/types'
 
 function countUsageInPool(sets: GeneratedSet[], pool: number[]): Map<number, number> {

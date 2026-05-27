@@ -1,5 +1,5 @@
 import type { WinningNumberRow } from '@/app/analysis/chi-square/types'
-import { numberToBandIndex } from '@/app/analysis/combination/logic/buildPositionBandDistribution'
+import { numberToBandIndex } from '@/app/analysis/combination/logic/numberToBand'
 
 /** 교체 루프 최대 스텝(시드 1회당) */
 export const MAX_REPAIR_STEPS = 300

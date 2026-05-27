@@ -5,11 +5,11 @@ import type { ChiSquareFetchContext } from '../types/fetchCtx';
 
 export const fetchWinningNumbersRange = async (
   drawNo: number,
-  ctx?: Pick<ChiSquareFetchContext, 'baseUrl'>,
+  ctx?: ChiSquareFetchContext,
 ): Promise<WinningNumberRow[]> => {
   const response = await fetchChiSquareApi(
     `winning-numbers-range?draw_no=${drawNo}`,
-    { cache: 'no-store' },
+    { signal: ctx?.signal, cache: 'no-store' },
     ctx?.baseUrl,
   );
   if (!response.ok) {

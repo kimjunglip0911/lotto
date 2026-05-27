@@ -1,4 +1,4 @@
-import type { ConsecutiveRunDistributionRow } from '../types';
+import type { ConsecutiveRunDistributionRow } from '../../types';
 
 type Props = {
   totalDraws: number;

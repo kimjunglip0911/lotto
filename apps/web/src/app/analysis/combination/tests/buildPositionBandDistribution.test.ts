@@ -1,10 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import {
-  NUMBER_BAND_LABELS,
-  buildPositionBandDistribution,
-  numberToBandIndex,
-} from './buildPositionBandDistribution';
 import type { WinningNumberRow } from '@/app/analysis/chi-square/types';
+import { NUMBER_BAND_LABELS } from '../constants/bandLabels';
+import { buildPositionBandDistribution } from '../logic/buildPositionBandDistribution';
+import { numberToBandIndex } from '../logic/numberToBand';
 
 describe('numberToBandIndex', () => {
   it('maps 1~45 into nine 5-number bands', () => {
@@ -19,15 +17,14 @@ describe('numberToBandIndex', () => {
 describe('buildPositionBandDistribution', () => {
   it('sums percentages to 100 per position across nine bands', () => {
     const row: WinningNumberRow = {
-      drawNo: 1,
-      drawDate: '2024-01-01',
+      draw_no: 1,
       num1: 1,
       num2: 6,
       num3: 11,
       num4: 16,
       num5: 21,
       num6: 26,
-      bonus: 31,
+      bonus_num: 31,
     };
     const { totalDraws, rows } = buildPositionBandDistribution([row]);
     expect(totalDraws).toBe(1);

@@ -1,4 +1,4 @@
-import type { OddEvenDistributionRow } from '../types';
+import type { OddEvenDistributionRow } from '../../types';
 
 type Props = {
   totalDraws: number;

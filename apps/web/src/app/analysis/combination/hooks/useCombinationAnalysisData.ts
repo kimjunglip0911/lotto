@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react';
-import { isWinningNumberRow } from '@/app/analysis/chi-square/logic/guards';
+import { loadCombinationHistory } from '../api/loadHistory';
 import { buildConsecutiveRunDistribution } from '../logic/buildConsecutiveRunDistribution';
 import { buildOddEvenDistribution } from '../logic/buildOddEvenDistribution';
-import { buildPositionBandDistribution } from '../logic/buildPositionBandDistribution';
-import { buildSumExtremeStats } from '../logic/buildSumExtremeStats';
+import { runComboAnalysis } from '../logic/runComboAnalysis';
 import type {
   ConsecutiveRunDistributionRow,
   OddEvenDistributionRow,
@@ -14,7 +13,7 @@ import type {
 const EMPTY_ODD_EVEN = buildOddEvenDistribution([]).rows;
 const EMPTY_CONSECUTIVE = buildConsecutiveRunDistribution([]).rows;
 
-type UseCombinationAnalysisDataResult = {
+export type UseCombinationAnalysisDataResult = {
   isLoading: boolean;
   loadError: string | null;
   totalDraws: number;
@@ -42,21 +41,10 @@ export function useCombinationAnalysisData(): UseCombinationAnalysisDataResult {
       setIsLoading(true);
       setLoadError(null);
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
-        const drawsResponse = await fetch(`${apiUrl}/api/analysis/chi-square/draw-numbers`, {
-          signal: abortController.signal,
-        });
-        if (!drawsResponse.ok) {
-          throw new Error(`Failed to fetch draw numbers: ${drawsResponse.status}`);
-        }
-        const drawsPayload: unknown = await drawsResponse.json();
-        if (!Array.isArray(drawsPayload)) {
-          throw new Error('Draw numbers response is not an array');
-        }
-        const draws = drawsPayload.filter((item): item is number => typeof item === 'number');
+        const sortedRows = await loadCombinationHistory({ signal: abortController.signal });
         if (!isMounted) return;
 
-        if (draws.length === 0) {
+        if (sortedRows.length === 0) {
           setTotalDraws(0);
           setOddEvenRows(EMPTY_ODD_EVEN);
           setConsecutiveRows(EMPTY_CONSECUTIVE);
@@ -65,30 +53,12 @@ export function useCombinationAnalysisData(): UseCombinationAnalysisDataResult {
           return;
         }
 
-        const maxDraw = Math.max(...draws);
-        const rangeResponse = await fetch(
-          `${apiUrl}/api/analysis/chi-square/winning-numbers-range?draw_no=${maxDraw + 1}`,
-          { signal: abortController.signal },
-        );
-        if (!rangeResponse.ok) {
-          throw new Error(`Failed to fetch winning numbers range: ${rangeResponse.status}`);
-        }
-        const rangePayload: unknown = await rangeResponse.json();
-        if (!Array.isArray(rangePayload)) {
-          throw new Error('Winning numbers range response is not an array');
-        }
-        const validRows = rangePayload.filter(isWinningNumberRow);
-        const sortedRows = [...validRows].sort((a, b) => a.draw_no - b.draw_no);
-        const oddEven = buildOddEvenDistribution(sortedRows);
-        const consecutive = buildConsecutiveRunDistribution(sortedRows);
-        const positionBand = buildPositionBandDistribution(sortedRows);
-        const sumExtreme = buildSumExtremeStats(sortedRows);
-        if (!isMounted) return;
-        setTotalDraws(oddEven.totalDraws);
-        setOddEvenRows(oddEven.rows);
-        setConsecutiveRows(consecutive.rows);
-        setPositionBandRows(positionBand.rows);
-        setSumExtremeStats(sumExtreme);
+        const result = runComboAnalysis(sortedRows);
+        setTotalDraws(result.totalDraws);
+        setOddEvenRows(result.oddEvenRows);
+        setConsecutiveRows(result.consecutiveRows);
+        setPositionBandRows(result.positionBandRows);
+        setSumExtremeStats(result.sumExtremeStats);
       } catch (error) {
         if (abortController.signal.aborted || !isMounted) return;
         console.error('Error loading combination analysis:', error);

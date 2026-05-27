@@ -1,11 +1,9 @@
 import type { WinningNumberRow } from '@/app/analysis/chi-square/types'
 import { buildConsecutiveRunDistribution } from '@/app/analysis/combination/logic/buildConsecutiveRunDistribution'
 import { buildOddEvenDistribution } from '@/app/analysis/combination/logic/buildOddEvenDistribution'
-import {
-  buildPositionBandDistribution,
-  NUMBER_BAND_LABELS,
-  numberToBandIndex,
-} from '@/app/analysis/combination/logic/buildPositionBandDistribution'
+import { NUMBER_BAND_LABELS } from '@/app/analysis/combination/constants/bandLabels'
+import { buildPositionBandDistribution } from '@/app/analysis/combination/logic/buildPositionBandDistribution'
+import { numberToBandIndex } from '@/app/analysis/combination/logic/numberToBand'
 import { buildSumExtremeStats } from '@/app/analysis/combination/logic/buildSumExtremeStats'
 import type { PositionBandDistributionRow } from '@/app/analysis/combination/types'
 import type { GeneratedSet } from '@/app/recommend/logic/types'

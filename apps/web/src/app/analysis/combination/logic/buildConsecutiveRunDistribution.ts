@@ -1,5 +1,5 @@
 import type { WinningNumberRow } from '@/app/analysis/chi-square/types';
-import type { ConsecutiveRunDistributionRow } from '../types';
+import type { ConsecutiveRunDistributionRow } from '../types/index';
 
 /** 정렬된 번호 배열에서 인접 차이 1인 구간 중 최장 길이(최소 1) */
 function maxConsecutiveRunLength(sorted: readonly number[]): number {

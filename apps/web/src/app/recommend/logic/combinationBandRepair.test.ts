@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { WinningNumberRow } from '@/app/analysis/chi-square/types'
-import { numberToBandIndex } from '@/app/analysis/combination/logic/buildPositionBandDistribution'
+import { numberToBandIndex } from '@/app/analysis/combination/logic/numberToBand'
 import {
   buildHistCounts,
   buildPoolByBand,

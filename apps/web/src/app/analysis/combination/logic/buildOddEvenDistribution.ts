@@ -1,5 +1,5 @@
 import type { WinningNumberRow } from '@/app/analysis/chi-square/types';
-import type { OddEvenDistributionRow } from '../types';
+import type { OddEvenDistributionRow } from '../types/index';
 
 /**
  * 각 회차 주번호 6개에서 짝수 개수를 세어 0~6 버킷별 건수·비율(%)을 계산한다. 보너스는 제외한다.
