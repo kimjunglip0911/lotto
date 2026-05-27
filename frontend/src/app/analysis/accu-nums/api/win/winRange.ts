@@ -1,7 +1,7 @@
 import type { WinningNumberRow } from '../../types';
-import { fetchAccumulatedApi } from '../fetchCore';
-import { parseWinningNumberRowsResponse } from '../parse';
-import type { AccumulatedNumbersFetchContext } from '../types';
+import { fetchAccumulatedApi } from '../core/fetchCore';
+import { parseWinningNumberRowsResponse } from '../parse/winRows';
+import type { AccumulatedNumbersFetchContext } from '../types/fetchCtx';
 
 // 선택 회차 직전까지의 전체 당첨 행 목록을 불러온다.
 

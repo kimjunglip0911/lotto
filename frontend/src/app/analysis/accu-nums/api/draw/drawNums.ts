@@ -1,6 +1,6 @@
-import { fetchAccumulatedApi } from '../fetchCore';
-import { parseNumberArrayResponse } from '../parse';
-import type { AccumulatedNumbersFetchContext } from '../types';
+import { fetchAccumulatedApi } from '../core/fetchCore';
+import { parseNumberArrayResponse } from '../parse/numArr';
+import type { AccumulatedNumbersFetchContext } from '../types/fetchCtx';
 
 // 검색 가능 회차 번호 목록을 불러온다.
 

@@ -1,6 +1,6 @@
-import { isWinningNumberRow } from '../../logic/numCounts';
 import type { WinningNumberRow } from '../../types';
-import { fetchAccumulatedApi } from '../fetchCore';
+import { fetchAccumulatedApi } from '../core/fetchCore';
+import { parseWinningNumberRowResponse } from '../parse/winRow';
 
 // 선택한 회차의 당첨 번호 한 줄을 불러온다.
 
@@ -15,9 +15,5 @@ export const fetchWinningNumberByDraw = async (drawNo: number): Promise<WinningN
   }
 
   const data: unknown = await response.json();
-  if (!isWinningNumberRow(data)) {
-    throw new Error('Selected winning number response is invalid');
-  }
-
-  return data;
+  return parseWinningNumberRowResponse(data, 'Selected winning number response is invalid');
 };

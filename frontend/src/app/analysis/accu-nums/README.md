@@ -20,7 +20,7 @@
 | `logic/accuCntExt.ts` | 극값 제외 계산(통합 분석과 동일 함수) |
 | `logic/stratEval.ts` | 전략 평가 facade(`eval`·`window`·`pick`·`rec`) |
 | `logic/runStratSel.ts` | 전략 차트·극값 제외 스냅샷용(조회 UI 경로에서는 미호출) |
-| `api/` | 백엔드 API(`draw/`·`win/`·`index.ts` 공개 진입점) |
+| `api/` | 백엔드 API(`core/`·`parse/`·`types/`·`draw/`·`win/`·`index.ts` 공개 진입점) |
 | `types/index.ts` | 타입 공개 진입점 |
 | `constants/` | 번호 범위·104회 윈도·전략 키 상수 |
 | `tests/` | 극값 제외·전략 선정 단위 테스트 |
