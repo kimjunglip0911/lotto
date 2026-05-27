@@ -49,7 +49,7 @@ lotto/
 │           │   ├── schema.sql
 │           │   └── data/lotto.db      # SQLite 정본(.gitignore)
 │           ├── home/                  # 8폴더 리팩터링 완료 (api·ui·hooks·logic·helpers·types·constants·tests)
-│           ├── recommend/
+│           ├── recommend/             # 8폴더 리팩터링 완료 (api·ui·hooks·logic/combo·logic/repair·types·constants·tests)
 │           └── analysis/
 │               ├── accu-nums/
 │               ├── chi-square/
@@ -84,4 +84,4 @@ lotto/
 
 ---
 
-*Last Updated: 2026-05-28 (home: 8폴더 리팩터링)*
+*Last Updated: 2026-05-28 (home·recommend: 8폴더 리팩터링)*
