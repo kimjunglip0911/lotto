@@ -3,39 +3,26 @@ import { getChiSquareWalkForwardExcludedSplit } from '@/app/analysis/final-pick/
 import { CHI_SQUARE_THRESHOLD, NUMBERS_PER_DRAW, TOTAL_NUMBERS } from '../constants';
 import { getMaxAbsDeviation } from '../logic/chiSquare';
 import { runChiSquareDeviationBinWalkForward, splitAndSortDeviationBins } from '../logic/walkForwardStats';
-import type { ChiSquareResult, WinningNumberRow } from '../types';
+import type { ChiSquareData } from './useChiSquareData';
 
-type Params = {
-  analyzedDrawCount: number;
-  chiSquareResults: ChiSquareResult[];
-  walkForwardRows: readonly WinningNumberRow[] | null;
-  selectedWinningNumber: WinningNumberRow | null;
-  searchedDraw: string;
-  isLoadingDraws: boolean;
-  drawLoadError: string | null;
-  availableDraws: number[];
-  isSearching: boolean;
-  selectedDraw: string;
-  searchError: string | null;
-};
+export const useChiSquareDerived = (data: ChiSquareData) => {
+  const {
+    analyzedDrawCount,
+    chiSquareResults,
+    walkForwardRows,
+    selectedWinningNumber,
+    searchedDraw,
+    isLoadingDraws,
+    drawLoadError,
+    availableDraws,
+    isSearching,
+    selectedDraw,
+    searchError,
+  } = data;
 
-export const useChiSquareDerived = ({
-  analyzedDrawCount,
-  chiSquareResults,
-  walkForwardRows,
-  selectedWinningNumber,
-  searchedDraw,
-  isLoadingDraws,
-  drawLoadError,
-  availableDraws,
-  isSearching,
-  selectedDraw,
-  searchError,
-}: Params) => {
   const hasSearched = searchedDraw !== '';
   const searchedDrawNo = Number(searchedDraw);
   const noHistory = hasSearched && searchedDrawNo <= 1;
-
   const expected = analyzedDrawCount > 0 ? (analyzedDrawCount * NUMBERS_PER_DRAW) / TOTAL_NUMBERS : 0;
 
   const selectedMainNumbers = selectedWinningNumber
@@ -49,42 +36,36 @@ export const useChiSquareDerived = ({
       ]
     : [];
 
-  /** 차트·검정 표 강조용: 본번호 6개만(보너스는 제외). */
-  const selectedWinningNumberSet = selectedWinningNumber
-    ? new Set([
-        selectedWinningNumber.num1,
-        selectedWinningNumber.num2,
-        selectedWinningNumber.num3,
-        selectedWinningNumber.num4,
-        selectedWinningNumber.num5,
-        selectedWinningNumber.num6,
-      ])
-    : null;
+  const selectedWinningNumberSet = useMemo(
+    () =>
+      selectedWinningNumber
+        ? new Set([
+            selectedWinningNumber.num1,
+            selectedWinningNumber.num2,
+            selectedWinningNumber.num3,
+            selectedWinningNumber.num4,
+            selectedWinningNumber.num5,
+            selectedWinningNumber.num6,
+          ])
+        : null,
+    [selectedWinningNumber],
+  );
 
   const maxAbsDeviation = useMemo(() => getMaxAbsDeviation(chiSquareResults), [chiSquareResults]);
 
-  /** 편차(O−E) 구간 워크포워드: 표용 분리 + 채택용 전체 구간. 2회차 이상일 때만. */
   const deviationBinWalkForwardBlock = useMemo(() => {
-    if (walkForwardRows === null || walkForwardRows.length < 2) {
-      return null;
-    }
+    if (walkForwardRows === null || walkForwardRows.length < 2) return null;
     const summary = runChiSquareDeviationBinWalkForward([...walkForwardRows], {
       minPastDraws: 1,
       referenceMainNumbers: selectedWinningNumberSet ?? undefined,
     });
-    return {
-      presentation: splitAndSortDeviationBins(summary),
-      summary,
-    };
+    return { presentation: splitAndSortDeviationBins(summary), summary };
   }, [walkForwardRows, selectedWinningNumberSet]);
 
   const relPctBinWalkForwardPresentation = deviationBinWalkForwardBlock?.presentation ?? null;
 
-  /** 워크포워드 제외를 조건부 확률 / 겹침 회차로 나눈 목록(카드). 표·차트는 합집합 강조. */
   const walkForwardExcludedSplit = useMemo(() => {
-    if (deviationBinWalkForwardBlock === null || chiSquareResults.length === 0) {
-      return null;
-    }
+    if (deviationBinWalkForwardBlock === null || chiSquareResults.length === 0) return null;
     return getChiSquareWalkForwardExcludedSplit(
       chiSquareResults,
       deviationBinWalkForwardBlock.summary.allBins,
@@ -127,3 +108,5 @@ export const useChiSquareDerived = ({
     relPctBinWalkForwardPresentation,
   };
 };
+
+export type ChiSquareView = ReturnType<typeof useChiSquareDerived>;

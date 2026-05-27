@@ -17,4 +17,5 @@ export const CHI_SQUARE_DEVIATION_BIN_WIDTH = 1;
 export const CHI_SQUARE_DEVIATION_BIN_RANGE_MIN = -300;
 /** 편차가 이 값 이상이면 말단 구간으로 묶는다. 일반 구간은 `[start, start+WIDTH)` 중 `start < 이 값`. */
 export const CHI_SQUARE_DEVIATION_BIN_RANGE_MAX_EXCLUSIVE = 300;
-export const CHART_HALF_H = 110;
+
+export { CHART_HALF_H } from './chart';

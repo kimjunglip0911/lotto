@@ -1,172 +1,29 @@
-import { useEffect, useState } from 'react';
-import { buildChiSquareResults } from '../logic/chiSquare';
-import { isWinningNumberRow } from '../logic/guards';
-import type { ChiSquareResult, WinningNumberRow } from '../types';
+import { useChiSquareDrawList } from './useChiSquareDrawList';
+import { useChiSquareSrch } from './useChiSquareSrch';
 
-type UseChiSquareDataResult = {
-  availableDraws: number[];
-  selectedDraw: string;
-  setSelectedDraw: (value: string) => void;
-  isLoadingDraws: boolean;
-  drawLoadError: string | null;
-  selectedWinningNumber: WinningNumberRow | null;
-  isLoadingWinningNumber: boolean;
-  winningNumberError: string | null;
-  searchedDraw: string;
-  isSearching: boolean;
-  searchError: string | null;
-  analyzedDrawCount: number;
-  chiSquareResults: ChiSquareResult[];
-  /**
-   * 워크포워드·구간 표용: 조회 회차 직전까지 전체 당첨 행(`draw_no` 오름차순, 2회차 이상 조회 시).
-   */
-  walkForwardRows: readonly WinningNumberRow[] | null;
-  handleSearch: () => Promise<void>;
-};
+/** 카이제곱 페이지 데이터 훅 — 회차 목록·조회 훅을 한 객체로 묶는다. */
 
-export const useChiSquareData = (): UseChiSquareDataResult => {
-  const [availableDraws, setAvailableDraws] = useState<number[]>([]);
-  const [selectedDraw, setSelectedDraw] = useState<string>('');
-  const [isLoadingDraws, setIsLoadingDraws] = useState(true);
-  const [drawLoadError, setDrawLoadError] = useState<string | null>(null);
-
-  const [selectedWinningNumber, setSelectedWinningNumber] = useState<WinningNumberRow | null>(null);
-  const [isLoadingWinningNumber, setIsLoadingWinningNumber] = useState(false);
-  const [winningNumberError, setWinningNumberError] = useState<string | null>(null);
-
-  const [searchedDraw, setSearchedDraw] = useState<string>('');
-  const [isSearching, setIsSearching] = useState(false);
-  const [searchError, setSearchError] = useState<string | null>(null);
-
-  const [analyzedDrawCount, setAnalyzedDrawCount] = useState(0);
-  const [chiSquareResults, setChiSquareResults] = useState<ChiSquareResult[]>([]);
-  const [walkForwardRows, setWalkForwardRows] = useState<readonly WinningNumberRow[] | null>(null);
-
-  useEffect(() => {
-    let isMounted = true;
-    const abortController = new AbortController();
-
-    const loadDrawNumbers = async () => {
-      setIsLoadingDraws(true);
-      setDrawLoadError(null);
-      try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
-        const response = await fetch(`${apiUrl}/api/analysis/chi-square/draw-numbers`, {
-          signal: abortController.signal,
-        });
-        if (!response.ok) throw new Error(`Failed to fetch draw numbers: ${response.status}`);
-        const data: unknown = await response.json();
-        if (!Array.isArray(data)) throw new Error('Draw numbers response is not an array');
-        const draws = data.filter((item): item is number => typeof item === 'number');
-        if (!isMounted) return;
-        setAvailableDraws(draws);
-        setSelectedDraw((prev) => (prev || draws.length === 0 ? prev : String(draws[0])));
-      } catch (error) {
-        if (abortController.signal.aborted || !isMounted) return;
-        console.error('Error fetching draw numbers:', error);
-        setAvailableDraws([]);
-        setSelectedDraw('');
-        setDrawLoadError('회차 정보를 불러오지 못했습니다.');
-      } finally {
-        if (isMounted) setIsLoadingDraws(false);
-      }
-    };
-
-    void loadDrawNumbers();
-    return () => {
-      isMounted = false;
-      abortController.abort();
-    };
-  }, []);
-
-  const resetResults = () => {
-    setAnalyzedDrawCount(0);
-    setChiSquareResults([]);
-    setSelectedWinningNumber(null);
-    setWinningNumberError(null);
-    setWalkForwardRows(null);
-  };
-
-  const handleSearch = async () => {
-    if (!selectedDraw) return;
-
-    const drawNo = Number(selectedDraw);
-    if (!Number.isInteger(drawNo) || drawNo < 1) {
-      setSearchError('유효한 회차를 선택해 주세요.');
-      setSearchedDraw('');
-      resetResults();
-      return;
-    }
-
-    setIsSearching(true);
-    setIsLoadingWinningNumber(true);
-    setSearchError(null);
-    setWinningNumberError(null);
-    setSearchedDraw(selectedDraw);
-
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
-
-    try {
-      if (drawNo === 1) {
-        const res = await fetch(`${apiUrl}/api/analysis/chi-square/winning-number?draw_no=${drawNo}`);
-        if (!res.ok) throw new Error(`Failed to fetch winning number: ${res.status}`);
-        const data: unknown = await res.json();
-        if (!isWinningNumberRow(data)) throw new Error('Winning number response is invalid');
-        resetResults();
-        setSelectedWinningNumber(data);
-        setAnalyzedDrawCount(0);
-        return;
-      }
-
-      const [winningNumberRes, rangeRes] = await Promise.all([
-        fetch(`${apiUrl}/api/analysis/chi-square/winning-number?draw_no=${drawNo}`),
-        fetch(`${apiUrl}/api/analysis/chi-square/winning-numbers-range?draw_no=${drawNo}`),
-      ]);
-
-      if (!winningNumberRes.ok) {
-        if (winningNumberRes.status === 404) throw new Error('선택한 회차의 당첨번호를 찾을 수 없습니다.');
-        throw new Error(`Failed to fetch winning number: ${winningNumberRes.status}`);
-      }
-      if (!rangeRes.ok) throw new Error(`Failed to fetch winning numbers range: ${rangeRes.status}`);
-
-      const winningData: unknown = await winningNumberRes.json();
-      const rangeData: unknown = await rangeRes.json();
-
-      if (!isWinningNumberRow(winningData)) throw new Error('Winning number response is invalid');
-      if (!Array.isArray(rangeData)) throw new Error('Winning numbers range response is not an array');
-
-      const rows = rangeData.filter(isWinningNumberRow);
-      const sortedRows = [...rows].sort((a, b) => a.draw_no - b.draw_no);
-      setSelectedWinningNumber(winningData);
-      setAnalyzedDrawCount(rows.length);
-      setChiSquareResults(buildChiSquareResults(rows));
-      setWalkForwardRows(sortedRows);
-    } catch (error) {
-      console.error('Error fetching chi-square data:', error);
-      setSearchError('조회 데이터를 불러오지 못했습니다.');
-      resetResults();
-      setSearchedDraw('');
-    } finally {
-      setIsSearching(false);
-      setIsLoadingWinningNumber(false);
-    }
-  };
+export const useChiSquareData = () => {
+  const draws = useChiSquareDrawList();
+  const srch = useChiSquareSrch({ selectedDraw: draws.selectedDraw });
 
   return {
-    availableDraws,
-    selectedDraw,
-    setSelectedDraw,
-    isLoadingDraws,
-    drawLoadError,
-    selectedWinningNumber,
-    isLoadingWinningNumber,
-    winningNumberError,
-    searchedDraw,
-    isSearching,
-    searchError,
-    analyzedDrawCount,
-    chiSquareResults,
-    walkForwardRows,
-    handleSearch,
+    availableDraws: draws.availableDraws,
+    selectedDraw: draws.selectedDraw,
+    setSelectedDraw: draws.setSelectedDraw,
+    isLoadingDraws: draws.isLoadingDraws,
+    drawLoadError: draws.drawLoadError,
+    selectedWinningNumber: srch.selectedWinningNumber,
+    isLoadingWinningNumber: srch.isLoadingWinningNumber,
+    winningNumberError: srch.winningNumberError,
+    searchedDraw: srch.searchedDraw,
+    isSearching: srch.isSearching,
+    searchError: srch.searchError,
+    analyzedDrawCount: srch.analyzedDrawCount,
+    chiSquareResults: srch.chiSquareResults,
+    walkForwardRows: srch.walkForwardRows,
+    handleSearch: srch.handleSearch,
   };
 };
+
+export type ChiSquareData = ReturnType<typeof useChiSquareData>;

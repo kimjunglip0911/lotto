@@ -5,7 +5,7 @@ import {
   pickFirstNumbersBySignedDeviationOrder,
   selectAdoptedBySignedDeviationSkippingExcluded,
   selectAdoptedBySignedDeviationSkippingExcludedDescending,
-} from './chiSquare';
+} from '../logic/chiSquare';
 
 function mk(partial: Pick<ChiSquareResult, 'number' | 'observed'> & Partial<ChiSquareResult>): ChiSquareResult {
   const expected = partial.expected ?? 10;

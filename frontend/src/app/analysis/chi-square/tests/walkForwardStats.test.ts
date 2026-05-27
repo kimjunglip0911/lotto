@@ -5,7 +5,7 @@ import {
   CHI_SQUARE_DEVIATION_BIN_WIDTH,
 } from '../constants';
 import type { ChiSquareResult } from '../types';
-import { buildChiSquareResults } from './chiSquare';
+import { buildChiSquareResults } from '../logic/chiSquare';
 import {
   buildChiSquareResultsFromCounts,
   classifyDrawExclusiveBucket,
@@ -15,7 +15,7 @@ import {
   runChiSquareWalkForward,
   selectNumbersByDeviationBinMergedRanking,
   splitAndSortDeviationBins,
-} from './walkForwardStats';
+} from '../logic/walkForwardStats';
 
 const row = (
   draw: number,

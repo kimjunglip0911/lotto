@@ -1,8 +1,4 @@
-type Props = {
-  analyzedDrawCount: number;
-  expected: number;
-  chiSquareThreshold: number;
-};
+type Props = { analyzedDrawCount: number; expected: number; chiSquareThreshold: number };
 
 export function SummaryCards({ analyzedDrawCount, expected, chiSquareThreshold }: Props) {
   return (
