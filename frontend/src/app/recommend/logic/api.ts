@@ -1,26 +1,11 @@
 import { isWinningNumberRow } from '@/app/analysis/chi-square/logic/guards'
 import type { WinningNumberRow } from '@/app/analysis/chi-square/types'
-import { buildTrendResults, toWinningRows } from '@/app/recommend/logic/trend'
-import {
-  ChiSquareHistoryRow,
-  ExclusionCandidatesResponse,
-  GeneratedSet,
-  TrendNumberResult,
-  UsedNumbersPlan,
-  WinningHistoryRow,
-} from '@/app/recommend/logic/types'
-import { deriveUsedNumbers } from '@/app/recommend/logic/usedNumbers'
-import {
-  isChiSquareHistoryRow,
-  isExclusionCandidatesResponse,
-  isGeneratedSet,
-  isWinningRow,
-} from '@/app/recommend/logic/validators'
+import { GeneratedSet } from '@/app/recommend/logic/types'
+import { isGeneratedSet, isWinningRow } from '@/app/recommend/logic/validators'
 
 function errorMessage(err: unknown): string {
   return err instanceof Error ? err.message : String(err)
 }
-
 
 async function fetchJson(url: string): Promise<unknown> {
   const response = await fetch(url)
@@ -61,75 +46,15 @@ export async function fetchChiSquareFullHistory(apiUrl: string): Promise<Winning
   return rangePayload.filter(isWinningNumberRow)
 }
 
-export interface RecommendBaseData {
-  exclusionCandidates: ExclusionCandidatesResponse
-  usedNumbersPlan: UsedNumbersPlan
-  chiSquareRows: ChiSquareHistoryRow[]
-  runStreakRows: ChiSquareHistoryRow[]
-  trendResults: TrendNumberResult[]
-  /** 최근 회차 당첨 이력(생성기 이력 신호용). `trend/all-history` 기반 */
-  allHistoryRows: WinningHistoryRow[]
-}
-
-export async function fetchRecommendBaseData(apiUrl: string, drawNo: number): Promise<RecommendBaseData> {
-  const [exclusionResponse, chiSquareRangeResponse, runStreakRangeResponse, allHistoryResponse] =
-    await Promise.all([
-      fetch(`${apiUrl}/api/recommend/exclusion-candidates?draw_no=${drawNo}`),
-      fetch(`${apiUrl}/api/analysis/chi-square/winning-numbers-range?draw_no=${drawNo}`),
-      fetch(`${apiUrl}/api/analysis/run-streak/winning-numbers-range?draw_no=${drawNo}`),
-      fetch(`${apiUrl}/api/analysis/trend/all-history?draw_no=${drawNo}`),
-    ])
-
-  if (!exclusionResponse.ok) {
-    throw new Error(`Failed to fetch exclusion candidates: ${exclusionResponse.status}`)
-  }
-
-  const [exclusionData, chiSquareRangeData, runStreakRangeData, allHistoryData]: [
-    unknown,
-    unknown,
-    unknown,
-    unknown,
-  ] = await Promise.all([
-    exclusionResponse.json(),
-    chiSquareRangeResponse.ok ? chiSquareRangeResponse.json() : Promise.resolve([]),
-    runStreakRangeResponse.ok ? runStreakRangeResponse.json() : Promise.resolve([]),
-    allHistoryResponse.ok ? allHistoryResponse.json() : Promise.resolve([]),
-  ])
-
-  if (!isExclusionCandidatesResponse(exclusionData)) {
-    throw new Error('Exclusion candidates response is invalid')
-  }
-
-  const chiSquareRows = Array.isArray(chiSquareRangeData) ? chiSquareRangeData.filter(isChiSquareHistoryRow) : []
-  const runStreakRows = Array.isArray(runStreakRangeData)
-    ? runStreakRangeData.filter(isChiSquareHistoryRow)
-    : []
-  const allHistoryRows = toWinningRows(allHistoryData)
-  const usedNumbers = deriveUsedNumbers(exclusionData.drawNo, allHistoryRows)
-
-  return {
-    exclusionCandidates: exclusionData,
-    usedNumbersPlan: {
-      drawNo: exclusionData.drawNo,
-      numbers: usedNumbers,
-    },
-    chiSquareRows,
-    runStreakRows,
-    trendResults: buildTrendResults(allHistoryRows),
-    allHistoryRows,
-  }
-}
-
-export interface SavedRecommendData extends RecommendBaseData {
+export interface SavedRecommendData {
   sets: GeneratedSet[]
   winningNumbers: number[] | null
 }
 
 export async function fetchSavedRecommendData(apiUrl: string, drawNo: number): Promise<SavedRecommendData> {
-  const [drawingsResponse, winningNumberResponse, baseData] = await Promise.all([
+  const [drawingsResponse, winningNumberResponse] = await Promise.all([
     fetch(`${apiUrl}/api/recommend/drawings?draw_no=${drawNo}`),
     fetch(`${apiUrl}/api/analysis/accu-nums/winning-number?draw_no=${drawNo}`),
-    fetchRecommendBaseData(apiUrl, drawNo),
   ])
 
   if (!drawingsResponse.ok) {
@@ -154,7 +79,6 @@ export async function fetchSavedRecommendData(apiUrl: string, drawNo: number): P
     : null
 
   return {
-    ...baseData,
     sets: drawingsData.filter(isGeneratedSet),
     winningNumbers,
   }

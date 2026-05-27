@@ -1,4 +1,4 @@
-import { ChiSquareHistoryRow, ExclusionCandidatesResponse, GeneratedSet } from '@/app/recommend/logic/types'
+import { ChiSquareHistoryRow, GeneratedSet } from '@/app/recommend/logic/types'
 
 type WinningRow = {
   draw_no: number
@@ -9,38 +9,6 @@ type WinningRow = {
   num5: number
   num6: number
   bonus_num: number
-}
-
-function isRankedNumberInfo(value: unknown): boolean {
-  if (typeof value !== 'object' || value === null) return false
-  const info = value as { number?: unknown; count?: unknown; is_tie?: unknown; candidates?: unknown }
-  return (
-    typeof info.number === 'number' &&
-    typeof info.count === 'number' &&
-    typeof info.is_tie === 'boolean' &&
-    Array.isArray(info.candidates)
-  )
-}
-
-export function isExclusionCandidatesResponse(value: unknown): value is ExclusionCandidatesResponse {
-  if (typeof value !== 'object' || value === null) return false
-  const data = value as {
-    drawNo?: unknown
-    leastFrequentOverall?: unknown
-    windowTopNumbers?: Record<string, unknown>
-    excludedNumbersUnion?: unknown
-  }
-  const windows = data.windowTopNumbers
-  return (
-    typeof data.drawNo === 'number' &&
-    isRankedNumberInfo(data.leastFrequentOverall) &&
-    typeof windows === 'object' &&
-    windows !== null &&
-    ['overall', 'sixMonth', 'oneYear', 'threeYear', 'fiveYear', 'tenYear'].every((key) =>
-      isRankedNumberInfo(windows[key]),
-    ) &&
-    Array.isArray(data.excludedNumbersUnion)
-  )
 }
 
 export function isWinningRow(value: unknown): value is WinningRow {

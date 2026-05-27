@@ -18,12 +18,11 @@
 | `hooks/useAccView.ts` | 안내 문구·당첨 번호·적중용 `Set` 파생값 |
 | `logic/runAccSearch.ts` | 당첨 범위·해당 회차 당첨 API 병렬 호출·집계·극값 제외 |
 | `logic/accuCntExt.ts` | 극값 제외 계산(통합 분석과 동일 함수) |
-| `logic/stratEval.ts` | 전략 평가 facade(`eval`·`window`·`pick`·`rec`) |
-| `logic/runStratSel.ts` | 전략 차트·극값 제외 스냅샷용(조회 UI 경로에서는 미호출) |
+| `logic/numCounts.ts` | 회차별 본번호 출현 누적 집계 |
 | `api/` | 백엔드 API(`core/`·`parse/`·`types/`·`draw/`·`win/`·`index.ts` 공개 진입점) |
 | `types/index.ts` | 타입 공개 진입점 |
-| `constants/` | 번호 범위·104회 윈도·전략 키 상수 |
-| `tests/` | 극값 제외·전략 선정 단위 테스트 |
+| `constants/` | 번호 범위·104회 윈도 상수 |
+| `tests/` | 극값 제외 단위 테스트 |
 
 ## 로컬에서 확인
 
@@ -31,5 +30,6 @@
 
 ## 주의
 
-- 이전에 제공하던 **분석 결과 스냅샷 저장**(최종 4개 번호) UI·API 호출은 제거되었습니다. 백엔드 스냅샷 라우트는 그대로 둘 수 있습니다.
-- `final-pick`·`recommend`는 `logic/accuCntExt`, `logic/stratEval`, `ui/chart/accBarStat` 등을 공유합니다. 경로 변경 시 해당 import를 함께 맞춥니다.
+- 이전에 제공하던 **분석 결과 스냅샷 저장**(최종 4개 번호) UI·API 호출은 제거되었습니다.
+- 과거 **4종 전략 평가**(상위4·하위4·평균근접·상2하2) 및 rolling evaluation 코드는 제거되었습니다. 극값 제외는 `accuCntExt`의 출현 최다·최소 슬롯만 사용합니다.
+- `final-pick`은 `logic/accuCntExt`, `ui/chart/accBarStat` 등을 공유합니다. 경로 변경 시 해당 import를 함께 맞춥니다.

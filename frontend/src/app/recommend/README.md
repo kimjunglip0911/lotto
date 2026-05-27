@@ -23,7 +23,7 @@
 - `logic/combinationBandRepair.ts` — `buildHistCounts`, `randomBandSeed`, `repairOneStep`, `tryBuildOneSet`.
 - `logic/api.ts` — `fetchChiSquareFullHistory`(조합 통계용 전체 이력), 저장/조회 API
 - `logic/types.ts` — `GeneratedSet`, `RecommendRule*` 타입(저장 데이터·타입 호환용으로 일부 유지)
-- `logic/trend.ts`, `logic/usedNumbers.ts`, `logic/validators.ts` — `fetchSavedRecommendData` / 과거 데이터 로드에 사용
+- `logic/validators.ts` — `fetchSavedRecommendData` 응답 검증
 - `logic/lottoRank.ts` — 등수 계산(단위 테스트), UI 비필수
 
 ## 검증
