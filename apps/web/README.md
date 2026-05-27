@@ -17,6 +17,8 @@ npm run dev
 브라우저의 `/api/*` 요청은 `src/app/api/[...path]/route.ts`에서 Nest(`8010`)로 **fetch** 프록시합니다.  
 (구 `next.config` `rewrites` + 내장 `http-proxy`는 `util._extend` DeprecationWarning을 유발해 제거함.)
 
+API가 꺼져 있으면 프록시는 **503**과 안내 JSON을 반환합니다 (`ECONNREFUSED` 시).
+
 | 변수 | 설명 |
 |:---|:---|
 | `API_PROXY_ORIGIN` | 서버 프록시 대상 (기본 `http://localhost:8010`) |

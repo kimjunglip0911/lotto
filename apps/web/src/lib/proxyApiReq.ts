@@ -30,5 +30,22 @@ export const proxyToApi = async (
     init.duplex = 'half';
   }
 
-  return fetch(target, init);
+  try {
+    return await fetch(target, init);
+  } catch (error) {
+    const refused =
+      error instanceof TypeError &&
+      error.cause != null &&
+      typeof error.cause === 'object' &&
+      'code' in error.cause &&
+      (error.cause as { code?: string }).code === 'ECONNREFUSED';
+
+    if (refused) {
+      return Response.json(
+        { message: 'API server is not reachable. Is Nest running on port 8010?' },
+        { status: 503 },
+      );
+    }
+    throw error;
+  }
 };
