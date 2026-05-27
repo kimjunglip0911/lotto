@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import {
   generateCombinationBasedSets,
-  sortGeneratedSetsByComboStrategy,
+  orderSetsByProfileSlots,
   TARGET_SET_COUNT,
 } from '@/app/recommend/logic/combinationBasedSets'
 import {
@@ -93,11 +93,15 @@ export function useRecommendGeneration({
         sets: payloadSets,
       })
 
-      setGeneratedSets(sortGeneratedSetsByComboStrategy(generatedData))
+      setGeneratedSets(orderSetsByProfileSlots(generatedData))
       const refNote = adoptedResult.infoMessage ? ` ${adoptedResult.infoMessage}` : ''
-      const tail = warning ? ` (${warning})` : ''
+      const shortOfGoal =
+        generatedData.length < TARGET_SET_COUNT
+          ? ` 목표 ${TARGET_SET_COUNT}세트에 ${TARGET_SET_COUNT - generatedData.length}개 부족합니다.`
+          : ''
+      const tail = warning ? ` ${warning}` : ''
       setStatusMessage(
-        `${selectedDraw}회차 기준으로 ${generatedData.length}개 세트를 생성·저장했습니다.${refNote}${tail}`,
+        `${selectedDraw}회차 기준으로 ${generatedData.length}개 세트를 생성·저장했습니다.${shortOfGoal}${refNote}${tail}`,
       )
     } catch (err: unknown) {
       const msg = errorMessage(err)
