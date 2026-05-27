@@ -12,17 +12,15 @@ npm run dev -w web
 npm run dev
 ```
 
-## API 프록시
+## 환경 변수
 
-브라우저의 `/api/*` 요청은 `src/app/api/[...path]/route.ts`에서 Nest(`8010`)로 **fetch** 프록시합니다.  
-(구 `next.config` `rewrites` + 내장 `http-proxy`는 `util._extend` DeprecationWarning을 유발해 제거함.)
-
-API가 꺼져 있으면 프록시는 **503**과 안내 JSON을 반환합니다 (`ECONNREFUSED` 시).
+로컬: `apps/web/.env.example`을 복사해 `.env.local`을 만듭니다.
 
 | 변수 | 설명 |
 |:---|:---|
-| `API_PROXY_ORIGIN` | 서버 프록시 대상 (기본 `http://localhost:8010`) |
-| `NEXT_PUBLIC_API_URL` | 클라이언트가 직접 API를 부를 때 베이스 URL (비우면 동일 출처 `/api`) |
+| `NEXT_PUBLIC_API_URL` | 브라우저가 Nest를 직접 부를 베이스 URL (예: `http://localhost:8010`). **필수** — 미설정 시 API 호출이 동작하지 않습니다 |
+
+변경 후에는 `npm run dev`를 **다시 시작**해야 `NEXT_PUBLIC_*`가 반영됩니다.
 
 ---
 

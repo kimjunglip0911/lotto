@@ -1,9 +1,5 @@
 node_modules
 
-# 루트 npm 매니페스트·락파일 (로컬 관리, 커밋 제외)
-/package.json
-/package-lock.json
-
 # 환경 변수·API 키 (커밋 금지)
 .env
 .env.local
