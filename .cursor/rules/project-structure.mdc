@@ -48,7 +48,7 @@ lotto/
 │           ├── db/
 │           │   ├── schema.sql
 │           │   └── data/lotto.db      # SQLite 정본(.gitignore)
-│           ├── home/
+│           ├── home/                  # 8폴더 리팩터링 완료 (api·ui·hooks·logic·helpers·types·constants·tests)
 │           ├── recommend/
 │           └── analysis/
 │               ├── accu-nums/
@@ -84,4 +84,4 @@ lotto/
 
 ---
 
-*Last Updated: 2026-05-28 (trend: 8폴더 리팩터링)*
+*Last Updated: 2026-05-28 (home: 8폴더 리팩터링)*

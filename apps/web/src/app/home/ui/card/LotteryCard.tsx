@@ -1,12 +1,10 @@
+/** 분석 번호 한 세트를 카드 형태로 표시한다 */
+
 import React from 'react';
+
 import { LotteryBall } from '@/components/ui/LotteryBall';
 
-export interface LotteryCardProps {
-  setIndex: number;
-  drawNo: number;
-  numbers: number[];
-  method?: string;
-}
+import type { LotteryCardProps } from '../../types/home';
 
 export function LotteryCard({ setIndex, drawNo, numbers, method }: LotteryCardProps) {
   return (
@@ -15,7 +13,6 @@ export function LotteryCard({ setIndex, drawNo, numbers, method }: LotteryCardPr
         <span className="text-[16px] font-black text-primary uppercase tracking-wider">SET {setIndex + 1}</span>
         <span className="mr-1 whitespace-nowrap text-[13px] font-semibold text-slate-300 bg-slate-800/50 px-2.5 py-1 rounded-md">({drawNo}회차)</span>
       </div>
-
       <div className="flex items-center justify-center gap-1.5 flex-nowrap shrink-0 w-full my-2 scale-[0.98] group-hover:scale-100 transition-transform duration-300">
         <div className="flex gap-1.5">
           {numbers.map((num, index) => (
@@ -23,11 +20,9 @@ export function LotteryCard({ setIndex, drawNo, numbers, method }: LotteryCardPr
           ))}
         </div>
       </div>
-
       <div className="mt-1 text-[13px] font-medium text-slate-300 bg-black/20 border border-white/10 px-3 py-2 rounded-lg w-full text-center truncate">
         분석 기법 : <span className="text-white ml-1">{method || '기본'}</span>
       </div>
     </div>
   );
 }
-
