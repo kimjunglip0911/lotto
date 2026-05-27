@@ -4,7 +4,7 @@ type Props = {
   kTrend: number;
 };
 
-export function SummaryCards({ historyCount, baseline, kTrend }: Props) {
+export function SumCards({ historyCount, baseline, kTrend }: Props) {
   return (
     <section className="grid grid-cols-1 sm:grid-cols-3 gap-3">
       <div className="rounded-2xl border border-card-border/30 bg-card-bg/60 p-3 flex flex-col gap-1">

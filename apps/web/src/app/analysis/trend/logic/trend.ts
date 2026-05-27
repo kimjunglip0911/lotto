@@ -1,4 +1,4 @@
-import { CHART_INNER_H, CHART_PADDING_TOP, K_TREND, TOTAL_NUMBERS } from '../constants';
+import { CHART_INNER_H, CHART_PADDING_TOP, K_TREND, TOTAL_NUMBERS } from '../constants/trendChart';
 import type { NumberTrendResult, WinningNumberRow } from '../types';
 
 /** 주번호 6개만 사용(보너스 제외). */

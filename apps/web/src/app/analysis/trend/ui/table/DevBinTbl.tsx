@@ -1,13 +1,10 @@
-import type { DeviationBinsSummary } from '../types';
+import type { DeviationBinsSummary } from '../../types';
 
 type Props = {
   summary: DeviationBinsSummary;
 };
 
-/**
- * 선택 회차를 제외한 전체 이력에서, 기댓값 대비 EMA 편차(%p) 구간별 회차 기준 출현확률을 표시한다.
- */
-export function ExpectedDeviationBinTable({ summary }: Props) {
+export function DevBinTbl({ summary }: Props) {
   const { rows, validDrawCount, skippedDrawCount } = summary;
   const visibleRows = rows.filter((row) => row.drawCount > 0);
 
@@ -16,15 +13,14 @@ export function ExpectedDeviationBinTable({ summary }: Props) {
       <div>
         <h3 className="text-xl font-semibold text-white">기댓값 대비 EMA 편차 구간(1)</h3>
         <p className="text-xs text-slate-400 mt-1">
-          표본: 조회한 선택 회차보다 이전의 전체 회차(보너스 제외). 각 회차에서 번호별 편차(%p) 구간이 나온 회차 대비, 실제 당첨 주6 포함 회차 비율을 출현확률로 계산합니다.
+          표본: 조회한 선택 회차보다 이전의 전체 회차(보너스 제외). 각 회차에서 번호별 편차(%p) 구간이 나온 회차 대비,
+          실제 당첨 주6 포함 회차 비율을 출현확률로 계산합니다.
         </p>
       </div>
-
       <p className="text-[11px] text-slate-500">
         유효 회차 {validDrawCount.toLocaleString()}건
         {skippedDrawCount > 0 ? ` · 기댓값 미달 등으로 제외 ${skippedDrawCount.toLocaleString()}건` : ''}
       </p>
-
       {validDrawCount === 0 || visibleRows.length === 0 ? (
         <p className="text-sm text-slate-300">집계 가능한 이전 이력이 없거나, 유효 회차가 없어 구간을 표시할 수 없습니다.</p>
       ) : (

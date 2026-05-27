@@ -1,4 +1,4 @@
-import type { WinningNumberRow } from '../types';
+import type { WinningNumberRow } from '../types/trend';
 
 export const isWinningNumberRow = (value: unknown): value is WinningNumberRow => {
   if (typeof value !== 'object' || value === null) return false;

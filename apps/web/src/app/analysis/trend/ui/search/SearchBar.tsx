@@ -1,4 +1,4 @@
-import type { WinningNumberRow } from '../types';
+import type { WinningNumberRow } from '../../types';
 
 type Props = {
   selectedDraw: string;
@@ -14,7 +14,7 @@ type Props = {
   statusMessage: string | null;
 };
 
-export function SearchControls({
+export function SearchBar({
   selectedDraw,
   onChangeSelectedDraw,
   availableDraws,
@@ -61,7 +61,6 @@ export function SearchControls({
             조회
           </button>
         </div>
-
         <div className="rounded-xl border border-white/10 bg-slate-900/60 px-4 py-3 min-h-[74px] lg:min-w-[440px]">
           <p className="text-xs font-medium text-slate-300 mb-2">선택 회차 당첨번호 (보너스 포함)</p>
           {isLoadingWinningNumber ? (
@@ -89,7 +88,6 @@ export function SearchControls({
           )}
         </div>
       </div>
-
       {statusMessage && <p className="text-slate-300 text-sm leading-relaxed">{statusMessage}</p>}
     </section>
   );

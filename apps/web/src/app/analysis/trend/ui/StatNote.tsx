@@ -2,7 +2,7 @@ type Props = {
   kTrend: number;
 };
 
-export function StatisticalNote({ kTrend }: Props) {
+export function StatNote({ kTrend }: Props) {
   return (
     <section className="rounded-2xl border border-white/10 bg-slate-900/40 p-4">
       <p className="text-xs text-slate-400 leading-relaxed">

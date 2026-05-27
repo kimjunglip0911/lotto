@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import { K_TREND, TOTAL_NUMBERS } from '../constants';
+import { K_TREND, TOTAL_NUMBERS } from '../constants/trendChart';
+import { aggregateDeviationBins, MIN_BASELINE } from '../logic/bins';
+import { computeEmpiricalAppearanceRate } from '../logic/trend';
 import type { WinningNumberRow } from '../types';
-import { aggregateDeviationBins, MIN_BASELINE } from './trendDeviationBins';
-import { computeEmpiricalAppearanceRate } from './trend';
 
 const mk = (draw_no: number, nums: [number, number, number, number, number, number]): WinningNumberRow => ({
   draw_no,

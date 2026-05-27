@@ -1,4 +1,4 @@
-import type { NumberTrendResult } from '../types';
+import type { NumberTrendResult } from '../../types';
 
 type Props = {
   noHistory: boolean;
@@ -8,11 +8,10 @@ type Props = {
   hasResults: boolean;
   trendResults: NumberTrendResult[];
   selectedWinningNumberSet: Set<number> | null;
-  /** 트렌드 이력 기반 기댓값(주6·보너스 제외) */
   baseline: number;
 };
 
-export function TrendResultTable({
+export function TrendTbl({
   noHistory,
   hasSearched,
   isSearching,
@@ -25,7 +24,6 @@ export function TrendResultTable({
   return (
     <section className="rounded-2xl border border-card-border/30 bg-card-bg/60 p-4 space-y-3">
       <h3 className="text-xl font-semibold text-white">번호별 EMA 출현율 상세</h3>
-
       {noHistory ? (
         <p className="text-sm text-slate-300">1회는 이전 회차가 없어 집계할 데이터가 없습니다.</p>
       ) : !hasSearched ? (
@@ -55,10 +53,7 @@ export function TrendResultTable({
                 const diffPct = ((row.ema - baseline) * 100).toFixed(1);
                 const diffPositive = row.ema >= baseline;
                 return (
-                  <tr
-                    key={row.number}
-                    className="border-b border-white/5 transition-colors hover:bg-white/5"
-                  >
+                  <tr key={row.number} className="border-b border-white/5 transition-colors hover:bg-white/5">
                     <td className="py-1.5 pr-3">
                       <span
                         className={`inline-flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold ${
@@ -69,7 +64,9 @@ export function TrendResultTable({
                       </span>
                     </td>
                     <td className="py-1.5 pr-2 text-right tabular-nums text-xs text-sky-300">{emaPct}%</td>
-                    <td className={`py-1.5 pr-2 text-right tabular-nums text-xs ${diffPositive ? 'text-blue-300' : 'text-rose-400'}`}>
+                    <td
+                      className={`py-1.5 pr-2 text-right tabular-nums text-xs ${diffPositive ? 'text-blue-300' : 'text-rose-400'}`}
+                    >
                       {diffPositive ? '+' : ''}
                       {diffPct}%
                     </td>
