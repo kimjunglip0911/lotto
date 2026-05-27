@@ -1,11 +1,9 @@
 import { useMemo } from 'react';
-import { getMaxStreak } from '../logic/streak/streak';
 import { buildStatusMessage } from '../logic/hintLine';
+import { getMaxStreak } from '../logic/streak/streak';
 import type { StreakResult } from '../types';
 
-// 조회된 데이터를 카드·표·상단 안내 문구에 맞게 가공한 값만 돌려 줍니다.
-
-type Params = {
+type StViewIn = {
   availableDraws: number[];
   selectedDraw: string;
   isLoadingDraws: boolean;
@@ -25,7 +23,7 @@ export const useStView = ({
   isSearching,
   searchError,
   streakResults,
-}: Params) => {
+}: StViewIn) => {
   const hasSearched = searchedDraw !== '';
   const noHistory = hasSearched && Number(searchedDraw) <= 1;
 
@@ -47,3 +45,5 @@ export const useStView = ({
 
   return { hasSearched, noHistory, maxStreak, coldNumbers, canShowStreakPanels, statusMessage };
 };
+
+export type StreakView = ReturnType<typeof useStView>;

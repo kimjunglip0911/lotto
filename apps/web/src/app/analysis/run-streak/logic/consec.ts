@@ -1,5 +1,5 @@
-import type { WinningNumberRow } from '../../types';
-import { isValidLotteryNumber } from './lotNums';
+import { isValidLotteryNumber } from '../constants/lotNums';
+import type { WinningNumberRow } from '../types';
 
 // 직전 두 회차에 연달아 나온 본번호를 찾아내는 코드입니다.
 // 추천 화면과 최종 4개 화면이 "이번에 빼고 갈 번호" 후보로 이 결과를 사용합니다.

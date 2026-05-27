@@ -55,7 +55,7 @@ lotto/
 │               ├── chi-square/
 │               ├── final-pick/        # 통합 분석(api·ui·hooks·logic/chiWf·tests)
 │               ├── trend/
-│               └── run-streak/
+│               └── run-streak/        # 8폴더 리팩터링 완료 (api·ui·hooks·logic·helpers·types·constants·tests)
 │
 ├── frontend/                          # 이전됨 → apps/web (삭제 예정)
 │   └── README.md
@@ -84,4 +84,4 @@ lotto/
 
 ---
 
-*Last Updated: 2026-05-27 (final-pick: 8폴더 리팩터링)*
+*Last Updated: 2026-05-27 (run-streak: 8폴더 리팩터링)*

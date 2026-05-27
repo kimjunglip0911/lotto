@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { buildNumberCounts } from '@/app/analysis/accu-nums/logic/numCounts';
-import { getConsecutivelyAppearedMainNumbers } from '@/app/analysis/run-streak/logic/streak/consec';
+import { getConsecutivelyAppearedMainNumbers } from '@/app/analysis/run-streak/logic/consec';
 import { getAccumulatedExclusionNumbers, type AccumulatedExclusionResult } from '../logic/accuAdopt';
 import { getChiSquareFinalPickSlice } from '../logic/chiWf';
 import { pickReferenceMainNumbers } from '../logic/pickMainNums';

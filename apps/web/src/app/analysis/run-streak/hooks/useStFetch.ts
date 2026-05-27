@@ -2,8 +2,6 @@ import { useState } from 'react';
 import { loadStreakSearch, parseStDrawNo } from '../logic/streak/stSearch';
 import type { StreakResult, WinningNumberRow } from '../types';
 
-// 조회 시 서버에서 당첨번호·이전 회차를 받아 연속 출현(본번호 6개) 결과를 만들어 화면에 넘깁니다.
-
 export const useStFetch = (selectedDraw: string) => {
   const [selectedWinningNumber, setSelectedWinningNumber] = useState<WinningNumberRow | null>(null);
   const [isLoadingWinningNumber, setIsLoadingWinningNumber] = useState(false);
@@ -12,11 +10,13 @@ export const useStFetch = (selectedDraw: string) => {
   const [searchError, setSearchError] = useState<string | null>(null);
   const [analyzedDrawCount, setAnalyzedDrawCount] = useState(0);
   const [streakResults, setStreakResults] = useState<StreakResult[]>([]);
+
   const resetResults = () => {
     setAnalyzedDrawCount(0);
     setStreakResults([]);
     setSelectedWinningNumber(null);
   };
+
   const handleSearch = async () => {
     const drawNo = parseStDrawNo(selectedDraw);
     if (drawNo === null) {
@@ -49,5 +49,15 @@ export const useStFetch = (selectedDraw: string) => {
       setIsLoadingWinningNumber(false);
     }
   };
-  return { selectedWinningNumber, isLoadingWinningNumber, searchedDraw, isSearching, searchError, analyzedDrawCount, streakResults, handleSearch };
+
+  return {
+    selectedWinningNumber,
+    isLoadingWinningNumber,
+    searchedDraw,
+    isSearching,
+    searchError,
+    analyzedDrawCount,
+    streakResults,
+    handleSearch,
+  };
 };

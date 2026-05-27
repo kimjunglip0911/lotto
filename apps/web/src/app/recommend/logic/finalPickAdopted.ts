@@ -1,4 +1,4 @@
-import { getConsecutivelyAppearedMainNumbers } from '@/app/analysis/run-streak/logic/streak/consec'
+import { getConsecutivelyAppearedMainNumbers } from '@/app/analysis/run-streak/logic/consec'
 import { getAccumulatedExclusionNumbers } from '@/app/analysis/final-pick/logic/accuAdopt'
 import { getChiSquareFinalPickSlice } from '@/app/analysis/final-pick/logic/chiWf'
 import {
