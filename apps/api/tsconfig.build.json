@@ -9,7 +9,6 @@
     "test",
     "dist",
     "src/scripts",
-    "src/db/data",
     "**/*spec.ts"
   ]
 }

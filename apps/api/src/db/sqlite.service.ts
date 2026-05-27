@@ -24,11 +24,19 @@ export class SqliteService implements OnModuleInit {
     if (override) {
       return override;
     }
-    const srcData = join(process.cwd(), 'src', 'db', 'data', 'lotto.db');
-    if (existsSync(srcData)) {
-      return srcData;
+    const candidates = [
+      join(process.cwd(), 'data', 'lotto.db'),
+      join(process.cwd(), 'apps', 'api', 'data', 'lotto.db'),
+      join(__dirname, '..', '..', 'data', 'lotto.db'),
+      // 이전 경로(마이그레이션): src 안 DB는 watch 재빌드 유발
+      join(process.cwd(), 'src', 'db', 'data', 'lotto.db'),
+    ];
+    for (const p of candidates) {
+      if (existsSync(p)) {
+        return p;
+      }
     }
-    return join(__dirname, 'data', 'lotto.db');
+    return join(process.cwd(), 'data', 'lotto.db');
   }
 
   async withDb<T>(fn: (db: Database.Database) => T): Promise<T> {

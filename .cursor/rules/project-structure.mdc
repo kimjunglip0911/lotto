@@ -77,7 +77,7 @@ lotto/
 ## 운영 기준 메모
 
 - 개발 포트: web `3010`, api `8010` (`npm run dev`)
-- SQLite: `apps/api/src/db/data/lotto.db`, `LOTTO_DB_PATH` 오버라이드
+- SQLite: `apps/api/data/lotto.db` (`src` 밖), `LOTTO_DB_PATH` 오버라이드
 - 구조 변경 시 함께 갱신: `apps/api/README.md`, 기능별 `README.md`, 본 파일
 - **기능 폴더 8대표 구조**: 신규/리팩터링 시 각 기능 폴더 루트(`apps/web/src/app/<route>/`)는 `refactoring-guide.mdc` `## 핵심 4`에 따라 다음 8개 폴더(`api/`, `ui/`, `hooks/`, `logic/`, `helpers/`, `types/`, `constants/`, `tests/`)를 항상 생성한다(빈 폴더는 `.gitkeep` 유지). 루트에는 `page.tsx`와 `README.md`만 둔다.
 - 페이지 전용 UI 위치는 `components.mdc`(3계층: `app/<route>/ui/`)와 일치시킨다.

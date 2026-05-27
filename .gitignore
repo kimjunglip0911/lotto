@@ -1,5 +1,9 @@
 node_modules
 
+# 루트 npm 매니페스트·락파일 (로컬 관리, 커밋 제외)
+/package.json
+/package-lock.json
+
 # 환경 변수·API 키 (커밋 금지)
 .env
 .env.local
@@ -25,8 +29,13 @@ apps/api/dist/
 
 # Local database files
 *.db
+*.db-shm
+*.db-wal
 *.sqlite
 *.sqlite3
+
+# Nest API SQLite data (로컬 정본·WAL, src 밖 — 커밋 제외)
+apps/api/data/*
 
 # 누적 스냅샷 스테이징(배치 스크립트 산출물, 커밋 금지)
 frontend/src/app/analysis/accu-nums/accumulated-snapshots-staging.md

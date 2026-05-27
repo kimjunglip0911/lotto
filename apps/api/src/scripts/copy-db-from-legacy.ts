@@ -1,17 +1,17 @@
 /**
- * 이전 경로의 lotto.db → src/db/data/lotto.db 복사 및 행 수 검증
+ * 이전 경로의 lotto.db → apps/api/data/lotto.db 복사 및 행 수 검증
  * 실행: npm run db:copy -w api
  */
 import Database from 'better-sqlite3';
 import { copyFileSync, existsSync, mkdirSync } from 'fs';
-import { dirname, join } from 'path';
+import { join } from 'path';
 
 const apiRoot = join(__dirname, '..', '..');
 const legacyCandidates = [
-  join(apiRoot, 'data', 'lotto.db'),
+  join(apiRoot, 'src', 'db', 'data', 'lotto.db'),
   join(apiRoot, '..', '..', 'backend', 'DB', 'lotto.db'),
 ];
-const targetDir = join(__dirname, '..', 'db', 'data');
+const targetDir = join(apiRoot, 'data');
 const target = join(targetDir, 'lotto.db');
 
 const countTables = (dbPath: string): Record<string, number> => {
