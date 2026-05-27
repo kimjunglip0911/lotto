@@ -56,7 +56,7 @@ backend/
 
 - **진입점** `main.py` 상단에 `sys.dont_write_bytecode = True`를 넣어 두었습니다.  
   이 경로로 실행하는 한 이 프로젝트 소스에서는 `__pycache__`가 생성되지 않습니다.
-- 루트 `package.json`의 `npm run dev:backend`는 `python -B -m uvicorn ...`로 실행되어 바이트코드 생성이 한 번 더 차단됩니다.
+- 루트 `package.json`의 `npm run dev:backend`는 `py -3.12 -B -m uvicorn ...`로 실행합니다(Windows 기본 `python`이 3.14 등 손상 설치를 가리키는 경우 대비). 바이트코드 생성도 `-B`로 차단됩니다.
 - **전역**으로 끄려면 터미널에서 `set PYTHONDONTWRITEBYTECODE=1`(Windows) 또는 `export PYTHONDONTWRITEBYTECODE=1`(Mac/Linux) 후 실행하세요.
 - `__pycache__` 폴더는 삭제해 두었으며, `.gitignore`에 포함되어 있어 커밋되지 않습니다.
 
@@ -95,7 +95,7 @@ npm run check:no-init
 | FastAPI 앱·미들웨어 | [`main.py`](main.py) | `FastAPI()` 인스턴스, `CORSMiddleware`(origins/methods/headers), `include_router`로 기능 라우터 마운트 |
 | 라우터 마운트 | [`main.py`](main.py) | `include_router`와 `load_router_from_file`로 기능 라우터 동적 로드 |
 | Python 패키지 | [`requirements.txt`](requirements.txt) | 런타임: `fastapi`, `uvicorn[standard]`, `pydantic`, `torch` |
-| 로컬 개발 서버 (Node) | 저장소 루트 `package.json` | `npm run dev:backend` → `python -B -m uvicorn backend.main:app`, `--reload-dir backend`, `--reload-dir features` |
+| 로컬 개발 서버 (Node) | 저장소 루트 `package.json` | `npm run dev:backend` → `py -3.12 -B -m uvicorn backend.main:app`, `--reload-dir backend` |
 
 **역할 분리 참고**: 엔드포인트 구현·DB 접근·공통 Pydantic 스키마는 `features/` 및 본 디렉터리의 `DB/database.py`, `domain/models/`, `DB/` 등에서 담고, 분석 기능의 등수 판정은 `features/analysis/domain/` 에 둡니다. 위 표는 **HTTP 서버 골격과 라이브러리 선언**에 해당합니다.
 
