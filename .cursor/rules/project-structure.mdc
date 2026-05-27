@@ -6,7 +6,7 @@ alwaysApply: false
 
 # Lotto 프로젝트 구조
 
-> Next.js 16 + FastAPI 기반 로또 서비스 (2026-04 기준)
+> Next.js 16(web) + NestJS(api) 로또 서비스 (2026-05 기준)
 
 ---
 
@@ -25,202 +25,41 @@ lotto/
 │   │   └── git-commit-guide.mdc
 │   └── skills/
 │
-├── backend/
-│   ├── main.py                        # FastAPI 앱 진입점
-│   ├── requirements.txt
+├── apps/
 │   ├── README.md
-│   ├── domain/
-│   │   ├── analysis/                  # 분석 도메인 확장 자리(현재 비어 있음)
-│   │   ├── models/
-│   │   │   └── schemas.py
-│   │   ├── recommend/
-│   │   │   └── lotto_rank.py          # 당첨 등수 계산 도메인 로직
-│   ├── DB/
-│   │   ├── database.py                # SQLite 연결/경로
-│   │   ├── init_db.py
-│   │   ├── schema.sql
-│   │   ├── lotto.db                   # 로컬 SQLite 파일
-│   │   └── README.md
-│   ├── router/
-│   │   ├── analysis/
-│   │   │   ├── run-streak/
-│   │   │   │   ├── router.py
-│   │   │   │   └── queries.py
-│   │   │   ├── trend/
-│   │   │   │   ├── router.py
-│   │   │   │   └── queries.py
-│   │   │   ├── chi-square/
-│   │   │   │   ├── router.py
-│   │   │   │   └── queries.py
-│   │   │   ├── accu-nums/
-│   │   │   │   ├── router.py
-│   │   │   │   └── queries.py
-│   │   │   └── _shared.py
-│   │   ├── home/
-│   │   │   ├── router.py
-│   │   │   └── queries.py
-│   │   └── recommend/
-│   │       ├── router.py
-│   │       ├── repository.py
-│   │       ├── helpers.py
-│   │       ├── jl_loader.py
-│   │       └── queries.py
-│   └── sql/
-│       ├── analysis/                  # 분석 SQL 확장 자리(현재 비어 있음)
-│       ├── home/                      # 비어 있음(queries는 router로 이동)
-│       └── recommend/                 # 비어 있음(queries는 router로 이동)
+│   ├── web/                           # Next.js (구 frontend/)
+│   │   ├── package.json
+│   │   ├── next.config.ts
+│   │   ├── eslint.config.mjs
+│   │   ├── postcss.config.mjs
+│   │   ├── components.json
+│   │   ├── .env.local
+│   │   ├── next-env.d.ts
+│   │   ├── tsconfig.json
+│   │   ├── README.md
+│   │   └── src/
+│   │       ├── app/                   # App Router 엔트리
+│   └── api/                           # NestJS API
+│       ├── package.json
+│       ├── README.md
+│       └── src/
+│           ├── dist/                  # 빌드 산출물
+│           ├── scripts/               # db:copy 등
+│           ├── db/
+│           │   ├── schema.sql
+│           │   └── data/lotto.db      # SQLite 정본(.gitignore)
+│           ├── home/
+│           ├── recommend/
+│           └── analysis/
+│               ├── accu-nums/
+│               ├── chi-square/
+│               ├── trend/
+│               └── run-streak/
 │
-├── frontend/
-│   ├── package.json
-│   ├── next.config.ts
-│   ├── eslint.config.mjs
-│   ├── postcss.config.mjs
-│   ├── components.json
-│   ├── .env.local
-│   ├── next-env.d.ts
-│   ├── tsconfig.json
-│   ├── tsconfig.tsbuildinfo
-│   ├── README.md
-│   └── src/
-│       ├── app/                       # App Router 엔트리
-│       │   ├── layout.tsx
-│       │   ├── globals.css
-│       │   ├── favicon.ico
-│       │   ├── page.tsx
-│       │   ├── analysis/
-│       │   │   ├── accu-nums/
-│       │   │   │   ├── README.md
-│       │   │   │   ├── page.tsx
-│       │   │   │   ├── api/
-│       │   │   │   │   ├── index.ts
-│       │   │   │   │   ├── core/
-│       │   │   │   │   ├── parse/
-│       │   │   │   │   ├── types/
-│       │   │   │   │   ├── draw/
-│       │   │   │   │   ├── win/
-│       │   │   │   ├── constants/
-│       │   │   │   ├── types/
-│       │   │   │   ├── helpers/
-│       │   │   │   ├── hooks/
-│       │   │   │   ├── tests/
-│       │   │   │   ├── logic/
-│       │   │   │   │   ├── eval/
-│       │   │   │   │   ├── window/
-│       │   │   │   │   ├── pick/
-│       │   │   │   │   ├── rec/
-│       │   │   │   │   └── …
-│       │   │   │   └── ui/
-│       │   │   │       ├── AccuMain.tsx
-│       │   │   │       ├── chart/
-│       │   │   │       └── search/
-│       │   │   ├── chi-square/
-│       │   │   │   ├── README.md
-│       │   │   │   ├── page.tsx
-│       │   │   │   ├── api/
-│       │   │   │   │   ├── index.ts
-│       │   │   │   │   ├── core/
-│       │   │   │   │   ├── parse/
-│       │   │   │   │   ├── types/
-│       │   │   │   │   ├── draw/
-│       │   │   │   │   └── win/
-│       │   │   │   ├── constants/
-│       │   │   │   ├── types/
-│       │   │   │   ├── helpers/
-│       │   │   │   ├── hooks/
-│       │   │   │   ├── tests/
-│       │   │   │   ├── logic/
-│       │   │   │   │   └── wf/
-│       │   │   │   └── ui/
-│       │   │   │       ├── ChiMain.tsx
-│       │   │   │       ├── chart/
-│       │   │   │       ├── search/
-│       │   │   │       └── table/
-│       │   │   ├── run-streak/
-│       │   │   │   ├── page.tsx
-│       │   │   │   ├── types.ts
-│       │   │   │   ├── hooks/
-│       │   │   │   │   ├── useDraws.ts
-│       │   │   │   │   ├── useStData.ts
-│       │   │   │   │   ├── useStFetch.ts
-│       │   │   │   │   └── useStView.ts
-│       │   │   │   ├── test/
-│       │   │   │   │   ├── consecutive.test.ts
-│       │   │   │   │   └── streak.test.ts
-│       │   │   │   ├── logic/
-│       │   │   │   │   ├── fetch/
-│       │   │   │   │   │   ├── api.ts
-│       │   │   │   │   │   └── streakFetch.ts
-│       │   │   │   │   ├── streak/
-│       │   │   │   │   │   ├── lotNums.ts
-│       │   │   │   │   │   ├── streakRun.ts
-│       │   │   │   │   │   ├── consec.ts
-│       │   │   │   │   │   ├── streak.ts
-│       │   │   │   │   │   └── stSearch.ts
-│       │   │   │   │   └── hintLine.ts
-│       │   │   │   └── components/
-│       │   │   │       ├── StreakMain.tsx
-│       │   │   │       ├── StatNote.tsx
-│       │   │   │       ├── search/
-│       │   │   │       │   ├── SearchBar.tsx
-│       │   │   │       │   ├── DrawPick.tsx
-│       │   │   │       │   └── NumPreview.tsx
-│       │   │   │       ├── summary/
-│       │   │   │       │   ├── SumCards.tsx
-│       │   │   │       │   └── ColdNums.tsx
-│       │   │   │       └── table/
-│       │   │   │           ├── StreakTbl.tsx
-│       │   │   │           ├── StreakRow.tsx
-│       │   │   │           └── StreakStat.tsx
-│       │   │   └── combination/
-│       │   │       ├── page.tsx
-│       │   │       ├── types.ts
-│       │   │       ├── hooks/
-│       │   │       │   └── useCombinationAnalysisData.ts
-│       │   │       ├── logic/
-│       │   │       │   ├── buildOddEvenDistribution.ts
-│       │   │       │   └── buildPositionBandDistribution.ts
-│       │   │       └── components/
-│       │   │           ├── OddEvenProbabilityTable.tsx
-│       │   │           └── PositionBandProbabilityTable.tsx
-│       │   ├── home/
-│       │   │   ├── page.tsx
-│       │   │   ├── hooks/
-│       │   │   │   ├── useLotteryGridData.ts
-│       │   │   │   ├── useSaveWinningNumbers.ts
-│       │   │   │   └── useWinningNumbersInput.ts
-│       │   │   ├── components/
-│       │   │   │   ├── LotteryGrid.tsx
-│       │   │   │   ├── LotteryGridControls.tsx
-│       │   │   │   ├── LotterySetList.tsx
-│       │   │   │   ├── LotteryCard.tsx
-│       │   │   │   └── SimulationStats.tsx
-│       │   │   └── utils/
-│       │   │       └── calculateSimulationStats.ts
-│       │   └── recommend/
-│       │       ├── page.tsx
-│       │       ├── hooks/
-│       │       │   ├── useRecommendData.ts
-│       │       │   └── useRecommendGeneration.ts
-│       │       ├── components/
-│       │           ├── AnalysisController.tsx
-│       │           └── AnalysisResultList.tsx
-│       │       └── logic/
-│       │           ├── api.ts
-│       │           ├── generator.ts
-│       │           ├── pipeline.ts
-│       │           ├── types.ts
-│       │           └── rules/
-│       ├── components/
-│       │   ├── common/
-│       │   │   ├── Header.tsx
-│       │   │   └── Sidebar.tsx
-│       │   └── ui/
-│       │       ├── LotteryBall.tsx
-│       │       └── LotteryCard.tsx
-│       └── lib/
-│           ├── utils.ts
-│           └── utils/
-│               └── lotteryUtils.ts
+├── frontend/                          # 이전됨 → apps/web (삭제 예정)
+│   └── README.md
+│
+│   # apps/web/src/app·components 상세 트리는 저장소 apps/web/ 참고 (문서 중복 생략)
 │
 ├── .gitignore
 ├── package.json                       # 루트 스크립트 (npm run dev)
@@ -236,12 +75,12 @@ lotto/
 
 ## 운영 기준 메모
 
-- 개발 포트: 프론트 `3010`, 백엔드 `8010`
-- Python 패키지 정책: `__init__.py` 미사용, `__pycache__` 생성 방지/제외
-- 구조 변경 시 함께 갱신: `backend/README.md`, 기능별 `README.md`, 본 파일
-- **기능 폴더 8대표 구조**: 신규/리팩터링 시 각 기능 폴더 루트(`frontend/src/app/<route>/`)는 `refactoring-guide.mdc` `## 핵심 4`에 따라 다음 8개 폴더(`api/`, `ui/`, `hooks/`, `logic/`, `helpers/`, `types/`, `constants/`, `tests/`)를 항상 생성한다(빈 폴더는 `.gitkeep` 유지). 루트에는 `page.tsx`와 `README.md`만 둔다.
+- 개발 포트: web `3010`, api `8010` (`npm run dev`)
+- SQLite: `apps/api/src/db/data/lotto.db`, `LOTTO_DB_PATH` 오버라이드
+- 구조 변경 시 함께 갱신: `apps/api/README.md`, 기능별 `README.md`, 본 파일
+- **기능 폴더 8대표 구조**: 신규/리팩터링 시 각 기능 폴더 루트(`apps/web/src/app/<route>/`)는 `refactoring-guide.mdc` `## 핵심 4`에 따라 다음 8개 폴더(`api/`, `ui/`, `hooks/`, `logic/`, `helpers/`, `types/`, `constants/`, `tests/`)를 항상 생성한다(빈 폴더는 `.gitkeep` 유지). 루트에는 `page.tsx`와 `README.md`만 둔다.
 - 페이지 전용 UI 위치는 `components.mdc`(3계층: `app/<route>/ui/`)와 일치시킨다.
 
 ---
 
-*Last Updated: 2026-05-27*
+*Last Updated: 2026-05-27 (api: src/db/data, dist, src/scripts)*

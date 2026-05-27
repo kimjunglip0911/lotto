@@ -1,17 +1,32 @@
 {
     "name": "lotto",
     "version": "1.0.0",
+    "engines": {
+        "node": ">=24 <25"
+    },
     "workspaces": [
-        "frontend"
+        "apps/web",
+        "apps/api"
     ],
     "scripts": {
-        "dev": "concurrently \"npm run dev -w frontend\" \"npm run dev:backend\"",
-        "dev:frontend:clean": "npm run dev:clean -w frontend",
-        "dev:backend": "py -3.12 -B -m uvicorn backend.main:app --host 0.0.0.0 --port 8010 --reload --reload-dir backend",
-        "check:no-init": "py -3.12 scripts/check_no_init.py",
-        "build": "npm run build -w frontend",
-        "start": "npm run start -w frontend",
-        "lint": "npm run lint -w frontend",
+        "check:node": "node -e \"const ok=process.versions.modules==='137'; if(!ok){console.error('Node 24.x 필요 (현재 '+process.version+', modules='+process.versions.modules+')'); process.exit(1)}\"",
+        "predev": "npm run check:node",
+        "dev": "npm run dev:raw",
+        "dev:raw": "concurrently \"npm run dev -w web\" \"npm run dev:api\"",
+        "rebuild:sqlite:node24": "powershell -NoProfile -ExecutionPolicy Bypass -Command \"& \\\"$env:ProgramFiles\\\\nodejs\\\\node.exe\\\" \\\"$env:ProgramFiles\\\\nodejs\\\\node_modules\\\\npm\\\\bin\\\\npm-cli.js\\\" rebuild better-sqlite3 --workspace api\"",
+        "dev:web:node24": "powershell -NoProfile -ExecutionPolicy Bypass -Command \"& \\\"$env:ProgramFiles\\\\nodejs\\\\node.exe\\\" \\\"$env:ProgramFiles\\\\nodejs\\\\node_modules\\\\npm\\\\bin\\\\npm-cli.js\\\" run dev -w web\"",
+        "dev:api:node24": "powershell -NoProfile -ExecutionPolicy Bypass -Command \"& \\\"$env:ProgramFiles\\\\nodejs\\\\node.exe\\\" \\\"$env:ProgramFiles\\\\nodejs\\\\node_modules\\\\npm\\\\bin\\\\npm-cli.js\\\" run start:dev -w api\"",
+        "dev:raw:node24": "concurrently \"npm run dev:web:node24\" \"npm run dev:api:node24\"",
+        "dev:node24": "npm run rebuild:sqlite:node24 && npm run dev:raw:node24",
+        "dev:web": "npm run dev -w web",
+        "dev:web:clean": "npm run dev:clean -w web",
+        "dev:api": "npm run start:dev -w api",
+        "db:copy": "npm run db:copy -w api",
+        "build": "npm run build -w web",
+        "build:api": "npm run build -w api",
+        "start": "npm run start -w web",
+        "lint": "npm run lint -w web",
+        "test:api": "npm run test -w api",
         "cursor-sdk:example": "node scripts/cursor-sdk-example.mjs"
     },
     "devDependencies": {

@@ -5,19 +5,19 @@ alwaysApply: false
 
 ## 1. 기술 스택
 
-> 정본: 루트 `package-lock.json`, `frontend/package.json`, `backend/requirements.txt`, `.cursor/rules/rules.mdc`.
+> 정본: 루트 `package-lock.json`, `apps/web/package.json`, `apps/api/package.json`, `.cursor/rules/rules.mdc`.
 
 ### 프론트엔드
 
-Node **20+** · Next **16.1**(App Router) · React **19.2** · TypeScript **5** · Tailwind **4** · dev **3010**
+Node **20+** · Next **16.1**(App Router) · React **19.2** · TypeScript **5** · Tailwind **4** · dev **3010** · 패키지 **`apps/web`**
 
 ### 백엔드
 
-FastAPI · Uvicorn · Pydantic · torch(`requirements.txt`, 버전은 파일·배포 환경 정본) · dev **8010**
+NestJS **11** · better-sqlite3 · class-validator · TypeScript **5** · dev **8010** · 패키지 **`apps/api`**
 
 ### 라이브러리
 
-런타임 `dependencies`는 **`frontend/package.json`** / **`backend/requirements.txt`**를 본다.
+런타임 `dependencies`는 **`apps/web/package.json`** / **`apps/api/package.json`**를 본다.
 
 ### 도구
 

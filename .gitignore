@@ -20,6 +20,9 @@ __pycache__/
 # Backend runtime
 backend/*.log
 
+# Nest API build output
+apps/api/dist/
+
 # Local database files
 *.db
 *.sqlite
