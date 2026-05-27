@@ -1,6 +1,6 @@
 import type { AccuData } from '../hooks/useAccData';
 import type { AccuView } from '../hooks/useAccView';
-import { AccumulatedExclusionCard } from '@/app/analysis/final-pick/components/AccumulatedExclusionCard';
+import { AccumulatedExclusionCard } from '@/app/analysis/final-pick/ui/cards/AccumulatedExclusionCard';
 import { AccumulatedChartSection } from './chart/AccuChart';
 import { AccSearchBlock } from './search/AccSearchBlock';
 

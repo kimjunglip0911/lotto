@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { getChiSquareWalkForwardExcludedSplit } from '@/app/analysis/final-pick/logic/chiSquareAdoption';
+import { getChiSquareWalkForwardExcludedSplit } from '@/app/analysis/final-pick/logic/chiWf';
 import { CHI_SQUARE_THRESHOLD, NUMBERS_PER_DRAW, TOTAL_NUMBERS } from '../constants';
 import { getMaxAbsDeviation } from '../logic/chiSquare';
 import { runChiSquareDeviationBinWalkForward, splitAndSortDeviationBins } from '../logic/walkForwardStats';

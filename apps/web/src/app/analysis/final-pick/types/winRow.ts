@@ -1,8 +1,6 @@
 /**
- * 통합 분석(`final-pick`) 페이지 내부에서 사용하는 타입 모음.
- *
- * - 회차/당첨번호는 기존 `run-streak` 라우터를 재사용해 가져오므로
- *   응답 형식은 다른 분석 페이지와 동일한 `WinningNumberRow`이다.
+ * 통합 분석(`final-pick`)에서 쓰는 당첨번호 행 타입.
+ * 응답 형식은 `run-streak` 라우터와 동일하다.
  */
 
 export type WinningNumberRow = {
@@ -16,7 +14,7 @@ export type WinningNumberRow = {
   bonus_num: number;
 };
 
-/** 본번호 6개만 추출(보너스 제외). 통합 분석은 보너스를 표시하지 않는다. */
+/** 본번호 6개만 추출(보너스 제외). */
 export const extractMainNumbers = (row: WinningNumberRow): number[] => [
   row.num1,
   row.num2,

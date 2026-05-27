@@ -53,6 +53,7 @@ lotto/
 │           └── analysis/
 │               ├── accu-nums/
 │               ├── chi-square/
+│               ├── final-pick/        # 통합 분석(api·ui·hooks·logic/chiWf·tests)
 │               ├── trend/
 │               └── run-streak/
 │
@@ -83,4 +84,4 @@ lotto/
 
 ---
 
-*Last Updated: 2026-05-27 (api: src/db/data, dist, src/scripts)*
+*Last Updated: 2026-05-27 (final-pick: 8폴더 리팩터링)*

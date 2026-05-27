@@ -1,11 +1,11 @@
 import { getConsecutivelyAppearedMainNumbers } from '@/app/analysis/run-streak/logic/streak/consec'
-import { getAccumulatedExclusionNumbers } from '@/app/analysis/final-pick/logic/accumulatedAdoption'
-import { getChiSquareFinalPickSlice } from '@/app/analysis/final-pick/logic/chiSquareAdoption'
+import { getAccumulatedExclusionNumbers } from '@/app/analysis/final-pick/logic/accuAdopt'
+import { getChiSquareFinalPickSlice } from '@/app/analysis/final-pick/logic/chiWf'
 import {
   extractMainNumbers,
   isWinningNumberRow,
   type WinningNumberRow,
-} from '@/app/analysis/final-pick/types'
+} from '@/app/analysis/final-pick/types/winRow'
 
 const chiSquareBase = (apiUrl: string, pathWithQuery: string): string =>
   `${apiUrl}/api/analysis/chi-square/${pathWithQuery}`

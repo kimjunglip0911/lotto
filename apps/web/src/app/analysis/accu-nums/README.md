@@ -32,4 +32,4 @@
 
 - 이전에 제공하던 **분석 결과 스냅샷 저장**(최종 4개 번호) UI·API 호출은 제거되었습니다.
 - 과거 **4종 전략 평가**(상위4·하위4·평균근접·상2하2) 및 rolling evaluation 코드는 제거되었습니다. 극값 제외는 `accuCntExt`의 출현 최다·최소 슬롯만 사용합니다.
-- `final-pick`은 `logic/accuCntExt`, `ui/chart/accBarStat` 등을 공유합니다. 경로 변경 시 해당 import를 함께 맞춥니다.
+- `final-pick`은 `logic/accuCntExt`, `ui/chart/accBarStat`, `ui/cards/AccumulatedExclusionCard` 등을 공유합니다. 경로 변경 시 해당 import를 함께 맞춥니다.

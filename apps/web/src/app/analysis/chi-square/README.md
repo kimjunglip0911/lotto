@@ -32,4 +32,4 @@
 ## 주의
 
 - API 경로 `/api/analysis/chi-square/*` 는 `combination`·`recommend`에서도 사용합니다. URL을 바꾸지 마세요.
-- `final-pick`은 `logic/chiSquare`, `logic/walkForwardStats`, `constants`를 import 합니다. 경로 변경 시 함께 맞춥니다.
+- `final-pick`은 `logic/chiSquare`, `logic/walkForwardStats`, `constants`를 import 하며, `logic/chiWf`를 통해 워크포워드 제외를 공유합니다. 경로 변경 시 함께 맞춥니다.
