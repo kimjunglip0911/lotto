@@ -8,11 +8,7 @@ import type {
   SetRanking,
   SimulationStatsResult,
 } from '../types/home';
-import {
-  isCalculableWinningNumbers,
-  normalizeWinningNumbers,
-  toNullableNumber,
-} from './normalize';
+import { canCalcWins, toNumOrNull, toWinNums } from './normalize';
 import { rankOneSet } from './rankSet';
 
 const createRankCounts = (): RankCounts => ({ ...INITIAL_RANK_COUNTS });
@@ -33,15 +29,15 @@ export const calculateSimulationStats = (
 
   const rankCounts = createRankCounts();
   const setRankings: SetRanking[] = [];
-  const normalized = normalizeWinningNumbers(winningNumbers);
-  const canCalculate = isCalculableWinningNumbers(normalized);
+  const normalized = toWinNums(winningNumbers);
+  const canCalculate = canCalcWins(normalized);
 
   if (!canCalculate) {
     return { canCalculate, totalSets: sets.length, rankCounts, setRankings };
   }
 
   const winningSet = new Set<number>(normalized);
-  const bonus = toNullableNumber(bonusNumber);
+  const bonus = toNumOrNull(bonusNumber);
   sets.forEach((setInfo, index) => rankOneSet(setInfo, index, winningSet, bonus, rankCounts, setRankings));
   sortSetRankings(setRankings);
 
