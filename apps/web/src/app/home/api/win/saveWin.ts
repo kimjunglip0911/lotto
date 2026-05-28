@@ -13,7 +13,7 @@
  * - 경로 문자열: `constants/apiPath`의 `HOME_SAVE_WIN_PATH`
  * - 전체 주소 붙이기: `api/core/url.ts`의 `homeApiUrl`
  * - 요청 보내기: `api/core/fetchCore.ts`의 `postOk`
- * - 본문 조립: `logic/saveBody.ts`의 `buildSaveWinningBody`
+ * - 본문 조립: `logic/saveBody.ts`의 `makeSaveBody`
  * - 저장 버튼·성공/실패 표시: `hooks/useSaveWinning.ts`
  *
  * 주의·화면에 미치는 영향

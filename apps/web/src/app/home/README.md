@@ -20,7 +20,7 @@
 | `api/` | HTTP 클라이언트 (`loadDrawNumbers`, `loadDrawings`, `loadWinByNo`, `saveWin`; 경로는 `constants/apiPath`) |
 | `ui/` | 화면 컴포넌트 (`controls/`, `stats/`, `list/`, `card/`, `HomeMain`) |
 | `hooks/` | `useHomeView`(입력·회차·저장·표시 세트 조합), `useGridData`, `useDrawList`, `useDrawBundle`, `useWinInput`(`winByDraw` 동기화), `useSaveWinning`, `useSaveDly`(저장 결과 idle 복귀 지연), `useGrpPng` |
-| `logic/` | 등수 판정·당첨 등수 집계(`rankStats`: `calcRankStats`)·당첨번호 정규화(`normalize`: `toNumOrNull`, `toWinNums`, `canCalcWins`)·10세트 묶음(`chunkSets`)·입력 파싱(`parseNum`: `toInputNum`)·회차 목록/세트 변환(`parseDrawArr`, `buildDrawList`, `toLotterySets`, `toSetVm`) |
+| `logic/` | 등수 판정·당첨 등수 집계(`rankStats`: `calcRankStats`)·당첨번호 정규화(`normalize`: `toNumOrNull`, `toWinNums`, `canCalcWins`)·저장 본문 조립(`saveBody`: `makeSaveBody`)·10세트 묶음(`chunkSets`)·입력 파싱(`parseNum`: `toInputNum`)·회차 목록/세트 변환(`parseDrawArr`, `buildDrawList`, `toLotterySets`, `toSetVm`) |
 | `helpers/` | API 묶음 fetch·PNG 다운로드(`helpers/png/`: `capHtmlImg`, `capCanvas`, `dlGroupPng`) |
 | `types/` | 세트·당첨·통계 타입 |
 | `constants/` | 그룹 크기·피드백 지연·초기값·API 경로(`apiPath`: 회차 목록·추천 세트·당첨 등) |
@@ -38,6 +38,7 @@
 
 - API 경로는 `constants/apiPath.ts`에 모아 둡니다. 추천 세트는 `HOME_RECOMMEND_DRAWINGS_PATH`(`api/recommend/drawings.ts`), 당첨 조회는 `HOME_WINNING_BY_NO_PATH`(`api/win/winByDraw.ts`의 `loadWinByNo`), 당첨번호 저장은 `HOME_SAVE_WIN_PATH`(`api/win/saveWin.ts`)를 사용합니다.
 - `helpers/fetchBundle.ts`의 `fetchDrawBundle(drawNo)`는 추천 세트/당첨번호를 병렬 조회하며, 추천 응답이 없으면 `sets: []`, 당첨번호가 없거나 조회 실패면 `winning: null`을 반환합니다.
+- 저장 요청 본문 조립(`logic/saveBody.ts`) 단계에서 번호 빈칸이 남아 있으면 즉시 실패 처리되고, 화면은 `useSaveWinning`을 통해 저장 실패 상태를 잠시 보여 줍니다.
 - 회차 목록은 accu-nums `draw-numbers` 응답 기준이며, 첫 항목+1 회차가 기본 선택됩니다.
 - 해당 회차에 분석 세트가 없으면 빈 상태 안내가 표시됩니다.
 - PNG 저장은 `helpers/png/dlGroupPng.ts`가 담당하며, 1차 `capHtmlImg.ts`(html-to-image) 실패 시 `capCanvas.ts`(html2canvas)로 폴백합니다.

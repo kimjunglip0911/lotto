@@ -24,7 +24,7 @@
 import { useCallback, useState } from 'react';
 
 import { saveWin } from '../api/win/saveWin';
-import { buildSaveWinningBody } from '../logic/saveBody';
+import { makeSaveBody } from '../logic/saveBody';
 import type { InputNumber, SaveStatus } from '../types/home';
 import { useSaveDly } from './useSaveDly';
 
@@ -62,7 +62,7 @@ export const useSaveWinning = ({
     setIsSaving(true);
     setSaveStatus('idle');
     try {
-      const body = buildSaveWinningBody(selectedDraw, winningNumbers, winningBonus);
+      const body = makeSaveBody(selectedDraw, winningNumbers, winningBonus);
       setResult((await saveWin(body)) ? 'success' : 'error');
     } catch {
       setResult('error');
