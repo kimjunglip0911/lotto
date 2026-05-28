@@ -3,7 +3,7 @@ import type { WinningNumberRow } from '@/app/analysis/chi-square/types';
 import { chiSquareApiUrl } from '@/app/recommend/api/core/url';
 import { fetchJson } from '@/app/recommend/api/core/fetchCore';
 
-/** chi-square 회차 목록과 max+1 미만 전체 당첨 이력을 조회한다 */
+/** chi-square 기준 1회차~최신 회차까지 전체 당첨 번호 이력을 조회한다 */
 
 export const fetchChiSquareFullHistory = async (apiUrl: string): Promise<WinningNumberRow[]> => {
   const drawsData = await fetchJson<unknown>(chiSquareApiUrl('draw-numbers', apiUrl));
@@ -13,9 +13,11 @@ export const fetchChiSquareFullHistory = async (apiUrl: string): Promise<Winning
   const draws = drawsData.filter((item): item is number => typeof item === 'number');
   if (draws.length === 0) return [];
 
-  const maxDraw = Math.max(...draws);
+  const latestDraw = Math.max(...draws);
+  // range API: draw_no는 상한(미포함) → latestDraw+1이면 latestDraw회차까지 포함
+  const rangeUpper = latestDraw + 1;
   const rangePayload = await fetchJson<unknown>(
-    chiSquareApiUrl(`winning-numbers-range?draw_no=${maxDraw + 1}`, apiUrl),
+    chiSquareApiUrl(`winning-numbers-range?draw_no=${rangeUpper}`, apiUrl),
   );
   if (!Array.isArray(rangePayload)) {
     throw new Error('Winning numbers range response is not an array');

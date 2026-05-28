@@ -104,6 +104,7 @@ export const buildBandTargetsPerPosition = (
   bandTier: number,
   prevTierTargets?: readonly number[] | null,
 ): number[] | null => {
+  if (bandTier < 1 || bandTier > 3) return null;
   const rankIdx = bandTier - 1;
   const targets: number[] = [];
   for (let pos = 1; pos <= 6; pos++) {
@@ -113,7 +114,7 @@ export const buildBandTargetsPerPosition = (
       return bandIndexFromRow(a) - bandIndexFromRow(b);
     });
     if (sorted.length === 0) return null;
-    const effRank = bandTier <= 3 ? effectiveBandRankIdx(sorted, rankIdx) : rankIdx;
+    const effRank = effectiveBandRankIdx(sorted, rankIdx);
     const picked = pickBandIndexForPosition(sorted, effRank);
     if (picked === null) return null;
     targets.push(picked);

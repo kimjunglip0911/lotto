@@ -25,9 +25,9 @@ export const COMBO_PROFILE_SLOT_ORDER: ReadonlyArray<readonly [number, number, n
   ...COMBO_PROFILE_SLOT_CYCLE.slice(0, 5),
 ];
 
-export const COMBO_RANK_TRIPLE_PRIORITY_ORDER: [number, number, number][] = [
-  ...COMBO_PROFILE_SLOT_ORDER,
-];
+export const COMBO_RANK_TRIPLE_PRIORITY_ORDER: ReadonlyArray<
+  readonly [number, number, number]
+> = [...COMBO_PROFILE_SLOT_ORDER];
 
 if (COMBO_PROFILE_SLOT_ORDER.length !== TARGET_SET_COUNT) {
   throw new Error('COMBO_PROFILE_SLOT_ORDER must match TARGET_SET_COUNT');

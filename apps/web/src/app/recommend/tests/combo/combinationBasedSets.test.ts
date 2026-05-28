@@ -3,7 +3,6 @@ import type { WinningNumberRow } from '@/app/analysis/chi-square/types'
 import type { PositionBandDistributionRow } from '@/app/analysis/combination/types'
 import {
   bandInnerSlot,
-  areBandTargetsMonotonic,
   buildBandTargetsPerPosition,
   effectiveBandRankIdx,
   MIN_BAND_TIER_PERCENT,
@@ -88,36 +87,17 @@ function innerSlotsUsedInSets(sets: GeneratedSet[]): Map<number, Set<number>> {
 }
 
 describe('buildBandTargetsPerPosition', () => {
-  it('band4는 자리마다 비율 4등(서로 다른 band) 구간을 고른다', () => {
+  it('band tier 4는 지원하지 않는다', () => {
     const rows: PositionBandDistributionRow[] = []
     for (let pos = 1; pos <= 6; pos++) {
-      const bands = [
-        { label: '1~5', pct: 40 - pos },
-        { label: '6~10', pct: 30 - pos },
-        { label: '11~15', pct: 20 - pos },
-        { label: '16~20', pct: 10 - pos },
-      ] as const
-      for (const b of bands) {
-        rows.push({
-          position: pos,
-          bandLabel: b.label,
-          count: 1,
-          percentage: b.pct,
-        })
-      }
+      rows.push({
+        position: pos,
+        bandLabel: '1~5',
+        count: 1,
+        percentage: 25,
+      })
     }
-    const t1 = buildBandTargetsPerPosition(rows, 1)!
-    const t2 = buildBandTargetsPerPosition(rows, 2, t1)!
-    const t3 = buildBandTargetsPerPosition(rows, 3, t2)!
-    const t4 = buildBandTargetsPerPosition(rows, 4, t3)!
-    expect(t1).toHaveLength(6)
-    expect(t4).toHaveLength(6)
-    for (let i = 0; i < 6; i++) {
-      expect(t4[i]).not.toBe(t1[i])
-    }
-    expect(t4.join(',')).not.toBe(t3.join(','))
-    expect(areBandTargetsMonotonic(t1)).toBe(true)
-    expect(t4.join(',')).not.toBe(t3.join(','))
+    expect(buildBandTargetsPerPosition(rows, 4)).toBeNull()
   })
 
   it('N등 비율이 20% 미만인 자리는 band3 목표에서 1등 구간을 쓴다', () => {
@@ -157,39 +137,6 @@ describe('buildBandTargetsPerPosition', () => {
     expect(sortedPos1[2]!.percentage).toBeLessThan(MIN_BAND_TIER_PERCENT)
     expect(effectiveBandRankIdx(sortedPos1, 2)).toBe(0)
     expect(t3[1]).not.toBe(t1[1])
-  })
-
-  it('자리별 4등 목표는 슬롯 간 비내림 보정 없이 표 통계를 따른다', () => {
-    const rows: PositionBandDistributionRow[] = []
-    const pos2Bands = [
-      { label: '16~20', pct: 40 },
-      { label: '21~25', pct: 30 },
-      { label: '11~15', pct: 20 },
-      { label: '1~5', pct: 10 },
-    ] as const
-    for (let pos = 1; pos <= 6; pos++) {
-      const bands =
-        pos === 2
-          ? pos2Bands
-          : ([
-              { label: '16~20', pct: 50 },
-              { label: '21~25', pct: 30 },
-              { label: '26~30', pct: 15 },
-              { label: '31~35', pct: 5 },
-            ] as const)
-      for (const b of bands) {
-        rows.push({
-          position: pos,
-          bandLabel: b.label,
-          count: 1,
-          percentage: b.pct,
-        })
-      }
-    }
-    const t4 = buildBandTargetsPerPosition(rows, 4)!
-    expect(t4[1]).toBe(0)
-    expect(t4[0]).toBeGreaterThan(t4[1]!)
-    expect(areBandTargetsMonotonic(t4)).toBe(false)
   })
 })
 

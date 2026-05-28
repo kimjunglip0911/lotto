@@ -8,7 +8,6 @@ export {
   MAX_FORCE_REPAIR_STEPS,
   MAX_STOCHASTIC_REPAIR_STEPS,
   MAX_BFS_REPAIR_VISITS,
-  MAX_BFS_REPAIR_VISITS_BAND4,
   HEAVY_SEARCH_MAX_POOL,
 } from '@/app/recommend/constants/repairLimits';
 

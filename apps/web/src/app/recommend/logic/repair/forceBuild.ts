@@ -1,7 +1,6 @@
 import {
   HEAVY_SEARCH_MAX_POOL,
   MAX_BFS_REPAIR_VISITS,
-  MAX_BFS_REPAIR_VISITS_BAND4,
   MAX_SEED_ATTEMPTS,
 } from '@/app/recommend/constants/repairLimits';
 import type { ForceBuildOptions, ProfileConstraints, RepairPickCtx } from '@/app/recommend/logic/repair/types';
@@ -23,18 +22,15 @@ export const forceBuildOneSet = (
   const allowBacktrack = options?.allowBacktrack !== false;
   const bandTier = options?.bandTier ?? 0;
   const lightOe = options?.lightOe === true;
-  const isBand4 = bandTier === 4;
   const heavySearch = adoptedPoolSize(poolByBand) <= HEAVY_SEARCH_MAX_POOL || bandTier >= 3;
 
   const quick = tryBuildOneSet(poolByBand, constraints, pickCtx);
   if (quick) return quick;
 
   const seedAttempts = heavySearch
-    ? isBand4
-      ? MAX_SEED_ATTEMPTS
-      : lightOe
-        ? 16
-        : MAX_SEED_ATTEMPTS
+    ? lightOe
+      ? 16
+      : MAX_SEED_ATTEMPTS
     : lightOe
       ? 10
       : 20;
@@ -53,7 +49,7 @@ export const forceBuildOneSet = (
 
   if (!allowBacktrack || !heavySearch) return null;
 
-  const bfsCap = isBand4 ? MAX_BFS_REPAIR_VISITS_BAND4 : MAX_BFS_REPAIR_VISITS;
+  const bfsCap = MAX_BFS_REPAIR_VISITS;
   const nodesBand = { count: 0 };
   const bandSkeleton = backtrackPositionPicks(
     poolByBand,

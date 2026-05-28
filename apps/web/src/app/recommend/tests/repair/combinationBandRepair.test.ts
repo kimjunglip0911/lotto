@@ -103,27 +103,6 @@ describe('forceBuildOneSet', () => {
     expect(state.ok).toBe(true)
   })
 
-  it('채택 풀이 커도 bandTier 4이면 BFS·백트래킹으로 맞출 수 있다', () => {
-    const pool = Array.from({ length: 35 }, (_, i) => i + 1)
-    const poolByBand = buildPoolByBand(pool)
-    const constraints = {
-      minSum: 40,
-      maxSum: 200,
-      evenT: 3,
-      runT: 1,
-      bandTargets: [0, 1, 2, 3, 4, 5],
-    }
-    const withoutTier = forceBuildOneSet(poolByBand, constraints, {}, { allowBacktrack: true })
-    const withBand4 = forceBuildOneSet(poolByBand, constraints, {}, {
-      allowBacktrack: true,
-      bandTier: 4,
-    })
-    expect(withBand4).not.toBeNull()
-    expect(validateSet(withBand4!, constraints).ok).toBe(true)
-    if (withoutTier === null) {
-      expect(withBand4).not.toBeNull()
-    }
-  })
 })
 
 describe('validateSet', () => {
