@@ -21,7 +21,7 @@
 | `ui/` | 화면 컴포넌트 (`controls/`, `stats/`, `list/`, `card/`, `HomeMain`) |
 | `hooks/` | `useHomeView`, `useGridData`, `useWinInput`, `useSaveWinning`, `useGroupDl` |
 | `logic/` | 등수 판정·시뮬레이션 통계·chunk·입력 파싱·회차 목록/세트 변환(`parseDrawArr`, `buildDrawList`, `toLotterySets`) |
-| `helpers/` | PNG 다운로드·API 묶음 fetch |
+| `helpers/` | API 묶음 fetch·PNG 다운로드(`helpers/png/`: `capHtmlImg`, `capCanvas`, `dlGroupPng`) |
 | `types/` | 세트·당첨·통계 타입 |
 | `constants/` | 그룹 크기·피드백 지연·초기값·API 경로(`apiPath`: 회차 목록·추천 세트·당첨 등) |
 | `tests/` | Vitest 단위 테스트 |
@@ -40,4 +40,4 @@
 - `helpers/fetchBundle.ts`의 `fetchDrawBundle(drawNo)`는 추천 세트/당첨번호를 병렬 조회하며, 추천 응답이 없으면 `sets: []`, 당첨번호가 없거나 조회 실패면 `winning: null`을 반환합니다.
 - 회차 목록은 accu-nums `draw-numbers` 응답 기준이며, 첫 항목+1 회차가 기본 선택됩니다.
 - 해당 회차에 분석 세트가 없으면 빈 상태 안내가 표시됩니다.
-- PNG 캡처는 `html-to-image` 실패 시 `html2canvas`로 폴백합니다.
+- PNG 저장은 `helpers/png/dlGroupPng.ts`가 담당하며, 1차 `capHtmlImg.ts`(html-to-image) 실패 시 `capCanvas.ts`(html2canvas)로 폴백합니다.

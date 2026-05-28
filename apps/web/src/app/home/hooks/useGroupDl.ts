@@ -3,7 +3,7 @@
 import { useCallback, useRef, useState } from 'react';
 
 import { DOWNLOAD_FEEDBACK_MS } from '../constants/home';
-import { downloadGroupImage } from '../helpers/pngDownload';
+import { dlGroupPng } from '../helpers/png/dlGroupPng';
 import type { LotterySetViewModel } from '../types/home';
 
 type DlStatus = 'success' | 'error';
@@ -19,7 +19,7 @@ export const useGroupDl = (groupSize: number) => {
       const startSetNo = groupIndex * groupSize + 1;
       const endSetNo = startSetNo + groupSets.length - 1;
       const targetNode = groupCaptureRefs.current[groupIndex];
-      const downloaded = await downloadGroupImage(targetNode, startSetNo, endSetNo);
+      const downloaded = await dlGroupPng(targetNode, startSetNo, endSetNo);
       setDownloadState({ groupIndex, status: downloaded ? 'success' : 'error' });
       setTimeout(() => {
         setDownloadState((prev) => (prev?.groupIndex === groupIndex ? null : prev));
