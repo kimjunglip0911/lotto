@@ -18,11 +18,11 @@ recommend/
 ├── api/          # draw, chi, recommend, adopt, core
 ├── ui/           # RecommendMain, controller, result, alert
 ├── hooks/
-├── logic/        # combo, repair, adopt, rank, generation
-├── helpers/      # validators, genExcluded, genPayload, genMessages
+├── logic/        # combo, repair, adopt, rank, generation, saved
+├── helpers/      # validators, genExcluded, genPayload, genMessages, savedMessages, savedState
 ├── types/
 ├── constants/
-└── tests/        # combo, repair, lottoRank
+└── tests/        # combo, repair, lottoRank, saved
 ```
 
 ## 실행·환경
@@ -41,6 +41,9 @@ npm run lint
 ## 주요 모듈
 
 - `logic/adopt/computeAdopted.ts` — 통합 채택 계산
+- `logic/saved/loadSavedDraw.ts` — 저장 세트·채택 병렬 조회(훅에서 호출)
+- `helpers/savedMessages.ts` — 저장 조회·초기 안내 문구
+- `helpers/savedState.ts` — 저장 조회 전·후 UI 상태 갱신
 - `logic/generation/runPipeline.ts` — 생성·저장 파이프라인(훅에서 호출)
 - `logic/combo/generate.ts` — 20세트 생성
 - `logic/repair/` — band·합·홀짝·연속 수리
