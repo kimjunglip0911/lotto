@@ -5,7 +5,7 @@
 import type { HomeView } from '../hooks/useHomeView';
 import { GridControls } from './controls/GridControls';
 import { SetList } from './list/SetList';
-import { SimStats } from './stats/SimStats';
+import { RankStats } from './stats/RankStats';
 
 interface HomeMainProps {
   view: HomeView;
@@ -29,7 +29,7 @@ export function HomeMain({ view }: HomeMainProps) {
             isSaving={view.isSaving}
             saveStatus={view.saveStatus}
           />
-          <SimStats
+          <RankStats
             sets={view.displaySets}
             winningNumbers={view.winningNumbers}
             bonusNumber={view.winningBonus}

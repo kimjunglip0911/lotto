@@ -1,4 +1,4 @@
-/** 시뮬레이션 통계·등수 타입 */
+/** 당첨번호 대비 세트별 등수·집계 타입 */
 
 export type Rank = 1 | 2 | 3 | 4 | 5;
 
@@ -16,7 +16,8 @@ export interface RankCounts {
   fail: number;
 }
 
-export interface SimulationStatsResult {
+/** 가져온 세트들을 입력한 당첨번호와 비교한 집계 결과 */
+export interface RankStatsResult {
   canCalculate: boolean;
   totalSets: number;
   rankCounts: RankCounts;

@@ -20,7 +20,7 @@ export const EMPTY_WINNING_NUMBERS: InputNumber[] = Array(6).fill('');
 /** 보너스 번호 입력의 초기값 */
 export const EMPTY_BONUS: InputNumber = '';
 
-/** 시뮬레이션 등수 카운트 초기값 */
+/** 당첨번호 대비 등수별 건수 집계 초기값 */
 export const INITIAL_RANK_COUNTS = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, fail: 0 } as const;
 
 /** PNG 캡처 배경색 */
