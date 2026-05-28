@@ -40,7 +40,12 @@ npm run lint
 
 ## 주요 모듈
 
-- `logic/adopt/computeAdopted.ts` — 통합 채택 계산
+- `logic/adopt/computeAdopted.ts` — 통합 채택 조회 오케스트레이션(`fetchFinalPickAdopted`)
+- `logic/adopt/fetchDrawOne.ts` — 1회차 당첨·채택
+- `logic/adopt/resolveMain.ts` — 본번호 결정(미추첨 시 전회차 대체)
+- `logic/adopt/parseWinRows.ts` — 당첨 API JSON 검증
+- `logic/adopt/buildSlice.ts` — 채택 슬라이스 계산(final-pick·연속·누적)
+- `logic/adopt/adoptEmpty.ts` — 실패 시 빈 결과
 - `logic/saved/loadSavedDraw.ts` — 저장 세트·채택 병렬 조회(훅에서 호출)
 - `helpers/savedMessages.ts` — 저장 조회·초기 안내 문구
 - `helpers/savedState.ts` — 저장 조회 전·후 UI 상태 갱신
