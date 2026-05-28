@@ -15,5 +15,17 @@ export interface WinningNumbersByDraw {
   bonus_num: number;
 }
 
+/** 당첨번호 저장 API에 보내는 본문(서버 SaveWinningDto와 동일 필드) */
+export interface SaveWinBody {
+  draw_no: number;
+  num1: number;
+  num2: number;
+  num3: number;
+  num4: number;
+  num5: number;
+  num6: number;
+  bonus_num: number;
+}
+
 export const isValidLottoNumber = (value: InputNumber): value is number =>
   typeof value === 'number' && value >= 1 && value <= 45;

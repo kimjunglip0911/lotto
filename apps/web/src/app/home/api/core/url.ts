@@ -12,14 +12,14 @@
  *
  * 역할 나눔
  * - 실제 요청 보내기·답 내용 읽기는 같은 폴더 `fetchCore.ts`가 담당합니다.
- * - 당첨번호 **저장(보내기)** 는 `api/win/saveWinning.ts`가 주소만 여기서 받아 직접 요청합니다.
+ * - 당첨번호 **저장(보내기)** 는 `api/win/saveWin.ts`가 주소만 여기서 받아 `fetchCore.postOk`로 보냅니다.
  *
  * 주의·화면에 미치는 영향
  * - 베이스 주소가 비어 있으면(환경 변수 미설정) **같은 사이트**의 `/api/...` 로 호출합니다.
  * - 주소가 잘못 만들어지면 홈의 회차 목록·세트·당첨 표시가 비거나 갱신되지 않을 수 있습니다.
  *
  * 이 파일을 쓰는 곳
- * - `api/draw/drawNums`(경로: `constants/apiPath`), `api/win/winByDraw`, `api/recommend/drawings`, `api/win/saveWinning`
+ * - `api/draw/drawNums`, `api/win/winByDraw`, `api/recommend/drawings`, `api/win/saveWin`(경로: `constants/apiPath`)
  */
 
 const getApiBase = (baseUrl?: string): string =>

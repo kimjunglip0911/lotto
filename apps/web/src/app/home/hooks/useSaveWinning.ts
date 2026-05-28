@@ -2,7 +2,7 @@
 
 import { useCallback, useState } from 'react';
 
-import { saveWinningNumbers } from '../api/win/saveWinning';
+import { saveWin } from '../api/win/saveWin';
 import { buildSaveWinningBody } from '../logic/saveBody';
 import type { InputNumber, SaveStatus } from '../types/home';
 import { useSaveTimer } from './useSaveTimer';
@@ -38,7 +38,7 @@ export const useSaveWinning = ({
     setSaveStatus('idle');
     try {
       const body = buildSaveWinningBody(selectedDraw, winningNumbers, winningBonus);
-      setResult((await saveWinningNumbers(body)) ? 'success' : 'error');
+      setResult((await saveWin(body)) ? 'success' : 'error');
     } catch {
       setResult('error');
     } finally {
