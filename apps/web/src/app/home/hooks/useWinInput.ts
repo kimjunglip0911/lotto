@@ -22,7 +22,7 @@
 import { useCallback, useState } from 'react';
 
 import { EMPTY_BONUS, EMPTY_WINNING_NUMBERS } from '../constants/home';
-import { parseInputNumber } from '../logic/parseNum';
+import { toInputNum } from '../logic/parseNum';
 import type { InputNumber, WinningNumbersByDraw } from '../types/home';
 
 const numsFromWin = (data: WinningNumbersByDraw): InputNumber[] => [
@@ -51,7 +51,7 @@ export const useWinInput = (winByDraw: WinningNumbersByDraw | null) => {
   }
 
   const onWinNumChg = useCallback((index: number, value: string) => {
-    const parsedNumber = parseInputNumber(value);
+    const parsedNumber = toInputNum(value);
     setWinningNumbers((prev) => {
       const next = [...prev];
       next[index] = parsedNumber;
@@ -60,7 +60,7 @@ export const useWinInput = (winByDraw: WinningNumbersByDraw | null) => {
   }, []);
 
   const onBonusChg = useCallback((value: string) => {
-    setWinningBonus(parseInputNumber(value));
+    setWinningBonus(toInputNum(value));
   }, []);
 
   return {

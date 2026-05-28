@@ -20,7 +20,7 @@
 | `api/` | HTTP 클라이언트 (`loadDrawNumbers`, `loadDrawings`, `loadWinByNo`, `saveWin`; 경로는 `constants/apiPath`) |
 | `ui/` | 화면 컴포넌트 (`controls/`, `stats/`, `list/`, `card/`, `HomeMain`) |
 | `hooks/` | `useHomeView`(입력·회차·저장·표시 세트 조합), `useGridData`, `useDrawList`, `useDrawBundle`, `useWinInput`(`winByDraw` 동기화), `useSaveWinning`, `useSaveDly`(저장 결과 idle 복귀 지연), `useGrpPng` |
-| `logic/` | 등수 판정·당첨 등수 집계(`rankStats`: `calcRankStats`)·당첨번호 정규화(`normalize`: `toNumOrNull`, `toWinNums`, `canCalcWins`)·10세트 묶음(`chunkSets`)·입력 파싱·회차 목록/세트 변환(`parseDrawArr`, `buildDrawList`, `toLotterySets`, `toSetVm`) |
+| `logic/` | 등수 판정·당첨 등수 집계(`rankStats`: `calcRankStats`)·당첨번호 정규화(`normalize`: `toNumOrNull`, `toWinNums`, `canCalcWins`)·10세트 묶음(`chunkSets`)·입력 파싱(`parseNum`: `toInputNum`)·회차 목록/세트 변환(`parseDrawArr`, `buildDrawList`, `toLotterySets`, `toSetVm`) |
 | `helpers/` | API 묶음 fetch·PNG 다운로드(`helpers/png/`: `capHtmlImg`, `capCanvas`, `dlGroupPng`) |
 | `types/` | 세트·당첨·통계 타입 |
 | `constants/` | 그룹 크기·피드백 지연·초기값·API 경로(`apiPath`: 회차 목록·추천 세트·당첨 등) |

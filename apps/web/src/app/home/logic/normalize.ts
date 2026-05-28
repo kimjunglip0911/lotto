@@ -11,7 +11,7 @@
  * - 돌려줌: 숫자 또는 null(`toNumOrNull`), 유효 숫자만 담은 배열(`toWinNums`), 집계 가능 여부(`canCalcWins`)
  *
  * 역할 나눔
- * - 화면 입력 문자열을 칸 값으로 바꾸는 곳: `logic/parseNum.ts`
+ * - 화면 입력 문자열을 칸 값으로 바꾸는 곳: `logic/parseNum.ts`의 `toInputNum`
  * - 세트별 등수·건수를 모으는 곳: `logic/rankStats.ts`
  * - 집계 결과를 보여 주는 화면: `ui/stats/RankStats.tsx`
  *
