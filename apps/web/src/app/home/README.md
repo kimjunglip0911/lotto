@@ -20,10 +20,10 @@
 | `api/` | HTTP 클라이언트 (`draw-numbers`, `drawings`, `winning-by-no`, `save-winning`) |
 | `ui/` | 화면 컴포넌트 (`controls/`, `stats/`, `list/`, `card/`, `HomeMain`) |
 | `hooks/` | `useHomeView`, `useGridData`, `useWinInput`, `useSaveWinning`, `useGroupDl` |
-| `logic/` | 등수 판정·시뮬레이션 통계·chunk·입력 파싱 |
+| `logic/` | 등수 판정·시뮬레이션 통계·chunk·입력 파싱·회차 목록 JSON 검증(`parseDrawArr`) |
 | `helpers/` | PNG 다운로드·회차/세트 변환·API 묶음 fetch |
 | `types/` | 세트·당첨·통계 타입 |
-| `constants/` | 그룹 크기·피드백 지연·초기값 |
+| `constants/` | 그룹 크기·피드백 지연·초기값·API 경로(`apiPath`) |
 | `tests/` | Vitest 단위 테스트 |
 
 루트에는 `page.tsx`, `README.md`만 둡니다.

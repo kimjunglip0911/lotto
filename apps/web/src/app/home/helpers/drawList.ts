@@ -2,11 +2,9 @@
 
 import type { LotterySetData } from '../types/home';
 
-export const toAvailableDraws = (data: unknown): number[] => {
-  if (!Array.isArray(data) || data.length === 0) return [];
-  const drawNumbers = data.filter((value): value is number => Number.isInteger(value));
-  if (drawNumbers.length === 0) return [];
-  return [drawNumbers[0] + 1, ...drawNumbers];
+export const toAvailableDraws = (data: number[]): number[] => {
+  if (data.length === 0) return [];
+  return [data[0] + 1, ...data];
 };
 
 export const toLotterySets = (data: unknown): LotterySetData[] =>

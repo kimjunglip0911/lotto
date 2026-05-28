@@ -4,7 +4,7 @@ import { loadDrawNumbers } from '../api/draw/drawNums';
 import { toAvailableDraws } from './drawList';
 
 export const fetchInitialDraws = async (): Promise<number[]> => {
-  const data = await loadDrawNumbers();
-  if (data == null) return [];
-  return toAvailableDraws(data);
+  const drawNumbers = await loadDrawNumbers();
+  if (drawNumbers == null) return [];
+  return toAvailableDraws(drawNumbers);
 };
