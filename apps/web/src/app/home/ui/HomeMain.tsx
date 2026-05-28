@@ -23,9 +23,9 @@ export function HomeMain({ view }: HomeMainProps) {
             winningNumbers={view.winningNumbers}
             winningBonus={view.winningBonus}
             onSelectDraw={view.setSelectedDraw}
-            onWinningNumberChange={view.handleWinningNumberChange}
-            onBonusNumberChange={view.handleBonusNumberChange}
-            onSaveWinning={view.handleSaveWinning}
+            onWinNumChg={view.onWinNumChg}
+            onBonusChg={view.onBonusChg}
+            saveWinning={view.saveWinning}
             isSaving={view.isSaving}
             saveStatus={view.saveStatus}
           />

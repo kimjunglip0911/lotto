@@ -5,8 +5,8 @@ import type { InputNumber } from '../../types/home';
 interface WinInputsProps {
   winningNumbers: InputNumber[];
   winningBonus: InputNumber;
-  onWinningNumberChange: (index: number, value: string) => void;
-  onBonusNumberChange: (value: string) => void;
+  onWinNumChg: (index: number, value: string) => void;
+  onBonusChg: (value: string) => void;
 }
 
 const inputClass =
@@ -15,8 +15,8 @@ const inputClass =
 export function WinInputs({
   winningNumbers,
   winningBonus,
-  onWinningNumberChange,
-  onBonusNumberChange,
+  onWinNumChg,
+  onBonusChg,
 }: WinInputsProps) {
   return (
     <>
@@ -28,7 +28,7 @@ export function WinInputs({
             min="1"
             max="45"
             value={num}
-            onChange={(e) => onWinningNumberChange(index, e.target.value)}
+            onChange={(e) => onWinNumChg(index, e.target.value)}
             className={`${inputClass} border-white/20 text-white focus:border-primary focus:ring-1 focus:ring-primary`}
           />
         ))}
@@ -40,7 +40,7 @@ export function WinInputs({
           min="1"
           max="45"
           value={winningBonus}
-          onChange={(e) => onBonusNumberChange(e.target.value)}
+          onChange={(e) => onBonusChg(e.target.value)}
           className={`${inputClass} border-emerald-500/50 text-emerald-400 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500`}
         />
       </div>

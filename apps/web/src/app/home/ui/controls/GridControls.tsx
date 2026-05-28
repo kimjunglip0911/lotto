@@ -11,9 +11,9 @@ interface GridControlsProps {
   winningNumbers: InputNumber[];
   winningBonus: InputNumber;
   onSelectDraw: (value: number | null) => void;
-  onWinningNumberChange: (index: number, value: string) => void;
-  onBonusNumberChange: (value: string) => void;
-  onSaveWinning: () => void;
+  onWinNumChg: (index: number, value: string) => void;
+  onBonusChg: (value: string) => void;
+  saveWinning: () => void;
   isSaving: boolean;
   saveStatus: SaveStatus;
 }
@@ -35,14 +35,14 @@ export function GridControls(props: GridControlsProps) {
         <WinInputs
           winningNumbers={props.winningNumbers}
           winningBonus={props.winningBonus}
-          onWinningNumberChange={props.onWinningNumberChange}
-          onBonusNumberChange={props.onBonusNumberChange}
+          onWinNumChg={props.onWinNumChg}
+          onBonusChg={props.onBonusChg}
         />
         <SaveBtn
           canSave={canSave}
           isSaving={props.isSaving}
           saveStatus={props.saveStatus}
-          onSaveWinning={props.onSaveWinning}
+          saveWinning={props.saveWinning}
         />
       </div>
     </div>

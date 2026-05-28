@@ -8,17 +8,17 @@ interface SaveBtnProps {
   canSave: boolean;
   isSaving: boolean;
   saveStatus: SaveStatus;
-  onSaveWinning: () => void;
+  saveWinning: () => void;
 }
 
-export function SaveBtn({ canSave, isSaving, saveStatus, onSaveWinning }: SaveBtnProps) {
+export function SaveBtn({ canSave, isSaving, saveStatus, saveWinning }: SaveBtnProps) {
   const label = isSaving ? '저장 중...' : saveStatus === 'success' ? '저장 완료' : '저장';
 
   return (
     <button
       type="button"
       disabled={!canSave}
-      onClick={onSaveWinning}
+      onClick={saveWinning}
       className={`ml-1 flex items-center gap-1.5 px-3.5 py-2 rounded-xl font-semibold text-sm transition-all whitespace-nowrap ${
         saveStatus === 'success'
           ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
