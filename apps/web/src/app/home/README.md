@@ -23,7 +23,7 @@
 | `logic/` | 등수 판정·시뮬레이션 통계·chunk·입력 파싱·회차 목록 JSON 검증(`parseDrawArr`) |
 | `helpers/` | PNG 다운로드·회차/세트 변환·API 묶음 fetch |
 | `types/` | 세트·당첨·통계 타입 |
-| `constants/` | 그룹 크기·피드백 지연·초기값·API 경로(`apiPath`) |
+| `constants/` | 그룹 크기·피드백 지연·초기값·API 경로(`apiPath`: 회차 목록·추천 세트·당첨 등) |
 | `tests/` | Vitest 단위 테스트 |
 
 루트에는 `page.tsx`, `README.md`만 둡니다.
@@ -36,6 +36,7 @@
 
 ## 주의
 
+- API 경로는 `constants/apiPath.ts`에 모아 두며, 추천 세트 조회는 `HOME_RECOMMEND_DRAWINGS_PATH`를 `api/recommend/drawings.ts`에서 사용합니다.
 - 회차 목록은 accu-nums `draw-numbers` 응답 기준이며, 첫 항목+1 회차가 기본 선택됩니다.
 - 해당 회차에 분석 세트가 없으면 빈 상태 안내가 표시됩니다.
 - PNG 캡처는 `html-to-image` 실패 시 `html2canvas`로 폴백합니다.

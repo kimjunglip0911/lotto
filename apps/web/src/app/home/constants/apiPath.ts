@@ -11,3 +11,7 @@
 /** 누적 분석에서 검색 가능한 회차 번호 목록을 받는 경로 */
 export const HOME_DRAW_NUMBERS_PATH =
   '/api/analysis/accu-nums/draw-numbers' as const;
+
+/** 선택 회차의 추천 분석 세트 목록을 받는 경로(회차 번호는 조회 시 붙임) */
+export const HOME_RECOMMEND_DRAWINGS_PATH =
+  '/api/recommend/drawings' as const;
