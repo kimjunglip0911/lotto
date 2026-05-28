@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 
 import { fetchDrawBundle } from '../helpers/fetchBundle';
-import { fetchInitialDraws } from '../helpers/fetchDraws';
+import { fetchDraws } from '../helpers/fetchDraws';
 import type { LotterySetData, WinningNumbersByDraw } from '../types/home';
 
 interface UseGridDataOptions {
@@ -19,7 +19,7 @@ export const useGridData = (options?: UseGridDataOptions) => {
 
   useEffect(() => {
     let cancelled = false;
-    void fetchInitialDraws()
+    void fetchDraws()
       .then((draws) => {
         if (cancelled || draws.length === 0) return;
         setAvailableDraws(draws);

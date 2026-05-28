@@ -8,10 +8,24 @@
         "failClosed": false
       }
     ],
+    "preToolUse": [
+      {
+        "type": "command",
+        "command": ".cursor/hooks/enforce-plan-template.ps1 -Mode Validate",
+        "matcher": "CreatePlan|createPlan|create_plan",
+        "failClosed": false
+      }
+    ],
     "postToolUse": [
       {
         "type": "command",
         "command": ".cursor/hooks/inject-rules-on-session-start.ps1 -InjectMode Index",
+        "failClosed": false
+      },
+      {
+        "type": "command",
+        "command": ".cursor/hooks/enforce-plan-template.ps1 -Mode Inject",
+        "matcher": "SwitchMode|switchMode|switch_mode|CreatePlan|createPlan|create_plan",
         "failClosed": false
       }
     ]
