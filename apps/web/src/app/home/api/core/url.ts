@@ -19,7 +19,7 @@
  * - 주소가 잘못 만들어지면 홈의 회차 목록·세트·당첨 표시가 비거나 갱신되지 않을 수 있습니다.
  *
  * 이 파일을 쓰는 곳
- * - `api/draw/drawNums`, `api/win/winByDraw`, `api/recommend/drawings`, `api/win/saveWin`(경로: `constants/apiPath`)
+ * - `api/draw/drawNums`, `api/win/winByDraw`(`loadWinByNo`), `api/recommend/drawings`, `api/win/saveWin`(경로: `constants/apiPath`)
  */
 
 const getApiBase = (baseUrl?: string): string =>

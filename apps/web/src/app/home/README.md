@@ -17,7 +17,7 @@
 
 | 폴더 | 역할 |
 |:---|:---|
-| `api/` | HTTP 클라이언트 (`draw-numbers`, `drawings`, `winning-by-no`, `saveWin` + `HOME_SAVE_WIN_PATH`) |
+| `api/` | HTTP 클라이언트 (`loadDrawNumbers`, `loadDrawings`, `loadWinByNo`, `saveWin`; 경로는 `constants/apiPath`) |
 | `ui/` | 화면 컴포넌트 (`controls/`, `stats/`, `list/`, `card/`, `HomeMain`) |
 | `hooks/` | `useHomeView`, `useGridData`, `useWinInput`, `useSaveWinning`, `useGroupDl` |
 | `logic/` | 등수 판정·시뮬레이션 통계·chunk·입력 파싱·회차 목록 JSON 검증(`parseDrawArr`) |
@@ -36,7 +36,7 @@
 
 ## 주의
 
-- API 경로는 `constants/apiPath.ts`에 모아 둡니다. 추천 세트는 `HOME_RECOMMEND_DRAWINGS_PATH`(`api/recommend/drawings.ts`), 당첨번호 저장은 `HOME_SAVE_WIN_PATH`(`api/win/saveWin.ts`)를 사용합니다.
+- API 경로는 `constants/apiPath.ts`에 모아 둡니다. 추천 세트는 `HOME_RECOMMEND_DRAWINGS_PATH`(`api/recommend/drawings.ts`), 당첨 조회는 `HOME_WINNING_BY_NO_PATH`(`api/win/winByDraw.ts`의 `loadWinByNo`), 당첨번호 저장은 `HOME_SAVE_WIN_PATH`(`api/win/saveWin.ts`)를 사용합니다.
 - 회차 목록은 accu-nums `draw-numbers` 응답 기준이며, 첫 항목+1 회차가 기본 선택됩니다.
 - 해당 회차에 분석 세트가 없으면 빈 상태 안내가 표시됩니다.
 - PNG 캡처는 `html-to-image` 실패 시 `html2canvas`로 폴백합니다.

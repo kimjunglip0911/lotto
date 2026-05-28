@@ -16,5 +16,9 @@ export const HOME_DRAW_NUMBERS_PATH =
 export const HOME_RECOMMEND_DRAWINGS_PATH =
   '/api/recommend/drawings' as const;
 
+/** 선택 회차에 저장된 당첨번호(6개+보너스)를 받는 경로(회차 번호는 조회 시 붙임) */
+export const HOME_WINNING_BY_NO_PATH =
+  '/api/drawings/winning-by-no' as const;
+
 /** 입력한 당첨번호(6개+보너스)를 서버에 저장하는 경로 */
 export const HOME_SAVE_WIN_PATH = '/api/drawings/save-winning' as const;

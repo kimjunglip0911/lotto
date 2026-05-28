@@ -16,7 +16,7 @@
  * - 저장 경로·보낼 본문 만들기는 `constants/apiPath`, `logic/saveBody`, `api/win/saveWin`.
  *
  * 이 파일을 쓰는 곳
- * - `api/win/winByDraw`, `api/draw/drawNums`, `api/recommend/drawings` (조회)
+ * - `api/win/winByDraw`(`loadWinByNo`), `api/draw/drawNums`, `api/recommend/drawings` (조회)
  * - `api/win/saveWin` (저장)
  */
 
