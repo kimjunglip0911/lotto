@@ -2,7 +2,7 @@
 
 import { loadDrawings } from '../api/recommend/drawings';
 import { loadWinByNo } from '../api/win/winByDraw';
-import { toLotterySets } from './drawList';
+import { toLotterySets } from '../logic/toLotterySets';
 import type { LotterySetData, WinningNumbersByDraw } from '../types/home';
 
 export interface DrawBundle {

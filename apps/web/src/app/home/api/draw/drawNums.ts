@@ -13,7 +13,7 @@
  * - 주소 만들기·“항상 새로 받기” 설정은 `api/core/url.ts`
  * - 요청 보내기·답 읽기는 `api/core/fetchCore.ts`
  * - 숫자 배열로 거르기는 `logic/parseDrawArr.ts`
- * - 화면용 목록(첫 회차+1 등)은 `helpers/fetchDraws.ts`·`helpers/drawList.ts`
+ * - 화면용 목록(첫 회차+1 등)은 `helpers/fetchDraws.ts`·`logic/buildDrawList.ts`
  *
  * 주의·화면에 미치는 영향
  * - 실패 시 null이 되고, 홈 회차 드롭다운이 비거나 기본 선택이 없을 수 있습니다.
