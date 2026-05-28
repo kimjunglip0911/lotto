@@ -8,7 +8,7 @@ import {
   type ProfileConstraints,
   type ProfileFailureReason,
 } from '@/app/recommend/logic/repair';
-import { evenCountAtRank, maxRunAtRank } from '@/app/recommend/logic/combo/bandUtil';
+import { evenCountAtRank, maxRunAtRank } from '@/app/recommend/logic/combo/rankAtPct';
 import { findOneSetForRanks } from '@/app/recommend/logic/combo/findOneSet';
 
 /** 20슬롯 채우기·미생성 진단 */

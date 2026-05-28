@@ -10,7 +10,7 @@ import {
   type ProfileConstraints,
   type RepairPickCtx,
 } from '@/app/recommend/logic/repair';
-import { evenCountAtRank, maxRunAtRank } from '@/app/recommend/logic/combo/bandUtil';
+import { evenCountAtRank, maxRunAtRank } from '@/app/recommend/logic/combo/rankAtPct';
 import { bumpUsage, setKey, toGeneratedSet } from '@/app/recommend/logic/combo/toSet';
 import { yieldToMain } from '@/app/recommend/logic/combo/yieldMain';
 

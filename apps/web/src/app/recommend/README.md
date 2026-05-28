@@ -51,6 +51,12 @@ npm run lint
 - `helpers/savedState.ts` — 저장 조회 전·후 UI 상태 갱신
 - `logic/generation/runPipeline.ts` — 생성·저장 파이프라인(훅에서 호출)
 - `logic/combo/generate.ts` — 20세트 생성
+- `logic/combo/bandSlot.ts` — band 구간·내부 슬롯·슬롯 키
+- `logic/combo/sortMains.ts` — 당첨 행 본번호 정렬
+- `logic/combo/bandMonotonic.ts` — band 목표 단조 검사·보정
+- `logic/combo/bandRankPick.ts` — 자리별 N등 band 인덱스 선택
+- `logic/combo/buildBandTargets.ts` — 6자리 band 목표 배열
+- `logic/combo/rankAtPct.ts` — 비율 랭크 기준 홀짝·연속 값
 - `logic/repair/` — band·합·홀짝·연속 수리
 - `api/recommend/` — 저장·조회 HTTP
 

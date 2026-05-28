@@ -1,6 +1,6 @@
 import { METHOD_JL } from '@/app/recommend/constants/comboThresholds';
 import type { GeneratedSet } from '@/app/recommend/types/generatedSet';
-import { innerSlotKey } from '@/app/recommend/logic/combo/bandUtil';
+import { innerSlotKey } from '@/app/recommend/logic/combo/bandSlot';
 
 /** 번호 배열을 GeneratedSet으로 변환 */
 

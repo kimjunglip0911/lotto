@@ -15,11 +15,16 @@ export {
   bandStartForIndex,
   bandInnerSlot,
   innerSlotKey,
+} from '@/app/recommend/logic/combo/bandSlot';
+
+export {
   areBandTargetsMonotonic,
-  effectiveBandRankIdx,
   makeMonotonicBandTargets,
-  buildBandTargetsPerPosition,
-} from '@/app/recommend/logic/combo/bandUtil';
+} from '@/app/recommend/logic/combo/bandMonotonic';
+
+export { effectiveBandRankIdx } from '@/app/recommend/logic/combo/bandRankPick';
+
+export { buildBandTargetsPerPosition } from '@/app/recommend/logic/combo/buildBandTargets';
 
 export {
   parseComboStrategyRanks,

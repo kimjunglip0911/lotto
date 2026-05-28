@@ -11,7 +11,8 @@ import {
 import { PROFILE_BUILD_ATTEMPTS } from '@/app/recommend/constants/repairLimits';
 import type { GeneratedSet } from '@/app/recommend/types/generatedSet';
 import { buildPoolByBand } from '@/app/recommend/logic/repair';
-import { buildBandTargetsPerPosition, withSortedMains } from '@/app/recommend/logic/combo/bandUtil';
+import { buildBandTargetsPerPosition } from '@/app/recommend/logic/combo/buildBandTargets';
+import { withSortedMains } from '@/app/recommend/logic/combo/sortMains';
 import {
   appendMissingProfileDiagnostics,
   fillTargetProfiles,
