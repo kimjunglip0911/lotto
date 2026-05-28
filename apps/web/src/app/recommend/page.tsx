@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Header } from '@/components/common/Header';
-import { Sidebar } from '@/components/common/Sidebar';
+import { Sidebar } from '@/components/sidebar/Sidebar';
 import { RecommendMain } from '@/app/recommend/ui/RecommendMain';
 
 /** 추천 페이지 — 레이아웃·사이드바 */

@@ -60,7 +60,8 @@ lotto/
 ├── frontend/                          # 이전됨 → apps/web (삭제 예정)
 │   └── README.md
 │
-│   # apps/web/src/app·components 상세 트리는 저장소 apps/web/ 참고 (문서 중복 생략)
+│   # apps/web/src/app 상세 트리는 저장소 apps/web/ 참고 (문서 중복 생략)
+│   # Sidebar: apps/web/src/components/sidebar/{Sidebar.tsx,types,constants,logic,hooks,ui}/
 │
 ├── .gitignore
 ├── package.json                       # 루트 스크립트 (npm run dev)
@@ -84,4 +85,4 @@ lotto/
 
 ---
 
-*Last Updated: 2026-05-28 (home·recommend: 8폴더 리팩터링)*
+*Last Updated: 2026-05-28 (components/sidebar 위치)*

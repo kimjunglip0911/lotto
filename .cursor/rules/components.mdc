@@ -28,7 +28,22 @@ alwaysApply: false
 | 컴포넌트 | 경로 | 설명 |
 |:---|:---|:---|
 | **Header** | `common/Header.tsx` | 상단 헤더(메뉴 버튼/타이틀/알림 버튼) |
-| **Sidebar** | `common/Sidebar.tsx` | 좌측 내비게이션 사이드바(현재 경로 활성화 포함) |
+
+## Sidebar (`components/sidebar/`)
+
+| 컴포넌트 | 경로 | 설명 |
+|:---|:---|:---|
+| **Sidebar** | `sidebar/Sidebar.tsx` | 좌측 내비게이션 진입점(`export`; `@/components/sidebar/Sidebar`) |
+
+**역할별 하위** (1단계):
+
+| 역할 | 경로 | 설명 |
+|:---|:---|:---|
+| types | `sidebar/types/sidebarTypes.ts` | `SidebarProps`, `SidebarMenuItem` |
+| constants | `sidebar/constants/menuItems.ts` | 메뉴 목록 |
+| logic | `sidebar/logic/navActive.ts` | 경로 활성 판별 |
+| hooks | `sidebar/hooks/useSidebarNav.ts` | 경로·분석 메뉴 펼침 |
+| ui | `sidebar/ui/*.tsx` | Backdrop, Header, Footer, Nav, NavLink, NavGroup, NavChildLink |
 
 ## 3계층: Page Components (`frontend/src/app/<route>/ui/`)
 
@@ -46,7 +61,8 @@ alwaysApply: false
 
 ```text
 frontend/src/components/ui/              ← 1계층: Primitive
-frontend/src/components/common/          ← 2계층: Shared
+frontend/src/components/common/          ← 2계층: Shared (Header 등)
+frontend/src/components/sidebar/         ← 2계층: Sidebar (types·constants·logic·hooks·ui)
 frontend/src/app/<route>/ui/             ← 3계층: Page-specific (기능 폴더 안 `ui/`)
 ```
 

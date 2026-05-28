@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Header } from '@/components/common/Header';
-import { Sidebar } from '@/components/common/Sidebar';
+import { Sidebar } from '@/components/sidebar/Sidebar';
 import { useStData } from './hooks/useStData';
 import { useStView } from './hooks/useStView';
 import { StreakMain } from './ui/StreakMain';

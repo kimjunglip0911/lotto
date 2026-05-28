@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Header } from '@/components/common/Header';
-import { Sidebar } from '@/components/common/Sidebar';
+import { Sidebar } from '@/components/sidebar/Sidebar';
 import { useFinalPickData } from './hooks/useFinalPickData';
 import { FinalPickMain } from './ui/FinalPickMain';
 

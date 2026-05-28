@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Header } from '@/components/common/Header';
-import { Sidebar } from '@/components/common/Sidebar';
+import { Sidebar } from '@/components/sidebar/Sidebar';
 import { useTrendData } from './hooks/useTrendData';
 import { useTrendView } from './hooks/useTrendView';
 import { TrendMain } from './ui/TrendMain';
