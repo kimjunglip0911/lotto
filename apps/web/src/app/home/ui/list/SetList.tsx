@@ -5,7 +5,7 @@
 import { useMemo } from 'react';
 
 import { GROUP_SIZE } from '../../constants/home';
-import { useGroupDl } from '../../hooks/useGroupDl';
+import { useGrpPng } from '../../hooks/useGrpPng';
 import { chunkSets } from '../../logic/chunkSets';
 import type { LotterySetViewModel } from '../../types/home';
 import { SetGroup } from './SetGroup';
@@ -16,7 +16,7 @@ interface SetListProps {
 
 export function SetList({ sets }: SetListProps) {
   const groups = useMemo(() => chunkSets(sets, GROUP_SIZE), [sets]);
-  const { downloadState, groupCaptureRefs, handleDownloadGroup } = useGroupDl(GROUP_SIZE);
+  const { pngDlState, grpCapRefs, runGrpPng } = useGrpPng(GROUP_SIZE);
 
   return (
     <div className="z-10 w-full mt-4 mb-2">
@@ -35,11 +35,11 @@ export function SetList({ sets }: SetListProps) {
               groupIndex={groupIndex}
               groupSets={groupSets}
               groupSize={GROUP_SIZE}
-              status={downloadState?.groupIndex === groupIndex ? downloadState.status : null}
+              status={pngDlState?.groupIndex === groupIndex ? pngDlState.status : null}
               captureRef={(node) => {
-                groupCaptureRefs.current[groupIndex] = node;
+                grpCapRefs.current[groupIndex] = node;
               }}
-              onDownload={() => void handleDownloadGroup(groupIndex, groupSets)}
+              onDownload={() => void runGrpPng(groupIndex, groupSets)}
             />
           ))}
         </div>

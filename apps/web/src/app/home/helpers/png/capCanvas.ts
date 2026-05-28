@@ -10,7 +10,7 @@
  *
  * 역할 나눔
  * - 보통 `capHtmlImg.ts`를 먼저 시도하고, 그 결과가 없을 때만 호출합니다.
- * - 파일 저장·버튼 피드백: `dlGroupPng.ts`, `hooks/useGroupDl.ts`
+ * - 파일 저장·버튼 피드백: `dlGroupPng.ts`, `hooks/useGrpPng.ts`
  */
 
 import html2canvas from 'html2canvas';

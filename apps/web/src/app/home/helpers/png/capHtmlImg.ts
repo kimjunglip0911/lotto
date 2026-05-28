@@ -10,7 +10,7 @@
  *
  * 역할 나눔
  * - 첫 시도가 실패하면 `capCanvas.ts`로 같은 영역을 다시 캡처합니다.
- * - 파일 저장·버튼 피드백: `dlGroupPng.ts`, `hooks/useGroupDl.ts`
+ * - 파일 저장·버튼 피드백: `dlGroupPng.ts`, `hooks/useGrpPng.ts`
  */
 
 import { toPng as toPngFromHtmlToImage } from 'html-to-image';

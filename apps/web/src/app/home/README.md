@@ -19,7 +19,7 @@
 |:---|:---|
 | `api/` | HTTP 클라이언트 (`loadDrawNumbers`, `loadDrawings`, `loadWinByNo`, `saveWin`; 경로는 `constants/apiPath`) |
 | `ui/` | 화면 컴포넌트 (`controls/`, `stats/`, `list/`, `card/`, `HomeMain`) |
-| `hooks/` | `useHomeView`, `useGridData`(회차·세트·당첨 조합), `useDrawList`, `useDrawBundle`, `useWinInput`, `useSaveWinning`, `useGroupDl` |
+| `hooks/` | `useHomeView`, `useGridData`(회차·세트·당첨 조합), `useDrawList`, `useDrawBundle`, `useWinInput`, `useSaveWinning`, `useGrpPng` |
 | `logic/` | 등수 판정·시뮬레이션 통계·chunk·입력 파싱·회차 목록/세트 변환(`parseDrawArr`, `buildDrawList`, `toLotterySets`, `toSetVm`) |
 | `helpers/` | API 묶음 fetch·PNG 다운로드(`helpers/png/`: `capHtmlImg`, `capCanvas`, `dlGroupPng`) |
 | `types/` | 세트·당첨·통계 타입 |

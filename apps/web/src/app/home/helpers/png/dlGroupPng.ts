@@ -11,7 +11,7 @@
  *
  * 역할 나눔
  * - 1차 캡처: `capHtmlImg.ts` · 2차 캡처: `capCanvas.ts`
- * - 다운로드 버튼·완료/실패 문구: `hooks/useGroupDl.ts`
+ * - 다운로드 버튼·완료/실패 문구: `hooks/useGrpPng.ts`
  *
  * 실패 시 화면 영향
  * - false이면 훅이 「다운로드 실패」 피드백을 잠시 보여 줍니다.
