@@ -13,6 +13,7 @@
  * 역할 나눔
  * - 입력 값: `hooks/useWinInput.ts`
  * - 서버 전송: `api/win/saveWin.ts`
+ * - 저장 결과 되돌리기 예약: `hooks/useSaveDly.ts`
  * - 화면 조합: `hooks/useHomeView.ts`
  *
  * 실패·주의
@@ -25,7 +26,7 @@ import { useCallback, useState } from 'react';
 import { saveWin } from '../api/win/saveWin';
 import { buildSaveWinningBody } from '../logic/saveBody';
 import type { InputNumber, SaveStatus } from '../types/home';
-import { useSaveTimer } from './useSaveTimer';
+import { useSaveDly } from './useSaveDly';
 
 interface UseSaveWinningParams {
   selectedDraw: number | null;
@@ -41,7 +42,7 @@ export const useSaveWinning = ({
   const [isSaving, setIsSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
   const [lastDraw, setLastDraw] = useState(selectedDraw);
-  const { scheduleReset } = useSaveTimer();
+  const { scheduleReset } = useSaveDly();
 
   if (selectedDraw !== lastDraw) {
     setLastDraw(selectedDraw);
