@@ -1,4 +1,8 @@
-/** 회차 선택·당첨번호 입력·저장 컨트롤 바 */
+/**
+ * 홈 화면 상단에서 당첨 데이터 입력 흐름을 한곳에서 묶어 보여주는 영역이다.
+ * 선택한 회차, 당첨 번호 6개, 보너스 번호, 저장 상태를 받아 화면에 전달하며,
+ * 모든 번호가 유효하고 저장 중이 아닐 때만 저장 버튼을 활성화한다.
+ */
 
 import { isValidLottoNumber, type InputNumber, type SaveStatus } from '../../types/home';
 import { DrawSelect } from './DrawSelect';
@@ -19,30 +23,43 @@ interface GridControlsProps {
 }
 
 export function GridControls(props: GridControlsProps) {
+  const {
+    selectedDraw,
+    availableDraws,
+    winningNumbers,
+    winningBonus,
+    onSelectDraw,
+    onWinNumChg,
+    onBonusChg,
+    saveWinning,
+    isSaving,
+    saveStatus,
+  } = props;
+
   const canSave =
-    !props.isSaving &&
-    props.winningNumbers.every(isValidLottoNumber) &&
-    isValidLottoNumber(props.winningBonus);
+    !isSaving &&
+    winningNumbers.every(isValidLottoNumber) &&
+    isValidLottoNumber(winningBonus);
 
   return (
     <div className="flex flex-col xl:flex-row xl:justify-between items-center gap-4 xl:gap-8 mb-8 z-10 w-full bg-white/5 p-4 sm:p-5 rounded-2xl border border-white/10 backdrop-blur-md">
       <DrawSelect
-        selectedDraw={props.selectedDraw}
-        availableDraws={props.availableDraws}
-        onSelectDraw={props.onSelectDraw}
+        selectedDraw={selectedDraw}
+        availableDraws={availableDraws}
+        onSelectDraw={onSelectDraw}
       />
       <div className="flex flex-wrap justify-center items-center gap-2 sm:gap-3 w-full xl:w-auto">
         <WinInputs
-          winningNumbers={props.winningNumbers}
-          winningBonus={props.winningBonus}
-          onWinNumChg={props.onWinNumChg}
-          onBonusChg={props.onBonusChg}
+          winningNumbers={winningNumbers}
+          winningBonus={winningBonus}
+          onWinNumChg={onWinNumChg}
+          onBonusChg={onBonusChg}
         />
         <SaveBtn
           canSave={canSave}
-          isSaving={props.isSaving}
-          saveStatus={props.saveStatus}
-          saveWinning={props.saveWinning}
+          isSaving={isSaving}
+          saveStatus={saveStatus}
+          saveWinning={saveWinning}
         />
       </div>
     </div>
