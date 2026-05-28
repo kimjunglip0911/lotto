@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo } from 'react';
 
-import { toViewModel } from '../helpers/toViewModel';
+import { toSetVm } from '../logic/toSetVm';
 import { useGridData } from './useGridData';
 import { useSaveWinning } from './useSaveWinning';
 import { useWinInput } from './useWinInput';
@@ -30,7 +30,7 @@ export const useHomeView = () => {
     resetSaveStatus();
   }, [resetSaveStatus, selectedDraw]);
 
-  const displaySets = useMemo(() => toViewModel(sets, selectedDraw), [selectedDraw, sets]);
+  const displaySets = useMemo(() => toSetVm(sets, selectedDraw), [selectedDraw, sets]);
 
   return {
     winningNumbers,
