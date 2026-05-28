@@ -37,6 +37,7 @@
 ## 주의
 
 - API 경로는 `constants/apiPath.ts`에 모아 둡니다. 추천 세트는 `HOME_RECOMMEND_DRAWINGS_PATH`(`api/recommend/drawings.ts`), 당첨 조회는 `HOME_WINNING_BY_NO_PATH`(`api/win/winByDraw.ts`의 `loadWinByNo`), 당첨번호 저장은 `HOME_SAVE_WIN_PATH`(`api/win/saveWin.ts`)를 사용합니다.
+- `helpers/fetchBundle.ts`의 `fetchDrawBundle(drawNo)`는 추천 세트/당첨번호를 병렬 조회하며, 추천 응답이 없으면 `sets: []`, 당첨번호가 없거나 조회 실패면 `winning: null`을 반환합니다.
 - 회차 목록은 accu-nums `draw-numbers` 응답 기준이며, 첫 항목+1 회차가 기본 선택됩니다.
 - 해당 회차에 분석 세트가 없으면 빈 상태 안내가 표시됩니다.
 - PNG 캡처는 `html-to-image` 실패 시 `html2canvas`로 폴백합니다.
