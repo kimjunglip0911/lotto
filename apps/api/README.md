@@ -34,7 +34,7 @@ src/
 ├── recommend/          # /api/recommend/*
 └── analysis/
     ├── run-streak/
-    ├── chi-square/
+    ├── chi-square/      # controller·service·queries (README.md)
     ├── trend/
     └── accu-nums/      # /api/analysis/accu-nums (controller·service·queries·repository·helpers; legacy: accumulated-numbers)
 ```

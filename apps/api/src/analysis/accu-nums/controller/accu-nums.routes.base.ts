@@ -3,13 +3,7 @@
  * 회차·당첨·스냅샷 조회·저장 경로를 정의하고, 실제 일은 service 폴더에 넘깁니다.
  * 신규 주소와 구 accumulated-numbers 주소가 이 클래스를 같이 씁니다.
  */
-import {
-  Body,
-  Get,
-  ParseIntPipe,
-  Post,
-  Query,
-} from '@nestjs/common';
+import { Body, Get, ParseIntPipe, Post, Query } from '@nestjs/common';
 import { MessageResponseDto } from '../../../domain/dto/message.dto';
 import { SnapshotSaveDto } from '../../../domain/dto/snapshot.dto';
 import { AccuNumsService } from '../service/accu-nums.service';

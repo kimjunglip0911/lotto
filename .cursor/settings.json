@@ -1,7 +1,2 @@
 {
-  "plugins": {
-    "parallel": {
-      "enabled": true
-    }
-  }
 }

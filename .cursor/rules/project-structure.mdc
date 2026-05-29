@@ -52,7 +52,7 @@ lotto/
 │           ├── recommend/             # 8폴더 리팩터링 완료 (api·ui·hooks·logic/combo·logic/repair·types·constants·tests)
 │           └── analysis/
 │               ├── accu-nums/         # API: controller·service·queries·repository·helpers (README.md; legacy URL)
-│               ├── chi-square/
+│               ├── chi-square/        # API: controller·service·queries (README.md)
 │               ├── final-pick/        # 통합 분석(api·ui·hooks·logic/chiWf·tests)
 │               ├── trend/             # 8폴더 리팩터링 완료 (api·ui·hooks·logic·helpers·types·constants·tests)
 │               └── run-streak/        # 8폴더 리팩터링 완료 (api·ui·hooks·logic·helpers·types·constants·tests)
@@ -85,4 +85,4 @@ lotto/
 
 ---
 
-*Last Updated: 2026-05-29 (api/src/home 역할 폴더)*
+*Last Updated: 2026-05-29 (api/src/analysis/chi-square 역할 폴더)*
