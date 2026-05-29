@@ -30,7 +30,7 @@ src/
 ├── scripts/            # db:copy 등 유틸
 ├── db/
 │   └── schema.sql
-├── home/               # /api/drawings/*
+├── home/               # /api/drawings/* (controller·service·queries/)
 ├── recommend/          # /api/recommend/*
 └── analysis/
     ├── run-streak/

@@ -48,7 +48,7 @@ lotto/
 │           ├── db/
 │           │   ├── schema.sql
 │           │   └── data/lotto.db      # SQLite 정본(.gitignore)
-│           ├── home/                  # 8폴더 리팩터링 완료 (api·ui·hooks·logic·helpers·types·constants·tests)
+│           ├── home/                  # /api/drawings — controller·service·queries (README.md)
 │           ├── recommend/             # 8폴더 리팩터링 완료 (api·ui·hooks·logic/combo·logic/repair·types·constants·tests)
 │           └── analysis/
 │               ├── accu-nums/
@@ -85,4 +85,4 @@ lotto/
 
 ---
 
-*Last Updated: 2026-05-28 (components/sidebar 위치)*
+*Last Updated: 2026-05-29 (api/src/home 역할 폴더)*
