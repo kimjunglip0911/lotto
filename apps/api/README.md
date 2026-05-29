@@ -36,7 +36,7 @@ src/
     ├── run-streak/
     ├── chi-square/
     ├── trend/
-    └── accu-nums/      # legacy: accumulated-numbers
+    └── accu-nums/      # /api/analysis/accu-nums (controller·service·queries·repository·helpers; legacy: accumulated-numbers)
 ```
 
 ## 테스트

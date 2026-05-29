@@ -1,14 +1,18 @@
 import { Module } from '@nestjs/common';
 import { AnalysisDbUtil } from '../shared/analysis-db.util';
-import {
-  AccuNumsController,
-  AccuNumsLegacyController,
-} from './accu-nums.controller';
-import { AccuNumsRepository } from './accu-nums.repository';
-import { AccuNumsService } from './accu-nums.service';
+import { AccuNumsController } from './controller/accu-nums.controller';
+import { AccuNumsLegacyController } from './controller/accu-nums.legacy.controller';
+import { SnapshotRepository } from './repository/snapshot.repository';
+import { AccuNumsService } from './service/accu-nums.service';
+import { SnapshotService } from './service/snapshot.service';
 
 @Module({
   controllers: [AccuNumsController, AccuNumsLegacyController],
-  providers: [AccuNumsService, AccuNumsRepository, AnalysisDbUtil],
+  providers: [
+    AccuNumsService,
+    SnapshotService,
+    SnapshotRepository,
+    AnalysisDbUtil,
+  ],
 })
 export class AccuNumsModule {}

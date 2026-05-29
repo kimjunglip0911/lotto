@@ -51,7 +51,7 @@ lotto/
 │           ├── home/                  # /api/drawings — controller·service·queries (README.md)
 │           ├── recommend/             # 8폴더 리팩터링 완료 (api·ui·hooks·logic/combo·logic/repair·types·constants·tests)
 │           └── analysis/
-│               ├── accu-nums/
+│               ├── accu-nums/         # API: controller·service·queries·repository·helpers (README.md; legacy URL)
 │               ├── chi-square/
 │               ├── final-pick/        # 통합 분석(api·ui·hooks·logic/chiWf·tests)
 │               ├── trend/             # 8폴더 리팩터링 완료 (api·ui·hooks·logic·helpers·types·constants·tests)
