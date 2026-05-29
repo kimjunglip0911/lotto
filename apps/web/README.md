@@ -18,9 +18,10 @@ npm run dev
 
 | 변수 | 설명 |
 |:---|:---|
-| `NEXT_PUBLIC_API_URL` | 브라우저가 Nest를 직접 부를 베이스 URL (예: `http://localhost:8010`). **필수** — 미설정 시 API 호출이 동작하지 않습니다 |
+| `NEXT_PUBLIC_API_URL` | 브라우저가 Nest를 직접 부를 베이스 URL (예: `http://127.0.0.1:8010`). 권장 |
+| `API_PROXY_TARGET` | *(선택)* `next.config.ts` rewrite 대상. 미설정 시 `NEXT_PUBLIC_API_URL` 또는 `http://127.0.0.1:8010` |
 
-변경 후에는 `npm run dev`를 **다시 시작**해야 `NEXT_PUBLIC_*`가 반영됩니다.
+`NEXT_PUBLIC_API_URL` 없이 상대 경로(`/api/...`)만 쓰는 경우, 개발 서버가 `next.config.ts` **rewrites**로 Nest(`8010`)에 프록시합니다. 브라우저에서 API를 직접 부르려면 `.env.example`을 복사해 `.env.local`을 만든 뒤 `npm run dev`를 **다시 시작**하세요.
 
 ---
 
