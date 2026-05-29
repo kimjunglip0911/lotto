@@ -28,15 +28,25 @@ export class AccuNumsService {
   }
 
   winningNumber(drawNo: number): Promise<Record<string, unknown>> {
-    return this.db.fetchDictOr404(Q.GET_WINNING_NUMBERS_BY_DRAW, [drawNo], NOT_FOUND);
+    return this.db.fetchDictOr404(
+      Q.GET_WINNING_NUMBERS_BY_DRAW,
+      [drawNo],
+      NOT_FOUND,
+    );
   }
 
-  winningWindow(drawNo: number, windowSize: number): Promise<Record<string, unknown>[]> {
+  winningWindow(
+    drawNo: number,
+    windowSize: number,
+  ): Promise<Record<string, unknown>[]> {
     if (drawNo <= 1) {
       return Promise.resolve([]);
     }
     const size = Math.min(MAX_WINDOW, Math.max(MIN_WINDOW, windowSize));
-    return this.db.fetchDictRows(Q.GET_WINNING_NUMBERS_BEFORE_DRAW_LIMITED, [drawNo, size]);
+    return this.db.fetchDictRows(Q.GET_WINNING_NUMBERS_BEFORE_DRAW_LIMITED, [
+      drawNo,
+      size,
+    ]);
   }
 
   async saveSnapshot(body: SnapshotSaveDto): Promise<void> {
@@ -48,11 +58,21 @@ export class AccuNumsService {
     }
     for (const n of body.final_numbers) {
       if (n < 1 || n > 45) {
-        throw new HttpException('final_numbers must be in 1..45', HttpStatus.BAD_REQUEST);
+        throw new HttpException(
+          'final_numbers must be in 1..45',
+          HttpStatus.BAD_REQUEST,
+        );
       }
     }
     const [n1, n2, n3, n4] = body.final_numbers;
-    await this.repo.saveSnapshot(body.anchor_draw_no, body.schema_version ?? 2, n1, n2, n3, n4);
+    await this.repo.saveSnapshot(
+      body.anchor_draw_no,
+      body.schema_version ?? 2,
+      n1,
+      n2,
+      n3,
+      n4,
+    );
   }
 
   async getSnapshot(drawNo: number): Promise<SnapshotGetDto> {

@@ -1,4 +1,12 @@
-const NUMBER_KEYS = ['num1', 'num2', 'num3', 'num4', 'num5', 'num6', 'bonus_num'] as const;
+const NUMBER_KEYS = [
+  'num1',
+  'num2',
+  'num3',
+  'num4',
+  'num5',
+  'num6',
+  'bonus_num',
+] as const;
 
 export type NumPick = {
   number: number;
@@ -57,7 +65,9 @@ export function replaceExcludedInRows(
   if (!excludedSet.size) {
     return rows;
   }
-  const pool = Array.from({ length: 45 }, (_, i) => i + 1).filter((n) => !excludedSet.has(n));
+  const pool = Array.from({ length: 45 }, (_, i) => i + 1).filter(
+    (n) => !excludedSet.has(n),
+  );
   if (pool.length < 6) {
     return rows;
   }

@@ -13,7 +13,11 @@ export class RunStreakService {
   }
 
   winningNumber(drawNo: number): Promise<Record<string, unknown>> {
-    return this.db.fetchDictOr404(Q.GET_WINNING_NUMBERS_BY_DRAW, [drawNo], NOT_FOUND);
+    return this.db.fetchDictOr404(
+      Q.GET_WINNING_NUMBERS_BY_DRAW,
+      [drawNo],
+      NOT_FOUND,
+    );
   }
 
   winningRange(drawNo: number): Promise<Record<string, unknown>[]> {

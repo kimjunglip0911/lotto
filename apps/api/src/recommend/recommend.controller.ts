@@ -14,9 +14,13 @@ export class RecommendController {
   constructor(private readonly svc: RecommendService) {}
 
   @Get('exclusion-candidates')
-  exclusionCandidates(@Query('draw_no') drawNoStr?: string): Promise<Record<string, unknown>> {
+  exclusionCandidates(
+    @Query('draw_no') drawNoStr?: string,
+  ): Promise<Record<string, unknown>> {
     const drawNo =
-      drawNoStr != null && drawNoStr !== '' ? parseInt(drawNoStr, 10) : undefined;
+      drawNoStr != null && drawNoStr !== ''
+        ? parseInt(drawNoStr, 10)
+        : undefined;
     return this.svc.getExclusionCandidates(drawNo);
   }
 
@@ -27,18 +31,25 @@ export class RecommendController {
     @Query('seed') seedStr?: string,
   ): Record<string, unknown>[] {
     const drawNo =
-      drawNoStr != null && drawNoStr !== '' ? parseInt(drawNoStr, 10) : undefined;
-    const seed = seedStr != null && seedStr !== '' ? parseInt(seedStr, 10) : undefined;
+      drawNoStr != null && drawNoStr !== ''
+        ? parseInt(drawNoStr, 10)
+        : undefined;
+    const seed =
+      seedStr != null && seedStr !== '' ? parseInt(seedStr, 10) : undefined;
     return this.svc.generateWheel(count, drawNo, seed);
   }
 
   @Post('generate-and-save')
-  generateAndSave(@Body() body: GenerateSaveDto): Promise<Record<string, unknown>[]> {
+  generateAndSave(
+    @Body() body: GenerateSaveDto,
+  ): Promise<Record<string, unknown>[]> {
     return this.svc.generateAndSave(body);
   }
 
   @Get('drawings')
-  drawings(@Query('draw_no', ParseIntPipe) drawNo: number): Promise<Record<string, unknown>[]> {
+  drawings(
+    @Query('draw_no', ParseIntPipe) drawNo: number,
+  ): Promise<Record<string, unknown>[]> {
     return this.svc.getDrawings(drawNo);
   }
 

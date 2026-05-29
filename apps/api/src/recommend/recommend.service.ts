@@ -20,7 +20,9 @@ export const METHOD_JL_SAVED = 'JL Wheel Method';
 export class RecommendService {
   constructor(private readonly repo: RecommendRepository) {}
 
-  async getExclusionCandidates(drawNo?: number): Promise<Record<string, unknown>> {
+  async getExclusionCandidates(
+    drawNo?: number,
+  ): Promise<Record<string, unknown>> {
     try {
       const targetDrawNo = await this.repo.resolveTargetDrawNo(drawNo);
       const rowsByWindow = await this.repo.fetchRowsByWindow(targetDrawNo);
@@ -33,7 +35,9 @@ export class RecommendService {
       }
       const excludedNumbersUnion = [
         ...new Set(
-          Object.values(windowTopNumbers).map((info) => (info as { number: number }).number),
+          Object.values(windowTopNumbers).map(
+            (info) => (info as { number: number }).number,
+          ),
         ),
       ].sort((a, b) => a - b);
       const drawCounts: Record<string, number> = {};
@@ -49,7 +53,15 @@ export class RecommendService {
         ruleMeta: {
           topTiePolicy: 'min-number-on-tie',
           leastTiePolicy: 'min-number-on-tie',
-          countedFields: ['num1', 'num2', 'num3', 'num4', 'num5', 'num6', 'bonus_num'],
+          countedFields: [
+            'num1',
+            'num2',
+            'num3',
+            'num4',
+            'num5',
+            'num6',
+            'bonus_num',
+          ],
         },
       };
     } catch (e) {
@@ -64,17 +76,25 @@ export class RecommendService {
     }
   }
 
-  generateWheel(count: number, drawNo?: number, seed?: number): Record<string, unknown>[] {
+  generateWheel(
+    count: number,
+    drawNo?: number,
+    seed?: number,
+  ): Record<string, unknown>[] {
     if (seed != null) {
       /* fallback generator does not fix seed; matches Python optional seed behavior when jl missing */
     }
     return generateWheelSets(count, 0, drawNo);
   }
 
-  async generateAndSave(request: GenerateSaveDto): Promise<Record<string, unknown>[]> {
+  async generateAndSave(
+    request: GenerateSaveDto,
+  ): Promise<Record<string, unknown>[]> {
     const drawNo = request.draw_no;
     const appliedRuleIds = request.applied_rule_ids ?? [];
-    const excludedNumbers = [...new Set(request.excluded_numbers ?? [])].sort((a, b) => a - b);
+    const excludedNumbers = [...new Set(request.excluded_numbers ?? [])].sort(
+      (a, b) => a - b,
+    );
     let rows: Record<string, unknown>[];
     if (request.sets?.length) {
       rows = request.sets.map((s) => ({
@@ -93,8 +113,11 @@ export class RecommendService {
         excludedSet,
       );
     }
-    await this.repo.replaceDrawingsForMethod(drawNo, METHOD_JL_SAVED, rows, () =>
-      `jl_${randomUUID().replace(/-/g, '').slice(0, 12)}`,
+    await this.repo.replaceDrawingsForMethod(
+      drawNo,
+      METHOD_JL_SAVED,
+      rows,
+      () => `jl_${randomUUID().replace(/-/g, '').slice(0, 12)}`,
     );
     return rows.map((row) => ({
       num1: row.num1,
@@ -114,7 +137,10 @@ export class RecommendService {
     return this.repo.getDrawingsByDrawNoAndMethod(drawNo, METHOD_JL_SAVED);
   }
 
-  getDrawDuplicateInsight(drawNo: number, count: number): Record<string, unknown> {
+  getDrawDuplicateInsight(
+    drawNo: number,
+    count: number,
+  ): Record<string, unknown> {
     return analyzeDrawDuplicateSets(drawNo, count);
   }
 }

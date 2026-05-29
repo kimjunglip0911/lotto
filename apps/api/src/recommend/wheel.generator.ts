@@ -27,7 +27,10 @@ export function generateJlWheelSets(
   return generateWheelSets(count, startIndex);
 }
 
-export function analyzeDrawDuplicateSets(drawNo: number, count = 20): Record<string, unknown> {
+export function analyzeDrawDuplicateSets(
+  drawNo: number,
+  count = 20,
+): Record<string, unknown> {
   const rows = generateWheelSets(count, 0, drawNo);
   const signatureCounts = new Map<string, number>();
   for (const row of rows) {

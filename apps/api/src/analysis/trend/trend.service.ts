@@ -13,7 +13,11 @@ export class TrendService {
   }
 
   winningNumber(drawNo: number): Promise<Record<string, unknown>> {
-    return this.db.fetchDictOr404(Q.GET_WINNING_NUMBERS_BY_DRAW, [drawNo], NOT_FOUND);
+    return this.db.fetchDictOr404(
+      Q.GET_WINNING_NUMBERS_BY_DRAW,
+      [drawNo],
+      NOT_FOUND,
+    );
   }
 
   allHistory(drawNo: number): Promise<Record<string, unknown>[]> {

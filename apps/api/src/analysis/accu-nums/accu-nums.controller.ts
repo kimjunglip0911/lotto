@@ -1,4 +1,11 @@
-import { Body, Controller, Get, ParseIntPipe, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  ParseIntPipe,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { MessageResponseDto } from '../../domain/dto/message.dto';
 import { SnapshotSaveDto } from '../../domain/dto/snapshot.dto';
 import { AccuNumsService } from './accu-nums.service';
@@ -13,12 +20,16 @@ export class AccuNumsController {
   }
 
   @Get('winning-numbers-range')
-  winningRange(@Query('draw_no', ParseIntPipe) drawNo: number): Promise<Record<string, unknown>[]> {
+  winningRange(
+    @Query('draw_no', ParseIntPipe) drawNo: number,
+  ): Promise<Record<string, unknown>[]> {
     return this.svc.winningRange(drawNo);
   }
 
   @Get('winning-number')
-  winningNumber(@Query('draw_no', ParseIntPipe) drawNo: number): Promise<Record<string, unknown>> {
+  winningNumber(
+    @Query('draw_no', ParseIntPipe) drawNo: number,
+  ): Promise<Record<string, unknown>> {
     return this.svc.winningNumber(drawNo);
   }
 
@@ -31,7 +42,9 @@ export class AccuNumsController {
   }
 
   @Post('snapshot')
-  async postSnapshot(@Body() body: SnapshotSaveDto): Promise<MessageResponseDto> {
+  async postSnapshot(
+    @Body() body: SnapshotSaveDto,
+  ): Promise<MessageResponseDto> {
     await this.svc.saveSnapshot(body);
     return { message: '저장되었습니다.' };
   }
@@ -53,12 +66,16 @@ export class AccuNumsLegacyController {
   }
 
   @Get('winning-numbers-range')
-  winningRange(@Query('draw_no', ParseIntPipe) drawNo: number): Promise<Record<string, unknown>[]> {
+  winningRange(
+    @Query('draw_no', ParseIntPipe) drawNo: number,
+  ): Promise<Record<string, unknown>[]> {
     return this.svc.winningRange(drawNo);
   }
 
   @Get('winning-number')
-  winningNumber(@Query('draw_no', ParseIntPipe) drawNo: number): Promise<Record<string, unknown>> {
+  winningNumber(
+    @Query('draw_no', ParseIntPipe) drawNo: number,
+  ): Promise<Record<string, unknown>> {
     return this.svc.winningNumber(drawNo);
   }
 
@@ -71,7 +88,9 @@ export class AccuNumsLegacyController {
   }
 
   @Post('snapshot')
-  async postSnapshot(@Body() body: SnapshotSaveDto): Promise<MessageResponseDto> {
+  async postSnapshot(
+    @Body() body: SnapshotSaveDto,
+  ): Promise<MessageResponseDto> {
     await this.svc.saveSnapshot(body);
     return { message: '저장되었습니다.' };
   }

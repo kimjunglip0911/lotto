@@ -10,7 +10,8 @@ WHERE draw_no = ? AND method = ?
 ORDER BY rowid ASC
 `.trim();
 
-export const GET_MAX_WINNER_DRAW_NO = `SELECT MAX(draw_no) FROM lotto_winners`.trim();
+export const GET_MAX_WINNER_DRAW_NO =
+  `SELECT MAX(draw_no) FROM lotto_winners`.trim();
 
 export const GET_WINNING_NUMBERS_BEFORE_DRAW = `
 SELECT draw_no, num1, num2, num3, num4, num5, num6, bonus_num

@@ -5,7 +5,10 @@ import { SqliteService } from '../../db/sqlite.service';
 export class AnalysisDbUtil {
   constructor(private readonly sqlite: SqliteService) {}
 
-  async fetchDrawNumbers(sql: string, params: unknown[] = []): Promise<number[]> {
+  async fetchDrawNumbers(
+    sql: string,
+    params: unknown[] = [],
+  ): Promise<number[]> {
     const rows = await this.sqlite.fetchAll(sql, params);
     return rows.map((r) => Number(r.draw_no ?? Object.values(r)[0]));
   }
@@ -22,7 +25,10 @@ export class AnalysisDbUtil {
     return row;
   }
 
-  async fetchDictRows(sql: string, params: unknown[] = []): Promise<Record<string, unknown>[]> {
+  async fetchDictRows(
+    sql: string,
+    params: unknown[] = [],
+  ): Promise<Record<string, unknown>[]> {
     return this.sqlite.fetchAll(sql, params);
   }
 }

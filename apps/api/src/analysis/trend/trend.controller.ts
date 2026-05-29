@@ -11,12 +11,16 @@ export class TrendController {
   }
 
   @Get('winning-number')
-  winningNumber(@Query('draw_no', ParseIntPipe) drawNo: number): Promise<Record<string, unknown>> {
+  winningNumber(
+    @Query('draw_no', ParseIntPipe) drawNo: number,
+  ): Promise<Record<string, unknown>> {
     return this.svc.winningNumber(drawNo);
   }
 
   @Get('all-history')
-  allHistory(@Query('draw_no', ParseIntPipe) drawNo: number): Promise<Record<string, unknown>[]> {
+  allHistory(
+    @Query('draw_no', ParseIntPipe) drawNo: number,
+  ): Promise<Record<string, unknown>[]> {
     return this.svc.allHistory(drawNo);
   }
 }

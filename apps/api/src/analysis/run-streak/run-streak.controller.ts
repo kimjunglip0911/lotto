@@ -11,12 +11,16 @@ export class RunStreakController {
   }
 
   @Get('winning-number')
-  winningNumber(@Query('draw_no', ParseIntPipe) drawNo: number): Promise<Record<string, unknown>> {
+  winningNumber(
+    @Query('draw_no', ParseIntPipe) drawNo: number,
+  ): Promise<Record<string, unknown>> {
     return this.svc.winningNumber(drawNo);
   }
 
   @Get('winning-numbers-range')
-  winningRange(@Query('draw_no', ParseIntPipe) drawNo: number): Promise<Record<string, unknown>[]> {
+  winningRange(
+    @Query('draw_no', ParseIntPipe) drawNo: number,
+  ): Promise<Record<string, unknown>[]> {
     return this.svc.winningRange(drawNo);
   }
 }

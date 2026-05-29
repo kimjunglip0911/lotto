@@ -27,14 +27,20 @@ export class RecommendRepository {
     return Number(maxVal) + 1;
   }
 
-  async fetchWinningRows(drawNo: number, windowSize: number | null): Promise<Record<string, unknown>[]> {
+  async fetchWinningRows(
+    drawNo: number,
+    windowSize: number | null,
+  ): Promise<Record<string, unknown>[]> {
     if (drawNo <= 1) {
       return [];
     }
     if (windowSize == null) {
       return this.sqlite.fetchAll(Q.GET_WINNING_NUMBERS_BEFORE_DRAW, [drawNo]);
     }
-    return this.sqlite.fetchAll(Q.GET_WINNING_NUMBERS_BEFORE_DRAW_LIMITED, [drawNo, windowSize]);
+    return this.sqlite.fetchAll(Q.GET_WINNING_NUMBERS_BEFORE_DRAW_LIMITED, [
+      drawNo,
+      windowSize,
+    ]);
   }
 
   async fetchRowsByWindow(
@@ -75,7 +81,13 @@ export class RecommendRepository {
     });
   }
 
-  async getDrawingsByDrawNoAndMethod(drawNo: number, method: string): Promise<Record<string, unknown>[]> {
-    return this.sqlite.fetchAll(Q.GET_DRAWINGS_BY_DRAW_NO_AND_METHOD, [drawNo, method]);
+  async getDrawingsByDrawNoAndMethod(
+    drawNo: number,
+    method: string,
+  ): Promise<Record<string, unknown>[]> {
+    return this.sqlite.fetchAll(Q.GET_DRAWINGS_BY_DRAW_NO_AND_METHOD, [
+      drawNo,
+      method,
+    ]);
   }
 }

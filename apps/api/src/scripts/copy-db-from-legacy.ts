@@ -19,11 +19,17 @@ const countTables = (dbPath: string): Record<string, number> => {
     return {};
   }
   const db = new Database(dbPath, { readonly: true });
-  const tables = ['lotto_winners', 'lotto_drawings', 'accumulated_number_snapshots'];
+  const tables = [
+    'lotto_winners',
+    'lotto_drawings',
+    'accumulated_number_snapshots',
+  ];
   const out: Record<string, number> = {};
   for (const t of tables) {
     try {
-      const row = db.prepare(`SELECT COUNT(*) AS c FROM ${t}`).get() as { c: number };
+      const row = db.prepare(`SELECT COUNT(*) AS c FROM ${t}`).get() as {
+        c: number;
+      };
       out[t] = row.c;
     } catch {
       out[t] = -1;

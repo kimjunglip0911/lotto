@@ -26,8 +26,12 @@ export class AccuNumsRepository {
     });
   }
 
-  async getSnapshotRow(anchorDrawNo: number): Promise<Record<string, unknown> | null> {
-    const row = await this.sqlite.fetchOne(Q.GET_ACCUMULATED_SNAPSHOT_BY_DRAW, [anchorDrawNo]);
+  async getSnapshotRow(
+    anchorDrawNo: number,
+  ): Promise<Record<string, unknown> | null> {
+    const row = await this.sqlite.fetchOne(Q.GET_ACCUMULATED_SNAPSHOT_BY_DRAW, [
+      anchorDrawNo,
+    ]);
     return row ?? null;
   }
 }
