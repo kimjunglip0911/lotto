@@ -17,7 +17,7 @@
  * - 당첨 입력: `hooks/useWinInput.ts`
  * - 저장: `hooks/useSaveWinning.ts`
  * - 세트 표시 변환: `logic/toSetVm.ts`
- * - 화면 배치: `ui/HomeMain.tsx`
+ * - 화면 배치: `ui/HomeMain.tsx`, 카드 꾸밈: `ui/HomeCard.tsx`
  *
  * 실패·주의
  * - 회차 미선택 시 저장 버튼 동작은 `useSaveWinning`에서 막습니다.
@@ -58,3 +58,18 @@ export const useHomeView = () => {
 };
 
 export type HomeView = ReturnType<typeof useHomeView>;
+
+/** 상단 회차·당첨 입력·저장 영역(`GridControls`)에 넘기는 view 일부 */
+export type HomeGridSlice = Pick<
+  HomeView,
+  | 'selectedDraw'
+  | 'availableDraws'
+  | 'winningNumbers'
+  | 'winningBonus'
+  | 'setSelectedDraw'
+  | 'onWinNumChg'
+  | 'onBonusChg'
+  | 'saveWinning'
+  | 'isSaving'
+  | 'saveStatus'
+>;

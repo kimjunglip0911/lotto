@@ -4,23 +4,13 @@
  * 모든 번호가 유효하고 저장 중이 아닐 때만 저장 버튼을 활성화한다.
  */
 
-import { isValidLottoNumber, type InputNumber, type SaveStatus } from '../../types/home';
+import type { HomeGridSlice } from '../../hooks/useHomeView';
+import { isValidLottoNumber } from '../../types/home';
 import { DrawSelect } from './DrawSelect';
 import { SaveBtn } from './SaveBtn';
 import { WinInputs } from './WinInputs';
 
-interface GridControlsProps {
-  selectedDraw: number | null;
-  availableDraws: number[];
-  winningNumbers: InputNumber[];
-  winningBonus: InputNumber;
-  onSelectDraw: (value: number | null) => void;
-  onWinNumChg: (index: number, value: string) => void;
-  onBonusChg: (value: string) => void;
-  saveWinning: () => void;
-  isSaving: boolean;
-  saveStatus: SaveStatus;
-}
+export type GridControlsProps = HomeGridSlice;
 
 export function GridControls(props: GridControlsProps) {
   const {
@@ -28,7 +18,7 @@ export function GridControls(props: GridControlsProps) {
     availableDraws,
     winningNumbers,
     winningBonus,
-    onSelectDraw,
+    setSelectedDraw,
     onWinNumChg,
     onBonusChg,
     saveWinning,
@@ -46,7 +36,7 @@ export function GridControls(props: GridControlsProps) {
       <DrawSelect
         selectedDraw={selectedDraw}
         availableDraws={availableDraws}
-        onSelectDraw={onSelectDraw}
+        onSelectDraw={setSelectedDraw}
       />
       <div className="flex flex-wrap justify-center items-center gap-2 sm:gap-3 w-full xl:w-auto">
         <WinInputs

@@ -18,7 +18,7 @@
 | 폴더 | 역할 |
 |:---|:---|
 | `api/` | HTTP 클라이언트 (`loadDrawNumbers`, `loadDrawings`, `loadWinByNo`, `saveWin`; 경로는 `constants/apiPath`) |
-| `ui/` | 화면 컴포넌트 (`controls/`, `stats/`: `RankStats`, `RankGuide`, `RankSummary`, `RankList`, `list/`, `card/`, `HomeMain`) |
+| `ui/` | 화면 컴포넌트 (`HomeMain` 본문 조립, `HomeCard` 카드 꾸밈, `controls/`, `stats/`: `RankStats`, `RankGuide`, `RankSummary`, `RankList`, `list/`, `card/`) |
 | `hooks/` | `useHomeView`(입력·회차·저장·표시 세트 조합), `useGridData`, `useDrawList`, `useDrawBundle`, `useWinInput`(`winByDraw` 동기화), `useSaveWinning`, `useSaveDly`(저장 결과 idle 복귀 지연), `useGrpPng` |
 | `logic/` | 등수 판정·당첨 등수 집계(`rankStats`: `calcRankStats`)·당첨번호 정규화(`normalize`: `toNumOrNull`, `toWinNums`, `canCalcWins`)·저장 본문 조립(`saveBody`: `makeSaveBody`)·10세트 묶음(`chunkSets`)·입력 파싱(`parseNum`: `toInputNum`)·회차 목록/세트 변환(`parseDrawArr`, `buildDrawList`, `toLotterySets`, `toSetVm`) |
 | `helpers/` | API 묶음 fetch·PNG 다운로드(`helpers/png/`: `capHtmlImg`, `capCanvas`, `dlGroupPng`) |
