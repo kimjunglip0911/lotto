@@ -8,6 +8,7 @@ import type {
 import { canPickBandSkeleton } from '@/app/recommend/logic/repair/backtrack';
 import { buildMetricsOnlyFromPool } from '@/app/recommend/logic/repair/metricsOnly';
 import { forceBuildOneSet } from '@/app/recommend/logic/repair/forceBuild';
+import { isSetWithinUsageLimit } from '@/app/recommend/logic/repair/usageLimit';
 
 const setKeyFromSorted = (sorted: readonly number[]): string => [...sorted].join(',');
 
@@ -29,10 +30,12 @@ export const diagnoseProfileBuild = (
     );
     if (!metrics) return 'no_band_in_pool';
     if (usedKeys.has(setKeyFromSorted(metrics))) return 'duplicate_only';
+    if (!isSetWithinUsageLimit(metrics, pickCtx.usage)) return 'usage_limit';
     return 'ok';
   }
   const built = forceBuildOneSet(poolByBand, constraints, pickCtx, options);
   if (!built) return 'constraints_unsat';
   if (usedKeys.has(setKeyFromSorted(built))) return 'duplicate_only';
+  if (!isSetWithinUsageLimit(built, pickCtx.usage)) return 'usage_limit';
   return 'ok';
 };

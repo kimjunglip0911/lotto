@@ -8,6 +8,7 @@ import type {
 import { compareViolationSets } from '@/app/recommend/logic/repair/violation';
 import { maxConsecutiveRunLength, sortPickedAsc } from '@/app/recommend/logic/repair/runLen';
 import { pickRepairPosition, replaceCandidatesForPosition } from '@/app/recommend/logic/repair/repairPos';
+import { matchesBandTarget } from '@/app/recommend/logic/repair/bandFallback';
 import { validatePickedNoSum, validatePickedSet } from '@/app/recommend/logic/repair/validate';
 
 /** 한 자리 교체로 위반을 줄인다 */
@@ -53,7 +54,7 @@ export const repairOneStep = (
     const runAfter = maxConsecutiveRunLength(sortedAfter);
     const bandAtPosOk =
       before.violations.includes('band') &&
-      numberToBandIndex(n) === constraints.bandTargets[pos];
+      matchesBandTarget(constraints.bandTargets[pos]!, numberToBandIndex(n));
     const sumCloser =
       !ignoreSum &&
       ((before.violations.includes('sum_high') && sumAfter < sumBefore) ||

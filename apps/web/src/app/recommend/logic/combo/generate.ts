@@ -5,13 +5,16 @@ import { buildPositionBandDistribution } from '@/app/analysis/combination/logic/
 import { buildSumExtremeStats } from '@/app/analysis/combination/logic/buildSumExtremeStats';
 import { COMBO_PROFILE_SLOT_ORDER } from '@/app/recommend/constants/comboSlots';
 import {
+  MAX_NUM_USAGE,
   MIN_BAND_TIER_PERCENT,
   TARGET_SET_COUNT,
 } from '@/app/recommend/constants/comboThresholds';
 import { PROFILE_BUILD_ATTEMPTS } from '@/app/recommend/constants/repairLimits';
+import type { AdoptReservePools } from '@/app/recommend/logic/adopt/adoptTypes';
 import type { GeneratedSet } from '@/app/recommend/types/generatedSet';
 import { buildPoolByBand } from '@/app/recommend/logic/repair';
 import { buildBandTargetsPerPosition } from '@/app/recommend/logic/combo/buildBandTargets';
+import { fillFallbackSlots } from '@/app/recommend/logic/combo/fillFallback';
 import { withSortedMains } from '@/app/recommend/logic/combo/sortMains';
 import {
   appendMissingProfileDiagnostics,
@@ -27,12 +30,18 @@ export type CombinationGenerationResult = {
   warning: string | null;
 };
 
+const emptyReservePools = (): AdoptReservePools => ({
+  accumulatedExcluded: [],
+  chiExcludedByPct: [],
+});
+
 /** 통합 채택 풀·이력 통계로 최대 20세트 생성 */
 
 export const generateCombinationBasedSets = async (
   fullHistory: readonly WinningNumberRow[],
   adoptedPool: readonly number[],
   referenceDrawNo: number,
+  reservePools: AdoptReservePools = emptyReservePools(),
   repairYieldEvery: number = DEFAULT_REPAIR_YIELD_EVERY,
 ): Promise<CombinationGenerationResult> => {
   const summaryLines: string[] = [];
@@ -115,11 +124,31 @@ export const generateCombinationBasedSets = async (
     if (profileSlots.every((s) => s !== null)) break;
   }
 
+  const phase1Count = profileSlots.filter((s) => s !== null).length;
+  summaryLines.push(`1단계 조합 세트: ${phase1Count}개`);
+
+  const fallbackResult = fillFallbackSlots(ctx, poolSorted, reservePools);
+  if (fallbackResult.filled > 0) {
+    summaryLines.push(`2단계 폴백 세트: ${fallbackResult.filled}개`);
+  }
+  if (fallbackResult.accuAdded > 0 || fallbackResult.chiAdded > 0) {
+    summaryLines.push(
+      `풀 확장: 누적 +${fallbackResult.accuAdded}, 카이 +${fallbackResult.chiAdded}`,
+    );
+  }
+
+  const maxSetsByUsage = Math.floor((fallbackResult.expandedPoolSize * MAX_NUM_USAGE) / 6);
+  if (maxSetsByUsage < TARGET_SET_COUNT) {
+    summaryLines.push(
+      `번호당 ${MAX_NUM_USAGE}회 한도·확장 풀 ${fallbackResult.expandedPoolSize}개 기준 최대 ${maxSetsByUsage}세트까지 가능합니다.`,
+    );
+  }
+
   appendMissingProfileDiagnostics(ctx, summaryLines);
   const sets = setsInProfileSlotOrder(profileSlots);
 
   summaryLines.push(
-    `세트 구성: 고정 ${TARGET_SET_COUNT}슬롯(15패턴+5, band1~3·자리별 ${MIN_BAND_TIER_PERCENT}% 미만 N등→1등)·통합 채택 풀·슬롯당 ${PROFILE_BUILD_ATTEMPTS}회·${sets.length}개.`,
+    `세트 구성: 고정 ${TARGET_SET_COUNT}슬롯(15패턴+5, band1~3·자리별 ${MIN_BAND_TIER_PERCENT}% 미만 N등→1등)·1단계 ${PROFILE_BUILD_ATTEMPTS}회·2단계 폴백·${sets.length}개.`,
   );
 
   const warning =

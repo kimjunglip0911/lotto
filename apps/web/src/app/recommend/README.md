@@ -5,8 +5,11 @@
 ## 목적
 
 - 통합 분석(`final-pick`)과 **동일한 경로**로 최종 채택 번호 풀을 계산하고, 조합 분석 페이지와 같은 통계로 **목표 20세트**를 만든 뒤 저장합니다.
-- **①** 자리마다 band **1~3등** 구간에서 번호 1개. 자리별 **N등 비율이 20% 미만**이면 그 자리만 **1등 구간** 목표로 대체.
-- **②** 합·홀짝·연속 슬롯당 10회·폴백. **③** **15슬롯 + oe1 앞 5슬롯 재시도** = 20세트.
+- **① 1단계** — 자리마다 band **1~3등** 구간·합·홀짝·연속 제약. band4~6 확장까지 시도 후 불가 슬롯은 비움. 슬롯당 `PROFILE_BUILD_ATTEMPTS`회.
+- **② 2단계 폴백** — 1단계 빈 슬롯을 **합·홀짝·연속·band 무시** 조합으로 채움. 채택 풀·**6개 조합 중복 금지**·**번호당 최대 2회** 유지.
+- **③ 풀 확장** — 2단계에서 번호 부족 시 1차: 누적 제외 4개 중 랜덤 추가 → 2차: 카이제곱 조건부확률 10% 이하 제외 번호 추가.
+- **④** **15슬롯 + oe1 앞 5슬롯 재시도** = 20세트. 폴백 세트 strategy는 `combo:fallback:oeX-runY-bandZ`.
+- **⑤** 목표 band(1~3구간)에 채택 번호가 없으면 **band 4~6구간**에서 후보를 확장(1단계만).
 - 미추첨 회차는 `(N−1)`회 당첨 본6을 reference로 대체해 채택을 계산합니다(화면 안내 문구 표시).
 
 ## 폴더 구조 (8대표)
@@ -50,7 +53,8 @@ npm run lint
 - `helpers/savedMessages.ts` — 저장 조회·초기 안내 문구
 - `helpers/savedState.ts` — 저장 조회 전·후 UI 상태 갱신
 - `logic/generation/runPipeline.ts` — 생성·저장 파이프라인(훅에서 호출)
-- `logic/combo/generate.ts` — 20세트 생성
+- `logic/combo/generate.ts` — 20세트 생성(1단계+2단계)
+- `logic/combo/fillFallback.ts` — 2단계 폴백·풀 확장
 - `logic/combo/bandSlot.ts` — band 구간·내부 슬롯·슬롯 키
 - `logic/combo/sortMains.ts` — 당첨 행 본번호 정렬
 - `logic/combo/bandMonotonic.ts` — band 목표 단조 검사·보정
@@ -63,4 +67,5 @@ npm run lint
 ## 주의사항
 
 - 백엔드 응답은 `unknown` 수신 후 `helpers/validators`로 검증합니다.
-- 목표는 20세트이며, 채택 풀 부족·주6 전부 중복일 때만 그보다 적게 저장되고 경고가 표시됩니다.
+- 목표는 20세트이며, **번호당 2회 한도**·풀 확장 후에도 `(확장 풀×2)/6` 미만이면 수학적으로 20세트 불가 경고가 표시됩니다.
+- 2단계 폴백 세트는 UI에서 **조합 폴백** 배지(amber)로 구분됩니다. `MAX_NUM_USAGE`는 `constants/comboThresholds.ts`·`logic/repair/usageLimit.ts`·`logic/combo/fillFallback.ts`에서 적용됩니다.

@@ -5,6 +5,7 @@ import type { GeneratedSet } from '@/app/recommend/types/generatedSet';
 import {
   buildMetricsOnlyFromPool,
   buildOneSetWithFallback,
+  isSetWithinUsageLimit,
   randomPerPositionPick,
   sortPickedAsc,
   type ProfileConstraints,
@@ -46,15 +47,19 @@ export const findOneSetForRanks = async (
   const baseStrategy = `combo:oe${oddRank}-run${consecRank}-band${bandTier}`;
   let sorted = built.sorted;
   let key = setKey(sorted);
-  if (usedKeys.has(key)) {
+
+  const canAccept = (nums: readonly number[], setKeyVal: string): boolean =>
+    !usedKeys.has(setKeyVal) && isSetWithinUsageLimit(nums, usage);
+
+  if (!canAccept(sorted, key)) {
     for (let i = 0; i < PROFILE_BUILD_ATTEMPTS; i++) {
       const picked = randomPerPositionPick(poolByBand, bandTargets, pickCtx);
       if (!picked) continue;
       sorted = sortPickedAsc(picked);
       key = setKey(sorted);
-      if (!usedKeys.has(key)) break;
+      if (canAccept(sorted, key)) break;
     }
-    if (usedKeys.has(key)) {
+    if (!canAccept(sorted, key)) {
       const metrics = buildMetricsOnlyFromPool(
         poolByBand,
         constraints,
@@ -66,7 +71,7 @@ export const findOneSetForRanks = async (
         key = setKey(sorted);
       }
     }
-    if (usedKeys.has(key)) return null;
+    if (!canAccept(sorted, key)) return null;
   }
 
   usedKeys.add(key);

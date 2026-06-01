@@ -4,6 +4,7 @@ import type { FinalPickAdoptedResult } from '@/app/recommend/logic/adopt/adoptTy
 
 export const emptyAdoptResult = (error: string): FinalPickAdoptedResult => ({
   adopted: [],
+  reservePools: { accumulatedExcluded: [], chiExcludedByPct: [] },
   previousDrawRows: [],
   error,
   infoMessage: null,

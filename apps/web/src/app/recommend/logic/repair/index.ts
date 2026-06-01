@@ -39,3 +39,13 @@ export { buildOneSetWithFallback } from '@/app/recommend/logic/repair/buildOneSe
 export { forceBuildOneSet } from '@/app/recommend/logic/repair/forceBuild';
 export { diagnoseProfileBuild } from '@/app/recommend/logic/repair/diagnose';
 export { canPickBandSkeleton } from '@/app/recommend/logic/repair/backtrack';
+export {
+  canUseNum,
+  filterUsageAvail,
+  isSetWithinUsageLimit,
+} from '@/app/recommend/logic/repair/usageLimit';
+export {
+  collectBandCands,
+  isBandFallbackOk,
+  matchesBandTarget,
+} from '@/app/recommend/logic/repair/bandFallback';

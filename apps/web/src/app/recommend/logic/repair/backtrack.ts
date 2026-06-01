@@ -1,6 +1,7 @@
 import { MAX_BACKTRACK_NODES } from '@/app/recommend/constants/repairLimits';
 import type { ProfileConstraints, RepairPickCtx } from '@/app/recommend/logic/repair/types';
 import { diverseCandidateOrder } from '@/app/recommend/logic/repair/diverse';
+import { collectBandCands } from '@/app/recommend/logic/repair/bandFallback';
 import { validatePickedSet } from '@/app/recommend/logic/repair/validate';
 import { sortPickedAsc } from '@/app/recommend/logic/repair/runLen';
 
@@ -22,7 +23,7 @@ export const backtrackPositionPicks = (
   const band = bandTargets[pos]!;
   const used = new Set(picked);
   const candidates = diverseCandidateOrder(
-    (poolByBand.get(band) ?? []).filter((n) => !used.has(n)),
+    collectBandCands(poolByBand, band, used, pickCtx),
     pickCtx,
   ).slice(0, MAX_BACKTRACK_CANDS_PER_POS);
   if (candidates.length === 0) return null;
@@ -52,7 +53,7 @@ export const backtrackBuildOneSet = (
   const band = constraints.bandTargets[pos]!;
   const used = new Set(picked);
   const candidates = diverseCandidateOrder(
-    (poolByBand.get(band) ?? []).filter((n) => !used.has(n)),
+    collectBandCands(poolByBand, band, used, pickCtx),
     pickCtx,
   ).slice(0, MAX_BACKTRACK_CANDS_PER_POS);
   if (candidates.length === 0) return null;

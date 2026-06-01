@@ -25,7 +25,7 @@ export const runRecommendGeneration = async (
   selectedDraw: number,
   phases?: GenerationPhaseHandlers,
 ): Promise<GenerationPipelineResult> => {
-  const { adopted, fullHistory, infoMessage } = await fetchGenerationInputs(
+  const { adopted, reservePools, fullHistory, infoMessage } = await fetchGenerationInputs(
     apiUrl,
     selectedDraw,
   );
@@ -35,6 +35,7 @@ export const runRecommendGeneration = async (
     fullHistory,
     adopted,
     selectedDraw,
+    reservePools,
   );
   assertSetsNonEmpty(sets, summaryLines);
 

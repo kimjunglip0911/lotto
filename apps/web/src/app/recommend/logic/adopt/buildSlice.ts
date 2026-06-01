@@ -20,5 +20,14 @@ export const buildAdoptedSlice = (
     excludedByStreakNumbers,
     accumulatedExclusionNumbers: accumulated.excludedUnique,
   });
-  return { adopted: slice.adopted, previousDrawRows, error: null, infoMessage };
+  return {
+    adopted: slice.adopted,
+    reservePools: {
+      accumulatedExcluded: accumulated.excludedUnique,
+      chiExcludedByPct: slice.walkForwardExcludedByConditionalPct,
+    },
+    previousDrawRows,
+    error: null,
+    infoMessage,
+  };
 };

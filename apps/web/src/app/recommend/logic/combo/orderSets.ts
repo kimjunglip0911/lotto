@@ -1,4 +1,5 @@
 import { COMBO_PROFILE_SLOT_ORDER } from '@/app/recommend/constants/comboSlots';
+import { FALLBACK_STRATEGY_PREFIX } from '@/app/recommend/constants/comboThresholds';
 import type { GeneratedSet } from '@/app/recommend/types/generatedSet';
 
 /** 프로필 슬롯 순서·전략 라벨 */
@@ -7,6 +8,12 @@ const COMBO_STRATEGY_RE = /^combo:oe(\d+)-run(\d+)-band(\d+)$/;
 
 const comboStrategyForTriple = (oe: number, run: number, band: number): string =>
   `combo:oe${oe}-run${run}-band${band}`;
+
+export const formatProfileTriple = (oe: number, run: number, band: number): string =>
+  `oe${oe}-run${run}-band${band}`;
+
+const fallbackStrategyForTriple = (oe: number, run: number, band: number): string =>
+  `${FALLBACK_STRATEGY_PREFIX}${formatProfileTriple(oe, run, band)}`;
 
 export const parseComboStrategyRanks = (strategy: string | undefined): [number, number, number] => {
   if (!strategy) return [999, 999, 999];
@@ -32,16 +39,15 @@ export const orderSetsByProfileSlots = (sets: readonly GeneratedSet[]): Generate
   const ordered: GeneratedSet[] = [];
   for (const [oe, run, band] of COMBO_PROFILE_SLOT_ORDER) {
     const want = comboStrategyForTriple(oe, run, band);
-    const idx = remaining.findIndex((s) => s.strategy === want);
+    const wantFallback = fallbackStrategyForTriple(oe, run, band);
+    let idx = remaining.findIndex((s) => s.strategy === want);
+    if (idx < 0) idx = remaining.findIndex((s) => s.strategy === wantFallback);
     if (idx < 0) continue;
     ordered.push(remaining[idx]!);
     remaining.splice(idx, 1);
   }
   return [...ordered, ...remaining];
 };
-
-export const formatProfileTriple = (oe: number, run: number, band: number): string =>
-  `oe${oe}-run${run}-band${band}`;
 
 export const setsInProfileSlotOrder = (slots: readonly (GeneratedSet | null)[]): GeneratedSet[] => {
   const out: GeneratedSet[] = [];

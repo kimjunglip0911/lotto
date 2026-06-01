@@ -1,6 +1,8 @@
 import type { RepairPickCtx } from '@/app/recommend/logic/repair/types';
 import { flatAdoptedPool } from '@/app/recommend/logic/repair/pool';
 import { pickDiverseOne } from '@/app/recommend/logic/repair/diverse';
+import { collectBandCands } from '@/app/recommend/logic/repair/bandFallback';
+import { filterUsageAvail } from '@/app/recommend/logic/repair/usageLimit';
 
 /** 자리별 band에서 번호를 뽑는다 */
 
@@ -9,7 +11,10 @@ const pickSixFromFlatPool = (flat: readonly number[], pickCtx: RepairPickCtx): n
   const used = new Set<number>();
   const picked: number[] = [];
   for (let i = 0; i < 6; i++) {
-    const candidates = flat.filter((n) => !used.has(n));
+    const candidates = filterUsageAvail(
+      flat.filter((n) => !used.has(n)),
+      pickCtx.usage,
+    );
     if (candidates.length === 0) return null;
     const pick = pickDiverseOne(candidates, pickCtx) ?? candidates[0]!;
     picked.push(pick);
@@ -30,8 +35,10 @@ export const randomPerPositionPick = (
   const used = new Set<number>();
   for (let i = 0; i < 6; i++) {
     const band = bandTargets[i]!;
-    let candidates = (poolByBand.get(band) ?? []).filter((n) => !used.has(n));
-    if (candidates.length === 0) candidates = flat.filter((n) => !used.has(n));
+    let candidates = collectBandCands(poolByBand, band, used, pickCtx);
+    if (candidates.length === 0) {
+      candidates = filterUsageAvail(flat.filter((n) => !used.has(n)), pickCtx.usage);
+    }
     if (candidates.length === 0) return null;
     const pick = pickDiverseOne(candidates, pickCtx) ?? candidates[0]!;
     picked.push(pick);

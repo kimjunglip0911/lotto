@@ -1,5 +1,6 @@
 import { numberToBandIndex } from '@/app/analysis/combination/logic/numberToBand';
 import type { ProfileConstraints, SetViolation, ValidateResult } from '@/app/recommend/logic/repair/types';
+import { matchesBandTarget } from '@/app/recommend/logic/repair/bandFallback';
 import { maxConsecutiveRunLength, sortPickedAsc } from '@/app/recommend/logic/repair/runLen';
 
 /** 뽑은 6개가 합·홀짝·연속·band 제약을 만족하는지 검사한다 */
@@ -12,7 +13,7 @@ export const validatePickedSet = (
   if (picked.length !== 6) return { ok: false, violations: ['duplicate'] };
   if (new Set(picked).size !== 6) violations.push('duplicate');
   for (let i = 0; i < 6; i++) {
-    if (numberToBandIndex(picked[i]!) !== constraints.bandTargets[i]) {
+    if (!matchesBandTarget(constraints.bandTargets[i]!, numberToBandIndex(picked[i]!))) {
       violations.push('band');
       break;
     }
@@ -57,7 +58,7 @@ export const validatePickedNoSum = (
   if (picked.length !== 6) return { ok: false, violations: ['duplicate'] };
   if (new Set(picked).size !== 6) violations.push('duplicate');
   for (let i = 0; i < 6; i++) {
-    if (numberToBandIndex(picked[i]!) !== constraints.bandTargets[i]) {
+    if (!matchesBandTarget(constraints.bandTargets[i]!, numberToBandIndex(picked[i]!))) {
       violations.push('band');
       break;
     }

@@ -47,10 +47,10 @@ describe('buildHistCounts', () => {
 })
 
 describe('repairOneStep', () => {
-  it('band 위반 자리는 목표 band 구간 후보만 사용한다', () => {
+  it('band 위반 자리는 목표 band·폴백 band(4~6) 후보로 수리한다', () => {
     const pool = Array.from({ length: 30 }, (_, i) => i + 1)
     const poolByBand = buildPoolByBand(pool)
-    const picked = [1, 6, 12, 13, 21, 26]
+    const picked = [1, 6, 12, 13, 35, 26]
     const constraints = {
       minSum: 50,
       maxSum: 200,
@@ -67,6 +67,19 @@ describe('repairOneStep', () => {
     expect(ok).toBe(true)
     expect(numberToBandIndex(picked[4]!)).toBe(2)
     expect([11, 12, 13, 14, 15]).toContain(picked[4]!)
+  })
+
+  it('band1~3 목표에 band4~6 번호는 band 위반이 아니다', () => {
+    const picked = [1, 6, 12, 13, 21, 26]
+    const constraints = {
+      minSum: 50,
+      maxSum: 200,
+      evenT: 3,
+      runT: 2,
+      bandTargets: [0, 1, 2, 2, 2, 5],
+    }
+    const before = validatePickedSet(picked, constraints)
+    expect(before.violations).not.toContain('band')
   })
 })
 

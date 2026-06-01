@@ -5,6 +5,7 @@ export type ProfileFailureReason =
   | 'no_band_in_pool'
   | 'constraints_unsat'
   | 'duplicate_only'
+  | 'usage_limit'
   | 'ok';
 
 export type ForceBuildOptions = {

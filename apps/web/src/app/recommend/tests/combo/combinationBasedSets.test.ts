@@ -12,6 +12,7 @@ import {
   generateCombinationBasedSets,
   TARGET_SET_COUNT,
 } from '@/app/recommend/logic/combo'
+import { MAX_NUM_USAGE } from '@/app/recommend/constants/comboThresholds'
 import { numberToBandIndex } from '@/app/analysis/combination/logic/numberToBand'
 import type { GeneratedSet } from '@/app/recommend/types/generatedSet'
 
@@ -176,7 +177,7 @@ describe('generateCombinationBasedSets', () => {
     const r = await generateCombinationBasedSets(hist, adopted, referenceDrawNo)
     expect(r.sets.length).toBeGreaterThan(0)
     expect(r.sets.length).toBeLessThanOrEqual(TARGET_SET_COUNT)
-    expect(r.sets.every((s) => /^combo:oe\d+-run\d+-band[123]$/.test(s.strategy ?? ''))).toBe(true)
+    expect(r.sets.every((s) => /^combo:(fallback:)?oe\d+-run\d+-band[123]$/.test(s.strategy ?? ''))).toBe(true)
     const bandTiers = new Set(
       r.sets.map((s) => {
         const m = /band(\d+)$/.exec(s.strategy ?? '')
@@ -186,7 +187,7 @@ describe('generateCombinationBasedSets', () => {
     expect(bandTiers.has(4)).toBe(false)
     expect(r.summaryLines.some((l) => l.includes('고저 합산'))).toBe(true)
     expect(r.summaryLines.some((l) => l.includes('세트 구성:'))).toBe(true)
-    expect(r.summaryLines.some((l) => l.includes('10회'))).toBe(true)
+    expect(r.summaryLines.some((l) => l.includes('1단계 조합'))).toBe(true)
     const keys = new Set(
       r.sets.map((s) => [s.num1, s.num2, s.num3, s.num4, s.num5, s.num6].sort((a, b) => a - b).join(',')),
     )
@@ -200,6 +201,10 @@ describe('generateCombinationBasedSets', () => {
     }
     const usage = countUsageInPool(r.sets, adopted)
     const distinctUsed = adopted.filter((n) => (usage.get(n) ?? 0) > 0).length
+    /** 20세트 전체에서 동일 번호는 MAX_NUM_USAGE 이하 */
+    for (const [, count] of usage) {
+      expect(count).toBeLessThanOrEqual(MAX_NUM_USAGE)
+    }
     /** 랭크·겹침 점수로 일부 번호는 안 쓰일 수 있으나, 풀의 상당 부분은 등장해야 한다 */
     expect(distinctUsed).toBeGreaterThanOrEqual(12)
 

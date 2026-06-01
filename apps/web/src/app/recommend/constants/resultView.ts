@@ -15,12 +15,18 @@ const STRATEGY_BADGE: Record<string, string> = {
 const STRATEGY_BADGE_DEFAULT = 'bg-white/10 text-slate-300 border-white/20';
 
 export const getStrategyLabel = (strategy: string): string => {
+  if (strategy.startsWith('combo:fallback:')) {
+    return `조합 폴백 ${strategy.replace('combo:fallback:', '')}`;
+  }
   if (strategy.startsWith('theme:')) return strategy.replace('theme:', '');
   if (strategy.startsWith('combo:')) return strategy.replace('combo:', '조합 ');
   return STRATEGY_LABEL[strategy] ?? strategy;
 };
 
 export const getStrategyBadge = (strategy: string): string => {
+  if (strategy.startsWith('combo:fallback:')) {
+    return 'bg-amber-500/20 text-amber-200 border-amber-500/40';
+  }
   if (strategy.startsWith('theme:')) return STRATEGY_BADGE['theme-diversity'];
   if (strategy.startsWith('combo:')) return 'bg-violet-500/20 text-violet-200 border-violet-500/40';
   return STRATEGY_BADGE[strategy] ?? STRATEGY_BADGE_DEFAULT;

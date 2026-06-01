@@ -1,8 +1,10 @@
 import { numberToBandIndex } from '@/app/analysis/combination/logic/numberToBand';
 import type { SetViolation } from '@/app/recommend/logic/repair/types';
+import { collectBandCands, matchesBandTarget } from '@/app/recommend/logic/repair/bandFallback';
 import { maxConsecutiveRunLength, sortPickedAsc } from '@/app/recommend/logic/repair/runLen';
 import { diverseCandidateOrder } from '@/app/recommend/logic/repair/diverse';
 import type { RepairPickCtx } from '@/app/recommend/logic/repair/types';
+import { filterUsageAvail } from '@/app/recommend/logic/repair/usageLimit';
 
 /** 위반 유형에 맞는 교체 자리·후보를 고른다 */
 
@@ -78,7 +80,7 @@ export const pickRepairPosition = (
 ): number => {
   if (violations.includes('band')) {
     for (let i = 0; i < 6; i++) {
-      if (numberToBandIndex(picked[i]!) !== bandTargets[i]) return i;
+      if (!matchesBandTarget(bandTargets[i]!, numberToBandIndex(picked[i]!))) return i;
     }
   }
   const metricViolations = violations.filter((v) => v !== 'band' && v !== 'duplicate');
@@ -99,10 +101,11 @@ export const replaceCandidatesForPosition = (
 ): number[] => {
   const band = bandTargets[position]!;
   const current = picked[position];
-  const list = poolByBand.get(band) ?? [];
   const used = new Set(picked);
   return diverseCandidateOrder(
-    list.filter((n) => n !== current && !used.has(n)),
+    collectBandCands(poolByBand, band, used, pickCtx).filter(
+      (n) => n !== current && !used.has(n),
+    ),
     pickCtx,
   );
 };
@@ -116,7 +119,10 @@ export const replaceCandidatesFromFullPool = (
   const current = picked[position];
   const used = new Set(picked);
   return diverseCandidateOrder(
-    flatPool.filter((n) => n !== current && !used.has(n)),
+    filterUsageAvail(
+      flatPool.filter((n) => n !== current && !used.has(n)),
+      pickCtx.usage,
+    ),
     pickCtx,
   );
 };

@@ -1,7 +1,7 @@
 import { buildConsecutiveRunDistribution } from '@/app/analysis/combination/logic/buildConsecutiveRunDistribution';
 import { buildOddEvenDistribution } from '@/app/analysis/combination/logic/buildOddEvenDistribution';
 import { COMBO_PROFILE_SLOT_ORDER } from '@/app/recommend/constants/comboSlots';
-import { OE_RANK_LIGHT } from '@/app/recommend/constants/comboThresholds';
+import { MAX_NUM_USAGE, OE_RANK_LIGHT } from '@/app/recommend/constants/comboThresholds';
 import type { GeneratedSet } from '@/app/recommend/types/generatedSet';
 import {
   diagnoseProfileBuild,
@@ -33,6 +33,7 @@ const FAILURE_REASON_KO: Record<ProfileFailureReason, string> = {
   no_band_in_pool: '채택 풀에 자리 band 후보가 없고, 합·홀짝·연속만 맞추는 조합도 없음',
   constraints_unsat: '합·홀짝·연속·자리대를 동시에 맞출 조합 없음(탐색 한도 내)',
   duplicate_only: '조건은 맞지만 이미 만든 6개 번호 조합과 중복',
+  usage_limit: `번호가 20세트 전체에서 ${MAX_NUM_USAGE}회 사용 한도에 도달`,
 };
 
 const profileFailureSummary = (
@@ -71,7 +72,7 @@ export const appendMissingProfileDiagnostics = (
     if (!ctx.profileSlots[slot]) missingSlots.push(slot);
   }
   if (missingSlots.length === 0) return;
-  summaryLines.push(`미생성 슬롯 ${missingSlots.length}개:`);
+  summaryLines.push(`최종 미생성 슬롯 ${missingSlots.length}개:`);
   for (const slot of missingSlots) {
     const [oe, run, band] = COMBO_PROFILE_SLOT_ORDER[slot]!;
     const detail = profileFailureSummary(ctx, oe, run, band);
