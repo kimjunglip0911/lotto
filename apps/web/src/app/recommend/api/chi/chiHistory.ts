@@ -1,26 +1,19 @@
-import { isWinningNumberRow } from '@/app/analysis/chi-square/logic/guards';
 import type { WinningNumberRow } from '@/app/analysis/chi-square/types';
-import { chiSquareApiUrl } from '@/app/recommend/api/core/url';
-import { fetchJson } from '@/app/recommend/api/core/fetchCore';
+import { fetchDraws } from '@/app/recommend/api/chi/fetchDraws';
+import { fetchWinningRangeRows } from '@/app/recommend/api/chi/fetchRange';
 
-/** chi-square 기준 1회차~최신 회차까지 전체 당첨 번호 이력을 조회한다 */
+/**
+ * 이 파일은 chi 추천 화면에서 쓰는 전체 당첨 번호 이력 조회 흐름을 한 번에 묶어 실행한다.
+ * - 입력: 서버 주소를 받는다.
+ * - 출력: 검증된 당첨 번호 이력 배열을 돌려준다.
+ * - 역할 분리: 회차 목록 조회와 범위 조회/검증은 각 전용 파일로 분리되어 있고, 이 파일은 순서 제어만 담당한다.
+ * - 실패 영향: 하위 조회에서 생긴 오류는 그대로 위로 전달되어, 화면 상위 로직이 예외 안내나 대체 흐름을 선택한다.
+ */
 
 export const fetchChiSquareFullHistory = async (apiUrl: string): Promise<WinningNumberRow[]> => {
-  const drawsData = await fetchJson<unknown>(chiSquareApiUrl('draw-numbers', apiUrl));
-  if (!Array.isArray(drawsData)) {
-    throw new Error('Draw numbers response is not an array');
-  }
-  const draws = drawsData.filter((item): item is number => typeof item === 'number');
+  const draws = await fetchDraws(apiUrl);
   if (draws.length === 0) return [];
 
   const latestDraw = Math.max(...draws);
-  // range API: draw_no는 상한(미포함) → latestDraw+1이면 latestDraw회차까지 포함
-  const rangeUpper = latestDraw + 1;
-  const rangePayload = await fetchJson<unknown>(
-    chiSquareApiUrl(`winning-numbers-range?draw_no=${rangeUpper}`, apiUrl),
-  );
-  if (!Array.isArray(rangePayload)) {
-    throw new Error('Winning numbers range response is not an array');
-  }
-  return rangePayload.filter(isWinningNumberRow);
+  return fetchWinningRangeRows(apiUrl, latestDraw);
 };
