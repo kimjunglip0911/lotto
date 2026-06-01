@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { COMBO_PROFILE_SLOT_ORDER } from '@/app/recommend/constants/comboSlots';
 import { FALLBACK_STRATEGY_PREFIX, MAX_NUM_USAGE } from '@/app/recommend/constants/comboThresholds';
 import type { FillCtx } from '@/app/recommend/logic/combo/fillSlots';
-import { fillFallbackSlots } from '@/app/recommend/logic/combo/fillFallback';
+import { fillFallbackSlots, findFallbackSetBacktrack } from '@/app/recommend/logic/combo/fillFallback';
 import { setKey } from '@/app/recommend/logic/combo/toSet';
 import { buildPoolByBand } from '@/app/recommend/logic/repair';
 
@@ -46,31 +46,30 @@ describe('fillFallbackSlots', () => {
     });
 
     expect(result.filled).toBeGreaterThan(0);
-    const filled = ctx.profileSlots.filter((s) => s !== null);
-    for (const s of filled) {
+    for (const s of ctx.profileSlots) {
       if (!s?.strategy?.startsWith(FALLBACK_STRATEGY_PREFIX)) continue;
       const nums = [s.num1, s.num2, s.num3, s.num4, s.num5, s.num6];
       expect(new Set(nums).size).toBe(6);
       for (const n of nums) {
-        expect(pool.includes(n)).toBe(true);
         expect((ctx.usage.get(n) ?? 0)).toBeLessThanOrEqual(MAX_NUM_USAGE);
       }
     }
   });
 
-  it('채택 풀 부족 시 누적 제외 번호를 풀에 추가한다', () => {
+  it('예비 풀 번호를 2단계 시작 시 한꺼번에 확장한다', () => {
     const pool = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
     const ctx = mkCtx(pool);
     const accu = [11, 12, 13, 14];
 
     const result = fillFallbackSlots(ctx, pool, {
       accumulatedExcluded: accu,
-      chiExcludedByPct: [],
+      chiExcludedByPct: [15, 16],
     });
 
     expect(result.filled).toBeGreaterThan(0);
-    expect(result.accuAdded).toBeGreaterThan(0);
-    expect(result.expandedPoolSize).toBeGreaterThan(pool.length);
+    expect(result.accuAdded).toBe(4);
+    expect(result.chiAdded).toBe(2);
+    expect(result.expandedPoolSize).toBe(16);
   });
 
   it('6개 조합 중복은 허용하지 않는다', () => {
@@ -85,5 +84,21 @@ describe('fillFallbackSlots', () => {
       if (!s) continue;
       expect(setKey([s.num1, s.num2, s.num3, s.num4, s.num5, s.num6])).not.toBe(dupKey);
     }
+  });
+
+  it('findFallbackSetBacktrack는 탐욕 실패 후에도 유효 조합을 찾는다', () => {
+    const usage = new Map<number, number>([
+      [1, 3],
+      [2, 3],
+      [3, 0],
+      [4, 0],
+      [5, 0],
+      [6, 0],
+      [7, 0],
+      [8, 0],
+    ]);
+    const usedKeys = new Set<string>();
+    const found = findFallbackSetBacktrack([1, 2, 3, 4, 5, 6, 7, 8], usage, usedKeys);
+    expect(found).toEqual([3, 4, 5, 6, 7, 8]);
   });
 });

@@ -140,7 +140,7 @@ export const generateCombinationBasedSets = async (
   const maxSetsByUsage = Math.floor((fallbackResult.expandedPoolSize * MAX_NUM_USAGE) / 6);
   if (maxSetsByUsage < TARGET_SET_COUNT) {
     summaryLines.push(
-      `번호당 ${MAX_NUM_USAGE}회 한도·확장 풀 ${fallbackResult.expandedPoolSize}개 기준 최대 ${maxSetsByUsage}세트까지 가능합니다.`,
+      `번호당 ${MAX_NUM_USAGE}회 한도·확장 풀 ${fallbackResult.expandedPoolSize}개 기준 이론상 최대 ${maxSetsByUsage}세트(20세트는 풀 ${Math.ceil((TARGET_SET_COUNT * 6) / MAX_NUM_USAGE)}개 이상 필요).`,
     );
   }
 

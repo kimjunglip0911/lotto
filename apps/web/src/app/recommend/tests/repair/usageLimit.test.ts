@@ -10,8 +10,8 @@ describe('usageLimit helpers', () => {
   it('canUseNum: usage 미만이면 사용 가능', () => {
     const usage = new Map<number, number>([
       [1, 0],
-      [2, 1],
-      [3, 2],
+      [2, 2],
+      [3, 3],
     ]);
     expect(canUseNum(1, usage)).toBe(true);
     expect(canUseNum(2, usage)).toBe(true);
@@ -24,7 +24,7 @@ describe('usageLimit helpers', () => {
 
   it('filterUsageAvail: 한도 도달 번호 제외', () => {
     const usage = new Map<number, number>([
-      [1, 2],
+      [1, 3],
       [2, 1],
       [3, 0],
     ]);
@@ -34,14 +34,14 @@ describe('usageLimit helpers', () => {
   it('isSetWithinUsageLimit: 6개 모두 사용 가능해야 통과', () => {
     const usage = new Map<number, number>([
       [1, 0],
-      [2, 2],
+      [2, 3],
       [3, 0],
     ]);
     expect(isSetWithinUsageLimit([3, 5, 7, 9, 11, 13], usage)).toBe(true);
     expect(isSetWithinUsageLimit([1, 2, 3, 4, 5, 6], usage)).toBe(false);
   });
 
-  it('MAX_NUM_USAGE는 2', () => {
-    expect(MAX_NUM_USAGE).toBe(2);
+  it('MAX_NUM_USAGE는 3', () => {
+    expect(MAX_NUM_USAGE).toBe(3);
   });
 });
