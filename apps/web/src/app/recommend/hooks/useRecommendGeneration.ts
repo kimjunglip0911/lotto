@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { errorMessage } from '@/app/recommend/api/core/fetchCore';
+import { errorMessage } from '@/app/recommend/api/core/errorText';
 import { useApiUrl } from '@/app/recommend/hooks/useApiUrl';
 import {
   GEN_STATUS_LOADING,
