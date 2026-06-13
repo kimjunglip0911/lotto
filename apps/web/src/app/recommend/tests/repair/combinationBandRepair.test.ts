@@ -47,29 +47,28 @@ describe('buildHistCounts', () => {
 })
 
 describe('repairOneStep', () => {
-  it('band 위반 자리는 목표 band·폴백 band(4~6) 후보로 수리한다', () => {
+  it('band 위반 자리는 목표 band·폴백 band(16~30) 후보로 수리한다', () => {
     const pool = Array.from({ length: 30 }, (_, i) => i + 1)
     const poolByBand = buildPoolByBand(pool)
-    const picked = [1, 6, 12, 13, 35, 26]
+    const picked = [1, 2, 3, 4, 35, 6]
     const constraints = {
       minSum: 50,
       maxSum: 200,
       evenT: 3,
-      bandTargets: [0, 1, 2, 2, 2, 5],
+      bandTargets: [0, 1, 2, 3, 4, 5],
     }
     const usage = new Map<number, number>()
     for (let i = 1; i <= 30; i++) usage.set(i, 0)
-    usage.set(21, 99)
     const before = validatePickedSet(picked, constraints)
     expect(before.violations).toContain('band')
     const ok = repairOneStep(picked, before, constraints, poolByBand, { usage })
     expect(ok).toBe(true)
-    expect(numberToBandIndex(picked[4]!)).toBe(2)
-    expect([11, 12, 13, 14, 15]).toContain(picked[4]!)
+    expect(numberToBandIndex(picked[4]!)).toBe(4)
+    expect(picked[4]).toBe(5)
   })
 
-  it('band1~3 목표에 band4~6 번호는 band 위반이 아니다', () => {
-    const picked = [1, 6, 12, 13, 21, 26]
+  it('번호 1~15 목표에 16~30 번호는 band 위반이 아니다', () => {
+    const picked = [16, 17, 18, 19, 20, 21]
     const constraints = {
       minSum: 50,
       maxSum: 200,
@@ -86,7 +85,7 @@ describe('forceBuildOneSet', () => {
     const pool = Array.from({ length: 28 }, (_, i) => i + 1)
     const poolByBand = buildPoolByBand(pool)
     const constraints = {
-      minSum: 40,
+      minSum: 21,
       maxSum: 200,
       evenT: 3,
       bandTargets: [0, 1, 2, 3, 4, 5],
@@ -162,7 +161,7 @@ describe('buildMetricsOnlyFromPool', () => {
       minSum: 50,
       maxSum: 200,
       evenT: 3,
-      bandTargets: [0, 1, 2, 3, 4, 8],
+      bandTargets: [0, 1, 2, 3, 4, 44],
     }
     expect(canPickBandSkeleton(poolByBand, constraints.bandTargets, {})).toBe(false)
     const sorted = buildMetricsOnlyFromPool(poolByBand, constraints, {}, 24)

@@ -12,7 +12,7 @@ export type PositionBandDistributionRow = {
   position: number;
   bandLabel: string;
   drawCount: number;
-  /** 해당 자리 기준 비율(0~100), 소수 둘째 자리; 동일 자리 9행(5단위 구간) 합은 100.00 */
+  /** 해당 자리 기준 비율(0~100), 소수 둘째 자리; 동일 자리 45행(1단위 구간) 합은 100.00 */
   percentage: number;
 };
 

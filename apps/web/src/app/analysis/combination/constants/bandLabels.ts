@@ -1,16 +1,8 @@
-/** 번호대 라벨(1~45를 5개 번호 단위 9구간으로 분할) */
-export const NUMBER_BAND_LABELS = [
-  '1~5',
-  '6~10',
-  '11~15',
-  '16~20',
-  '21~25',
-  '26~30',
-  '31~35',
-  '36~40',
-  '41~45',
-] as const;
+/** 번호대 라벨(1~45를 번호 1개 단위 45구간으로 분할) */
+export const NUMBER_BAND_LABELS = Array.from({ length: 45 }, (_, i) =>
+  String(i + 1),
+) as readonly string[];
 
 export const BAND_COUNT = NUMBER_BAND_LABELS.length;
 export const POSITION_COUNT = 6;
-export const BAND_WIDTH = 5;
+export const BAND_WIDTH = 1;

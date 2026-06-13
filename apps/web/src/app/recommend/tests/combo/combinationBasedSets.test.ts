@@ -65,28 +65,14 @@ function syntheticHistory(count: number): WinningNumberRow[] {
 }
 
 describe('bandInnerSlot', () => {
-  it('maps numbers into 0~4 slots within each 5-number band', () => {
+  it('1단위 구간에서는 innerSlot이 항상 0이다', () => {
     expect(bandInnerSlot(1)).toBe(0)
-    expect(bandInnerSlot(5)).toBe(4)
+    expect(bandInnerSlot(5)).toBe(0)
     expect(bandInnerSlot(6)).toBe(0)
     expect(bandInnerSlot(16)).toBe(0)
-    expect(bandInnerSlot(18)).toBe(2)
-    expect(bandInnerSlot(45)).toBe(4)
+    expect(bandInnerSlot(45)).toBe(0)
   })
 })
-
-function innerSlotsUsedInSets(sets: GeneratedSet[]): Map<number, Set<number>> {
-  const byBand = new Map<number, Set<number>>()
-  for (const s of sets) {
-    for (const n of [s.num1, s.num2, s.num3, s.num4, s.num5, s.num6]) {
-      const b = numberToBandIndex(n)
-      const slots = byBand.get(b) ?? new Set<number>()
-      slots.add(bandInnerSlot(n))
-      byBand.set(b, slots)
-    }
-  }
-  return byBand
-}
 
 describe('buildBandTargetsPerPosition', () => {
   it('band tier 4는 지원하지 않는다', () => {
@@ -94,8 +80,8 @@ describe('buildBandTargetsPerPosition', () => {
     for (let pos = 1; pos <= 6; pos++) {
       rows.push({
         position: pos,
-        bandLabel: '1~5',
-        count: 1,
+        bandLabel: '1',
+        drawCount: 1,
         percentage: 25,
       })
     }
@@ -105,26 +91,26 @@ describe('buildBandTargetsPerPosition', () => {
   it('N등 비율이 20% 미만인 자리는 band3 목표에서 1등 구간을 쓴다', () => {
     const rows: PositionBandDistributionRow[] = []
     const pos1Bands = [
-      { label: '1~5', pct: 50 },
-      { label: '6~10', pct: 25 },
-      { label: '11~15', pct: 13 },
-      { label: '16~20', pct: 12 },
+      { label: '1', pct: 50 },
+      { label: '6', pct: 25 },
+      { label: '11', pct: 13 },
+      { label: '16', pct: 12 },
     ] as const
     for (let pos = 1; pos <= 6; pos++) {
       const bands =
         pos === 1
           ? pos1Bands
           : ([
-              { label: '1~5', pct: 40 },
-              { label: '6~10', pct: 30 },
-              { label: '11~15', pct: 20 },
-              { label: '16~20', pct: 10 },
+              { label: '1', pct: 40 },
+              { label: '6', pct: 30 },
+              { label: '11', pct: 20 },
+              { label: '16', pct: 10 },
             ] as const)
       for (const b of bands) {
         rows.push({
           position: pos,
           bandLabel: b.label,
-          count: 1,
+          drawCount: 1,
           percentage: b.pct,
         })
       }
@@ -210,9 +196,13 @@ describe('generateCombinationBasedSets', () => {
     /** 랭크·겹침 점수로 일부 번호는 안 쓰일 수 있으나, 풀의 상당 부분은 등장해야 한다 */
     expect(distinctUsed).toBeGreaterThanOrEqual(12)
 
-    const slotsByBand = innerSlotsUsedInSets(r.sets)
-    const bandsWithSpread = [...slotsByBand.values()].filter((slots) => slots.size >= 2).length
-    expect(bandsWithSpread).toBeGreaterThanOrEqual(1)
+    const bandsUsed = new Set<number>()
+    for (const s of r.sets) {
+      for (const n of [s.num1, s.num2, s.num3, s.num4, s.num5, s.num6]) {
+        bandsUsed.add(numberToBandIndex(n))
+      }
+    }
+    expect(bandsUsed.size).toBeGreaterThanOrEqual(12)
     },
     120_000,
   )

@@ -14,7 +14,7 @@ export function PositionBandProbabilityTable({ totalDraws, rows }: Props) {
         <h3 className="text-xl font-semibold text-white">구간별 번호 확률</h3>
         <p className="text-xs text-slate-400 mt-1">
           표본: DB에 저장된 전체 회차의 당첨 주번호 6개(num1~num6)만 사용합니다. 보너스 번호는 제외합니다.
-          번호구간은 5개 번호 단위(1~5, 6~10, …, 41~45)로 집계합니다.
+          번호구간은 번호 1개 단위(1~45)로 집계합니다.
           각 행의 비율은 해당 구간(자리) 안에서만 합산하여 100%입니다.
         </p>
       </div>
@@ -24,10 +24,10 @@ export function PositionBandProbabilityTable({ totalDraws, rows }: Props) {
       {totalDraws === 0 ? (
         <p className="text-sm text-slate-300">집계할 당첨 이력이 없습니다.</p>
       ) : (
-        <div className="overflow-x-auto rounded-lg border border-card-border/20">
+        <div className="overflow-x-auto overflow-y-auto max-h-[60vh] rounded-lg border border-card-border/20">
           <table className="w-full min-w-[360px] text-sm text-left border-collapse">
-            <thead>
-              <tr className="border-b border-card-border/30 bg-black/20">
+            <thead className="sticky top-0 z-10">
+              <tr className="border-b border-card-border/30 bg-black/80 backdrop-blur-sm">
                 <th
                   scope="col"
                   className="py-2 px-3 font-semibold text-slate-300 text-center align-middle"
@@ -35,7 +35,7 @@ export function PositionBandProbabilityTable({ totalDraws, rows }: Props) {
                   구간
                 </th>
                 <th scope="col" className="py-2 px-3 font-semibold text-slate-300">
-                  번호구간
+                  번호
                 </th>
                 <th scope="col" className="py-2 px-3 font-semibold text-slate-300 text-right">
                   총 회차

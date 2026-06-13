@@ -20,8 +20,8 @@ export function CombinationMain({
       {!isLoading && loadError && <p className="text-sm text-rose-300">{loadError}</p>}
       {!isLoading && !loadError && (
         <>
-          <OddEvenProbabilityTable totalDraws={totalDraws} rows={oddEvenRows} />
           <PositionBandProbabilityTable totalDraws={totalDraws} rows={positionBandRows} />
+          <OddEvenProbabilityTable totalDraws={totalDraws} rows={oddEvenRows} />
           <HighLowSumTable stats={sumExtremeStats} />
         </>
       )}

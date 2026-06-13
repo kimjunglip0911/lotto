@@ -1,22 +1,28 @@
 import type { RepairPickCtx } from '@/app/recommend/logic/repair/types';
 import { filterUsageAvail } from '@/app/recommend/logic/repair/usageLimit';
 
-/** band 1~3(index 0~2) 비었을 때 band 4~6(index 3~5)에서 후보 확장 */
+/** 번호 1~15(index 0~14) 목표일 때 번호 16~30(index 15~29)에서 후보 확장 */
 
-export const LOW_BAND_INDICES = [0, 1, 2] as const;
-export const MID_BAND_INDICES = [3, 4, 5] as const;
+export const LOW_BAND_MAX_INDEX = 14;
+export const MID_BAND_MIN_INDEX = 15;
+export const MID_BAND_MAX_INDEX = 29;
 
-export const isLowBandIndex = (band: number): boolean =>
-  (LOW_BAND_INDICES as readonly number[]).includes(band);
+export const isLowBandIndex = (band: number): boolean => band <= LOW_BAND_MAX_INDEX;
 
 export const isMidBandIndex = (band: number): boolean =>
-  (MID_BAND_INDICES as readonly number[]).includes(band);
+  band >= MID_BAND_MIN_INDEX && band <= MID_BAND_MAX_INDEX;
 
 export const isBandFallbackOk = (targetBand: number, actualBand: number): boolean =>
   isLowBandIndex(targetBand) && isMidBandIndex(actualBand);
 
 export const matchesBandTarget = (targetBand: number, actualBand: number): boolean =>
   targetBand === actualBand || isBandFallbackOk(targetBand, actualBand);
+
+const midBandIndices = (): number[] =>
+  Array.from(
+    { length: MID_BAND_MAX_INDEX - MID_BAND_MIN_INDEX + 1 },
+    (_, i) => MID_BAND_MIN_INDEX + i,
+  );
 
 export const collectBandCands = (
   poolByBand: ReadonlyMap<number, number[]>,
@@ -34,7 +40,7 @@ export const collectBandCands = (
 
   const seen = new Set<number>();
   const merged: number[] = [];
-  for (const b of MID_BAND_INDICES) {
+  for (const b of midBandIndices()) {
     for (const n of filterUsageAvail(
       (poolByBand.get(b) ?? []).filter((n) => !used.has(n) && !seen.has(n)),
       pickCtx.usage,
