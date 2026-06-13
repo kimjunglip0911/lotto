@@ -23,12 +23,7 @@ export const repairOneStep = (
 ): boolean => {
   if (before.ok) return false;
   const ignoreSum = options?.ignoreSum === true;
-  const pos = pickRepairPosition(
-    picked,
-    before.violations,
-    constraints.evenT,
-    constraints.bandTargets,
-  );
+  const pos = pickRepairPosition(picked, before.violations, constraints.bandTargets);
   const candidates = replaceCandidatesForPosition(
     picked,
     pos,
@@ -38,7 +33,6 @@ export const repairOneStep = (
   );
   const sortedBefore = sortPickedAsc(picked);
   const sumBefore = sortedBefore.reduce((a, b) => a + b, 0);
-  const evensBefore = sortedBefore.filter((x) => x % 2 === 0).length;
 
   for (const n of candidates) {
     const prev = picked[pos]!;
@@ -48,7 +42,6 @@ export const repairOneStep = (
       : validatePickedSet(picked, constraints);
     const sortedAfter = sortPickedAsc(picked);
     const sumAfter = sortedAfter.reduce((a, b) => a + b, 0);
-    const evensAfter = sortedAfter.filter((x) => x % 2 === 0).length;
     const bandAtPosOk =
       before.violations.includes('band') &&
       matchesBandTarget(constraints.bandTargets[pos]!, numberToBandIndex(n));
@@ -56,15 +49,11 @@ export const repairOneStep = (
       !ignoreSum &&
       ((before.violations.includes('sum_high') && sumAfter < sumBefore) ||
         (before.violations.includes('sum_low') && sumAfter > sumBefore));
-    const evenCloser =
-      before.violations.includes('even') &&
-      Math.abs(evensAfter - constraints.evenT) < Math.abs(evensBefore - constraints.evenT);
     if (
       after.ok ||
       compareViolationSets(after.violations, before.violations) < 0 ||
       bandAtPosOk ||
-      sumCloser ||
-      evenCloser
+      sumCloser
     ) {
       return true;
     }

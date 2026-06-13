@@ -1,46 +1,58 @@
-import { COMBO_PROFILE_SLOT_ORDER } from '@/app/recommend/constants/comboSlots';
+import { COMBO_RANK_SLOT_ORDER } from '@/app/recommend/constants/comboSlots';
 import { FALLBACK_STRATEGY_PREFIX } from '@/app/recommend/constants/comboThresholds';
 import type { GeneratedSet } from '@/app/recommend/types/generatedSet';
 
-/** 프로필 슬롯 순서·전략 라벨 */
+/** rank 슬롯 순서·전략 라벨 */
 
-const COMBO_STRATEGY_RE = /^combo:oe(\d+)-band(\d+)$/;
+const COMBO_STRATEGY_RE = /^combo:rank(\d+)$/;
 
-const comboStrategyForPair = (oe: number, band: number): string => `combo:oe${oe}-band${band}`;
+const comboStrategyForRank = (rank: number): string => `combo:rank${rank}`;
 
-export const formatProfilePair = (oe: number, band: number): string => `oe${oe}-band${band}`;
+export const formatProfileRank = (rank: number): string => `rank${rank}`;
 
-/** @deprecated formatProfilePair 사용 */
-export const formatProfileTriple = (oe: number, _run: number, band: number): string =>
-  formatProfilePair(oe, band);
+/** @deprecated formatProfileRank 사용 */
+export const formatProfilePair = (_oe: number, band: number): string => formatProfileRank(band);
 
-const fallbackStrategyForPair = (oe: number, band: number): string =>
-  `${FALLBACK_STRATEGY_PREFIX}${formatProfilePair(oe, band)}`;
+/** @deprecated formatProfileRank 사용 */
+export const formatProfileTriple = (_oe: number, _run: number, band: number): string =>
+  formatProfileRank(band);
 
-export const parseComboStrategyRanks = (strategy: string | undefined): [number, number] => {
-  if (!strategy) return [999, 999];
+const fallbackStrategyForRank = (rank: number): string =>
+  `${FALLBACK_STRATEGY_PREFIX}${formatProfileRank(rank)}`;
+
+export const parseComboStrategyRank = (strategy: string | undefined): number => {
+  if (!strategy) return 999;
   const m = COMBO_STRATEGY_RE.exec(strategy);
-  if (!m) return [999, 999];
-  return [Number(m[1]), Number(m[2])];
+  if (m) return Number(m[1]);
+  const fb = new RegExp(`^${FALLBACK_STRATEGY_PREFIX.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}rank(\\d+)$`).exec(
+    strategy,
+  );
+  if (fb) return Number(fb[1]);
+  return 999;
+};
+
+/** @deprecated parseComboStrategyRank 사용 */
+export const parseComboStrategyRanks = (strategy: string | undefined): [number, number] => {
+  const rank = parseComboStrategyRank(strategy);
+  return [rank, rank];
 };
 
 export const sortGeneratedSetsByComboStrategy = (sets: readonly GeneratedSet[]): GeneratedSet[] =>
   [...sets].sort((x, y) => {
-    const [a1, a2] = parseComboStrategyRanks(x.strategy);
-    const [b1, b2] = parseComboStrategyRanks(y.strategy);
-    if (a1 !== b1) return a1 - b1;
-    if (a2 !== b2) return a2 - b2;
+    const a = parseComboStrategyRank(x.strategy);
+    const b = parseComboStrategyRank(y.strategy);
+    if (a !== b) return a - b;
     const key = (s: GeneratedSet) =>
-      [s.num1, s.num2, s.num3, s.num4, s.num5, s.num6].sort((a, b) => a - b).join(',');
+      [s.num1, s.num2, s.num3, s.num4, s.num5, s.num6].sort((p, q) => p - q).join(',');
     return key(x).localeCompare(key(y));
   });
 
 export const orderSetsByProfileSlots = (sets: readonly GeneratedSet[]): GeneratedSet[] => {
   const remaining = [...sets];
   const ordered: GeneratedSet[] = [];
-  for (const [oe, band] of COMBO_PROFILE_SLOT_ORDER) {
-    const want = comboStrategyForPair(oe, band);
-    const wantFallback = fallbackStrategyForPair(oe, band);
+  for (const rank of COMBO_RANK_SLOT_ORDER) {
+    const want = comboStrategyForRank(rank);
+    const wantFallback = fallbackStrategyForRank(rank);
     let idx = remaining.findIndex((s) => s.strategy === want);
     if (idx < 0) idx = remaining.findIndex((s) => s.strategy === wantFallback);
     if (idx < 0) continue;

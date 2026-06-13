@@ -7,6 +7,7 @@ import { buildMetricsOnlyFromPool } from '@/app/recommend/logic/repair/metricsOn
 import { validatePickedSet } from '@/app/recommend/logic/repair/validate';
 import { repairOneStep } from '@/app/recommend/logic/repair/repairStep';
 import { repairFallbackUntil, tryFallbackFromBases } from '@/app/recommend/logic/repair/repairFallback';
+import { sequentialPickByBands } from '@/app/recommend/logic/repair/sequentialPick';
 
 /** PROFILE_BUILD_ATTEMPTS회 시도 후 폴백 */
 
@@ -16,6 +17,15 @@ export const buildOneSetWithFallback = (
   pickCtx: RepairPickCtx = {},
   maxAttempts: number = PROFILE_BUILD_ATTEMPTS,
 ): { sorted: number[]; usedFallback: boolean } | null => {
+  const sequential = sequentialPickByBands(
+    poolByBand,
+    constraints.bandTargets,
+    constraints.minSum,
+    constraints.maxSum,
+    pickCtx,
+  );
+  if (sequential) return { sorted: sequential, usedFallback: false };
+
   if (!canPickBandSkeleton(poolByBand, constraints.bandTargets, pickCtx)) {
     const metricsOnly = buildMetricsOnlyFromPool(
       poolByBand,

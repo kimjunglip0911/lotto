@@ -65,7 +65,6 @@ describe('bandFallback', () => {
     const constraints = {
       minSum: 50,
       maxSum: 200,
-      evenT: 3,
       bandTargets: [0, 1, 2, 2, 2, 5],
     };
     const picked = [16, 17, 18, 19, 20, 21];

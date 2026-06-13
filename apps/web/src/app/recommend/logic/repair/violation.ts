@@ -5,7 +5,6 @@ import type { SetViolation } from '@/app/recommend/logic/repair/types';
 export const violationRank = (v: SetViolation): number => {
   if (v === 'duplicate' || v === 'band') return 0;
   if (v === 'sum_high' || v === 'sum_low') return 1;
-  if (v === 'even') return 2;
   return 3;
 };
 

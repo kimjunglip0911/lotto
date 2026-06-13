@@ -1,30 +1,27 @@
-import { describe, expect, it } from 'vitest'
-import type { WinningNumberRow } from '@/app/analysis/accu-nums/types'
-import type { PositionBandDistributionRow } from '@/app/analysis/combination/types'
+import { describe, expect, it } from 'vitest';
+import type { WinningNumberRow } from '@/app/analysis/accu-nums/types';
+import type { PositionBandDistributionRow } from '@/app/analysis/combination/types';
 import {
   bandInnerSlot,
+  buildBandTargetsForRank,
   buildBandTargetsPerPosition,
-  effectiveBandRankIdx,
-  MIN_BAND_TIER_PERCENT,
-  COMBO_PROFILE_SLOT_CYCLE,
-  COMBO_PROFILE_SLOT_ORDER,
-  COMBO_RANK_TRIPLE_PRIORITY_ORDER,
+  COMBO_RANK_SLOT_ORDER,
   generateCombinationBasedSets,
   TARGET_SET_COUNT,
-} from '@/app/recommend/logic/combo'
-import { MAX_NUM_USAGE } from '@/app/recommend/constants/comboThresholds'
-import { FULL_LOTTO_POOL } from '@/app/recommend/constants/lottoPool'
-import { numberToBandIndex } from '@/app/analysis/combination/logic/numberToBand'
-import type { GeneratedSet } from '@/app/recommend/types/generatedSet'
+} from '@/app/recommend/logic/combo';
+import { MAX_NUM_USAGE } from '@/app/recommend/constants/comboThresholds';
+import { FULL_LOTTO_POOL } from '@/app/recommend/constants/lottoPool';
+import { numberToBandIndex } from '@/app/analysis/combination/logic/numberToBand';
+import type { GeneratedSet } from '@/app/recommend/types/generatedSet';
 
 function countUsageInPool(sets: GeneratedSet[], pool: number[]): Map<number, number> {
-  const u = new Map<number, number>(pool.map((n) => [n, 0]))
+  const u = new Map<number, number>(pool.map((n) => [n, 0]));
   for (const s of sets) {
     for (const n of [s.num1, s.num2, s.num3, s.num4, s.num5, s.num6]) {
-      u.set(n, (u.get(n) ?? 0) + 1)
+      u.set(n, (u.get(n) ?? 0) + 1);
     }
   }
-  return u
+  return u;
 }
 
 function mkRow(drawNo: number, nums: [number, number, number, number, number, number]): WinningNumberRow {
@@ -37,13 +34,9 @@ function mkRow(drawNo: number, nums: [number, number, number, number, number, nu
     num5: nums[4],
     num6: nums[5],
     bonus_num: 1,
-  }
+  };
 }
 
-/**
- * 본번호가 모두 1~20 안에 있어 채택 풀 1~20과 자리대 분포가 충돌하지 않게 한다.
- * 합은 저·중간을 섞어 트림 후에도 풀 내 합 범위와 겹치게 한다.
- */
 const SYNTHETIC_MAIN_PATTERNS: [number, number, number, number, number, number][] = [
   [1, 2, 3, 4, 5, 6],
   [15, 16, 17, 18, 19, 20],
@@ -53,157 +46,100 @@ const SYNTHETIC_MAIN_PATTERNS: [number, number, number, number, number, number][
   [3, 6, 9, 12, 15, 18],
   [4, 8, 12, 16, 17, 18],
   [1, 5, 10, 14, 18, 20],
-]
+];
 
 function syntheticHistory(count: number): WinningNumberRow[] {
-  const rows: WinningNumberRow[] = []
+  const rows: WinningNumberRow[] = [];
   for (let i = 0; i < count; i++) {
-    const nums = SYNTHETIC_MAIN_PATTERNS[i % SYNTHETIC_MAIN_PATTERNS.length]
-    rows.push(mkRow(i + 1, nums))
+    const nums = SYNTHETIC_MAIN_PATTERNS[i % SYNTHETIC_MAIN_PATTERNS.length];
+    rows.push(mkRow(i + 1, nums));
   }
-  return rows
+  return rows;
 }
 
 describe('bandInnerSlot', () => {
   it('1단위 구간에서는 innerSlot이 항상 0이다', () => {
-    expect(bandInnerSlot(1)).toBe(0)
-    expect(bandInnerSlot(5)).toBe(0)
-    expect(bandInnerSlot(6)).toBe(0)
-    expect(bandInnerSlot(16)).toBe(0)
-    expect(bandInnerSlot(45)).toBe(0)
-  })
-})
+    expect(bandInnerSlot(1)).toBe(0);
+    expect(bandInnerSlot(45)).toBe(0);
+  });
+});
 
-describe('buildBandTargetsPerPosition', () => {
-  it('band tier 4는 지원하지 않는다', () => {
-    const rows: PositionBandDistributionRow[] = []
+describe('buildBandTargetsForRank', () => {
+  it('rank 1은 자리별 최고 비율 band를 반환한다', () => {
+    const rows: PositionBandDistributionRow[] = [];
     for (let pos = 1; pos <= 6; pos++) {
-      rows.push({
-        position: pos,
-        bandLabel: '1',
-        drawCount: 1,
-        percentage: 25,
-      })
+      rows.push({ position: pos, bandLabel: '1', drawCount: 10, percentage: 50 });
+      rows.push({ position: pos, bandLabel: '2', drawCount: 5, percentage: 25 });
     }
-    expect(buildBandTargetsPerPosition(rows, 4)).toBeNull()
-  })
+    const t1 = buildBandTargetsForRank(rows, 1)!;
+    expect(t1.every((b) => b === 0)).toBe(true);
+  });
 
-  it('N등 비율이 20% 미만인 자리는 band3 목표에서 1등 구간을 쓴다', () => {
-    const rows: PositionBandDistributionRow[] = []
-    const pos1Bands = [
-      { label: '1', pct: 50 },
-      { label: '6', pct: 25 },
-      { label: '11', pct: 13 },
-      { label: '16', pct: 12 },
-    ] as const
-    for (let pos = 1; pos <= 6; pos++) {
-      const bands =
-        pos === 1
-          ? pos1Bands
-          : ([
-              { label: '1', pct: 40 },
-              { label: '6', pct: 30 },
-              { label: '11', pct: 20 },
-              { label: '16', pct: 10 },
-            ] as const)
-      for (const b of bands) {
-        rows.push({
-          position: pos,
-          bandLabel: b.label,
-          drawCount: 1,
-          percentage: b.pct,
-        })
-      }
-    }
-    const t1 = buildBandTargetsPerPosition(rows, 1)!
-    const t3 = buildBandTargetsPerPosition(rows, 3)!
-    expect(t3[0]).toBe(t1[0])
-    const sortedPos1 = rows
-      .filter((r) => r.position === 1)
-      .sort((a, b) => b.percentage - a.percentage)
-    expect(sortedPos1[2]!.percentage).toBe(13)
-    expect(sortedPos1[2]!.percentage).toBeLessThan(MIN_BAND_TIER_PERCENT)
-    expect(effectiveBandRankIdx(sortedPos1, 2)).toBe(0)
-    expect(t3[1]).not.toBe(t1[1])
-  })
-})
+  it('buildBandTargetsPerPosition은 rank 별칭이다', () => {
+    const rows: PositionBandDistributionRow[] = [
+      { position: 1, bandLabel: '3', drawCount: 1, percentage: 60 },
+      { position: 1, bandLabel: '1', drawCount: 1, percentage: 40 },
+    ];
+    expect(buildBandTargetsPerPosition(rows, 1)).toEqual(buildBandTargetsForRank(rows, 1));
+  });
+});
 
-describe('COMBO_PROFILE_SLOT_ORDER', () => {
-  it('9패턴 2회+2슬롯 재시도·band1~3', () => {
-    expect(COMBO_PROFILE_SLOT_CYCLE).toHaveLength(9)
-    expect(COMBO_PROFILE_SLOT_ORDER).toHaveLength(TARGET_SET_COUNT)
-    expect(COMBO_PROFILE_SLOT_ORDER.every(([, band]) => band <= 3)).toBe(true)
-    expect(COMBO_PROFILE_SLOT_ORDER.slice(0, 9)).toEqual([...COMBO_PROFILE_SLOT_CYCLE])
-    expect(COMBO_PROFILE_SLOT_ORDER.slice(9, 18)).toEqual([...COMBO_PROFILE_SLOT_CYCLE])
-    expect(COMBO_PROFILE_SLOT_ORDER.slice(18)).toEqual(
-      [...COMBO_PROFILE_SLOT_CYCLE].slice(0, 2),
-    )
-    expect(COMBO_RANK_TRIPLE_PRIORITY_ORDER).toEqual([...COMBO_PROFILE_SLOT_ORDER])
-  })
-})
+describe('COMBO_RANK_SLOT_ORDER', () => {
+  it('rank 1~20 슬롯을 가진다', () => {
+    expect(COMBO_RANK_SLOT_ORDER).toHaveLength(TARGET_SET_COUNT);
+    expect(COMBO_RANK_SLOT_ORDER[0]).toBe(1);
+    expect(COMBO_RANK_SLOT_ORDER[19]).toBe(20);
+  });
+});
 
 describe('generateCombinationBasedSets', () => {
   it('번호 풀이 6개 미만이면 세트를 만들지 않는다', async () => {
-    const hist = syntheticHistory(40)
-    const r = await generateCombinationBasedSets(hist, [1, 2, 3], 0)
-    expect(r.sets).toHaveLength(0)
-    expect(r.warning).toBeTruthy()
-  })
+    const hist = syntheticHistory(40);
+    const r = await generateCombinationBasedSets(hist, [1, 2, 3], 0);
+    expect(r.sets).toHaveLength(0);
+    expect(r.warning).toBeTruthy();
+  });
 
   it('이력이 비어 있으면 합산 통계 부재로 세트를 만들지 않는다', async () => {
-    const r = await generateCombinationBasedSets([], Array.from({ length: 20 }, (_, i) => i + 1), 0)
-    expect(r.sets).toHaveLength(0)
-    expect(r.summaryLines.some((l) => l.includes('고저 합산'))).toBe(true)
-  })
+    const r = await generateCombinationBasedSets([], Array.from({ length: 20 }, (_, i) => i + 1), 0);
+    expect(r.sets).toHaveLength(0);
+    expect(r.summaryLines.some((l) => l.includes('고저 합산'))).toBe(true);
+  });
 
   it(
-    '이력이 있으면 조합 요약이 생기고, 목표 개수·중복 없음·번호 풀·분산이 만족된다',
+    '이력이 있으면 rank strategy·중복 없음·번호 풀·분산이 만족된다',
     async () => {
-    const hist = syntheticHistory(80)
-    const numberPool = [...FULL_LOTTO_POOL]
-    const referenceDrawNo = 81
-    const r = await generateCombinationBasedSets(hist, numberPool, referenceDrawNo)
-    expect(r.sets.length).toBeGreaterThan(0)
-    expect(r.sets.length).toBeLessThanOrEqual(TARGET_SET_COUNT)
-    expect(r.sets.every((s) => /^combo:(fallback:)?oe\d+-band[123]$/.test(s.strategy ?? ''))).toBe(true)
-    const bandTiers = new Set(
-      r.sets.map((s) => {
-        const m = /band(\d+)$/.exec(s.strategy ?? '')
-        return m ? Number(m[1]) : 0
-      }),
-    )
-    expect(bandTiers.has(4)).toBe(false)
-    expect(r.summaryLines.some((l) => l.includes('고저 합산'))).toBe(true)
-    expect(r.summaryLines.some((l) => l.includes('세트 구성:'))).toBe(true)
-    expect(r.summaryLines.some((l) => l.includes('1단계 조합'))).toBe(true)
-    const keys = new Set(
-      r.sets.map((s) => [s.num1, s.num2, s.num3, s.num4, s.num5, s.num6].sort((a, b) => a - b).join(',')),
-    )
-    expect(keys.size).toBe(r.sets.length)
-    for (const s of r.sets) {
-      const nums = [s.num1, s.num2, s.num3, s.num4, s.num5, s.num6]
-      expect(new Set(nums).size).toBe(6)
-      for (const n of nums) {
-        expect(numberPool.includes(n)).toBe(true)
+      const hist = syntheticHistory(80);
+      const numberPool = [...FULL_LOTTO_POOL];
+      const r = await generateCombinationBasedSets(hist, numberPool, 81);
+      expect(r.sets.length).toBeGreaterThan(0);
+      expect(r.sets.length).toBeLessThanOrEqual(TARGET_SET_COUNT);
+      expect(r.sets.every((s) => /^combo:(fallback:)?rank\d+$/.test(s.strategy ?? ''))).toBe(true);
+      expect(r.summaryLines.some((l) => l.includes('고저 합산'))).toBe(true);
+      expect(r.summaryLines.some((l) => l.includes('rank 1~20'))).toBe(true);
+      const keys = new Set(
+        r.sets.map((s) => [s.num1, s.num2, s.num3, s.num4, s.num5, s.num6].sort((a, b) => a - b).join(',')),
+      );
+      expect(keys.size).toBe(r.sets.length);
+      for (const s of r.sets) {
+        const nums = [s.num1, s.num2, s.num3, s.num4, s.num5, s.num6];
+        expect(new Set(nums).size).toBe(6);
+        for (const n of nums) {
+          expect(numberPool.includes(n)).toBe(true);
+        }
       }
-    }
-    const usage = countUsageInPool(r.sets, numberPool)
-    const distinctUsed = numberPool.filter((n) => (usage.get(n) ?? 0) > 0).length
-    /** 20세트 전체에서 동일 번호는 MAX_NUM_USAGE 이하 */
-    for (const [, count] of usage) {
-      expect(count).toBeLessThanOrEqual(MAX_NUM_USAGE)
-    }
-    /** 랭크·겹침 점수로 일부 번호는 안 쓰일 수 있으나, 풀의 상당 부분은 등장해야 한다 */
-    expect(distinctUsed).toBeGreaterThanOrEqual(12)
-
-    const bandsUsed = new Set<number>()
-    for (const s of r.sets) {
-      for (const n of [s.num1, s.num2, s.num3, s.num4, s.num5, s.num6]) {
-        bandsUsed.add(numberToBandIndex(n))
+      const usage = countUsageInPool(r.sets, numberPool);
+      for (const [, count] of usage) {
+        expect(count).toBeLessThanOrEqual(MAX_NUM_USAGE);
       }
-    }
-    expect(bandsUsed.size).toBeGreaterThanOrEqual(12)
+      const bandsUsed = new Set<number>();
+      for (const s of r.sets) {
+        for (const n of [s.num1, s.num2, s.num3, s.num4, s.num5, s.num6]) {
+          bandsUsed.add(numberToBandIndex(n));
+        }
+      }
+      expect(bandsUsed.size).toBeGreaterThanOrEqual(12);
     },
     120_000,
-  )
-})
+  );
+});

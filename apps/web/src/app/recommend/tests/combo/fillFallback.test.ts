@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { COMBO_PROFILE_SLOT_ORDER } from '@/app/recommend/constants/comboSlots';
+import { COMBO_RANK_SLOT_ORDER } from '@/app/recommend/constants/comboSlots';
 import { FALLBACK_STRATEGY_PREFIX, MAX_NUM_USAGE } from '@/app/recommend/constants/comboThresholds';
 import type { FillCtx } from '@/app/recommend/logic/combo/fillSlots';
 import { fillFallbackSlots, findFallbackSetBacktrack } from '@/app/recommend/logic/combo/fillFallback';
@@ -8,17 +8,20 @@ import { buildPoolByBand } from '@/app/recommend/logic/repair';
 
 const mkCtx = (pool: number[]): FillCtx => {
   const usage = new Map<number, number>(pool.map((n) => [n, 0]));
+  const targetsByRank = new Map<number, number[]>();
+  for (const rank of COMBO_RANK_SLOT_ORDER) {
+    targetsByRank.set(rank, [0, 1, 2, 3, 4, 5]);
+  }
   return {
     poolByBand: buildPoolByBand(pool),
     minSum: 21,
     maxSum: 300,
-    oddRows: [],
-    targetsByBandTier: [[0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0]],
+    targetsByRank,
     usedKeys: new Set<string>(),
     usage,
     innerSlotUsage: new Map<string, number>(),
     repairYieldEvery: 0,
-    profileSlots: Array.from({ length: COMBO_PROFILE_SLOT_ORDER.length }, () => null),
+    profileSlots: Array.from({ length: COMBO_RANK_SLOT_ORDER.length }, () => null),
   };
 };
 
@@ -34,7 +37,7 @@ describe('fillFallbackSlots', () => {
       num5: 5,
       num6: 6,
       method: 'JL Wheel Method',
-      strategy: 'combo:oe1-band1',
+      strategy: 'combo:rank1',
     };
     ctx.usedKeys.add('1,2,3,4,5,6');
     for (const n of [1, 2, 3, 4, 5, 6]) ctx.usage.set(n, 1);

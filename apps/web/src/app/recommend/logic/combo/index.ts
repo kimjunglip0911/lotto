@@ -1,11 +1,9 @@
 /** 조합 기반 20세트 생성 — 공개 API */
 
-export {
-  TARGET_SET_COUNT,
-  MIN_BAND_TIER_PERCENT,
-} from '@/app/recommend/constants/comboThresholds';
+export { TARGET_SET_COUNT } from '@/app/recommend/constants/comboThresholds';
 
 export {
+  COMBO_RANK_SLOT_ORDER,
   COMBO_PROFILE_SLOT_CYCLE,
   COMBO_PROFILE_SLOT_ORDER,
   COMBO_RANK_PAIR_PRIORITY_ORDER,
@@ -25,12 +23,17 @@ export {
 
 export { effectiveBandRankIdx } from '@/app/recommend/logic/combo/bandRankPick';
 
-export { buildBandTargetsPerPosition } from '@/app/recommend/logic/combo/buildBandTargets';
+export {
+  buildBandTargetsForRank,
+  buildBandTargetsPerPosition,
+} from '@/app/recommend/logic/combo/buildBandTargets';
 
 export {
+  parseComboStrategyRank,
   parseComboStrategyRanks,
   sortGeneratedSetsByComboStrategy,
   orderSetsByProfileSlots,
+  formatProfileRank,
   formatProfilePair,
   formatProfileTriple,
   setsInProfileSlotOrder,

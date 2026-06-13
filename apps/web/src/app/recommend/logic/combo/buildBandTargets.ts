@@ -1,35 +1,31 @@
 import type { PositionBandDistributionRow } from '@/app/analysis/combination/types';
-import { differentiateBandTargetsFromPrev } from '@/app/recommend/logic/combo/bandMonotonic';
 import {
-  bandIndexFromDistributionRow,
-  effectiveBandRankIdx,
-  pickBandIndexForPosition,
-} from '@/app/recommend/logic/combo/bandRankPick';
+  pickBandIndexForRank,
+  sortRowsForPosition,
+} from '@/app/analysis/combination/logic/rankPositionBands';
 
-/** 6자리 각각에 band tier(1~3)에 맞는 목표 band 인덱스 배열을 만든다 */
+/** 6자리 각각에 rank(1~20)에 맞는 목표 band 인덱스 배열을 만든다 */
 
-export const buildBandTargetsPerPosition = (
+export const buildBandTargetsForRank = (
   flat: readonly PositionBandDistributionRow[],
-  bandTier: number,
-  prevTierTargets?: readonly number[] | null,
+  rank: number,
 ): number[] | null => {
-  if (bandTier < 1 || bandTier > 3) return null;
-  const rankIdx = bandTier - 1;
+  if (rank < 1) return null;
+  const rankIdx = rank - 1;
   const targets: number[] = [];
   for (let pos = 1; pos <= 6; pos++) {
     const forPos = flat.filter((r) => r.position === pos);
-    const sorted = [...forPos].sort((a, b) => {
-      if (b.percentage !== a.percentage) return b.percentage - a.percentage;
-      return bandIndexFromDistributionRow(a) - bandIndexFromDistributionRow(b);
-    });
+    const sorted = sortRowsForPosition(forPos);
     if (sorted.length === 0) return null;
-    const effRank = effectiveBandRankIdx(sorted, rankIdx);
-    const picked = pickBandIndexForPosition(sorted, effRank);
+    const picked = pickBandIndexForRank(sorted, rankIdx);
     if (picked === null) return null;
     targets.push(picked);
   }
-  if (prevTierTargets) {
-    return differentiateBandTargetsFromPrev(targets, prevTierTargets);
-  }
   return targets;
 };
+
+/** @deprecated buildBandTargetsForRank 사용 */
+export const buildBandTargetsPerPosition = (
+  flat: readonly PositionBandDistributionRow[],
+  bandTier: number,
+): number[] | null => buildBandTargetsForRank(flat, bandTier);

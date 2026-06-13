@@ -8,6 +8,11 @@ export type PositionBandDistributionRow = {
   percentage: number;
 };
 
+/** 자리 내 출현 비율 순위(1등=최다)가 붙은 구간별 집계 행 */
+export type PositionBandRankRow = PositionBandDistributionRow & {
+  rank: number;
+};
+
 /** 주6 합산 극단(고·저 각 5% 제외) 및 최근 창 건수 */
 export type SumExtremeStats = {
   totalDraws: number;

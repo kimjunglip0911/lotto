@@ -1,32 +1,23 @@
 import { TARGET_SET_COUNT } from '@/app/recommend/constants/comboThresholds';
 
-/** 9슬롯 1회분(oe·band) */
+/** rank 1~20 슬롯 — 세트 k는 자리별 k등 band 목표 */
 
-export const COMBO_PROFILE_SLOT_CYCLE: ReadonlyArray<readonly [number, number]> = [
-  [1, 1],
-  [1, 2],
-  [1, 3],
-  [2, 1],
-  [2, 2],
-  [2, 3],
-  [3, 1],
-  [3, 2],
-  [3, 3],
-] as const;
+export const COMBO_RANK_SLOT_ORDER: readonly number[] = Array.from(
+  { length: TARGET_SET_COUNT },
+  (_, i) => i + 1,
+);
 
-export const COMBO_PROFILE_SLOT_ORDER: ReadonlyArray<readonly [number, number]> = [
-  ...COMBO_PROFILE_SLOT_CYCLE,
-  ...COMBO_PROFILE_SLOT_CYCLE,
-  ...COMBO_PROFILE_SLOT_CYCLE.slice(0, TARGET_SET_COUNT - COMBO_PROFILE_SLOT_CYCLE.length * 2),
-];
+/** @deprecated COMBO_RANK_SLOT_ORDER 사용 */
+export const COMBO_PROFILE_SLOT_CYCLE = COMBO_RANK_SLOT_ORDER;
 
-export const COMBO_RANK_PAIR_PRIORITY_ORDER: ReadonlyArray<readonly [number, number]> = [
-  ...COMBO_PROFILE_SLOT_ORDER,
-];
+/** @deprecated COMBO_RANK_SLOT_ORDER 사용 */
+export const COMBO_PROFILE_SLOT_ORDER = COMBO_RANK_SLOT_ORDER.map((rank) => [1, rank] as const);
 
-/** @deprecated COMBO_RANK_PAIR_PRIORITY_ORDER 사용 */
-export const COMBO_RANK_TRIPLE_PRIORITY_ORDER = COMBO_RANK_PAIR_PRIORITY_ORDER;
+export const COMBO_RANK_PAIR_PRIORITY_ORDER = COMBO_RANK_SLOT_ORDER;
 
-if (COMBO_PROFILE_SLOT_ORDER.length !== TARGET_SET_COUNT) {
-  throw new Error('COMBO_PROFILE_SLOT_ORDER must match TARGET_SET_COUNT');
+/** @deprecated COMBO_RANK_SLOT_ORDER 사용 */
+export const COMBO_RANK_TRIPLE_PRIORITY_ORDER = COMBO_RANK_SLOT_ORDER;
+
+if (COMBO_RANK_SLOT_ORDER.length !== TARGET_SET_COUNT) {
+  throw new Error('COMBO_RANK_SLOT_ORDER must match TARGET_SET_COUNT');
 }

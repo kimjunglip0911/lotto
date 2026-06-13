@@ -36,6 +36,7 @@ export { randomPerPositionPick, randomBandSeed } from '@/app/recommend/logic/rep
 export { repairOneStep } from '@/app/recommend/logic/repair/repairStep';
 export { tryBuildOneSet } from '@/app/recommend/logic/repair/tryBuild';
 export { buildOneSetWithFallback } from '@/app/recommend/logic/repair/buildOneSet';
+export { sequentialPickByBands } from '@/app/recommend/logic/repair/sequentialPick';
 export { forceBuildOneSet } from '@/app/recommend/logic/repair/forceBuild';
 export { diagnoseProfileBuild } from '@/app/recommend/logic/repair/diagnose';
 export { canPickBandSkeleton } from '@/app/recommend/logic/repair/backtrack';

@@ -1,17 +1,12 @@
 import type { WinningNumberRow } from '@/app/analysis/accu-nums/types';
-import { buildOddEvenDistribution } from '@/app/recommend/logic/combo/buildOddEvenDistribution';
 import { buildPositionBandDistribution } from '@/app/analysis/combination/logic/buildPositionBandDistribution';
 import { buildSumExtremeStats } from '@/app/analysis/combination/logic/buildSumExtremeStats';
-import { COMBO_PROFILE_SLOT_ORDER } from '@/app/recommend/constants/comboSlots';
-import {
-  MAX_NUM_USAGE,
-  MIN_BAND_TIER_PERCENT,
-  TARGET_SET_COUNT,
-} from '@/app/recommend/constants/comboThresholds';
+import { COMBO_RANK_SLOT_ORDER } from '@/app/recommend/constants/comboSlots';
+import { MAX_NUM_USAGE, TARGET_SET_COUNT } from '@/app/recommend/constants/comboThresholds';
 import { PROFILE_BUILD_ATTEMPTS } from '@/app/recommend/constants/repairLimits';
 import type { GeneratedSet } from '@/app/recommend/types/generatedSet';
 import { buildPoolByBand } from '@/app/recommend/logic/repair';
-import { buildBandTargetsPerPosition } from '@/app/recommend/logic/combo/buildBandTargets';
+import { buildBandTargetsForRank } from '@/app/recommend/logic/combo/buildBandTargets';
 import { fillFallbackSlots } from '@/app/recommend/logic/combo/fillFallback';
 import { withSortedMains } from '@/app/recommend/logic/combo/sortMains';
 import {
@@ -28,7 +23,7 @@ export type CombinationGenerationResult = {
   warning: string | null;
 };
 
-/** 1~45 전체 풀·이력 통계로 최대 20세트 생성 */
+/** 1~45 전체 풀·이력 통계로 최대 20세트 생성(rank 1~20 순차 선택) */
 
 export const generateCombinationBasedSets = async (
   fullHistory: readonly WinningNumberRow[],
@@ -50,7 +45,6 @@ export const generateCombinationBasedSets = async (
 
   const minSum = sumStats.trimmedMinSum;
   const maxSum = sumStats.trimmedMaxSum;
-  const oddEven = buildOddEvenDistribution(sortedHistory);
   const positionBand = buildPositionBandDistribution(sortedHistory);
 
   summaryLines.push(
@@ -72,19 +66,21 @@ export const generateCombinationBasedSets = async (
   const innerSlotUsage = new Map<string, number>();
   const usedKeys = new Set<string>();
 
-  const t1 = buildBandTargetsPerPosition(positionBand.rows, 1);
-  const t2 = t1 ? buildBandTargetsPerPosition(positionBand.rows, 2, t1) : null;
-  const t3 = t2 ? buildBandTargetsPerPosition(positionBand.rows, 3, t2) : null;
-  if (!t1 || !t2 || !t3) {
-    return {
-      sets: [],
-      summaryLines: [...summaryLines, '자리별 번호대 통계를 해석할 수 없어 세트를 만들 수 없습니다.'],
-      warning: '자리대 통계 없음',
-    };
+  const targetsByRank = new Map<number, number[]>();
+  for (const rank of COMBO_RANK_SLOT_ORDER) {
+    const targets = buildBandTargetsForRank(positionBand.rows, rank);
+    if (!targets) {
+      return {
+        sets: [],
+        summaryLines: [...summaryLines, `rank${rank} 자리별 band 통계를 해석할 수 없습니다.`],
+        warning: '자리대 통계 없음',
+      };
+    }
+    targetsByRank.set(rank, targets);
   }
 
   const profileSlots: (GeneratedSet | null)[] = Array.from(
-    { length: COMBO_PROFILE_SLOT_ORDER.length },
+    { length: COMBO_RANK_SLOT_ORDER.length },
     () => null,
   );
 
@@ -92,8 +88,7 @@ export const generateCombinationBasedSets = async (
     poolByBand,
     minSum,
     maxSum,
-    oddRows: oddEven.rows,
-    targetsByBandTier: [t1, t2, t3],
+    targetsByRank,
     usedKeys,
     usage,
     innerSlotUsage,
@@ -108,7 +103,7 @@ export const generateCombinationBasedSets = async (
   }
 
   const phase1Count = profileSlots.filter((s) => s !== null).length;
-  summaryLines.push(`1단계 조합 세트: ${phase1Count}개`);
+  summaryLines.push(`1단계 조합 세트: ${phase1Count}개 (rank 1~${COMBO_RANK_SLOT_ORDER.length} 순차 선택)`);
 
   const fallbackResult = fillFallbackSlots(ctx, poolSorted);
   if (fallbackResult.filled > 0) {
@@ -126,7 +121,7 @@ export const generateCombinationBasedSets = async (
   const sets = setsInProfileSlotOrder(profileSlots);
 
   summaryLines.push(
-    `세트 구성: 고정 ${TARGET_SET_COUNT}슬롯(9패턴×2+2, band1~3·자리별 ${MIN_BAND_TIER_PERCENT}% 미만 N등→1등)·1단계 ${PROFILE_BUILD_ATTEMPTS}회·2단계 폴백·${sets.length}개.`,
+    `세트 구성: rank 1~20 슬롯·1구간→6구간 순차·고저 반영·1단계 ${PROFILE_BUILD_ATTEMPTS}회·2단계 폴백·${sets.length}개.`,
   );
 
   const warning =

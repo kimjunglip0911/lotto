@@ -1,8 +1,8 @@
 import { positionGroupRowBg } from '../../../helpers/positionRowBg';
-import type { PositionBandDistributionRow } from '../../../types';
+import type { PositionBandRankRow } from '../../../types';
 
 type Props = {
-  rows: PositionBandDistributionRow[];
+  rows: PositionBandRankRow[];
 };
 
 export function PositionBandRows({ rows }: Props) {
@@ -25,6 +25,11 @@ export function PositionBandRows({ rows }: Props) {
 
         return (
           <tr key={`${r.position}-${r.bandLabel}`} className={`${groupTopRule} ${rowBottomRule}`}>
+            <td
+              className={`py-1.5 px-3 text-sky-200 tabular-nums text-center align-middle ${rowBg}`}
+            >
+              {r.rank}등
+            </td>
             {isFirstInPosition ? (
               <td
                 rowSpan={rowSpan}

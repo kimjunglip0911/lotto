@@ -1,1 +1,5 @@
-export type { PositionBandDistributionRow, SumExtremeStats } from './distribution';
+export type {
+  PositionBandDistributionRow,
+  PositionBandRankRow,
+  SumExtremeStats,
+} from './distribution';

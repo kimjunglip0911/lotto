@@ -27,26 +27,15 @@ const indexOfMin = (sorted: readonly number[]): number => {
 const pickRepairSortedIndex = (
   sorted: readonly number[],
   violations: readonly SetViolation[],
-  evenT: number,
 ): number => {
   if (violations.includes('sum_high')) return indexOfMax(sorted);
   if (violations.includes('sum_low')) return indexOfMin(sorted);
-  if (violations.includes('even')) {
-    const evens = sorted.filter((n) => n % 2 === 0).length;
-    const needMoreEven = evens < evenT;
-    for (let i = 0; i < 6; i++) {
-      const isEven = sorted[i]! % 2 === 0;
-      if (needMoreEven && !isEven) return i;
-      if (!needMoreEven && isEven) return i;
-    }
-  }
   return 0;
 };
 
 export const pickRepairPosition = (
   picked: readonly number[],
   violations: readonly SetViolation[],
-  evenT: number,
   bandTargets: readonly number[],
 ): number => {
   if (violations.includes('band')) {
@@ -57,7 +46,7 @@ export const pickRepairPosition = (
   const metricViolations = violations.filter((v) => v !== 'band' && v !== 'duplicate');
   if (metricViolations.length === 0) return 0;
   const sorted = sortPickedAsc(picked);
-  const si = pickRepairSortedIndex(sorted, metricViolations, evenT);
+  const si = pickRepairSortedIndex(sorted, metricViolations);
   const value = sorted[si]!;
   const pi = picked.indexOf(value);
   return pi >= 0 ? pi : 0;

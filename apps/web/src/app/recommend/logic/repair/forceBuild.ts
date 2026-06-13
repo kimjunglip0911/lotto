@@ -21,19 +21,12 @@ export const forceBuildOneSet = (
 ): number[] | null => {
   const allowBacktrack = options?.allowBacktrack !== false;
   const bandTier = options?.bandTier ?? 0;
-  const lightOe = options?.lightOe === true;
   const heavySearch = adoptedPoolSize(poolByBand) <= HEAVY_SEARCH_MAX_POOL || bandTier >= 3;
 
   const quick = tryBuildOneSet(poolByBand, constraints, pickCtx);
   if (quick) return quick;
 
-  const seedAttempts = heavySearch
-    ? lightOe
-      ? 16
-      : MAX_SEED_ATTEMPTS
-    : lightOe
-      ? 10
-      : 20;
+  const seedAttempts = heavySearch ? MAX_SEED_ATTEMPTS : 20;
 
   for (let attempt = 0; attempt < seedAttempts; attempt++) {
     const picked = randomPerPositionPick(poolByBand, constraints.bandTargets, pickCtx);
