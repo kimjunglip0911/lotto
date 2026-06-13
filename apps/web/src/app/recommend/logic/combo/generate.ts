@@ -1,5 +1,5 @@
 import type { WinningNumberRow } from '@/app/analysis/accu-nums/types';
-import { buildOddEvenDistribution } from '@/app/analysis/combination/logic/buildOddEvenDistribution';
+import { buildOddEvenDistribution } from '@/app/recommend/logic/combo/buildOddEvenDistribution';
 import { buildPositionBandDistribution } from '@/app/analysis/combination/logic/buildPositionBandDistribution';
 import { buildSumExtremeStats } from '@/app/analysis/combination/logic/buildSumExtremeStats';
 import { COMBO_PROFILE_SLOT_ORDER } from '@/app/recommend/constants/comboSlots';

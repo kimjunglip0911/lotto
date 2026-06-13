@@ -1,4 +1,4 @@
-import { buildOddEvenDistribution } from '@/app/analysis/combination/logic/buildOddEvenDistribution';
+import { buildOddEvenDistribution } from '@/app/recommend/logic/combo/buildOddEvenDistribution';
 import { PROFILE_BUILD_ATTEMPTS } from '@/app/recommend/constants/repairLimits';
 import type { GeneratedSet } from '@/app/recommend/types/generatedSet';
 import {

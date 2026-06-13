@@ -1,5 +1,12 @@
 import type { WinningNumberRow } from '@/app/analysis/accu-nums/types';
-import type { OddEvenDistributionRow } from '../types/index';
+
+/** 주6 기준 짝수 개수(0~6) 버킷별 집계 행 */
+export type OddEvenDistributionRow = {
+  evenCount: number;
+  drawCount: number;
+  /** 전체 대비 비율(0~100), 소수 둘째 자리 */
+  percentage: number;
+};
 
 /**
  * 각 회차 주번호 6개에서 짝수 개수를 세어 0~6 버킷별 건수·비율(%)을 계산한다. 보너스는 제외한다.

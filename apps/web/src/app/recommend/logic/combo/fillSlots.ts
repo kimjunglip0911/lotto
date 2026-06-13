@@ -1,4 +1,4 @@
-import { buildOddEvenDistribution } from '@/app/analysis/combination/logic/buildOddEvenDistribution';
+import { buildOddEvenDistribution } from '@/app/recommend/logic/combo/buildOddEvenDistribution';
 import { COMBO_PROFILE_SLOT_ORDER } from '@/app/recommend/constants/comboSlots';
 import { MAX_NUM_USAGE, OE_RANK_LIGHT } from '@/app/recommend/constants/comboThresholds';
 import type { GeneratedSet } from '@/app/recommend/types/generatedSet';

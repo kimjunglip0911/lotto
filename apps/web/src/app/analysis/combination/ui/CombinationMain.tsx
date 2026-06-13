@@ -1,16 +1,14 @@
 import { HighLowSumTable } from './table/HighLowSumTable';
-import { OddEvenProbabilityTable } from './table/OddEvenProbabilityTable';
 import { PositionBandProbabilityTable } from './table/PositionBandProbabilityTable';
 import type { useCombinationAnalysisData } from '../hooks/useCombinationAnalysisData';
 
 type Props = ReturnType<typeof useCombinationAnalysisData>;
 
-/** 조합 분석 본문: 로딩·에러·3개 집계 표 */
+/** 조합 분석 본문: 로딩·에러·2개 집계 표 */
 export function CombinationMain({
   isLoading,
   loadError,
   totalDraws,
-  oddEvenRows,
   positionBandRows,
   sumExtremeStats,
 }: Props) {
@@ -21,7 +19,6 @@ export function CombinationMain({
       {!isLoading && !loadError && (
         <>
           <PositionBandProbabilityTable totalDraws={totalDraws} rows={positionBandRows} />
-          <OddEvenProbabilityTable totalDraws={totalDraws} rows={oddEvenRows} />
           <HighLowSumTable stats={sumExtremeStats} />
         </>
       )}
