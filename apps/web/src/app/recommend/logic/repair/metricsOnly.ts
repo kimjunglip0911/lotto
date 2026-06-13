@@ -5,7 +5,7 @@ import { sortPickedAsc } from '@/app/recommend/logic/repair/runLen';
 import { pickSixFromFlatPool } from '@/app/recommend/logic/repair/pick';
 import { repairUntilMetricsOk } from '@/app/recommend/logic/repair/repairMetrics';
 
-/** band 없이 합·홀짝·연속만 맞춘 6개 */
+/** band 없이 합·홀짝만 맞춘 6개 */
 
 export const buildMetricsOnlyFromPool = (
   poolByBand: ReadonlyMap<number, number[]>,

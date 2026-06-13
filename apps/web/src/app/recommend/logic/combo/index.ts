@@ -8,6 +8,7 @@ export {
 export {
   COMBO_PROFILE_SLOT_CYCLE,
   COMBO_PROFILE_SLOT_ORDER,
+  COMBO_RANK_PAIR_PRIORITY_ORDER,
   COMBO_RANK_TRIPLE_PRIORITY_ORDER,
 } from '@/app/recommend/constants/comboSlots';
 
@@ -30,6 +31,7 @@ export {
   parseComboStrategyRanks,
   sortGeneratedSetsByComboStrategy,
   orderSetsByProfileSlots,
+  formatProfilePair,
   formatProfileTriple,
   setsInProfileSlotOrder,
 } from '@/app/recommend/logic/combo/orderSets';

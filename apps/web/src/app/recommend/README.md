@@ -5,9 +5,9 @@
 ## 목적
 
 - **1~45 전체 번호 풀**과 조합 분석 페이지와 같은 통계로 **목표 20세트**를 만든 뒤 저장합니다.
-- **① 1단계** — 자리마다 band **1~3등** 구간·합·홀짝·연속 제약. band4~6 확장까지 시도 후 불가 슬롯은 비움. 슬롯당 `PROFILE_BUILD_ATTEMPTS`회.
-- **② 2단계 폴백** — 1단계 빈 슬롯을 **합·홀짝·연속·band 무시** 조합으로 채움. **6개 조합 중복 금지**·**번호당 최대 3회** 유지.
-- **③** **15슬롯 + oe1 앞 5슬롯 재시도** = 20세트. 폴백 세트 strategy는 `combo:fallback:oeX-runY-bandZ`.
+- **① 1단계** — 자리마다 band **1~3등** 구간·합·홀짝 제약. band4~6 확장까지 시도 후 불가 슬롯은 비움. 슬롯당 `PROFILE_BUILD_ATTEMPTS`회.
+- **② 2단계 폴백** — 1단계 빈 슬롯을 **합·홀짝·band 무시** 조합으로 채움. **6개 조합 중복 금지**·**번호당 최대 3회** 유지.
+- **③** **9슬롯×2 + 앞 2슬롯 재시도** = 20세트. 폴백 세트 strategy는 `combo:fallback:oeX-bandZ`.
 - **④** 목표 band(1~3구간)에 풀 번호가 없으면 **band 4~6구간**에서 후보를 확장(1단계만).
 
 ## 폴더 구조 (8대표)
@@ -47,7 +47,7 @@ npm run lint
 - `logic/saved/loadSavedDraw.ts` — 저장 세트 조회(훅에서 호출)
 - `logic/combo/generate.ts` — 20세트 생성(1단계+2단계)
 - `logic/combo/fillFallback.ts` — 2단계 폴백
-- `logic/repair/` — band·합·홀짝·연속 수리
+- `logic/repair/` — band·합·홀짝 수리
 - `api/recommend/` — 저장·조회 HTTP
 
 ## 주의사항

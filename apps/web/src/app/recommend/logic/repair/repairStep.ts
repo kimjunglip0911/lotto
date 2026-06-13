@@ -6,7 +6,7 @@ import type {
   ValidateResult,
 } from '@/app/recommend/logic/repair/types';
 import { compareViolationSets } from '@/app/recommend/logic/repair/violation';
-import { maxConsecutiveRunLength, sortPickedAsc } from '@/app/recommend/logic/repair/runLen';
+import { sortPickedAsc } from '@/app/recommend/logic/repair/runLen';
 import { pickRepairPosition, replaceCandidatesForPosition } from '@/app/recommend/logic/repair/repairPos';
 import { matchesBandTarget } from '@/app/recommend/logic/repair/bandFallback';
 import { validatePickedNoSum, validatePickedSet } from '@/app/recommend/logic/repair/validate';
@@ -27,7 +27,6 @@ export const repairOneStep = (
     picked,
     before.violations,
     constraints.evenT,
-    constraints.runT,
     constraints.bandTargets,
   );
   const candidates = replaceCandidatesForPosition(
@@ -40,7 +39,6 @@ export const repairOneStep = (
   const sortedBefore = sortPickedAsc(picked);
   const sumBefore = sortedBefore.reduce((a, b) => a + b, 0);
   const evensBefore = sortedBefore.filter((x) => x % 2 === 0).length;
-  const runBefore = maxConsecutiveRunLength(sortedBefore);
 
   for (const n of candidates) {
     const prev = picked[pos]!;
@@ -51,7 +49,6 @@ export const repairOneStep = (
     const sortedAfter = sortPickedAsc(picked);
     const sumAfter = sortedAfter.reduce((a, b) => a + b, 0);
     const evensAfter = sortedAfter.filter((x) => x % 2 === 0).length;
-    const runAfter = maxConsecutiveRunLength(sortedAfter);
     const bandAtPosOk =
       before.violations.includes('band') &&
       matchesBandTarget(constraints.bandTargets[pos]!, numberToBandIndex(n));
@@ -62,16 +59,12 @@ export const repairOneStep = (
     const evenCloser =
       before.violations.includes('even') &&
       Math.abs(evensAfter - constraints.evenT) < Math.abs(evensBefore - constraints.evenT);
-    const runCloser =
-      before.violations.includes('run') &&
-      Math.abs(runAfter - constraints.runT) < Math.abs(runBefore - constraints.runT);
     if (
       after.ok ||
       compareViolationSets(after.violations, before.violations) < 0 ||
       bandAtPosOk ||
       sumCloser ||
-      evenCloser ||
-      runCloser
+      evenCloser
     ) {
       return true;
     }

@@ -1,5 +1,4 @@
 import type { WinningNumberRow } from '@/app/analysis/accu-nums/types';
-import { buildConsecutiveRunDistribution } from '@/app/analysis/combination/logic/buildConsecutiveRunDistribution';
 import { buildOddEvenDistribution } from '@/app/analysis/combination/logic/buildOddEvenDistribution';
 import { buildPositionBandDistribution } from '@/app/analysis/combination/logic/buildPositionBandDistribution';
 import { buildSumExtremeStats } from '@/app/analysis/combination/logic/buildSumExtremeStats';
@@ -52,7 +51,6 @@ export const generateCombinationBasedSets = async (
   const minSum = sumStats.trimmedMinSum;
   const maxSum = sumStats.trimmedMaxSum;
   const oddEven = buildOddEvenDistribution(sortedHistory);
-  const consecutive = buildConsecutiveRunDistribution(sortedHistory);
   const positionBand = buildPositionBandDistribution(sortedHistory);
 
   summaryLines.push(
@@ -95,7 +93,6 @@ export const generateCombinationBasedSets = async (
     minSum,
     maxSum,
     oddRows: oddEven.rows,
-    consecRows: consecutive.rows,
     targetsByBandTier: [t1, t2, t3],
     usedKeys,
     usage,
@@ -129,7 +126,7 @@ export const generateCombinationBasedSets = async (
   const sets = setsInProfileSlotOrder(profileSlots);
 
   summaryLines.push(
-    `세트 구성: 고정 ${TARGET_SET_COUNT}슬롯(15패턴+5, band1~3·자리별 ${MIN_BAND_TIER_PERCENT}% 미만 N등→1등)·1단계 ${PROFILE_BUILD_ATTEMPTS}회·2단계 폴백·${sets.length}개.`,
+    `세트 구성: 고정 ${TARGET_SET_COUNT}슬롯(9패턴×2+2, band1~3·자리별 ${MIN_BAND_TIER_PERCENT}% 미만 N등→1등)·1단계 ${PROFILE_BUILD_ATTEMPTS}회·2단계 폴백·${sets.length}개.`,
   );
 
   const warning =

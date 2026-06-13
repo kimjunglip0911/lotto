@@ -1,24 +1,20 @@
 import { useEffect, useState } from 'react';
 import { loadCombinationHistory } from '../api/loadHistory';
-import { buildConsecutiveRunDistribution } from '../logic/buildConsecutiveRunDistribution';
 import { buildOddEvenDistribution } from '../logic/buildOddEvenDistribution';
 import { runComboAnalysis } from '../logic/runComboAnalysis';
 import type {
-  ConsecutiveRunDistributionRow,
   OddEvenDistributionRow,
   PositionBandDistributionRow,
   SumExtremeStats,
 } from '../types';
 
 const EMPTY_ODD_EVEN = buildOddEvenDistribution([]).rows;
-const EMPTY_CONSECUTIVE = buildConsecutiveRunDistribution([]).rows;
 
 export type UseCombinationAnalysisDataResult = {
   isLoading: boolean;
   loadError: string | null;
   totalDraws: number;
   oddEvenRows: OddEvenDistributionRow[];
-  consecutiveRows: ConsecutiveRunDistributionRow[];
   positionBandRows: PositionBandDistributionRow[];
   sumExtremeStats: SumExtremeStats | null;
 };
@@ -28,8 +24,6 @@ export function useCombinationAnalysisData(): UseCombinationAnalysisDataResult {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [totalDraws, setTotalDraws] = useState(0);
   const [oddEvenRows, setOddEvenRows] = useState<OddEvenDistributionRow[]>(EMPTY_ODD_EVEN);
-  const [consecutiveRows, setConsecutiveRows] =
-    useState<ConsecutiveRunDistributionRow[]>(EMPTY_CONSECUTIVE);
   const [positionBandRows, setPositionBandRows] = useState<PositionBandDistributionRow[]>([]);
   const [sumExtremeStats, setSumExtremeStats] = useState<SumExtremeStats | null>(null);
 
@@ -47,7 +41,6 @@ export function useCombinationAnalysisData(): UseCombinationAnalysisDataResult {
         if (sortedRows.length === 0) {
           setTotalDraws(0);
           setOddEvenRows(EMPTY_ODD_EVEN);
-          setConsecutiveRows(EMPTY_CONSECUTIVE);
           setPositionBandRows([]);
           setSumExtremeStats(null);
           return;
@@ -56,7 +49,6 @@ export function useCombinationAnalysisData(): UseCombinationAnalysisDataResult {
         const result = runComboAnalysis(sortedRows);
         setTotalDraws(result.totalDraws);
         setOddEvenRows(result.oddEvenRows);
-        setConsecutiveRows(result.consecutiveRows);
         setPositionBandRows(result.positionBandRows);
         setSumExtremeStats(result.sumExtremeStats);
       } catch (error) {
@@ -65,7 +57,6 @@ export function useCombinationAnalysisData(): UseCombinationAnalysisDataResult {
         setLoadError('데이터를 불러오지 못했습니다.');
         setTotalDraws(0);
         setOddEvenRows(EMPTY_ODD_EVEN);
-        setConsecutiveRows(EMPTY_CONSECUTIVE);
         setPositionBandRows([]);
         setSumExtremeStats(null);
       } finally {
@@ -85,7 +76,6 @@ export function useCombinationAnalysisData(): UseCombinationAnalysisDataResult {
     loadError,
     totalDraws,
     oddEvenRows,
-    consecutiveRows,
     positionBandRows,
     sumExtremeStats,
   };

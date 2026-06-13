@@ -55,7 +55,6 @@ describe('repairOneStep', () => {
       minSum: 50,
       maxSum: 200,
       evenT: 3,
-      runT: 2,
       bandTargets: [0, 1, 2, 2, 2, 5],
     }
     const usage = new Map<number, number>()
@@ -75,7 +74,6 @@ describe('repairOneStep', () => {
       minSum: 50,
       maxSum: 200,
       evenT: 3,
-      runT: 2,
       bandTargets: [0, 1, 2, 2, 2, 5],
     }
     const before = validatePickedSet(picked, constraints)
@@ -91,7 +89,6 @@ describe('forceBuildOneSet', () => {
       minSum: 40,
       maxSum: 200,
       evenT: 3,
-      runT: 1,
       bandTargets: [0, 1, 2, 3, 4, 5],
     }
     const sorted = forceBuildOneSet(poolByBand, constraints)
@@ -99,14 +96,13 @@ describe('forceBuildOneSet', () => {
     expect(validateSet(sorted!, constraints).ok).toBe(true)
   })
 
-  it('합·홀짝·연속·band 제약을 만족하는 6개를 만든다', () => {
+  it('합·홀짝·band 제약을 만족하는 6개를 만든다', () => {
     const pool = Array.from({ length: 45 }, (_, i) => i + 1)
     const poolByBand = buildPoolByBand(pool)
     const constraints = {
       minSum: 21,
       maxSum: 255,
       evenT: 3,
-      runT: 1,
       bandTargets: [0, 1, 2, 3, 4, 5],
     }
     const sorted = forceBuildOneSet(poolByBand, constraints)
@@ -124,7 +120,6 @@ describe('validateSet', () => {
       minSum: 1,
       maxSum: 300,
       evenT: 3,
-      runT: 2,
       bandTargets: [0, 1, 2, 3, 4, 5],
     }
     const state = validateSet([1, 2, 32, 32, 40, 45], constraints)
@@ -134,12 +129,11 @@ describe('validateSet', () => {
 })
 
 describe('hasFallbackBothMetricsOk', () => {
-  it('홀짝·연속이 모두 맞으면 true', () => {
+  it('홀짝이 맞으면 true', () => {
     const constraints = {
       minSum: 1,
       maxSum: 300,
       evenT: 3,
-      runT: 1,
       bandTargets: [0, 1, 2, 3, 4, 5],
     }
     expect(hasFallbackBothMetricsOk([1, 3, 5, 8, 10, 12], constraints)).toBe(true)
@@ -148,29 +142,26 @@ describe('hasFallbackBothMetricsOk', () => {
 })
 
 describe('hasFallbackMetricOk', () => {
-  it('홀짝 또는 연속 중 하나만 맞아도 true', () => {
+  it('홀짝이 맞으면 true', () => {
     const constraints = {
       minSum: 1,
       maxSum: 300,
       evenT: 3,
-      runT: 1,
       bandTargets: [0, 1, 2, 3, 4, 5],
     }
-    expect(hasFallbackMetricOk([1, 3, 5, 7, 9, 11], constraints)).toBe(true)
-    expect(hasFallbackMetricOk([1, 3, 5, 7, 9, 20], constraints)).toBe(true)
-    expect(hasFallbackMetricOk([1, 2, 3, 4, 5, 7], constraints)).toBe(false)
+    expect(hasFallbackMetricOk([1, 3, 5, 8, 10, 12], constraints)).toBe(true)
+    expect(hasFallbackMetricOk([1, 3, 5, 7, 9, 11], constraints)).toBe(false)
   })
 })
 
 describe('buildMetricsOnlyFromPool', () => {
-  it('자리 band 후보가 없어도 합·홀짝·연속을 맞출 수 있다', () => {
+  it('자리 band 후보가 없어도 합·홀짝을 맞출 수 있다', () => {
     const pool = Array.from({ length: 30 }, (_, i) => i + 1)
     const poolByBand = buildPoolByBand(pool)
     const constraints = {
       minSum: 50,
       maxSum: 200,
       evenT: 3,
-      runT: 1,
       bandTargets: [0, 1, 2, 3, 4, 8],
     }
     expect(canPickBandSkeleton(poolByBand, constraints.bandTargets, {})).toBe(false)
@@ -183,14 +174,13 @@ describe('buildMetricsOnlyFromPool', () => {
 })
 
 describe('buildOneSetWithFallback', () => {
-  it('PROFILE_BUILD_ATTEMPTS회 실패 시 폴백으로 홀짝·연속 중 1개 이상 맞춘 6개를 반환한다', () => {
+  it('PROFILE_BUILD_ATTEMPTS회 실패 시 폴백으로 홀짝을 맞춘 6개를 반환한다', () => {
     const pool = Array.from({ length: 30 }, (_, i) => i + 1)
     const poolByBand = buildPoolByBand(pool)
     const constraints = {
       minSum: 1,
       maxSum: 2,
       evenT: 0,
-      runT: 1,
       bandTargets: [0, 1, 2, 3, 4, 5],
     }
     const r = buildOneSetWithFallback(poolByBand, constraints, {}, PROFILE_BUILD_ATTEMPTS)

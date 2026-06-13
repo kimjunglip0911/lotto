@@ -13,7 +13,6 @@ const mkCtx = (pool: number[]): FillCtx => {
     minSum: 21,
     maxSum: 300,
     oddRows: [],
-    consecRows: [],
     targetsByBandTier: [[0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0]],
     usedKeys: new Set<string>(),
     usage,
@@ -35,7 +34,7 @@ describe('fillFallbackSlots', () => {
       num5: 5,
       num6: 6,
       method: 'JL Wheel Method',
-      strategy: 'combo:oe1-run1-band1',
+      strategy: 'combo:oe1-band1',
     };
     ctx.usedKeys.add('1,2,3,4,5,6');
     for (const n of [1, 2, 3, 4, 5, 6]) ctx.usage.set(n, 1);

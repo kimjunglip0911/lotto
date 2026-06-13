@@ -14,13 +14,12 @@ export type ForceBuildOptions = {
   lightOe?: boolean;
 };
 
-export type SetViolation = 'sum_high' | 'sum_low' | 'even' | 'run' | 'band' | 'duplicate';
+export type SetViolation = 'sum_high' | 'sum_low' | 'even' | 'band' | 'duplicate';
 
 export type ProfileConstraints = {
   minSum: number;
   maxSum: number;
   evenT: number;
-  runT: number;
   bandTargets: readonly number[];
 };
 

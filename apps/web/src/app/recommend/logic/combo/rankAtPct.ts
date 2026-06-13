@@ -23,9 +23,3 @@ export const evenCountAtRank = (
   rank1: number,
 ): number | null =>
   pickAtRankByPct(rows, rank1, (a, b) => a.evenCount - b.evenCount, (r) => r.evenCount);
-
-export const maxRunAtRank = (
-  rows: { percentage: number; maxRunLength: number }[],
-  rank1: number,
-): number | null =>
-  pickAtRankByPct(rows, rank1, (a, b) => a.maxRunLength - b.maxRunLength, (r) => r.maxRunLength);

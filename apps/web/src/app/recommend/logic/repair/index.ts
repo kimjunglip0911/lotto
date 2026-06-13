@@ -22,7 +22,7 @@ export type {
 } from '@/app/recommend/logic/repair/types';
 
 export { buildHistCounts, adoptedPoolSize, buildPoolByBand, flatAdoptedPool } from '@/app/recommend/logic/repair/pool';
-export { maxConsecutiveRunLength, sortPickedAsc } from '@/app/recommend/logic/repair/runLen';
+export { sortPickedAsc } from '@/app/recommend/logic/repair/runLen';
 export {
   validatePickedSet,
   validateSet,

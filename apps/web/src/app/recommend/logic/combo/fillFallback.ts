@@ -1,12 +1,12 @@
 import { COMBO_PROFILE_SLOT_ORDER } from '@/app/recommend/constants/comboSlots';
 import { FALLBACK_STRATEGY_PREFIX } from '@/app/recommend/constants/comboThresholds';
 import type { FillCtx } from '@/app/recommend/logic/combo/fillSlots';
-import { formatProfileTriple } from '@/app/recommend/logic/combo/orderSets';
+import { formatProfilePair } from '@/app/recommend/logic/combo/orderSets';
 import { bumpUsage, setKey, toGeneratedSet } from '@/app/recommend/logic/combo/toSet';
 import { sortPickedAsc } from '@/app/recommend/logic/repair';
 import { filterUsageAvail } from '@/app/recommend/logic/repair/usageLimit';
 
-/** 2단계: 빈 슬롯을 합·홀짝·연속·band 무시 조합으로 채움 */
+/** 2단계: 빈 슬롯을 합·홀짝·band 무시 조합으로 채움 */
 
 export type FallbackFillResult = {
   filled: number;
@@ -49,14 +49,14 @@ export const fillFallbackSlots = (
 
   for (let slot = 0; slot < COMBO_PROFILE_SLOT_ORDER.length; slot++) {
     if (ctx.profileSlots[slot]) continue;
-    const triple = COMBO_PROFILE_SLOT_ORDER[slot];
-    if (!triple) continue;
-    const [oe, run, band] = triple;
+    const pair = COMBO_PROFILE_SLOT_ORDER[slot];
+    if (!pair) continue;
+    const [oe, band] = pair;
 
     const sorted = findFallbackSetBacktrack(poolSorted, ctx.usage, ctx.usedKeys);
     if (!sorted) continue;
 
-    const strategy = `${FALLBACK_STRATEGY_PREFIX}${formatProfileTriple(oe, run, band)}`;
+    const strategy = `${FALLBACK_STRATEGY_PREFIX}${formatProfilePair(oe, band)}`;
     ctx.usedKeys.add(setKey(sorted));
     bumpUsage(sorted, ctx.usage, ctx.innerSlotUsage);
     ctx.profileSlots[slot] = toGeneratedSet(sorted, strategy);

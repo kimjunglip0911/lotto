@@ -6,14 +6,6 @@ export type OddEvenDistributionRow = {
   percentage: number;
 };
 
-/** 정렬된 주6에서 최대 연속 구간 길이(1~6) 버킷별 집계 행 */
-export type ConsecutiveRunDistributionRow = {
-  maxRunLength: 1 | 2 | 3 | 4 | 5 | 6;
-  drawCount: number;
-  /** 전체 대비 비율(0~100), 소수 둘째 자리 */
-  percentage: number;
-};
-
 /** 정렬된 주6의 자리(1~6) × 번호대별 집계 행 */
 export type PositionBandDistributionRow = {
   /** 1~6 (num1~num6) */

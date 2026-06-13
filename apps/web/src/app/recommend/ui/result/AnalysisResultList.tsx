@@ -24,7 +24,7 @@ export const AnalysisResultList = ({
       <div className="rounded-xl border border-card-border/60 bg-card/30 px-5 py-6 text-sm text-slate-300 space-y-4">
         <h4 className="text-base font-semibold text-white">추천 생성 결과</h4>
         <p>
-          1~45 전체 번호 풀과 조합 분석(고저 합·홀짝·연속·구간별) 통계를 사용해 세트를 만듭니다.
+          1~45 전체 번호 풀과 조합 분석(고저 합·홀짝·구간별) 통계를 사용해 세트를 만듭니다.
         </p>
         {targetDrawNo ? <p className="text-slate-200">기준 회차: {targetDrawNo}회</p> : null}
         {statusMessage ? <p className="text-emerald-300">{statusMessage}</p> : null}

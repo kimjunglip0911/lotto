@@ -143,13 +143,14 @@ describe('buildBandTargetsPerPosition', () => {
 })
 
 describe('COMBO_PROFILE_SLOT_ORDER', () => {
-  it('15패턴+5슬롯 재시도·band1~3', () => {
-    expect(COMBO_PROFILE_SLOT_CYCLE).toHaveLength(15)
+  it('9패턴 2회+2슬롯 재시도·band1~3', () => {
+    expect(COMBO_PROFILE_SLOT_CYCLE).toHaveLength(9)
     expect(COMBO_PROFILE_SLOT_ORDER).toHaveLength(TARGET_SET_COUNT)
-    expect(COMBO_PROFILE_SLOT_ORDER.every(([, , band]) => band <= 3)).toBe(true)
-    expect(COMBO_PROFILE_SLOT_ORDER.slice(0, 15)).toEqual([...COMBO_PROFILE_SLOT_CYCLE])
-    expect(COMBO_PROFILE_SLOT_ORDER.slice(15)).toEqual(
-      [...COMBO_PROFILE_SLOT_CYCLE].slice(0, 5),
+    expect(COMBO_PROFILE_SLOT_ORDER.every(([, band]) => band <= 3)).toBe(true)
+    expect(COMBO_PROFILE_SLOT_ORDER.slice(0, 9)).toEqual([...COMBO_PROFILE_SLOT_CYCLE])
+    expect(COMBO_PROFILE_SLOT_ORDER.slice(9, 18)).toEqual([...COMBO_PROFILE_SLOT_CYCLE])
+    expect(COMBO_PROFILE_SLOT_ORDER.slice(18)).toEqual(
+      [...COMBO_PROFILE_SLOT_CYCLE].slice(0, 2),
     )
     expect(COMBO_RANK_TRIPLE_PRIORITY_ORDER).toEqual([...COMBO_PROFILE_SLOT_ORDER])
   })
@@ -178,7 +179,7 @@ describe('generateCombinationBasedSets', () => {
     const r = await generateCombinationBasedSets(hist, numberPool, referenceDrawNo)
     expect(r.sets.length).toBeGreaterThan(0)
     expect(r.sets.length).toBeLessThanOrEqual(TARGET_SET_COUNT)
-    expect(r.sets.every((s) => /^combo:(fallback:)?oe\d+-run\d+-band[123]$/.test(s.strategy ?? ''))).toBe(true)
+    expect(r.sets.every((s) => /^combo:(fallback:)?oe\d+-band[123]$/.test(s.strategy ?? ''))).toBe(true)
     const bandTiers = new Set(
       r.sets.map((s) => {
         const m = /band(\d+)$/.exec(s.strategy ?? '')

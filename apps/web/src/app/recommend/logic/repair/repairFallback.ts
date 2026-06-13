@@ -7,7 +7,7 @@ import {
 } from '@/app/recommend/logic/repair/validate';
 import { repairOneStep } from '@/app/recommend/logic/repair/repairStep';
 
-/** 합 무시·홀짝·연속 폴백 교체 */
+/** 합 무시·홀짝 폴백 교체 */
 
 export const repairFallbackUntil = (
   picked: number[],

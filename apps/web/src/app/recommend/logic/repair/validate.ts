@@ -1,9 +1,9 @@
 import { numberToBandIndex } from '@/app/analysis/combination/logic/numberToBand';
 import type { ProfileConstraints, SetViolation, ValidateResult } from '@/app/recommend/logic/repair/types';
 import { matchesBandTarget } from '@/app/recommend/logic/repair/bandFallback';
-import { maxConsecutiveRunLength, sortPickedAsc } from '@/app/recommend/logic/repair/runLen';
+import { sortPickedAsc } from '@/app/recommend/logic/repair/runLen';
 
-/** 뽑은 6개가 합·홀짝·연속·band 제약을 만족하는지 검사한다 */
+/** 뽑은 6개가 합·홀짝·band 제약을 만족하는지 검사한다 */
 
 export const validatePickedSet = (
   picked: readonly number[],
@@ -24,7 +24,6 @@ export const validatePickedSet = (
   if (sum < constraints.minSum) violations.push('sum_low');
   const evens = sorted.filter((n) => n % 2 === 0).length;
   if (evens !== constraints.evenT) violations.push('even');
-  if (maxConsecutiveRunLength(sorted) !== constraints.runT) violations.push('run');
   return { ok: violations.length === 0, violations };
 };
 
@@ -46,7 +45,6 @@ export const validateMetricsOnly = (
   if (sum < constraints.minSum) violations.push('sum_low');
   const evens = sorted.filter((n) => n % 2 === 0).length;
   if (evens !== constraints.evenT) violations.push('even');
-  if (maxConsecutiveRunLength(sorted) !== constraints.runT) violations.push('run');
   return { ok: violations.length === 0, violations };
 };
 
@@ -66,7 +64,6 @@ export const validatePickedNoSum = (
   const sorted = sortPickedAsc(picked);
   const evens = sorted.filter((n) => n % 2 === 0).length;
   if (evens !== constraints.evenT) violations.push('even');
-  if (maxConsecutiveRunLength(sorted) !== constraints.runT) violations.push('run');
   return { ok: violations.length === 0, violations };
 };
 
@@ -76,16 +73,7 @@ export const hasFallbackBothMetricsOk = (
 ): boolean => {
   const sorted = sortPickedAsc(picked);
   const evens = sorted.filter((n) => n % 2 === 0).length;
-  const run = maxConsecutiveRunLength(sorted);
-  return evens === constraints.evenT && run === constraints.runT;
+  return evens === constraints.evenT;
 };
 
-export const hasFallbackMetricOk = (
-  picked: readonly number[],
-  constraints: ProfileConstraints,
-): boolean => {
-  const sorted = sortPickedAsc(picked);
-  const evens = sorted.filter((n) => n % 2 === 0).length;
-  const run = maxConsecutiveRunLength(sorted);
-  return evens === constraints.evenT || run === constraints.runT;
-};
+export const hasFallbackMetricOk = hasFallbackBothMetricsOk;

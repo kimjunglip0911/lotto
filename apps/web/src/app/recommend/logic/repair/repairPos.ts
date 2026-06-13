@@ -1,7 +1,7 @@
 import { numberToBandIndex } from '@/app/analysis/combination/logic/numberToBand';
 import type { SetViolation } from '@/app/recommend/logic/repair/types';
 import { collectBandCands, matchesBandTarget } from '@/app/recommend/logic/repair/bandFallback';
-import { maxConsecutiveRunLength, sortPickedAsc } from '@/app/recommend/logic/repair/runLen';
+import { sortPickedAsc } from '@/app/recommend/logic/repair/runLen';
 import { diverseCandidateOrder } from '@/app/recommend/logic/repair/diverse';
 import type { RepairPickCtx } from '@/app/recommend/logic/repair/types';
 import { filterUsageAvail } from '@/app/recommend/logic/repair/usageLimit';
@@ -24,37 +24,10 @@ const indexOfMin = (sorted: readonly number[]): number => {
   return idx;
 };
 
-const pickRunRepairIndex = (sorted: readonly number[], targetRun: number): number => {
-  const maxRun = maxConsecutiveRunLength(sorted);
-  if (maxRun <= targetRun) return sorted.length - 1;
-  let bestStart = 0;
-  let bestLen = 1;
-  let start = 0;
-  let len = 1;
-  for (let i = 0; i < sorted.length - 1; i++) {
-    if (sorted[i + 1] === sorted[i]! + 1) {
-      len++;
-    } else {
-      if (len > bestLen) {
-        bestLen = len;
-        bestStart = start;
-      }
-      start = i + 1;
-      len = 1;
-    }
-  }
-  if (len > bestLen) {
-    bestLen = len;
-    bestStart = start;
-  }
-  return bestStart + Math.floor(bestLen / 2);
-};
-
 const pickRepairSortedIndex = (
   sorted: readonly number[],
   violations: readonly SetViolation[],
   evenT: number,
-  runT: number,
 ): number => {
   if (violations.includes('sum_high')) return indexOfMax(sorted);
   if (violations.includes('sum_low')) return indexOfMin(sorted);
@@ -67,7 +40,6 @@ const pickRepairSortedIndex = (
       if (!needMoreEven && isEven) return i;
     }
   }
-  if (violations.includes('run')) return pickRunRepairIndex(sorted, runT);
   return 0;
 };
 
@@ -75,7 +47,6 @@ export const pickRepairPosition = (
   picked: readonly number[],
   violations: readonly SetViolation[],
   evenT: number,
-  runT: number,
   bandTargets: readonly number[],
 ): number => {
   if (violations.includes('band')) {
@@ -86,7 +57,7 @@ export const pickRepairPosition = (
   const metricViolations = violations.filter((v) => v !== 'band' && v !== 'duplicate');
   if (metricViolations.length === 0) return 0;
   const sorted = sortPickedAsc(picked);
-  const si = pickRepairSortedIndex(sorted, metricViolations, evenT, runT);
+  const si = pickRepairSortedIndex(sorted, metricViolations, evenT);
   const value = sorted[si]!;
   const pi = picked.indexOf(value);
   return pi >= 0 ? pi : 0;

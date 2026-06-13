@@ -1,4 +1,3 @@
-import { ConsecutiveNumberTable } from './table/ConsecutiveNumberTable';
 import { HighLowSumTable } from './table/HighLowSumTable';
 import { OddEvenProbabilityTable } from './table/OddEvenProbabilityTable';
 import { PositionBandProbabilityTable } from './table/PositionBandProbabilityTable';
@@ -6,13 +5,12 @@ import type { useCombinationAnalysisData } from '../hooks/useCombinationAnalysis
 
 type Props = ReturnType<typeof useCombinationAnalysisData>;
 
-/** 조합 분석 본문: 로딩·에러·4개 집계 표 */
+/** 조합 분석 본문: 로딩·에러·3개 집계 표 */
 export function CombinationMain({
   isLoading,
   loadError,
   totalDraws,
   oddEvenRows,
-  consecutiveRows,
   positionBandRows,
   sumExtremeStats,
 }: Props) {
@@ -22,12 +20,7 @@ export function CombinationMain({
       {!isLoading && loadError && <p className="text-sm text-rose-300">{loadError}</p>}
       {!isLoading && !loadError && (
         <>
-          <div className="flex flex-col lg:flex-row lg:items-start gap-6">
-            <div className="flex-1 min-w-0">
-              <OddEvenProbabilityTable totalDraws={totalDraws} rows={oddEvenRows} />
-            </div>
-            <ConsecutiveNumberTable totalDraws={totalDraws} rows={consecutiveRows} />
-          </div>
+          <OddEvenProbabilityTable totalDraws={totalDraws} rows={oddEvenRows} />
           <PositionBandProbabilityTable totalDraws={totalDraws} rows={positionBandRows} />
           <HighLowSumTable stats={sumExtremeStats} />
         </>
