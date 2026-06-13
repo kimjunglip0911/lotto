@@ -42,9 +42,9 @@ npm run lint
 ## 주요 모듈
 
 - `constants/lottoPool.ts` — `FULL_LOTTO_POOL`(1~45) 고정 풀
-- `constants/statsWindow.ts` — `STATS_WINDOW_DRAWS`(26)·`STATS_WINDOW_LABEL`(6개월)
+- `constants/statsWindow.ts` — `@/lib/statsWindow`(`STATS_WINDOW_DRAWS`·`STATS_WINDOW_LABEL`)
 - `logic/generation/fetchInputs.ts` — 당첨 이력 조회
-- `logic/generation/pickStatsHistory.ts` — 기준 회차 직전 최근 26회로 통계 이력 슬라이스
+- `@/lib/pickStatsHistory` — 기준 회차 직전 최근 26회로 통계 이력 슬라이스
 - `logic/generation/runPipeline.ts` — 생성·저장 파이프라인(훅에서 호출)
 - `logic/combo/generate.ts` — 20세트 생성(rank 1~20·순차 선택)
 - `logic/repair/sequentialPick.ts` — 1구간→6구간 고저 lookahead 선택
@@ -57,6 +57,6 @@ npm run lint
 - 백엔드 응답은 `unknown` 수신 후 `helpers/validators`로 검증합니다.
 - 저장 시 `excluded_numbers`는 빈 배열로 전송합니다(레거시 필드 호환).
 - 적용 규칙 ID: `full-pool-45`, `combination-rank-20sets`, `stats-window-six-month`.
-- 구간·합산 통계는 **기준 회차 직전 최근 26회(6개월)** 만 사용합니다(`constants/statsWindow.ts`).
+- 구간·합산 통계는 **기준 회차 직전 최근 26회(6개월)** 만 사용합니다(`@/lib/statsWindow.ts`).
 - 목표는 20세트이며, **번호당 3회 한도** 기준 풀 고유 번호 `N`개일 때 **이론상 최대 `floor(N×3÷6)`세트**입니다(1~45 전체이면 **최대 22세트**).
 - 2단계 폴백 세트는 UI에서 **조합 폴백** 배지(amber)로 구분됩니다.

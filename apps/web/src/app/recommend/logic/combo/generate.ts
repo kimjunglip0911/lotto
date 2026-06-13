@@ -15,7 +15,7 @@ import {
   type FillCtx,
 } from '@/app/recommend/logic/combo/fillSlots';
 import { setsInProfileSlotOrder } from '@/app/recommend/logic/combo/orderSets';
-import { STATS_WINDOW_LABEL } from '@/app/recommend/constants/statsWindow';
+import { STATS_WINDOW_LABEL } from '@/lib/statsWindow';
 import { DEFAULT_REPAIR_YIELD_EVERY, MAX_PRIORITY_ROUNDS } from '@/app/recommend/logic/combo/yieldMain';
 
 export type CombinationGenerationResult = {

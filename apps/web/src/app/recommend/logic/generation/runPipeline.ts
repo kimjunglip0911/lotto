@@ -8,7 +8,7 @@ import {
   mergeSummaryLines,
 } from '@/app/recommend/helpers/genMessages';
 import { fetchGenerationInputs } from '@/app/recommend/logic/generation/fetchInputs';
-import { pickStatsHistory } from '@/app/recommend/logic/generation/pickStatsHistory';
+import { pickStatsHistory } from '@/lib/pickStatsHistory';
 import { assertSetsNonEmpty } from '@/app/recommend/logic/generation/validateGenSets';
 import {
   generateCombinationBasedSets,

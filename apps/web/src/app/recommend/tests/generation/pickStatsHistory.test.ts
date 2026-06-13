@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { WinningNumberRow } from '@/lib/accu-nums/types';
-import { STATS_WINDOW_DRAWS } from '@/app/recommend/constants/statsWindow';
-import { pickStatsHistory } from '@/app/recommend/logic/generation/pickStatsHistory';
+import { STATS_WINDOW_DRAWS } from '@/lib/statsWindow';
+import { pickStatsHistory } from '@/lib/pickStatsHistory';
 
 const mkRow = (drawNo: number): WinningNumberRow => ({
   draw_no: drawNo,
