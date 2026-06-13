@@ -9,7 +9,7 @@ import { STATS_WINDOW_DRAWS } from '@/lib/statsWindow';
 
 export type LoadCombinationHistoryCtx = Pick<AccumulatedNumbersFetchContext, 'baseUrl' | 'signal'>;
 
-/** accu-nums API로 당첨 이력을 불러온 뒤 최근 26회(6개월)만 반환한다. */
+/** accu-nums API로 당첨 이력을 불러온 뒤 최근 13회(3개월)만 반환한다. */
 export async function loadCombinationHistory(
   ctx?: LoadCombinationHistoryCtx,
 ): Promise<WinningNumberRow[]> {

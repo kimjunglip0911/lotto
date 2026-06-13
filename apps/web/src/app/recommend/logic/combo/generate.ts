@@ -24,7 +24,7 @@ export type CombinationGenerationResult = {
   warning: string | null;
 };
 
-/** 1~45 전체 풀·당첨 이력 통계(상위에서 6개월 윈도우 적용)로 최대 20세트 생성 */
+/** 1~45 전체 풀·당첨 이력 통계(상위에서 3개월 윈도우 적용)로 최대 20세트 생성 */
 
 export const generateCombinationBasedSets = async (
   fullHistory: readonly WinningNumberRow[],
