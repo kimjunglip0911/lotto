@@ -23,7 +23,7 @@ function countRecentExtremes(
 
 /**
  * 전체 회차 기준 주6 합산(보너스 제외) 극단 통계.
- * 고: 합 내림차순에서 앞쪽(가장 큰 합) ceil(10%×n)회차 제외 후, 남은 합 중 최댓값.
+ * 고: 합 내림차순에서 앞쪽(가장 큰 합) ceil(5%×n)회차 제외 후, 남은 합 중 최댓값.
  * 저: 합 오름차순 앞쪽 ceil(5%×n)회차 제외 후, 남은 합 중 최솟값.
  */
 export function buildSumExtremeStats(rows: readonly WinningNumberRow[]): SumExtremeStats | null {
@@ -31,7 +31,7 @@ export function buildSumExtremeStats(rows: readonly WinningNumberRow[]): SumExtr
   if (n === 0) return null;
 
   const withSum: RowWithSum[] = rows.map((r) => ({ drawNo: r.draw_no, sum: mainSum(r) }));
-  const extremeKHigh = Math.min(Math.ceil(n * 0.1), n);
+  const extremeKHigh = Math.min(Math.ceil(n * 0.05), n);
   const extremeKLow = Math.min(Math.ceil(n * 0.05), n);
 
   const sortedDesc = [...withSum].sort((a, b) => b.sum - a.sum || a.drawNo - b.drawNo);

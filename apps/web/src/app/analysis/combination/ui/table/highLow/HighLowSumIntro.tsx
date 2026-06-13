@@ -15,7 +15,7 @@ export function HighLowSumIntro({ stats }: Props) {
         </p>
         <p className="text-xs text-slate-400 mt-1">
           고: 합을 <span className="text-slate-300">큰 순</span>으로 두면 앞쪽{' '}
-          <span className="tabular-nums">ceil(10% × n)</span>회차(가장 큰 합)를 빼고, 남은 합 중{' '}
+          <span className="tabular-nums">ceil(5% × n)</span>회차(가장 큰 합)를 빼고, 남은 합 중{' '}
           <span className="text-slate-300">최댓값</span>. 저: 합을 <span className="text-slate-300">작은 순</span>
           으로 두면 맨 앞이 가장 낮은 합이므로, 그 앞쪽 <span className="tabular-nums">ceil(5% × n)</span>회차를
           빼고 남은 합 중 <span className="text-slate-300">최솟값</span>입니다. 저는 낮은 쪽을 더 많이 자를수록
