@@ -1,4 +1,4 @@
-import type { WinningNumberRow } from '@/app/analysis/chi-square/types';
+import type { WinningNumberRow } from '@/app/analysis/accu-nums/types';
 import { numberToBandIndex } from '@/app/analysis/combination/logic/numberToBand';
 
 /** 채택 풀을 band별·평탄 목록으로 만든다 */

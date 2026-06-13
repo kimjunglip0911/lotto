@@ -29,7 +29,7 @@ export interface ExclusionCandidatesResponse {
   };
 }
 
-export interface ChiSquareHistoryRow {
+export interface WinningHistoryRow {
   draw_no: number;
   num1: number;
   num2: number;
@@ -40,14 +40,10 @@ export interface ChiSquareHistoryRow {
   bonus_num: number;
 }
 
-export type WinningHistoryRow = ChiSquareHistoryRow;
-
 export interface RecommendRuleContext {
   exclusionCandidates: ExclusionCandidatesResponse;
   currentExcludedNumbers: number[];
-  chiSquareRows?: ChiSquareHistoryRow[];
   trendResults?: TrendNumberResult[];
-  runStreakRows?: ChiSquareHistoryRow[];
   appliedRuleResults?: RecommendRuleResult[];
 }
 

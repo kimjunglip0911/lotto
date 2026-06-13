@@ -17,11 +17,10 @@
 | `hooks/useFinalPickSrch.ts` | 회차 조회·당첨·이전 회차 행 |
 | `hooks/useFinalPickDerived.ts` | 차트용 누적 출현 집계 |
 | `hooks/useFinalPickData.ts` | 위 훅 조립 |
-| `api/` | `run-streak`·`drawings` HTTP (`draw/`·`win/`·`core/`) |
-| `logic/chiWf/` | 카이제곱 워크포워드( `chi-square` 페이지가 import) |
+| `api/` | `accu-nums`·`drawings` HTTP (`draw/`·`win/`·`core/`) |
 | `logic/accuAdopt.ts` | 누적 극값 제외( `accu-nums` 와 공유) |
 | `types/winRow.ts` | 당첨번호 행 타입·파싱 |
-| `tests/` | `chiWf`·`accuAdopt` 단위 테스트 |
+| `tests/` | `accuAdopt` 단위 테스트 |
 
 ## 로컬에서 확인
 
@@ -29,6 +28,6 @@
 
 ## 주의
 
-- API는 현재 `/api/analysis/run-streak/*`, `/api/drawings/draw-numbers` 를 재사용합니다. URL을 바꿀 때는 `api/` 만 수정하세요.
-- `chi-square`·`accu-nums` 가 `logic/chiWf`, `logic/accuAdopt`, `ui/cards/AccumulatedExclusionCard` 를 import 합니다. 경로 변경 시 함께 맞춥니다.
+- API는 `/api/analysis/accu-nums/*`, `/api/drawings/draw-numbers` 를 사용합니다. URL을 바꿀 때는 `api/` 만 수정하세요.
+- `accu-nums` 가 `logic/accuAdopt`, `ui/cards/AccumulatedExclusionCard` 를 import 합니다. 경로 변경 시 함께 맞춥니다.
 - 번호 추천(`recommend`)은 본 페이지와 연동하지 않으며 **1~45 전체 풀**로 세트를 생성합니다.

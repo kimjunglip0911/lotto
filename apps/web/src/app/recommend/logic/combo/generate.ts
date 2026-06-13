@@ -1,4 +1,4 @@
-import type { WinningNumberRow } from '@/app/analysis/chi-square/types';
+import type { WinningNumberRow } from '@/app/analysis/accu-nums/types';
 import { buildConsecutiveRunDistribution } from '@/app/analysis/combination/logic/buildConsecutiveRunDistribution';
 import { buildOddEvenDistribution } from '@/app/analysis/combination/logic/buildOddEvenDistribution';
 import { buildPositionBandDistribution } from '@/app/analysis/combination/logic/buildPositionBandDistribution';

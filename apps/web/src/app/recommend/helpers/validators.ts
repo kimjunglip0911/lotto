@@ -1,4 +1,4 @@
-import type { ChiSquareHistoryRow } from '@/app/recommend/types/legacyRule';
+import type { WinningHistoryRow } from '@/app/recommend/types/legacyRule';
 import type { GeneratedSet } from '@/app/recommend/types/generatedSet';
 
 /** API 응답이 당첨·추천 세트 형식인지 검사한다 */
@@ -29,7 +29,7 @@ export const isWinningRow = (value: unknown): value is WinningRow => {
   );
 };
 
-export const isChiSquareHistoryRow = (value: unknown): value is ChiSquareHistoryRow =>
+export const isWinningHistoryRow = (value: unknown): value is WinningHistoryRow =>
   isWinningRow(value);
 
 export const isGeneratedSet = (value: unknown): value is GeneratedSet => {

@@ -14,7 +14,6 @@ export function Header({ onMenuClick }: HeaderProps) {
         '/home': '로또 번호 생성기',
         '/recommend': '로또 번호 추천',
         '/analysis/accu-nums': '누적 번호 분석',
-        '/analysis/chi-square': '카이제곱 검정 분석',
     };
     const pageTitle = titleMap[pathname] ?? '로또 번호 생성기';
 

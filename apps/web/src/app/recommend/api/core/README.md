@@ -5,7 +5,7 @@
 - `url.ts`는 주소 조합, `fetchCore.ts`는 조회 공통 처리, `errorText.ts`는 오류 문구 변환만 담당한다.
 
 ## 실행(호출) 방법
-- 서버 주소와 경로를 조합할 때 `resolveApiBaseUrl`, `recommendApiUrl`, `chiSquareApiUrl`, `accuNumsApiUrl`를 호출한다.
+- 서버 주소와 경로를 조합할 때 `resolveApiBaseUrl`, `recommendApiUrl`, `accuNumsApiUrl`를 호출한다.
 - 데이터 조회가 필요할 때 `fetchJson(url, init?)`를 호출한다.
 - 예외를 화면 문구로 바꿀 때 `errorMessage(err)`를 호출한다.
 

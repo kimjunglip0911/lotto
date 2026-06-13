@@ -1,13 +1,13 @@
 import {
   fetchDrawNumbers,
   fetchWinningNumbersRange,
-  type ChiSquareFetchContext,
-} from '@/app/analysis/chi-square/api';
-import type { WinningNumberRow } from '@/app/analysis/chi-square/types';
+  type AccumulatedNumbersFetchContext,
+} from '@/app/analysis/accu-nums/api';
+import type { WinningNumberRow } from '@/app/analysis/accu-nums/types';
 
-export type LoadCombinationHistoryCtx = Pick<ChiSquareFetchContext, 'baseUrl' | 'signal'>;
+export type LoadCombinationHistoryCtx = Pick<AccumulatedNumbersFetchContext, 'baseUrl' | 'signal'>;
 
-/** chi-square API로 전체 당첨 이력을 draw_no 오름차순으로 불러온다. */
+/** accu-nums API로 전체 당첨 이력을 draw_no 오름차순으로 불러온다. */
 export async function loadCombinationHistory(
   ctx?: LoadCombinationHistoryCtx,
 ): Promise<WinningNumberRow[]> {

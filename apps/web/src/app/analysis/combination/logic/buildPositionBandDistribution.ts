@@ -1,4 +1,4 @@
-import type { WinningNumberRow } from '@/app/analysis/chi-square/types';
+import type { WinningNumberRow } from '@/app/analysis/accu-nums/types';
 import { BAND_COUNT, NUMBER_BAND_LABELS, POSITION_COUNT } from '../constants/bandLabels';
 import { percentagesWithExactHundredSum } from '../helpers/pctExactSum';
 import type { PositionBandDistributionRow } from '../types';

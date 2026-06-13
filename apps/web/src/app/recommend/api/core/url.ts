@@ -15,8 +15,5 @@ export const resolveApiBaseUrl = (baseUrl?: string): string =>
 export const recommendApiUrl = (pathWithQuery: string, baseUrl?: string): string =>
   `${resolveApiBaseUrl(baseUrl)}${ensureLeadSlash(pathWithQuery)}`;
 
-export const chiSquareApiUrl = (pathWithQuery: string, baseUrl?: string): string =>
-  recommendApiUrl(`/api/analysis/chi-square/${pathWithQuery}`, baseUrl);
-
 export const accuNumsApiUrl = (pathWithQuery: string, baseUrl?: string): string =>
   recommendApiUrl(`/api/analysis/accu-nums/${pathWithQuery}`, baseUrl);

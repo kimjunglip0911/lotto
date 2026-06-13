@@ -1,6 +1,6 @@
 /**
  * 통합 분석(`final-pick`)에서 쓰는 당첨번호 행 타입.
- * 응답 형식은 `run-streak` 라우터와 동일하다.
+ * 응답 형식은 accu-nums API와 동일하다.
  */
 
 export type WinningNumberRow = {
