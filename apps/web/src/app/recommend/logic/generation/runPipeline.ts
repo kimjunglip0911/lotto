@@ -1,7 +1,7 @@
 import { generateAndSaveSets } from '@/app/recommend/api/recommend/generateSave';
 import { APPLIED_RULE_IDS } from '@/app/recommend/constants/generationRules';
 import { TARGET_SET_COUNT } from '@/app/recommend/constants/comboThresholds';
-import { buildExcludedNumbers } from '@/app/recommend/helpers/genExcluded';
+import { FULL_LOTTO_POOL } from '@/app/recommend/constants/lottoPool';
 import { buildPayloadSets } from '@/app/recommend/helpers/genPayload';
 import {
   buildSuccessStatusMessage,
@@ -25,32 +25,26 @@ export const runRecommendGeneration = async (
   selectedDraw: number,
   phases?: GenerationPhaseHandlers,
 ): Promise<GenerationPipelineResult> => {
-  const { adopted, reservePools, fullHistory, infoMessage } = await fetchGenerationInputs(
-    apiUrl,
-    selectedDraw,
-  );
-  phases?.onAdoptedLoaded?.(adopted);
+  const { fullHistory } = await fetchGenerationInputs(apiUrl);
 
   const { sets, summaryLines, warning } = await generateCombinationBasedSets(
     fullHistory,
-    adopted,
+    FULL_LOTTO_POOL,
     selectedDraw,
-    reservePools,
   );
   assertSetsNonEmpty(sets, summaryLines);
 
-  const mergedSummary = mergeSummaryLines(infoMessage, summaryLines);
+  const mergedSummary = mergeSummaryLines(null, summaryLines);
   phases?.onSummaryReady?.(mergedSummary);
 
-  const excludedNumbers = buildExcludedNumbers(adopted);
   const ruleIds = [...APPLIED_RULE_IDS];
-  const payloadSets = buildPayloadSets(sets, excludedNumbers, ruleIds);
+  const payloadSets = buildPayloadSets(sets, ruleIds);
 
   phases?.onSaving?.();
   const generatedData = await generateAndSaveSets(apiUrl, {
     drawNo: selectedDraw,
     appliedRuleIds: ruleIds,
-    excludedNumbers,
+    excludedNumbers: [],
     sets: payloadSets,
   });
 
@@ -59,9 +53,9 @@ export const runRecommendGeneration = async (
     drawNo: selectedDraw,
     count: generatedData.length,
     targetCount: TARGET_SET_COUNT,
-    infoMessage,
+    infoMessage: null,
     warning,
   });
 
-  return { orderedSets, adopted, summaryLines: mergedSummary, statusMessage };
+  return { orderedSets, summaryLines: mergedSummary, statusMessage };
 };

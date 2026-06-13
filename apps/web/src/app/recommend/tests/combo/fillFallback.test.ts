@@ -24,7 +24,7 @@ const mkCtx = (pool: number[]): FillCtx => {
 };
 
 describe('fillFallbackSlots', () => {
-  it('빈 슬롯을 채택 풀만으로 폴백 세트를 채운다', () => {
+  it('빈 슬롯을 번호 풀만으로 폴백 세트를 채운다', () => {
     const pool = Array.from({ length: 20 }, (_, i) => i + 1);
     const ctx = mkCtx(pool);
     ctx.profileSlots[0] = {
@@ -40,10 +40,7 @@ describe('fillFallbackSlots', () => {
     ctx.usedKeys.add('1,2,3,4,5,6');
     for (const n of [1, 2, 3, 4, 5, 6]) ctx.usage.set(n, 1);
 
-    const result = fillFallbackSlots(ctx, pool, {
-      accumulatedExcluded: [],
-      chiExcludedByPct: [],
-    });
+    const result = fillFallbackSlots(ctx, pool);
 
     expect(result.filled).toBeGreaterThan(0);
     for (const s of ctx.profileSlots) {
@@ -56,29 +53,13 @@ describe('fillFallbackSlots', () => {
     }
   });
 
-  it('예비 풀 번호를 2단계 시작 시 한꺼번에 확장한다', () => {
-    const pool = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-    const ctx = mkCtx(pool);
-    const accu = [11, 12, 13, 14];
-
-    const result = fillFallbackSlots(ctx, pool, {
-      accumulatedExcluded: accu,
-      chiExcludedByPct: [15, 16],
-    });
-
-    expect(result.filled).toBeGreaterThan(0);
-    expect(result.accuAdded).toBe(4);
-    expect(result.chiAdded).toBe(2);
-    expect(result.expandedPoolSize).toBe(16);
-  });
-
   it('6개 조합 중복은 허용하지 않는다', () => {
     const pool = Array.from({ length: 12 }, (_, i) => i + 1);
     const ctx = mkCtx(pool);
     const dupKey = setKey([1, 2, 3, 4, 5, 6]);
     ctx.usedKeys.add(dupKey);
 
-    fillFallbackSlots(ctx, pool, { accumulatedExcluded: [], chiExcludedByPct: [] });
+    fillFallbackSlots(ctx, pool);
 
     for (const s of ctx.profileSlots) {
       if (!s) continue;

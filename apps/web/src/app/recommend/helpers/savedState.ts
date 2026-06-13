@@ -10,7 +10,6 @@ import type { SavedHookOpts } from '@/app/recommend/types/savedHook';
 export const resetSavedBeforeLoad = (opts: SavedHookOpts, drawNo: number): void => {
   opts.setGeneratedSets([]);
   opts.setWinningNumbers(null);
-  opts.setAdoptedNumbers([]);
   opts.setCombinationSummaryLines([]);
   opts.setError(null);
   opts.setStatusMessage(savedLoadingMessage(drawNo));
@@ -21,7 +20,6 @@ export const applySavedLoadResult = (
   result: SavedDrawLoadResult,
 ): void => {
   opts.setWinningNumbers(result.winningNumbers);
-  opts.setAdoptedNumbers(result.adopted);
   opts.setGeneratedSets(result.orderedSets);
   opts.setCombinationSummaryLines(result.summaryLines);
   opts.setStatusMessage(result.statusMessage);
@@ -33,7 +31,6 @@ export const applySavedLoadError = (
   err: unknown,
 ): void => {
   opts.setGeneratedSets([]);
-  opts.setAdoptedNumbers([]);
   opts.setCombinationSummaryLines([]);
   opts.setStatusMessage(savedErrorMessage(drawNo));
   console.error('Error fetching saved drawings:', err);

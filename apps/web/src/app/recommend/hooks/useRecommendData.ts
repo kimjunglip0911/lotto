@@ -7,7 +7,7 @@ import { initialStatusMessage } from '@/app/recommend/helpers/savedMessages';
 import { useRecommendSaved } from '@/app/recommend/hooks/useRecommendSaved';
 import type { GeneratedSet } from '@/app/recommend/types/generatedSet';
 
-/** 추천 페이지 데이터 — 회차·저장 세트·채택 조립 */
+/** 추천 페이지 데이터 — 회차·저장 세트 조립 */
 
 export const useRecommendData = () => {
   const apiUrl = useApiUrl();
@@ -17,7 +17,6 @@ export const useRecommendData = () => {
   const [error, setError] = useState<string | null>(null);
   const [generatedSets, setGeneratedSets] = useState<GeneratedSet[]>([]);
   const [winningNumbers, setWinningNumbers] = useState<number[] | null>(null);
-  const [adoptedNumbers, setAdoptedNumbers] = useState<number[]>([]);
   const [combinationSummaryLines, setCombinationSummaryLines] = useState<string[]>([]);
 
   const savedOpts = useMemo(
@@ -26,7 +25,6 @@ export const useRecommendData = () => {
       setError,
       setGeneratedSets,
       setWinningNumbers,
-      setAdoptedNumbers,
       setCombinationSummaryLines,
     }),
     [
@@ -34,7 +32,6 @@ export const useRecommendData = () => {
       setError,
       setGeneratedSets,
       setWinningNumbers,
-      setAdoptedNumbers,
       setCombinationSummaryLines,
     ],
   );
@@ -50,8 +47,6 @@ export const useRecommendData = () => {
     generatedSets,
     setGeneratedSets,
     winningNumbers,
-    adoptedNumbers,
-    setAdoptedNumbers,
     combinationSummaryLines,
     setCombinationSummaryLines,
   };

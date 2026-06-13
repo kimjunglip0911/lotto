@@ -10,7 +10,6 @@ import {
   TARGET_SET_COUNT,
 } from '@/app/recommend/constants/comboThresholds';
 import { PROFILE_BUILD_ATTEMPTS } from '@/app/recommend/constants/repairLimits';
-import type { AdoptReservePools } from '@/app/recommend/logic/adopt/adoptTypes';
 import type { GeneratedSet } from '@/app/recommend/types/generatedSet';
 import { buildPoolByBand } from '@/app/recommend/logic/repair';
 import { buildBandTargetsPerPosition } from '@/app/recommend/logic/combo/buildBandTargets';
@@ -30,28 +29,15 @@ export type CombinationGenerationResult = {
   warning: string | null;
 };
 
-const emptyReservePools = (): AdoptReservePools => ({
-  accumulatedExcluded: [],
-  chiExcludedByPct: [],
-});
-
-/** 통합 채택 풀·이력 통계로 최대 20세트 생성 */
+/** 1~45 전체 풀·이력 통계로 최대 20세트 생성 */
 
 export const generateCombinationBasedSets = async (
   fullHistory: readonly WinningNumberRow[],
-  adoptedPool: readonly number[],
-  referenceDrawNo: number,
-  reservePools: AdoptReservePools = emptyReservePools(),
+  numberPool: readonly number[],
+  _referenceDrawNo: number,
   repairYieldEvery: number = DEFAULT_REPAIR_YIELD_EVERY,
 ): Promise<CombinationGenerationResult> => {
   const summaryLines: string[] = [];
-  if (adoptedPool.length < 6) {
-    return {
-      sets: [],
-      summaryLines: ['채택 번호가 6개 미만이라 세트를 만들 수 없습니다.'],
-      warning: '채택 풀 부족',
-    };
-  }
 
   const sortedHistory = [...fullHistory].sort((a, b) => a.draw_no - b.draw_no).map(withSortedMains);
   const sumStats = buildSumExtremeStats(sortedHistory);
@@ -73,12 +59,12 @@ export const generateCombinationBasedSets = async (
     `고저 합산 허용 구간: ${minSum} ~ ${maxSum} (전체 ${sumStats.totalDraws}회차 기준 극단 제외 후)`,
   );
 
-  const poolSorted = [...new Set(adoptedPool)].filter((n) => n >= 1 && n <= 45).sort((a, b) => a - b);
+  const poolSorted = [...new Set(numberPool)].filter((n) => n >= 1 && n <= 45).sort((a, b) => a - b);
   if (poolSorted.length < 6) {
     return {
       sets: [],
-      summaryLines: [...summaryLines, '유효 채택 번호가 6개 미만입니다.'],
-      warning: '채택 풀 부족',
+      summaryLines: [...summaryLines, '유효 번호 풀이 6개 미만입니다.'],
+      warning: '번호 풀 부족',
     };
   }
 
@@ -127,20 +113,15 @@ export const generateCombinationBasedSets = async (
   const phase1Count = profileSlots.filter((s) => s !== null).length;
   summaryLines.push(`1단계 조합 세트: ${phase1Count}개`);
 
-  const fallbackResult = fillFallbackSlots(ctx, poolSorted, reservePools);
+  const fallbackResult = fillFallbackSlots(ctx, poolSorted);
   if (fallbackResult.filled > 0) {
     summaryLines.push(`2단계 폴백 세트: ${fallbackResult.filled}개`);
-  }
-  if (fallbackResult.accuAdded > 0 || fallbackResult.chiAdded > 0) {
-    summaryLines.push(
-      `풀 확장: 누적 +${fallbackResult.accuAdded}, 카이 +${fallbackResult.chiAdded}`,
-    );
   }
 
   const maxSetsByUsage = Math.floor((fallbackResult.expandedPoolSize * MAX_NUM_USAGE) / 6);
   if (maxSetsByUsage < TARGET_SET_COUNT) {
     summaryLines.push(
-      `번호당 ${MAX_NUM_USAGE}회 한도·확장 풀 ${fallbackResult.expandedPoolSize}개 기준 이론상 최대 ${maxSetsByUsage}세트(20세트는 풀 ${Math.ceil((TARGET_SET_COUNT * 6) / MAX_NUM_USAGE)}개 이상 필요).`,
+      `번호당 ${MAX_NUM_USAGE}회 한도·풀 ${fallbackResult.expandedPoolSize}개 기준 이론상 최대 ${maxSetsByUsage}세트(20세트는 풀 ${Math.ceil((TARGET_SET_COUNT * 6) / MAX_NUM_USAGE)}개 이상 필요).`,
     );
   }
 
@@ -153,7 +134,7 @@ export const generateCombinationBasedSets = async (
 
   const warning =
     sets.length < TARGET_SET_COUNT
-      ? `목표 ${TARGET_SET_COUNT}세트 중 ${sets.length}개만 생성되었습니다. 채택 풀·제약을 확인해 주세요.`
+      ? `목표 ${TARGET_SET_COUNT}세트 중 ${sets.length}개만 생성되었습니다. 제약을 확인해 주세요.`
       : null;
   if (warning) summaryLines.push(warning);
   summaryLines.push(`생성 세트 수: ${sets.length}`);

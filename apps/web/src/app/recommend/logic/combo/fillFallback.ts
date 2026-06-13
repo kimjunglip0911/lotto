@@ -1,6 +1,5 @@
 import { COMBO_PROFILE_SLOT_ORDER } from '@/app/recommend/constants/comboSlots';
 import { FALLBACK_STRATEGY_PREFIX } from '@/app/recommend/constants/comboThresholds';
-import type { AdoptReservePools } from '@/app/recommend/logic/adopt/adoptTypes';
 import type { FillCtx } from '@/app/recommend/logic/combo/fillSlots';
 import { formatProfileTriple } from '@/app/recommend/logic/combo/orderSets';
 import { bumpUsage, setKey, toGeneratedSet } from '@/app/recommend/logic/combo/toSet';
@@ -11,8 +10,6 @@ import { filterUsageAvail } from '@/app/recommend/logic/repair/usageLimit';
 
 export type FallbackFillResult = {
   filled: number;
-  accuAdded: number;
-  chiAdded: number;
   expandedPoolSize: number;
 };
 
@@ -43,43 +40,12 @@ export const findFallbackSetBacktrack = (
   return search(0, []);
 };
 
-const addNumsToPool = (
-  activePool: number[],
-  activeSet: Set<number>,
-  usage: Map<number, number>,
-  nums: readonly number[],
-): number => {
-  let added = 0;
-  for (const n of nums) {
-    if (activeSet.has(n)) continue;
-    activeSet.add(n);
-    activePool.push(n);
-    if (!usage.has(n)) usage.set(n, 0);
-    added++;
-  }
-  return added;
-};
-
 export const fillFallbackSlots = (
   ctx: FillCtx,
   poolSorted: readonly number[],
-  reservePools: AdoptReservePools,
 ): FallbackFillResult => {
   let filled = 0;
-  const activePool = [...poolSorted];
-  const activeSet = new Set(activePool);
-  const accuAdded = addNumsToPool(
-    activePool,
-    activeSet,
-    ctx.usage,
-    reservePools.accumulatedExcluded,
-  );
-  const chiAdded = addNumsToPool(
-    activePool,
-    activeSet,
-    ctx.usage,
-    reservePools.chiExcludedByPct,
-  );
+  const activeSet = new Set(poolSorted);
 
   for (let slot = 0; slot < COMBO_PROFILE_SLOT_ORDER.length; slot++) {
     if (ctx.profileSlots[slot]) continue;
@@ -87,7 +53,7 @@ export const fillFallbackSlots = (
     if (!triple) continue;
     const [oe, run, band] = triple;
 
-    const sorted = findFallbackSetBacktrack(activePool, ctx.usage, ctx.usedKeys);
+    const sorted = findFallbackSetBacktrack(poolSorted, ctx.usage, ctx.usedKeys);
     if (!sorted) continue;
 
     const strategy = `${FALLBACK_STRATEGY_PREFIX}${formatProfileTriple(oe, run, band)}`;
@@ -97,5 +63,5 @@ export const fillFallbackSlots = (
     filled++;
   }
 
-  return { filled, accuAdded, chiAdded, expandedPoolSize: activeSet.size };
+  return { filled, expandedPoolSize: activeSet.size };
 };

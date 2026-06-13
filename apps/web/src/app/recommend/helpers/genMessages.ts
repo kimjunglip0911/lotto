@@ -1,12 +1,5 @@
-import { TARGET_SET_COUNT } from '@/app/recommend/constants/comboThresholds';
-
 /** 생성 버튼 진행 단계 안내 문구 */
-
-export const GEN_STATUS_LOADING =
-  '통합 채택 번호와 조합 통계를 불러오는 중입니다...';
-
-export const genStatusGenerating = (): string =>
-  `조합 제약을 적용해 ${TARGET_SET_COUNT}세트를 생성하는 중입니다...`;
+export const GEN_STATUS_LOADING = '조합 통계를 불러오는 중입니다...';
 
 export const GEN_STATUS_SAVING = '서버에 저장하는 중입니다...';
 

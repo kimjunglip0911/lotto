@@ -4,7 +4,6 @@ import type { GeneratedSet } from '@/app/recommend/types/generatedSet';
 
 export type SavedDrawLoadResult = {
   winningNumbers: number[] | null;
-  adopted: number[];
   orderedSets: GeneratedSet[];
   summaryLines: string[];
   statusMessage: string;

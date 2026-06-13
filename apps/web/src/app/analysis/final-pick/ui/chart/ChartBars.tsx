@@ -1,16 +1,12 @@
 'use client';
 
 import type { AccumulatedBarChartStats } from '@/app/analysis/accu-nums/ui/chart/accBarStat';
-import { ExclusionMarkers } from './ExclusionMarkers';
 
 type Props = {
   chartRows: AccumulatedBarChartStats['chartRows'];
   averageCount: number;
   averageLineBottomPx: number;
   highlightedNumbers?: Set<number>;
-  streakSet: Set<number>;
-  accumulatedSet: Set<number>;
-  chiSquareExcludedSet: Set<number>;
 };
 
 /** 누적 출현 막대 본문(평균선 포함). */
@@ -19,9 +15,6 @@ export function ChartBars({
   averageCount,
   averageLineBottomPx,
   highlightedNumbers,
-  streakSet,
-  accumulatedSet,
-  chiSquareExcludedSet,
 }: Props) {
   return (
     <div className="overflow-x-auto pb-0.5">
@@ -38,12 +31,7 @@ export function ChartBars({
             return (
               <li key={`comprehensive-${item.number}`} className="flex w-8 shrink-0 flex-col items-center gap-1">
                 <span className="text-[11px] leading-none text-slate-100 tabular-nums">{item.count}</span>
-                <ExclusionMarkers
-                  number={item.number}
-                  streakSet={streakSet}
-                  accumulatedSet={accumulatedSet}
-                  chiSquareExcludedSet={chiSquareExcludedSet}
-                />
+                <div className="h-3" />
                 <div className="flex h-[145px] w-full items-end overflow-hidden rounded-md border border-white/10 bg-slate-900/70">
                   <div
                     className={`w-full ${isHighlighted ? 'bg-rose-500/90' : 'bg-primary/80'}`}

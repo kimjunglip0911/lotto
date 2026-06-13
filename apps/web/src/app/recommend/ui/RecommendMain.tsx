@@ -13,7 +13,6 @@ export const RecommendMain = () => {
   const gen = useRecommendGeneration({
     selectedDraw: data.selectedDraw,
     setGeneratedSets: data.setGeneratedSets,
-    setAdoptedNumbers: data.setAdoptedNumbers,
     setCombinationSummaryLines: data.setCombinationSummaryLines,
     setStatusMessage: data.setStatusMessage,
     setError: data.setError,
@@ -35,7 +34,6 @@ export const RecommendMain = () => {
       <AnalysisResultList
         statusMessage={data.statusMessage}
         targetDrawNo={data.selectedDraw}
-        adoptedNumbers={data.adoptedNumbers}
         combinationSummaryLines={data.combinationSummaryLines}
         sets={data.generatedSets}
         winningNumbers={data.winningNumbers ?? undefined}

@@ -13,6 +13,7 @@ import {
   TARGET_SET_COUNT,
 } from '@/app/recommend/logic/combo'
 import { MAX_NUM_USAGE } from '@/app/recommend/constants/comboThresholds'
+import { FULL_LOTTO_POOL } from '@/app/recommend/constants/lottoPool'
 import { numberToBandIndex } from '@/app/analysis/combination/logic/numberToBand'
 import type { GeneratedSet } from '@/app/recommend/types/generatedSet'
 
@@ -155,7 +156,7 @@ describe('COMBO_PROFILE_SLOT_ORDER', () => {
 })
 
 describe('generateCombinationBasedSets', () => {
-  it('채택 풀이 6개 미만이면 세트를 만들지 않는다', async () => {
+  it('번호 풀이 6개 미만이면 세트를 만들지 않는다', async () => {
     const hist = syntheticHistory(40)
     const r = await generateCombinationBasedSets(hist, [1, 2, 3], 0)
     expect(r.sets).toHaveLength(0)
@@ -169,12 +170,12 @@ describe('generateCombinationBasedSets', () => {
   })
 
   it(
-    '이력이 있으면 조합 요약이 생기고, 목표 개수·중복 없음·채택 풀·분산이 만족된다',
+    '이력이 있으면 조합 요약이 생기고, 목표 개수·중복 없음·번호 풀·분산이 만족된다',
     async () => {
     const hist = syntheticHistory(80)
-    const adopted = Array.from({ length: 29 }, (_, i) => i + 1)
+    const numberPool = [...FULL_LOTTO_POOL]
     const referenceDrawNo = 81
-    const r = await generateCombinationBasedSets(hist, adopted, referenceDrawNo)
+    const r = await generateCombinationBasedSets(hist, numberPool, referenceDrawNo)
     expect(r.sets.length).toBeGreaterThan(0)
     expect(r.sets.length).toBeLessThanOrEqual(TARGET_SET_COUNT)
     expect(r.sets.every((s) => /^combo:(fallback:)?oe\d+-run\d+-band[123]$/.test(s.strategy ?? ''))).toBe(true)
@@ -196,11 +197,11 @@ describe('generateCombinationBasedSets', () => {
       const nums = [s.num1, s.num2, s.num3, s.num4, s.num5, s.num6]
       expect(new Set(nums).size).toBe(6)
       for (const n of nums) {
-        expect(adopted.includes(n)).toBe(true)
+        expect(numberPool.includes(n)).toBe(true)
       }
     }
-    const usage = countUsageInPool(r.sets, adopted)
-    const distinctUsed = adopted.filter((n) => (usage.get(n) ?? 0) > 0).length
+    const usage = countUsageInPool(r.sets, numberPool)
+    const distinctUsed = numberPool.filter((n) => (usage.get(n) ?? 0) > 0).length
     /** 20세트 전체에서 동일 번호는 MAX_NUM_USAGE 이하 */
     for (const [, count] of usage) {
       expect(count).toBeLessThanOrEqual(MAX_NUM_USAGE)

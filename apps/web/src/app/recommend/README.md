@@ -4,13 +4,11 @@
 
 ## 목적
 
-- 통합 분석(`final-pick`)과 **동일한 경로**로 최종 채택 번호 풀을 계산하고, 조합 분석 페이지와 같은 통계로 **목표 20세트**를 만든 뒤 저장합니다.
+- **1~45 전체 번호 풀**과 조합 분석 페이지와 같은 통계로 **목표 20세트**를 만든 뒤 저장합니다.
 - **① 1단계** — 자리마다 band **1~3등** 구간·합·홀짝·연속 제약. band4~6 확장까지 시도 후 불가 슬롯은 비움. 슬롯당 `PROFILE_BUILD_ATTEMPTS`회.
-- **② 2단계 폴백** — 1단계 빈 슬롯을 **합·홀짝·연속·band 무시** 조합으로 채움. 채택 풀·**6개 조합 중복 금지**·**번호당 최대 3회** 유지.
-- **③ 풀 확장** — 2단계에서 번호 부족 시 1차: 누적 제외 4개 중 랜덤 추가 → 2차: 카이제곱 조건부확률 10% 이하 제외 번호 추가.
-- **④** **15슬롯 + oe1 앞 5슬롯 재시도** = 20세트. 폴백 세트 strategy는 `combo:fallback:oeX-runY-bandZ`.
-- **⑤** 목표 band(1~3구간)에 채택 번호가 없으면 **band 4~6구간**에서 후보를 확장(1단계만).
-- 미추첨 회차는 `(N−1)`회 당첨 본6을 reference로 대체해 채택을 계산합니다(화면 안내 문구 표시).
+- **② 2단계 폴백** — 1단계 빈 슬롯을 **합·홀짝·연속·band 무시** 조합으로 채움. **6개 조합 중복 금지**·**번호당 최대 3회** 유지.
+- **③** **15슬롯 + oe1 앞 5슬롯 재시도** = 20세트. 폴백 세트 strategy는 `combo:fallback:oeX-runY-bandZ`.
+- **④** 목표 band(1~3구간)에 풀 번호가 없으면 **band 4~6구간**에서 후보를 확장(1단계만).
 
 ## 폴더 구조 (8대표)
 
@@ -18,13 +16,13 @@
 recommend/
 ├── page.tsx
 ├── README.md
-├── api/          # draw, chi, recommend, adopt, core
+├── api/          # draw, chi, recommend, core
 ├── ui/           # RecommendMain, controller, result, alert
 ├── hooks/
-├── logic/        # combo, repair, adopt, rank, generation, saved
-├── helpers/      # validators, genExcluded, genPayload, genMessages, savedMessages, savedState
+├── logic/        # combo, repair, rank, generation, saved
+├── helpers/      # validators, genPayload, genMessages, savedMessages, savedState
 ├── types/
-├── constants/
+├── constants/    # lottoPool, comboThresholds, generationRules, …
 └── tests/        # combo, repair, lottoRank, saved
 ```
 
@@ -43,29 +41,19 @@ npm run lint
 
 ## 주요 모듈
 
-- `logic/adopt/computeAdopted.ts` — 통합 채택 조회 오케스트레이션(`fetchFinalPickAdopted`)
-- `logic/adopt/fetchDrawOne.ts` — 1회차 당첨·채택
-- `logic/adopt/resolveMain.ts` — 본번호 결정(미추첨 시 전회차 대체)
-- `logic/adopt/parseWinRows.ts` — 당첨 API JSON 검증
-- `logic/adopt/buildSlice.ts` — 채택 슬라이스 계산(final-pick·연속·누적)
-- `logic/adopt/adoptEmpty.ts` — 실패 시 빈 결과
-- `logic/saved/loadSavedDraw.ts` — 저장 세트·채택 병렬 조회(훅에서 호출)
-- `helpers/savedMessages.ts` — 저장 조회·초기 안내 문구
-- `helpers/savedState.ts` — 저장 조회 전·후 UI 상태 갱신
+- `constants/lottoPool.ts` — `FULL_LOTTO_POOL`(1~45) 고정 풀
+- `logic/generation/fetchInputs.ts` — 조합 분석용 당첨 이력 조회
 - `logic/generation/runPipeline.ts` — 생성·저장 파이프라인(훅에서 호출)
+- `logic/saved/loadSavedDraw.ts` — 저장 세트 조회(훅에서 호출)
 - `logic/combo/generate.ts` — 20세트 생성(1단계+2단계)
-- `logic/combo/fillFallback.ts` — 2단계 폴백·풀 확장
-- `logic/combo/bandSlot.ts` — band 구간·내부 슬롯·슬롯 키
-- `logic/combo/sortMains.ts` — 당첨 행 본번호 정렬
-- `logic/combo/bandMonotonic.ts` — band 목표 단조 검사·보정
-- `logic/combo/bandRankPick.ts` — 자리별 N등 band 인덱스 선택
-- `logic/combo/buildBandTargets.ts` — 6자리 band 목표 배열
-- `logic/combo/rankAtPct.ts` — 비율 랭크 기준 홀짝·연속 값
+- `logic/combo/fillFallback.ts` — 2단계 폴백
 - `logic/repair/` — band·합·홀짝·연속 수리
 - `api/recommend/` — 저장·조회 HTTP
 
 ## 주의사항
 
 - 백엔드 응답은 `unknown` 수신 후 `helpers/validators`로 검증합니다.
-- 목표는 20세트이며, **번호당 3회 한도** 기준 확장 풀 고유 번호 `N`개일 때 **이론상 최대 `floor(N×3÷6)`세트**입니다(1~45 전체이면 **최대 22세트**). 20세트는 풀 **40개 이상**이면 충분합니다.
-- 2단계 폴백 세트는 UI에서 **조합 폴백** 배지(amber)로 구분됩니다. `MAX_NUM_USAGE`는 `constants/comboThresholds.ts`·`logic/repair/usageLimit.ts`·`logic/combo/fillFallback.ts`에서 적용됩니다.
+- 저장 시 `excluded_numbers`는 빈 배열로 전송합니다(레거시 필드 호환).
+- 적용 규칙 ID: `full-pool-45`, `combination-20sets`.
+- 목표는 20세트이며, **번호당 3회 한도** 기준 풀 고유 번호 `N`개일 때 **이론상 최대 `floor(N×3÷6)`세트**입니다(1~45 전체이면 **최대 22세트**).
+- 2단계 폴백 세트는 UI에서 **조합 폴백** 배지(amber)로 구분됩니다.

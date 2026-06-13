@@ -3,7 +3,7 @@ import { TARGET_SET_COUNT } from '@/app/recommend/constants/comboThresholds';
 /** 저장 세트 조회·초기 화면 안내 문구 */
 
 export const initialStatusMessage = (): string =>
-  `생성 및 저장을 실행하면 통합 채택·조합 분석 기준으로 ${TARGET_SET_COUNT}세트를 만듭니다.`;
+  `생성 및 저장을 실행하면 1~45 전체 번호·조합 분석 기준으로 ${TARGET_SET_COUNT}세트를 만듭니다.`;
 
 export const savedLoadingMessage = (drawNo: number): string =>
   `${drawNo}회차 저장된 추천 세트를 불러오는 중입니다...`;
