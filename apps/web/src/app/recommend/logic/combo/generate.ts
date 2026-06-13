@@ -15,6 +15,7 @@ import {
   type FillCtx,
 } from '@/app/recommend/logic/combo/fillSlots';
 import { setsInProfileSlotOrder } from '@/app/recommend/logic/combo/orderSets';
+import { STATS_WINDOW_LABEL } from '@/app/recommend/constants/statsWindow';
 import { DEFAULT_REPAIR_YIELD_EVERY, MAX_PRIORITY_ROUNDS } from '@/app/recommend/logic/combo/yieldMain';
 
 export type CombinationGenerationResult = {
@@ -23,7 +24,7 @@ export type CombinationGenerationResult = {
   warning: string | null;
 };
 
-/** 1~45 전체 풀·이력 통계로 최대 20세트 생성(rank 1~20 순차 선택) */
+/** 1~45 전체 풀·당첨 이력 통계(상위에서 6개월 윈도우 적용)로 최대 20세트 생성 */
 
 export const generateCombinationBasedSets = async (
   fullHistory: readonly WinningNumberRow[],
@@ -48,7 +49,7 @@ export const generateCombinationBasedSets = async (
   const positionBand = buildPositionBandDistribution(sortedHistory);
 
   summaryLines.push(
-    `고저 합산 허용 구간: ${minSum} ~ ${maxSum} (전체 ${sumStats.totalDraws}회차 기준 극단 제외 후)`,
+    `고저 합산 허용 구간: ${minSum} ~ ${maxSum} (최근 ${sumStats.totalDraws}회차·${STATS_WINDOW_LABEL} 기준 극단 제외 후)`,
   );
 
   const poolSorted = [...new Set(numberPool)].filter((n) => n >= 1 && n <= 45).sort((a, b) => a - b);
