@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { numberToBandIndex } from '@/app/analysis/combination/logic/numberToBand';
+import { numberToBandIndex } from '@/app/combination/logic/numberToBand';
 import {
   buildPoolByBand,
   collectBandCands,

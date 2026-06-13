@@ -1,4 +1,4 @@
-import { numberToBandIndex } from '@/app/analysis/combination/logic/numberToBand';
+import { numberToBandIndex } from '@/app/combination/logic/numberToBand';
 import type {
   ProfileConstraints,
   RepairPickCtx,

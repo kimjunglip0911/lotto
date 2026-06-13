@@ -2,7 +2,7 @@ import {
   bandIndexFromLabel,
   pickBandIndexForRank,
   sortRowsForPosition,
-} from '@/app/analysis/combination/logic/rankPositionBands';
+} from '@/app/combination/logic/rankPositionBands';
 
 export {
   bandIndexFromLabel,

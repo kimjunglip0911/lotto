@@ -20,6 +20,11 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  async redirects() {
+    return [
+      { source: "/analysis/:path*", destination: "/combination", permanent: true },
+    ];
+  },
   webpack: (config) => {
     config.resolve.alias["@features"] = path.resolve(__dirname, "../../features");
     return config;

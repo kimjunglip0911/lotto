@@ -1,8 +1,8 @@
-import type { PositionBandDistributionRow } from '@/app/analysis/combination/types';
+import type { PositionBandDistributionRow } from '@/app/combination/types';
 import {
   pickBandIndexForRank,
   sortRowsForPosition,
-} from '@/app/analysis/combination/logic/rankPositionBands';
+} from '@/app/combination/logic/rankPositionBands';
 
 /** 6자리 각각에 rank(1~20)에 맞는 목표 band 인덱스 배열을 만든다 */
 

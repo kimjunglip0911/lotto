@@ -1,4 +1,4 @@
-import type { WinningNumberRow } from '@/app/analysis/accu-nums/types';
+import type { WinningNumberRow } from '@/lib/accu-nums/types';
 import { fetchDraws } from '@/app/recommend/api/history/fetchDraws';
 import { fetchWinningRangeRows } from '@/app/recommend/api/history/fetchRange';
 

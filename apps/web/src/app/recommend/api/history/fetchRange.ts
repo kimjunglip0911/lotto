@@ -1,5 +1,5 @@
-import { isWinningNumberRow } from '@/app/analysis/accu-nums/logic/numCounts';
-import type { WinningNumberRow } from '@/app/analysis/accu-nums/types';
+import { isWinningNumberRow } from '@/lib/accu-nums/logic/numCounts';
+import type { WinningNumberRow } from '@/lib/accu-nums/types';
 import { accuNumsApiUrl } from '@/app/recommend/api/core/url';
 import { fetchJson } from '@/app/recommend/api/core/fetchCore';
 

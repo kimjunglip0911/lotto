@@ -1,4 +1,4 @@
-import { BAND_COUNT } from '@/app/analysis/combination/constants/bandLabels';
+import { BAND_COUNT } from '@/app/combination/constants/bandLabels';
 
 /** 자리별 band 목표가 단조 증가하는지 검사하고, 필요 시 보정한다 */
 

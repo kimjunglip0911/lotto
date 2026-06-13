@@ -40,8 +40,8 @@ accu-nums/
 
 ## 웹 연동
 
-- `apps/web/src/app/analysis/accu-nums/api/core/url.ts`
-- 구 URL 재시도: `apps/web/src/app/analysis/accu-nums/api/core/fetchCore.ts`
+- `apps/web/src/lib/accu-nums/api/core/url.ts`
+- 구 URL 재시도: `apps/web/src/lib/accu-nums/api/core/fetchCore.ts`
 
 ## 환경·DB
 

@@ -13,10 +13,7 @@
     "start": "next start -p 3010",
     "lint": "eslint",
     "test": "vitest run",
-    "test:watch": "vitest",
-    "snapshots:accumulated:export": "npx tsx --tsconfig tsconfig.run-scripts.json src/app/analysis/accu-nums/scripts/exportImportAccumulatedSnapshots.ts export",
-    "snapshots:accumulated:import": "npx tsx --tsconfig tsconfig.run-scripts.json src/app/analysis/accu-nums/scripts/exportImportAccumulatedSnapshots.ts import",
-    "snapshots:accumulated:all": "npx tsx --tsconfig tsconfig.run-scripts.json src/app/analysis/accu-nums/scripts/exportImportAccumulatedSnapshots.ts all"
+    "test:watch": "vitest"
   },
   "dependencies": {
     "class-variance-authority": "^0.7.1",

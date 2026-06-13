@@ -1,6 +1,6 @@
-import type { WinningNumberRow } from '@/app/analysis/accu-nums/types';
-import { buildPositionBandDistribution } from '@/app/analysis/combination/logic/buildPositionBandDistribution';
-import { buildSumExtremeStats } from '@/app/analysis/combination/logic/buildSumExtremeStats';
+import type { WinningNumberRow } from '@/lib/accu-nums/types';
+import { buildPositionBandDistribution } from '@/app/combination/logic/buildPositionBandDistribution';
+import { buildSumExtremeStats } from '@/app/combination/logic/buildSumExtremeStats';
 import { COMBO_RANK_SLOT_ORDER } from '@/app/recommend/constants/comboSlots';
 import { MAX_NUM_USAGE, TARGET_SET_COUNT } from '@/app/recommend/constants/comboThresholds';
 import { PROFILE_BUILD_ATTEMPTS } from '@/app/recommend/constants/repairLimits';

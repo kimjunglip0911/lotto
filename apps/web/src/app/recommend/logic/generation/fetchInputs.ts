@@ -1,4 +1,4 @@
-import type { WinningNumberRow } from '@/app/analysis/accu-nums/types';
+import type { WinningNumberRow } from '@/lib/accu-nums/types';
 import { fetchWinningFullHistory } from '@/app/recommend/api/history/winningHistory';
 
 /** 조합 분석용 당첨 이력만 조회한다(번호 풀은 1~45 고정). */

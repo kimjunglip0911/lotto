@@ -13,7 +13,7 @@ export function Header({ onMenuClick }: HeaderProps) {
         '/': '로또 번호 생성기',
         '/home': '로또 번호 생성기',
         '/recommend': '로또 번호 추천',
-        '/analysis/accu-nums': '누적 번호 분석',
+        '/combination': '조합 분석',
     };
     const pageTitle = titleMap[pathname] ?? '로또 번호 생성기';
 

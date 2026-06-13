@@ -1,4 +1,4 @@
-import { numberToBandIndex } from '@/app/analysis/combination/logic/numberToBand';
+import { numberToBandIndex } from '@/app/combination/logic/numberToBand';
 import type { SetViolation } from '@/app/recommend/logic/repair/types';
 import { collectBandCands, matchesBandTarget } from '@/app/recommend/logic/repair/bandFallback';
 import { sortPickedAsc } from '@/app/recommend/logic/repair/runLen';

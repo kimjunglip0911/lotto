@@ -1,4 +1,4 @@
-import type { WinningNumberRow } from '@/app/analysis/accu-nums/types';
+import type { WinningNumberRow } from '@/lib/accu-nums/types';
 
 /** 주6 기준 짝수 개수(0~6) 버킷별 집계 행 */
 export type OddEvenDistributionRow = {

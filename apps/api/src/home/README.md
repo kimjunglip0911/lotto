@@ -30,7 +30,7 @@ home/
 ## 웹 연동
 
 - 당첨 조회·저장: `apps/web/src/app/home/constants/apiPath.ts` (`winning-by-no`, `save-winning`)
-- 회차 목록(분석): `apps/web/src/app/analysis/final-pick` → `draw-numbers`
+- 회차 목록(분석): `apps/web/src/app/combination` → accu-nums `draw-numbers`
 - 추천 세트 조회는 **`/api/recommend/drawings`** (`recommend` 모듈)를 사용합니다.
 
 ## 삭제된 API

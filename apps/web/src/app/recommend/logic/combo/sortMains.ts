@@ -1,4 +1,4 @@
-import type { WinningNumberRow } from '@/app/analysis/accu-nums/types';
+import type { WinningNumberRow } from '@/lib/accu-nums/types';
 
 /** 당첨 행의 본번호 6개를 오름차순으로 정렬한 복사본을 만든다 */
 

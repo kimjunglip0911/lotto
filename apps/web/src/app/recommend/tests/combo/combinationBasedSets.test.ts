@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import type { WinningNumberRow } from '@/app/analysis/accu-nums/types';
-import type { PositionBandDistributionRow } from '@/app/analysis/combination/types';
+import type { WinningNumberRow } from '@/lib/accu-nums/types';
+import type { PositionBandDistributionRow } from '@/app/combination/types';
 import {
   bandInnerSlot,
   buildBandTargetsForRank,
@@ -11,7 +11,7 @@ import {
 } from '@/app/recommend/logic/combo';
 import { MAX_NUM_USAGE } from '@/app/recommend/constants/comboThresholds';
 import { FULL_LOTTO_POOL } from '@/app/recommend/constants/lottoPool';
-import { numberToBandIndex } from '@/app/analysis/combination/logic/numberToBand';
+import { numberToBandIndex } from '@/app/combination/logic/numberToBand';
 import type { GeneratedSet } from '@/app/recommend/types/generatedSet';
 
 function countUsageInPool(sets: GeneratedSet[], pool: number[]): Map<number, number> {

@@ -8,17 +8,10 @@ import { NavLink } from './NavLink';
 
 interface SidebarNavProps {
   pathname: string;
-  isAnalysisExpanded: boolean;
-  onToggleAnalysis: () => void;
   onClose: () => void;
 }
 
-export function SidebarNav({
-  pathname,
-  isAnalysisExpanded,
-  onToggleAnalysis,
-  onClose,
-}: SidebarNavProps) {
+export function SidebarNav({ pathname, onClose }: SidebarNavProps) {
   const renderItem = (item: SidebarMenuItem) => {
     const isActive = isNavItemActive(pathname, item);
 
@@ -29,8 +22,8 @@ export function SidebarNav({
           item={item}
           pathname={pathname}
           isActive={isActive}
-          isExpanded={isAnalysisExpanded}
-          onToggle={onToggleAnalysis}
+          isExpanded={false}
+          onToggle={() => {}}
           onClose={onClose}
         />
       );
