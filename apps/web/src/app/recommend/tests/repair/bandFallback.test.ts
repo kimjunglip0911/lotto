@@ -30,7 +30,7 @@ describe('bandFallback', () => {
     expect(matchesBandTarget(0, 1)).toBe(false);
   });
 
-  it('collectBandCands: 번호 1~15 구간 비었으면 16~30 후보 반환', () => {
+  it('collectBandCands: 풀에 해당 band 번호가 없으면 16~30 후보 반환', () => {
     const poolByBand = buildPoolByBand([16, 17, 18, 19, 20, 21, 22, 23]);
     const used = new Set<number>();
     const usage = new Map<number, number>();
@@ -59,6 +59,14 @@ describe('bandFallback', () => {
 
     const cands = collectBandCands(poolByBand, 0, used, { usage });
     expect(cands).toEqual([1]);
+  });
+
+  it('collectBandCands: 한도 소진이면 mid-band 폴백 없이 빈 배열(ladder 다음 등수)', () => {
+    const poolByBand = buildPoolByBand(Array.from({ length: 45 }, (_, i) => i + 1));
+    const usage = new Map<number, number>([[1, 3]]);
+
+    expect(collectBandCands(poolByBand, 0, new Set(), { usage })).toEqual([]);
+    expect(collectBandCands(poolByBand, 2, new Set(), { usage })).toEqual([3]);
   });
 
   it('validatePickedSet: 번호 1~15 목표에 16~30 번호 허용', () => {

@@ -1,7 +1,7 @@
 import type { RepairPickCtx } from '@/app/recommend/logic/repair/types';
 import { filterUsageAvail } from '@/app/recommend/logic/repair/usageLimit';
 
-/** 번호 1~15(index 0~14) 목표일 때 번호 16~30(index 15~29)에서 후보 확장 */
+/** 번호 1~15(index 0~14) 목표인데 풀에 해당 band가 없을 때만 16~30(index 15~29) 후보 확장. 한도 소진은 ladder 다음 등수. */
 
 export const LOW_BAND_MAX_INDEX = 14;
 export const MID_BAND_MIN_INDEX = 15;
@@ -48,11 +48,13 @@ export const collectBandCands = (
   used: ReadonlySet<number>,
   pickCtx: RepairPickCtx,
 ): number[] => {
-  const primary = filterUsageAvail(
-    (poolByBand.get(targetBand) ?? []).filter((n) => !used.has(n)),
-    pickCtx.usage,
-  );
+  const bandPool = poolByBand.get(targetBand) ?? [];
+  const poolInBand = bandPool.filter((n) => !used.has(n));
+  const primary = filterUsageAvail(poolInBand, pickCtx.usage);
   if (primary.length > 0) return primary;
+
+  /** 풀에 번호는 있으나 한도·이번 세트 used → ladder 다음 등수로 */
+  if (bandPool.length > 0) return [];
 
   if (!isLowBandIndex(targetBand)) return [];
 

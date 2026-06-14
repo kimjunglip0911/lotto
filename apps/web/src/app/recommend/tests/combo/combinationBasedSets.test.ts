@@ -16,7 +16,7 @@ import {
 import { BAND_LADDER_START_TIER, MAX_NUM_USAGE } from '@/app/recommend/constants/comboThresholds';
 import { FULL_LOTTO_POOL } from '@/app/recommend/constants/lottoPool';
 import { numberToBandIndex } from '@/app/combination/logic/numberToBand';
-import type { GeneratedSet } from '@/app/recommend/types/generatedSet';
+import { STATS_WINDOW_ONE_YEAR } from '@/lib/statsWindow';
 
 function countUsageInPool(sets: GeneratedSet[], pool: number[]): Map<number, number> {
   const u = new Map<number, number>(pool.map((n) => [n, 0]));
@@ -142,7 +142,7 @@ describe('COMBO_RANK_SLOT_ORDER', () => {
 
 function bandWindows(hist: WinningNumberRow[]): WinningNumberRow[][] {
   const slice = (n: number) => (hist.length <= n ? hist : hist.slice(-n));
-  return [slice(13), slice(26), slice(52)];
+  return [slice(STATS_WINDOW_ONE_YEAR)];
 }
 
 describe('generateCombinationBasedSets', () => {

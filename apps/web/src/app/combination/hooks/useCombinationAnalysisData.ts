@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { sliceLatestStatsHistory } from '@/lib/pickStatsHistory';
-import { STATS_POSITION_BAND_WINDOW, STATS_WINDOW_DRAWS } from '@/lib/statsWindow';
+import { STATS_POSITION_BAND_WINDOW, STATS_WINDOW_ONE_YEAR } from '@/lib/statsWindow';
 import { loadCombinationHistory } from '../api/loadHistory';
 import { buildPositionBandDistribution } from '../logic/buildPositionBandDistribution';
 import { buildSumExtremeStats } from '../logic/buildSumExtremeStats';
@@ -40,7 +40,7 @@ export function useCombinationAnalysisData(): UseCombinationAnalysisDataResult {
         }
 
         const positionRows = sliceLatestStatsHistory(allRows, STATS_POSITION_BAND_WINDOW);
-        const sumRows = sliceLatestStatsHistory(allRows, STATS_WINDOW_DRAWS);
+        const sumRows = sliceLatestStatsHistory(allRows, STATS_WINDOW_ONE_YEAR);
         const positionBand = buildPositionBandDistribution(positionRows);
         setTotalDraws(positionBand.totalDraws);
         setPositionBandRows(positionBand.rows);

@@ -8,14 +8,16 @@ export const setKey = (nums: number[]): string =>
   [...nums].sort((a, b) => a - b).join(',');
 
 export const toGeneratedSet = (nums: number[], strategy: string): GeneratedSet => {
-  const s = [...nums].sort((a, b) => a - b);
+  if (nums.length !== 6) {
+    throw new Error('GeneratedSet requires exactly 6 numbers in pick order');
+  }
   return {
-    num1: s[0]!,
-    num2: s[1]!,
-    num3: s[2]!,
-    num4: s[3]!,
-    num5: s[4]!,
-    num6: s[5]!,
+    num1: nums[0]!,
+    num2: nums[1]!,
+    num3: nums[2]!,
+    num4: nums[3]!,
+    num5: nums[4]!,
+    num6: nums[5]!,
     method: METHOD_JL,
     strategy,
   };

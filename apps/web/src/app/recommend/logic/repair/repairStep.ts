@@ -23,7 +23,7 @@ export const repairOneStep = (
 ): boolean => {
   if (before.ok) return false;
   const ignoreSum = options?.ignoreSum === true;
-  const pos = pickRepairPosition(picked, before.violations, constraints.bandTargets);
+  const pos = pickRepairPosition(picked, before.violations, constraints.bandTargets, pickCtx);
   const candidates = replaceCandidatesForPosition(
     picked,
     pos,

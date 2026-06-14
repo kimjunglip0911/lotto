@@ -2,13 +2,14 @@ import { MAX_BACKTRACK_NODES } from '@/app/recommend/constants/repairLimits';
 import type { ProfileConstraints, RepairPickCtx } from '@/app/recommend/logic/repair/types';
 import { bandRungsForPos, collectBandCands } from '@/app/recommend/logic/repair/bandFallback';
 import { diverseCandidateOrder } from '@/app/recommend/logic/repair/diverse';
+import { setKey } from '@/app/recommend/logic/combo/toSet';
+import { nudgeDuplicateCombo } from '@/app/recommend/logic/repair/nudgeDuplicate';
 import { isSetWithinUsageLimit } from '@/app/recommend/logic/repair/usageLimit';
 import { validatePickedSet } from '@/app/recommend/logic/repair/validate';
-import { sortPickedAsc } from '@/app/recommend/logic/repair/runLen';
 
 const MAX_BACKTRACK_CANDS_PER_POS = 9;
 
-const setKeyFromSorted = (sorted: readonly number[]): string => [...sorted].join(',');
+const setKeyFromSorted = (nums: readonly number[]): string => setKey([...nums]);
 
 const candsForPos = (
   poolByBand: ReadonlyMap<number, number[]>,
@@ -78,10 +79,11 @@ export const backtrackBuildOneSet = (
   if (pos === 6) {
     const state = validatePickedSet(picked, constraints);
     if (!state.ok) return null;
-    const sorted = sortPickedAsc(picked);
-    if (usedKeys.has(setKeyFromSorted(sorted))) return null;
-    if (!isSetWithinUsageLimit(sorted, pickCtx.usage)) return null;
-    return sorted;
+    if (!isSetWithinUsageLimit(picked, pickCtx.usage)) return null;
+    if (usedKeys.has(setKeyFromSorted(picked))) {
+      return nudgeDuplicateCombo(picked, constraints, poolByBand, pickCtx, usedKeys);
+    }
+    return [...picked];
   }
   const candidates = candsForPos(poolByBand, constraints, pickCtx, pos, picked);
   if (candidates.length === 0) return null;

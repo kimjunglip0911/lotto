@@ -41,6 +41,8 @@ export { forceBuildOneSet } from '@/app/recommend/logic/repair/forceBuild';
 export { diagnoseProfileBuild } from '@/app/recommend/logic/repair/diagnose';
 export { backtrackPositionPicks, backtrackBuildOneSet, canPickBandSkeleton } from '@/app/recommend/logic/repair/backtrack';
 export { buildUnusedPoolSet, buildTailUnusedSet } from '@/app/recommend/logic/repair/unusedPool';
+export { nudgeDuplicateCombo } from '@/app/recommend/logic/repair/nudgeDuplicate';
+export { pickMinAppearPosition, pickMinUsagePosition, numAppearCount } from '@/app/recommend/logic/repair/repairPos';
 export {
   canUseNum,
   filterUsageAvail,

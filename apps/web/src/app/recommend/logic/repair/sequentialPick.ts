@@ -49,9 +49,6 @@ export const sequentialPickByBands = (
     for (const band of rungs) {
       if (chosen !== null) break;
       let candidates = collectBandCands(poolByBand, band, used, pickCtx);
-      if (candidates.length === 0) {
-        candidates = filterUsageAvail(flat.filter((n) => !used.has(n)), pickCtx.usage);
-      }
       candidates = candidates.filter((n) => {
         const usage = pickCtx.usage?.get(n) ?? 0;
         return usage < MAX_NUM_USAGE;
@@ -86,8 +83,7 @@ export const sequentialPickByBands = (
     used.add(chosen);
   }
 
-  const sorted = sortPickedAsc(picked);
-  const sum = sorted.reduce((a, b) => a + b, 0);
+  const sum = sortPickedAsc(picked).reduce((a, b) => a + b, 0);
   if (sum < minSum || sum > maxSum) return null;
-  return sorted;
+  return [...picked];
 };

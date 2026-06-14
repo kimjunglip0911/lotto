@@ -19,26 +19,45 @@ describe('sequentialPickByBands', () => {
   });
 
   it('자리 ladder로 1등 band 불가 시 다음 순위 band를 쓴다', () => {
-    const pool = [1, 2, 3, 4, 5, 20, 21, 22, 23, 24, 25, 26];
+    const pool = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
     const poolByBand = buildPoolByBand(pool);
-    const bandTargets = [0, 0, 10, 15, 20, 25];
     const bandLadder = [
       [0, 5],
       [0, 5],
-      [10, 15],
-      [15, 20],
-      [20, 25],
-      [25, 20],
+      [6, 7],
+      [8, 9],
+      [10, 11],
+      [11, 10],
     ];
+    const bandTargets = [0, 0, 6, 8, 10, 11];
     const usage = new Map<number, number>();
     for (const n of pool) usage.set(n, 0);
 
-    const picked = sequentialPickByBands(poolByBand, bandTargets, 60, 120, { usage }, bandLadder);
+    const picked = sequentialPickByBands(poolByBand, bandTargets, 21, 60, { usage }, bandLadder);
     expect(picked).not.toBeNull();
     if (!picked) return;
-    expect(picked[0]).toBe(1);
-    expect(picked[1]).not.toBe(1);
+    expect(picked).toContain(1);
+    expect(picked).toContain(6);
     expect(new Set(picked).size).toBe(6);
+  });
+
+  it('1등 band 한도 소진 시 ladder 2등 band를 쓴다', () => {
+    const pool = Array.from({ length: 45 }, (_, i) => i + 1);
+    const poolByBand = buildPoolByBand(pool);
+    const usage = new Map(pool.map((n) => [n, 0]));
+    usage.set(1, 3);
+    const ladder = Array.from({ length: 6 }, () => Array.from({ length: 45 }, (_, i) => i));
+
+    const picked = sequentialPickByBands(
+      poolByBand,
+      [0, 1, 2, 3, 4, 5],
+      89,
+      179,
+      { usage },
+      ladder,
+    );
+    expect(picked).not.toBeNull();
+    expect(picked).toContain(3);
   });
 
   it('고저 구간 밖이면 null을 반환한다', () => {

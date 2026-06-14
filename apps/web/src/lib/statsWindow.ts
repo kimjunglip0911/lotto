@@ -28,16 +28,12 @@ export const STATS_WINDOW_TEN_YEAR = 520;
 
 export const STATS_WINDOW_TEN_YEAR_LABEL = '10년';
 
-/** 조합 분석 구간별 번호 확률 표본 */
-export const STATS_POSITION_BAND_WINDOW = STATS_WINDOW_TEN_YEAR;
+/** 조합 분석 구간별 번호 확률·고저 합산 표본 */
+export const STATS_POSITION_BAND_WINDOW = STATS_WINDOW_ONE_YEAR;
 
-export const STATS_POSITION_BAND_LABEL = STATS_WINDOW_TEN_YEAR_LABEL;
+export const STATS_POSITION_BAND_LABEL = STATS_WINDOW_ONE_YEAR_LABEL;
 
-/** 추천 cascade band 순위 윈도우 [3개월, 6개월, 1년] */
-export const STATS_BAND_CASCADE_WINDOWS = [
-  STATS_WINDOW_DRAWS,
-  STATS_WINDOW_SIX_MONTH,
-  STATS_WINDOW_ONE_YEAR,
-] as const;
+/** 추천 band 순위·고저 합산 표본(1년 단일 윈도우) */
+export const STATS_BAND_CASCADE_WINDOWS = [STATS_WINDOW_ONE_YEAR] as const;
 
-export const STATS_BAND_CASCADE_LABEL = '3개월→6개월→1년';
+export const STATS_BAND_CASCADE_LABEL = STATS_WINDOW_ONE_YEAR_LABEL;

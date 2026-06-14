@@ -1,5 +1,5 @@
 import { filterUsageAvail } from '@/app/recommend/logic/repair/usageLimit';
-import { sortPickedAsc } from '@/app/recommend/logic/repair/runLen';
+import { setKey } from '@/app/recommend/logic/combo/toSet';
 
 /** band 무시·한도 남은 번호(적게 쓴 순)로 고저 합·중복만 맞춘 6개 */
 
@@ -17,7 +17,7 @@ const sumRangeFeasible = (
   return partialSum + minRem <= maxSum && partialSum + maxRem >= minSum;
 };
 
-const setKeyFromSorted = (sorted: readonly number[]): string => [...sorted].join(',');
+const setKeyFromPicked = (picked: readonly number[]): string => setKey([...picked]);
 
 const sortByUsageAsc = (
   nums: readonly number[],
@@ -45,10 +45,9 @@ export const buildUnusedPoolSet = (
     if (!sumRangeFeasible(partialSum, avail.slice(from), need, minSum, maxSum)) return null;
 
     if (picked.length === 6) {
-      const sorted = sortPickedAsc(picked);
-      const key = setKeyFromSorted(sorted);
+      const key = setKeyFromPicked(picked);
       if (usedKeys.has(key) || avoidKeys.has(key)) return null;
-      return sorted;
+      return [...picked];
     }
     for (let i = from; i < avail.length; i++) {
       picked.push(avail[i]!);
@@ -72,9 +71,8 @@ const searchSixNoSum = (
 
   const search = (from: number, picked: number[]): number[] | null => {
     if (picked.length === 6) {
-      const sorted = sortPickedAsc(picked);
-      if (usedKeys.has(setKeyFromSorted(sorted))) return null;
-      return sorted;
+      if (usedKeys.has(setKeyFromPicked(picked))) return null;
+      return [...picked];
     }
     for (let i = from; i < avail.length; i++) {
       picked.push(avail[i]!);

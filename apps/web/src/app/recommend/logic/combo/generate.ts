@@ -1,10 +1,12 @@
 import type { WinningNumberRow } from '@/lib/accu-nums/types';
 import { buildPositionBandDistribution } from '@/app/combination/logic/buildPositionBandDistribution';
 import { buildSumExtremeStats } from '@/app/combination/logic/buildSumExtremeStats';
+import { rankPositionBandRows } from '@/app/combination/logic/rankPositionBands';
 import { COMBO_RANK_SLOT_ORDER } from '@/app/recommend/constants/comboSlots';
 import { MAX_NUM_USAGE, MAX_BAND_LADDER_DEPTH, TARGET_SET_COUNT } from '@/app/recommend/constants/comboThresholds';
 import type { GeneratedSet } from '@/app/recommend/types/generatedSet';
-import { buildPoolByBand } from '@/app/recommend/logic/repair';
+import { buildPositionRankLookup, buildPositionDrawCountLookup } from '@/app/recommend/helpers/positionRankLookup';
+import { buildPoolByBand, buildHistCounts } from '@/app/recommend/logic/repair';
 import { buildBandLadderForRankCascade, primaryBandTargetsFromLadder } from '@/app/recommend/logic/combo/buildBandTargets';
 import {
   appendMissingProfileDiagnostics,
@@ -14,7 +16,7 @@ import {
 } from '@/app/recommend/logic/combo/fillSlots';
 import { withSortedMains } from '@/app/recommend/logic/combo/sortMains';
 import { setsInProfileSlotOrder } from '@/app/recommend/logic/combo/orderSets';
-import { STATS_BAND_CASCADE_LABEL } from '@/lib/statsWindow';
+import { STATS_BAND_CASCADE_LABEL, STATS_WINDOW_ONE_YEAR, STATS_WINDOW_ONE_YEAR_LABEL } from '@/lib/statsWindow';
 import { DEFAULT_REPAIR_YIELD_EVERY, MAX_PRIORITY_ROUNDS } from '@/app/recommend/logic/combo/yieldMain';
 
 export type CombinationGenerationResult = {
@@ -23,13 +25,13 @@ export type CombinationGenerationResult = {
   warning: string | null;
 };
 
-/** 1~45 전체 풀·고저=전체 누적·자리대=3→6→12개월 cascade로 최대 20세트 생성 */
+/** 1~45 전체 풀·고저·자리대=최근 1년(52회) 표본으로 최대 20세트 생성 */
 
 export const generateCombinationBasedSets = async (
   sumHistory: readonly WinningNumberRow[],
   bandWindowHistories: readonly (readonly WinningNumberRow[])[],
   numberPool: readonly number[],
-  _referenceDrawNo: number,
+  referenceDrawNo: number,
   repairYieldEvery: number = DEFAULT_REPAIR_YIELD_EVERY,
 ): Promise<CombinationGenerationResult> => {
   const summaryLines: string[] = [];
@@ -48,7 +50,7 @@ export const generateCombinationBasedSets = async (
   const maxSum = sumStats.trimmedMaxSum;
 
   summaryLines.push(
-    `고저 합산 허용 구간: ${minSum} ~ ${maxSum} (전체 누적 ${sumStats.totalDraws}회차·극단 제외 후)`,
+    `고저 합산 허용 구간: ${minSum} ~ ${maxSum} (최근 ${STATS_WINDOW_ONE_YEAR_LABEL} ${sumStats.totalDraws}회차·극단 제외 후)`,
   );
 
   const flatByWindow = bandWindowHistories.map((hist) => {
@@ -65,7 +67,7 @@ export const generateCombinationBasedSets = async (
   }
 
   summaryLines.push(
-    `자리대 순위: ${STATS_BAND_CASCADE_LABEL} cascade·rank 1~20 공통 1등→2등 ladder(최대 ${MAX_BAND_LADDER_DEPTH}단·출현 번호만)`,
+    `자리대 순위: 최근 ${STATS_BAND_CASCADE_LABEL}(${STATS_WINDOW_ONE_YEAR}회)·rank 1~20 공통 1등→2등 ladder(최대 ${MAX_BAND_LADDER_DEPTH}단·출현 번호만)`,
   );
 
   const poolSorted = [...new Set(numberPool)].filter((n) => n >= 1 && n <= 45).sort((a, b) => a - b);
@@ -82,6 +84,19 @@ export const generateCombinationBasedSets = async (
   for (const n of poolSorted) usage.set(n, 0);
   const innerSlotUsage = new Map<string, number>();
   const usedKeys = new Set<string>();
+
+  const appearHist =
+    bandWindowHistories[bandWindowHistories.length - 1] ??
+    bandWindowHistories[0] ??
+    [];
+  const histCounts = buildHistCounts(
+    [...appearHist].sort((a, b) => a.draw_no - b.draw_no),
+    referenceDrawNo,
+  );
+  const flatForRank = flatByWindow[flatByWindow.length - 1] ?? [];
+  const rankedRows = rankPositionBandRows(flatForRank);
+  const positionRankLookup = buildPositionRankLookup(rankedRows);
+  const positionDrawCountLookup = buildPositionDrawCountLookup(rankedRows);
 
   const targetsByRank = new Map<number, number[]>();
   const laddersByRank = new Map<number, number[][]>();
@@ -113,6 +128,9 @@ export const generateCombinationBasedSets = async (
     usedKeys,
     usage,
     innerSlotUsage,
+    histCounts,
+    positionRankLookup,
+    positionDrawCountLookup,
     repairYieldEvery,
     profileSlots,
   };

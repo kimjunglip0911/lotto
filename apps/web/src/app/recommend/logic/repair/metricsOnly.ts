@@ -1,7 +1,6 @@
 import { PROFILE_BUILD_ATTEMPTS } from '@/app/recommend/constants/repairLimits';
 import type { ProfileConstraints, RepairPickCtx } from '@/app/recommend/logic/repair/types';
 import { flatAdoptedPool } from '@/app/recommend/logic/repair/pool';
-import { sortPickedAsc } from '@/app/recommend/logic/repair/runLen';
 import { pickSixFromFlatPool } from '@/app/recommend/logic/repair/pick';
 import { repairUntilMetricsOk } from '@/app/recommend/logic/repair/repairMetrics';
 
@@ -20,7 +19,7 @@ export const buildMetricsOnlyFromPool = (
     if (!picked) continue;
     const work = [...picked];
     if (repairUntilMetricsOk(work, constraints, flat, pickCtx)) {
-      return sortPickedAsc(work);
+      return [...work];
     }
   }
   return null;

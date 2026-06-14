@@ -1,6 +1,7 @@
 'use client';
 
 import type { GeneratedSet } from '@/app/recommend/types/generatedSet';
+import type { PositionRankLookup } from '@/app/recommend/helpers/positionRankLookup';
 import { SetList } from '@/app/recommend/ui/result/SetList';
 
 /** 추천 생성 결과 요약·세트 목록 */
@@ -11,6 +12,7 @@ type Props = {
   combinationSummaryLines?: string[];
   sets?: GeneratedSet[];
   winningNumbers?: number[];
+  rankLookup: PositionRankLookup;
 };
 
 export const AnalysisResultList = ({
@@ -18,6 +20,7 @@ export const AnalysisResultList = ({
   targetDrawNo,
   combinationSummaryLines = [],
   sets = [],
+  rankLookup,
 }: Props) => {
   return (
     <div className="mt-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -40,7 +43,7 @@ export const AnalysisResultList = ({
           </div>
         ) : null}
 
-        <SetList sets={sets} />
+        <SetList sets={sets} rankLookup={rankLookup} />
       </div>
     </div>
   );

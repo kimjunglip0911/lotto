@@ -59,7 +59,7 @@ export const buildBandTargetsForRank = (
   return targets;
 };
 
-/** 3→6→12개월 cascade 윈도우별 flat rows로 rank에 맞는 band 인덱스 배열을 만든다 */
+/** 윈도우별 flat rows로 rank에 맞는 band 인덱스 배열을 만든다(현재 1년 단일) */
 export const buildBandTargetsForRankCascade = (
   flatByWindow: readonly (readonly PositionBandDistributionRow[])[],
   rank: number,

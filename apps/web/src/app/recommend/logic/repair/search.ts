@@ -4,7 +4,6 @@ import {
 } from '@/app/recommend/constants/repairLimits';
 import type { ProfileConstraints, RepairPickCtx } from '@/app/recommend/logic/repair/types';
 import { compareViolationSets, violationScore } from '@/app/recommend/logic/repair/violation';
-import { sortPickedAsc } from '@/app/recommend/logic/repair/runLen';
 import { replaceCandidatesForPosition } from '@/app/recommend/logic/repair/repairPos';
 import { pickDiverseOne } from '@/app/recommend/logic/repair/diverse';
 import { validatePickedSet } from '@/app/recommend/logic/repair/validate';
@@ -66,7 +65,7 @@ export const bfsRepairUntilOk = (
   while (queue.length > 0 && seen.size < maxVisits) {
     const cur = queue.shift()!;
     const state = validatePickedSet(cur, constraints);
-    if (state.ok) return sortPickedAsc(cur);
+    if (state.ok) return [...cur];
     for (let pos = 0; pos < 6; pos++) {
       const candidates = replaceCandidatesForPosition(
         cur,

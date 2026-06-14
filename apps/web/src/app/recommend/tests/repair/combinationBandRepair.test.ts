@@ -176,10 +176,10 @@ describe('buildOneSetWithFallback', () => {
     const r = buildOneSetWithFallback(poolByBand, constraints, {}, PROFILE_BUILD_ATTEMPTS)
     expect(r).not.toBeNull()
     if (!r) return
-    expect(r.sorted).toHaveLength(6)
+    expect(r.picked).toHaveLength(6)
     expect(r.usedFallback).toBe(true)
-    expect(hasFallbackMetricOk(r.sorted, constraints)).toBe(true)
-    expect(validateSet(r.sorted, constraints).ok).toBe(false)
+    expect(hasFallbackMetricOk(r.picked, constraints)).toBe(true)
+    expect(validateSet(r.picked, constraints).ok).toBe(false)
   })
 })
 

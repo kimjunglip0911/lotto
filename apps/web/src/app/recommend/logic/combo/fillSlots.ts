@@ -17,6 +17,10 @@ import {
   setKey,
   sortedNumsFromSet,
 } from '@/app/recommend/logic/combo/toSet';
+import type {
+  PositionDrawCountLookup,
+  PositionRankLookup,
+} from '@/app/recommend/helpers/positionRankLookup';
 
 /** 20슬롯(rank 1~20) 채우기·미생성 진단 */
 
@@ -29,6 +33,9 @@ export type FillCtx = {
   usedKeys: Set<string>;
   usage: Map<number, number>;
   innerSlotUsage: Map<string, number>;
+  histCounts: readonly number[];
+  positionRankLookup: PositionRankLookup;
+  positionDrawCountLookup: PositionDrawCountLookup;
   repairYieldEvery: number;
   profileSlots: (GeneratedSet | null)[];
 };
@@ -101,6 +108,9 @@ export const tryFillOneSlot = async (
     ctx.usedKeys,
     ctx.usage,
     ctx.innerSlotUsage,
+    ctx.histCounts,
+    ctx.positionRankLookup,
+    ctx.positionDrawCountLookup,
     ctx.repairYieldEvery,
     avoidKeys,
   );

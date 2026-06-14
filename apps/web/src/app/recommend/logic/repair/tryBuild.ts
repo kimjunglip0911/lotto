@@ -1,6 +1,5 @@
 import { MAX_REPAIR_STEPS, MAX_SEED_ATTEMPTS } from '@/app/recommend/constants/repairLimits';
 import type { ProfileConstraints, RepairPickCtx } from '@/app/recommend/logic/repair/types';
-import { sortPickedAsc } from '@/app/recommend/logic/repair/runLen';
 import { randomPerPositionPick } from '@/app/recommend/logic/repair/pick';
 import { validatePickedSet } from '@/app/recommend/logic/repair/validate';
 import { repairOneStep } from '@/app/recommend/logic/repair/repairStep';
@@ -22,11 +21,11 @@ export const tryBuildOneSet = (
     if (!picked) continue;
     const work = [...picked];
     let state = validatePickedSet(work, constraints);
-    if (state.ok) return sortPickedAsc(work);
+    if (state.ok) return [...work];
     for (let step = 0; step < MAX_REPAIR_STEPS; step++) {
       if (!repairOneStep(work, state, constraints, poolByBand, pickCtx)) break;
       state = validatePickedSet(work, constraints);
-      if (state.ok) return sortPickedAsc(work);
+      if (state.ok) return [...work];
     }
   }
   return null;

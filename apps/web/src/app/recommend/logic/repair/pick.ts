@@ -38,10 +38,7 @@ export const randomPerPositionPick = (
     const rungs = bandRungsForPos(i, bandTargets, bandLadder);
     let pick: number | null = null;
     for (const band of rungs) {
-      let candidates = collectBandCands(poolByBand, band, used, pickCtx);
-      if (candidates.length === 0) {
-        candidates = filterUsageAvail(flat.filter((n) => !used.has(n)), pickCtx.usage);
-      }
+      const candidates = collectBandCands(poolByBand, band, used, pickCtx);
       if (candidates.length === 0) continue;
       pick = pickDiverseOne(candidates, pickCtx) ?? candidates[0]!;
       break;

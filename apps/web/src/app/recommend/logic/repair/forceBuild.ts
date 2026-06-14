@@ -5,7 +5,6 @@ import {
 } from '@/app/recommend/constants/repairLimits';
 import type { ForceBuildOptions, ProfileConstraints, RepairPickCtx } from '@/app/recommend/logic/repair/types';
 import { adoptedPoolSize } from '@/app/recommend/logic/repair/pool';
-import { sortPickedAsc } from '@/app/recommend/logic/repair/runLen';
 import { backtrackPositionPicks, backtrackBuildOneSet } from '@/app/recommend/logic/repair/backtrack';
 import { randomPerPositionPick } from '@/app/recommend/logic/repair/pick';
 import { tryBuildOneSet } from '@/app/recommend/logic/repair/tryBuild';
@@ -38,10 +37,10 @@ export const forceBuildOneSet = (
     if (!picked) continue;
     const work = [...picked];
     if (aggressiveRepairUntilOk(work, constraints, poolByBand, pickCtx)) {
-      return sortPickedAsc(work);
+      return [...work];
     }
     if (heavySearch && stochasticRepairUntilOk(work, constraints, poolByBand, pickCtx)) {
-      return sortPickedAsc(work);
+      return [...work];
     }
   }
 
@@ -60,12 +59,12 @@ export const forceBuildOneSet = (
   if (bandSkeleton) {
     const work = [...bandSkeleton];
     if (aggressiveRepairUntilOk(work, constraints, poolByBand, pickCtx)) {
-      return sortPickedAsc(work);
+      return [...work];
     }
     const bfs = bfsRepairUntilOk(work, constraints, poolByBand, pickCtx, bfsCap);
     if (bfs) return bfs;
     if (stochasticRepairUntilOk(work, constraints, poolByBand, pickCtx)) {
-      return sortPickedAsc(work);
+      return [...work];
     }
   }
 

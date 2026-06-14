@@ -15,7 +15,7 @@ const repairMetricsOneStep = (
   pickCtx: RepairPickCtx,
 ): boolean => {
   if (before.ok) return false;
-  const pos = pickRepairPosition(picked, before.violations, constraints.bandTargets);
+  const pos = pickRepairPosition(picked, before.violations, constraints.bandTargets, pickCtx);
   const candidates = replaceCandidatesFromFullPool(picked, pos, flatPool, pickCtx);
   const sortedBefore = sortPickedAsc(picked);
   const sumBefore = sortedBefore.reduce((a, b) => a + b, 0);

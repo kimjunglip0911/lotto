@@ -1,7 +1,6 @@
 import { MAX_REPAIR_STEPS, PROFILE_BUILD_ATTEMPTS } from '@/app/recommend/constants/repairLimits';
 import type { ProfileConstraints, RepairPickCtx } from '@/app/recommend/logic/repair/types';
 import { canPickBandSkeleton } from '@/app/recommend/logic/repair/backtrack';
-import { sortPickedAsc } from '@/app/recommend/logic/repair/runLen';
 import { randomPerPositionPick } from '@/app/recommend/logic/repair/pick';
 import { buildMetricsOnlyFromPool } from '@/app/recommend/logic/repair/metricsOnly';
 import { validatePickedSet } from '@/app/recommend/logic/repair/validate';
@@ -16,7 +15,7 @@ export const buildOneSetWithFallback = (
   constraints: ProfileConstraints,
   pickCtx: RepairPickCtx = {},
   maxAttempts: number = PROFILE_BUILD_ATTEMPTS,
-): { sorted: number[]; usedFallback: boolean } | null => {
+): { picked: number[]; usedFallback: boolean } | null => {
   const sequential = sequentialPickByBands(
     poolByBand,
     constraints.bandTargets,
@@ -25,7 +24,7 @@ export const buildOneSetWithFallback = (
     pickCtx,
     constraints.bandLadder,
   );
-  if (sequential) return { sorted: sequential, usedFallback: false };
+  if (sequential) return { picked: sequential, usedFallback: false };
 
   if (!canPickBandSkeleton(poolByBand, constraints.bandTargets, pickCtx)) {
     const metricsOnly = buildMetricsOnlyFromPool(
@@ -34,7 +33,7 @@ export const buildOneSetWithFallback = (
       pickCtx,
       maxAttempts * 2,
     );
-    if (metricsOnly) return { sorted: metricsOnly, usedFallback: true };
+    if (metricsOnly) return { picked: metricsOnly, usedFallback: true };
   }
 
   let firstDraw: number[] | null = null;
@@ -59,12 +58,12 @@ export const buildOneSetWithFallback = (
         if (state.ok) break;
       }
     }
-    if (state.ok) return { sorted: sortPickedAsc(work), usedFallback: false };
+    if (state.ok) return { picked: [...work], usedFallback: false };
   }
 
   const fallbackBases = firstDraw ? [[...firstDraw], ...attemptDraws] : attemptDraws;
   const fromBases = tryFallbackFromBases(fallbackBases, poolByBand, constraints, pickCtx);
-  if (fromBases) return { sorted: fromBases, usedFallback: true };
+  if (fromBases) return { picked: fromBases, usedFallback: true };
 
   for (let extra = 0; extra < maxAttempts; extra++) {
     const picked = randomPerPositionPick(
@@ -76,10 +75,10 @@ export const buildOneSetWithFallback = (
     if (!picked) continue;
     const work = [...picked];
     if (repairFallbackUntil(work, constraints, poolByBand, pickCtx, 'both')) {
-      return { sorted: sortPickedAsc(work), usedFallback: true };
+      return { picked: [...work], usedFallback: true };
     }
     if (repairFallbackUntil(work, constraints, poolByBand, pickCtx, 'one')) {
-      return { sorted: sortPickedAsc(work), usedFallback: true };
+      return { picked: [...work], usedFallback: true };
     }
   }
 
@@ -89,6 +88,6 @@ export const buildOneSetWithFallback = (
     pickCtx,
     maxAttempts * 2,
   );
-  if (metricsOnly) return { sorted: metricsOnly, usedFallback: true };
+  if (metricsOnly) return { picked: metricsOnly, usedFallback: true };
   return null;
 };
