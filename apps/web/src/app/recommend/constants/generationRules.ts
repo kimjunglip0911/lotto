@@ -3,7 +3,7 @@
 export const APPLIED_RULE_IDS = [
   'full-pool-45',
   'combination-rank-20sets',
-  'stats-window-one-year',
+  'stats-window-three-year',
   'pos-band-ladder-fallback',
   'unused-pool-tail-fill',
 ] as const;

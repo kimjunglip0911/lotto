@@ -1,5 +1,9 @@
 import { useMemo } from 'react';
-import { STATS_POSITION_BAND_LABEL, STATS_POSITION_BAND_WINDOW } from '@/lib/statsWindow';
+import {
+  formatStatsSampleDesc,
+  STATS_POSITION_BAND_LABEL,
+  STATS_POSITION_BAND_WINDOW,
+} from '@/lib/statsWindow';
 import type { PositionBandDistributionRow } from '../../types';
 import { rankPositionBandRows } from '../../logic/rankPositionBands';
 import { PositionBandRows } from './positionBand/PositionBandRows';
@@ -18,7 +22,7 @@ export function PositionBandProbabilityTable({ totalDraws, rows }: Props) {
       <div>
         <h3 className="text-xl font-semibold text-white">구간별 번호 확률</h3>
         <p className="text-xs text-slate-400 mt-1">
-          표본: DB에 저장된 최근 {STATS_POSITION_BAND_WINDOW}회({STATS_POSITION_BAND_LABEL}) 당첨 주번호 6개(num1~num6)만 사용합니다. 보너스 번호는 제외합니다.
+          표본: {formatStatsSampleDesc(STATS_POSITION_BAND_LABEL, STATS_POSITION_BAND_WINDOW, totalDraws)} 당첨 주번호 6개(num1~num6)만 사용합니다. 보너스 번호는 제외합니다.
           번호구간은 번호 1개 단위(1~45)로 집계합니다.
           각 행의 비율은 해당 구간(자리) 안에서만 합산하여 100%입니다.
           추천 생성 시 자리별 1등부터 순서대로 번호대를 우선 사용합니다.

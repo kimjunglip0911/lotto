@@ -50,7 +50,7 @@ export const filterAppearedBands = (
 ): PositionBandDistributionRow[] => sorted.filter((row) => row.drawCount > 0);
 
 /**
- * 다중 윈도우 cascade: 짧은 윈도우→긴 윈도우 순으로 출현 band만 순위 매김(현재 1년 단일).
+ * 다중 윈도우 cascade: 짧은 윈도우→긴 윈도우 순으로 출현 band만 순위 매김(현재 3년 단일).
  * rankIdx는 0부터(1등=0). cascade로도 부족하면 최장 윈도우 pickBandIndexForRank tail로 보충.
  */
 export const pickBandIndexForCascadeRank = (

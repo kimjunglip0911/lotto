@@ -11,7 +11,7 @@ export const sliceLatestStatsHistory = (
   windowSize: number = STATS_WINDOW_DRAWS,
 ): WinningNumberRow[] => {
   const sorted = [...rows].sort((a, b) => a.draw_no - b.draw_no);
-  if (sorted.length <= windowSize) return sorted;
+  if (!Number.isFinite(windowSize) || sorted.length <= windowSize) return sorted;
   return sorted.slice(-windowSize);
 };
 

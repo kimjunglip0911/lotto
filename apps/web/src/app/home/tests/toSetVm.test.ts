@@ -38,4 +38,10 @@ describe('toSetVm', () => {
   it('draw_no와 selectedDraw가 모두 없으면 drawNo는 0이다', () => {
     expect(toSetVm([mkData()], null)).toEqual([expect.objectContaining({ drawNo: 0 })]);
   });
+
+  it('표시용 numbers는 오름차순으로 정렬한다', () => {
+    expect(
+      toSetVm([mkData({ num1: 30, num2: 5, num3: 44, num4: 12, num5: 1, num6: 28 })], null),
+    ).toEqual([expect.objectContaining({ numbers: [1, 5, 12, 28, 30, 44] })]);
+  });
 });

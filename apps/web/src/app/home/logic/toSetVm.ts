@@ -16,9 +16,12 @@
  *
  * 주의·화면에 미치는 영향
  * - 회차가 모두 비어 있으면 카드에 0회차로 보일 수 있습니다(기존과 동일).
- * - 번호 순서는 DB 칸 순서 그대로이며, 정렬은 하지 않습니다.
+ * - 카드·PNG 표시용 numbers는 오름차순 정렬합니다(추천 페이지의 1~6구 순서와 별개).
  */
 import type { LotterySetData, LotterySetViewModel } from '../types/home';
+
+const displayNumsAsc = (set: LotterySetData): number[] =>
+  [set.num1, set.num2, set.num3, set.num4, set.num5, set.num6].toSorted((a, b) => a - b);
 
 export const toSetVm = (
   sets: LotterySetData[],
@@ -26,7 +29,7 @@ export const toSetVm = (
 ): LotterySetViewModel[] =>
   sets.map((set) => ({
     id: set.id,
-    numbers: [set.num1, set.num2, set.num3, set.num4, set.num5, set.num6],
+    numbers: displayNumsAsc(set),
     method: set.method,
     drawNo: set.draw_no ?? selectedDraw ?? 0,
   }));

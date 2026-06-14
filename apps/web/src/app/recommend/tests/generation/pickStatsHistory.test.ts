@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { WinningNumberRow } from '@/lib/accu-nums/types';
-import { STATS_WINDOW_DRAWS } from '@/lib/statsWindow';
+import { STATS_WINDOW_ALL, STATS_WINDOW_DRAWS } from '@/lib/statsWindow';
 import { pickStatsHistory } from '@/lib/pickStatsHistory';
 
 const mkRow = (drawNo: number): WinningNumberRow => ({
@@ -27,5 +27,13 @@ describe('pickStatsHistory', () => {
     const rows = Array.from({ length: 10 }, (_, i) => mkRow(i + 1));
     const out = pickStatsHistory(rows, 11, STATS_WINDOW_DRAWS);
     expect(out).toHaveLength(10);
+  });
+
+  it('전체 윈도우면 기준 회차 직전 이력 전부를 반환한다', () => {
+    const rows = Array.from({ length: 40 }, (_, i) => mkRow(i + 1));
+    const out = pickStatsHistory(rows, 41, STATS_WINDOW_ALL);
+    expect(out).toHaveLength(40);
+    expect(out[0]?.draw_no).toBe(1);
+    expect(out[39]?.draw_no).toBe(40);
   });
 });

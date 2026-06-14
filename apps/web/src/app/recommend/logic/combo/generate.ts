@@ -24,7 +24,11 @@ import {
 } from '@/app/recommend/logic/combo/fillSlots';
 import { withSortedMains } from '@/app/recommend/logic/combo/sortMains';
 import { setsInProfileSlotOrder } from '@/app/recommend/logic/combo/orderSets';
-import { STATS_BAND_CASCADE_LABEL, STATS_WINDOW_ONE_YEAR } from '@/lib/statsWindow';
+import {
+  formatStatsBandSummary,
+  STATS_BAND_CASCADE_LABEL,
+  STATS_POSITION_BAND_WINDOW,
+} from '@/lib/statsWindow';
 import { DEFAULT_REPAIR_YIELD_EVERY, MAX_PRIORITY_ROUNDS } from '@/app/recommend/logic/combo/yieldMain';
 
 export type CombinationGenerationResult = {
@@ -33,7 +37,7 @@ export type CombinationGenerationResult = {
   warning: string | null;
 };
 
-/** 1~45 전체 풀·자리대=최근 1년(52회) 표본·rank N=N등 band 시작으로 최대 20세트 생성 */
+/** 1~45 전체 풀·자리대=최근 3년(156회) 표본·rank N=N등 band 시작으로 최대 20세트 생성 */
 
 export const generateCombinationBasedSets = async (
   _sumHistory: readonly WinningNumberRow[],
@@ -62,8 +66,9 @@ export const generateCombinationBasedSets = async (
     };
   }
 
+  const sampleDraws = bandWindowHistories[0]?.length ?? 0;
   summaryLines.push(
-    `자리대 순위: 최근 ${STATS_BAND_CASCADE_LABEL}(${STATS_WINDOW_ONE_YEAR}회)·rank N=N등 band 시작→ladder(최대 ${MAX_BAND_LADDER_DEPTH}단·출현 band만)`,
+    `자리대 순위: ${formatStatsBandSummary(STATS_BAND_CASCADE_LABEL, STATS_POSITION_BAND_WINDOW, sampleDraws)}·rank N=N등 band 시작→ladder(최대 ${MAX_BAND_LADDER_DEPTH}단·출현 band만)`,
   );
 
   const poolSorted = [...new Set(numberPool)].filter((n) => n >= 1 && n <= 45).sort((a, b) => a - b);
