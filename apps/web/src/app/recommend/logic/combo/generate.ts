@@ -2,13 +2,14 @@ import type { WinningNumberRow } from '@/lib/accu-nums/types';
 import { buildPositionBandDistribution } from '@/app/combination/logic/buildPositionBandDistribution';
 import { buildSumExtremeStats } from '@/app/combination/logic/buildSumExtremeStats';
 import { COMBO_RANK_SLOT_ORDER } from '@/app/recommend/constants/comboSlots';
-import { MAX_NUM_USAGE, BAND_TIER_REPEATS, TARGET_SET_COUNT } from '@/app/recommend/constants/comboThresholds';
+import { MAX_NUM_USAGE, MAX_BAND_LADDER_DEPTH, TARGET_SET_COUNT } from '@/app/recommend/constants/comboThresholds';
 import type { GeneratedSet } from '@/app/recommend/types/generatedSet';
 import { buildPoolByBand } from '@/app/recommend/logic/repair';
-import { bandTierForRank, buildBandLadderForRankCascade, primaryBandTargetsFromLadder } from '@/app/recommend/logic/combo/buildBandTargets';
+import { buildBandLadderForRankCascade, primaryBandTargetsFromLadder } from '@/app/recommend/logic/combo/buildBandTargets';
 import {
   appendMissingProfileDiagnostics,
   fillTargetProfiles,
+  recoverMissingSlots,
   type FillCtx,
 } from '@/app/recommend/logic/combo/fillSlots';
 import { withSortedMains } from '@/app/recommend/logic/combo/sortMains';
@@ -64,7 +65,7 @@ export const generateCombinationBasedSets = async (
   }
 
   summaryLines.push(
-    `자리대 순위: ${STATS_BAND_CASCADE_LABEL} cascade·동일 순위 ${BAND_TIER_REPEATS}회 반복·자리별 1등→2등 ladder(출현 번호만)`,
+    `자리대 순위: ${STATS_BAND_CASCADE_LABEL} cascade·rank 1~20 공통 1등→2등 ladder(최대 ${MAX_BAND_LADDER_DEPTH}단·출현 번호만)`,
   );
 
   const poolSorted = [...new Set(numberPool)].filter((n) => n >= 1 && n <= 45).sort((a, b) => a - b);
@@ -84,21 +85,18 @@ export const generateCombinationBasedSets = async (
 
   const targetsByRank = new Map<number, number[]>();
   const laddersByRank = new Map<number, number[][]>();
+  const sharedLadder = buildBandLadderForRankCascade(flatByWindow);
+  if (!sharedLadder) {
+    return {
+      sets: [],
+      summaryLines: [...summaryLines, '자리별 band cascade ladder를 만들 수 없습니다.'],
+      warning: '자리대 통계 없음',
+    };
+  }
+  const sharedTargets = primaryBandTargetsFromLadder(sharedLadder);
   for (const rank of COMBO_RANK_SLOT_ORDER) {
-    const bandTier = bandTierForRank(rank);
-    const ladder = buildBandLadderForRankCascade(flatByWindow, bandTier);
-    if (!ladder) {
-      return {
-        sets: [],
-        summaryLines: [
-          ...summaryLines,
-          `rank${rank}(자리 band ${bandTier}등) cascade ladder를 만들 수 없습니다.`,
-        ],
-        warning: '자리대 통계 없음',
-      };
-    }
-    targetsByRank.set(rank, primaryBandTargetsFromLadder(ladder));
-    laddersByRank.set(rank, ladder);
+    targetsByRank.set(rank, sharedTargets);
+    laddersByRank.set(rank, sharedLadder);
   }
 
   const profileSlots: (GeneratedSet | null)[] = Array.from(
@@ -123,6 +121,10 @@ export const generateCombinationBasedSets = async (
     const gained = await fillTargetProfiles(ctx);
     if (gained === 0) break;
     if (profileSlots.every((s) => s !== null)) break;
+  }
+
+  if (profileSlots.some((s) => s === null)) {
+    await recoverMissingSlots(ctx);
   }
 
   const builtCount = profileSlots.filter((s) => s !== null).length;

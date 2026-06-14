@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import { COMBO_RANK_SLOT_ORDER } from '@/app/recommend/constants/comboSlots';
-import { TAIL_UNUSED_RANK_START } from '@/app/recommend/constants/comboThresholds';
 import { findOneSetForRank } from '@/app/recommend/logic/combo/findOneSet';
 import { setKey } from '@/app/recommend/logic/combo/toSet';
 import { buildPoolByBand } from '@/app/recommend/logic/repair';
@@ -79,33 +78,31 @@ describe('findOneSetForRank', () => {
     expect(new Set(keys).size).toBe(3);
   });
 
-  it('rank19는 미사용 번호·고저 무시로 세트를 만든다', async () => {
+  it('rank19도 rank1과 동일 band ladder로 세트를 만든다', async () => {
     const pool = Array.from({ length: 45 }, (_, i) => i + 1);
     const poolByBand = buildPoolByBand(pool);
     const bandTargets = [0, 3, 8, 15, 22, 30];
-    const bandLadder = bandTargets.map((b) => [b]);
-    const usage = new Map<number, number>(pool.map((n) => [n, 0]));
-    for (let n = 1; n <= 35; n++) usage.set(n, 2);
-    const innerSlotUsage = new Map<string, number>();
-    const usedKeys = new Set<string>();
+    const bandLadder = bandTargets.map((b, i) => [b, b + 1, b + 2 + i, b + 3]);
 
+    const mk = () => ({
+      usage: new Map<number, number>(pool.map((n) => [n, 0])),
+      innerSlotUsage: new Map<string, number>(),
+      usedKeys: new Set<string>(),
+    });
+
+    const ctx1 = mk();
+    const rank1 = await findOneSetForRank(
+      poolByBand, 100, 200, 1, bandTargets, bandLadder,
+      ctx1.usedKeys, ctx1.usage, ctx1.innerSlotUsage, 0,
+    );
+    const ctx19 = mk();
     const rank19 = await findOneSetForRank(
-      poolByBand,
-      500,
-      600,
-      TAIL_UNUSED_RANK_START,
-      bandTargets,
-      bandLadder,
-      usedKeys,
-      usage,
-      innerSlotUsage,
-      0,
+      poolByBand, 100, 200, 19, bandTargets, bandLadder,
+      ctx19.usedKeys, ctx19.usage, ctx19.innerSlotUsage, 0,
     );
 
+    expect(rank1).not.toBeNull();
     expect(rank19).not.toBeNull();
-    const nums = [rank19!.num1, rank19!.num2, rank19!.num3, rank19!.num4, rank19!.num5, rank19!.num6];
-    expect(nums.every((n) => n >= 36)).toBe(true);
-    const sum = nums.reduce((a, b) => a + b, 0);
-    expect(sum).toBeLessThan(500);
+    expect(rank19!.strategy).toBe('combo:rank19');
   });
 });

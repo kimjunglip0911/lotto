@@ -1,6 +1,6 @@
 import { TARGET_SET_COUNT } from '@/app/recommend/constants/comboThresholds';
 
-/** rank 1~20 슬롯 — 자리별 band tier는 rank 3개마다 1씩 증가(1~3→1등, 4~6→2등 …) */
+/** rank 1~20 슬롯 — rank마다 tier를 올리지 않고 공통 1등→2등 ladder 사용 */
 
 export const COMBO_RANK_SLOT_ORDER: readonly number[] = Array.from(
   { length: TARGET_SET_COUNT },

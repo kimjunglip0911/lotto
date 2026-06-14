@@ -8,3 +8,7 @@ export const MAX_FORCE_REPAIR_STEPS = 4_000;
 export const MAX_STOCHASTIC_REPAIR_STEPS = 1_500;
 export const MAX_BFS_REPAIR_VISITS = 8_000;
 export const HEAVY_SEARCH_MAX_POOL = 45;
+
+/** 미생성 rank 슬롯 복구: 직전 세트를 되돌리며 재탐색 */
+export const MAX_SLOT_RECOVERY_DEPTH = 5;
+export const MAX_SLOT_RECOVERY_ATTEMPTS = 80;

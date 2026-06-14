@@ -13,7 +13,7 @@ import {
   generateCombinationBasedSets,
   TARGET_SET_COUNT,
 } from '@/app/recommend/logic/combo';
-import { MAX_NUM_USAGE, BAND_TIER_REPEATS } from '@/app/recommend/constants/comboThresholds';
+import { BAND_LADDER_START_TIER, MAX_NUM_USAGE } from '@/app/recommend/constants/comboThresholds';
 import { FULL_LOTTO_POOL } from '@/app/recommend/constants/lottoPool';
 import { numberToBandIndex } from '@/app/combination/logic/numberToBand';
 import type { GeneratedSet } from '@/app/recommend/types/generatedSet';
@@ -66,33 +66,23 @@ describe('bandInnerSlot', () => {
 });
 
 describe('bandTierForRank', () => {
-  it('rank 3개마다 band tier가 1씩 증가한다', () => {
-    expect(BAND_TIER_REPEATS).toBe(3);
+  it('모든 rank는 1등 band tier를 사용한다', () => {
+    expect(BAND_LADDER_START_TIER).toBe(1);
     expect(bandTierForRank(1)).toBe(1);
-    expect(bandTierForRank(2)).toBe(1);
-    expect(bandTierForRank(3)).toBe(1);
-    expect(bandTierForRank(4)).toBe(2);
-    expect(bandTierForRank(6)).toBe(2);
-    expect(bandTierForRank(7)).toBe(3);
-    expect(bandTierForRank(19)).toBe(7);
-    expect(bandTierForRank(20)).toBe(7);
+    expect(bandTierForRank(19)).toBe(1);
+    expect(bandTierForRank(20)).toBe(1);
   });
 
-  it('동일 tier의 rank는 cascade band 목표가 같다', () => {
+  it('rank1과 rank20의 cascade band 목표가 같다', () => {
     const rows: PositionBandDistributionRow[] = [];
     for (let pos = 1; pos <= 6; pos++) {
       rows.push({ position: pos, bandLabel: '1', drawCount: 10, percentage: 50 });
       rows.push({ position: pos, bandLabel: '2', drawCount: 5, percentage: 25 });
-      rows.push({ position: pos, bandLabel: '3', drawCount: 2, percentage: 10 });
     }
     const flat = [rows];
-    const t1 = buildBandTargetsForRankCascade(flat, bandTierForRank(1))!;
-    const t2 = buildBandTargetsForRankCascade(flat, bandTierForRank(2))!;
-    const t3 = buildBandTargetsForRankCascade(flat, bandTierForRank(3))!;
-    const t4 = buildBandTargetsForRankCascade(flat, bandTierForRank(4))!;
-    expect(t1).toEqual(t2);
-    expect(t2).toEqual(t3);
-    expect(t4).not.toEqual(t1);
+    expect(buildBandTargetsForRankCascade(flat, 1)).toEqual(buildBandTargetsForRankCascade(flat, 1));
+    const ladder = buildBandLadderForRankCascade(flat)!;
+    expect(primaryBandTargetsFromLadder(ladder)).toEqual(buildBandTargetsForRankCascade(flat, 1));
   });
 });
 
@@ -180,7 +170,7 @@ describe('generateCombinationBasedSets', () => {
       expect(r.sets.every((s) => /^combo:rank\d+$/.test(s.strategy ?? ''))).toBe(true);
       expect(r.summaryLines.some((l) => l.includes('고저 합산'))).toBe(true);
       expect(r.summaryLines.some((l) => l.includes('ladder'))).toBe(true);
-      expect(r.summaryLines.some((l) => l.includes('3회 반복'))).toBe(true);
+      expect(r.summaryLines.some((l) => l.includes('rank 1~20'))).toBe(true);
       const keys = new Set(
         r.sets.map((s) => [s.num1, s.num2, s.num3, s.num4, s.num5, s.num6].sort((a, b) => a - b).join(',')),
       );

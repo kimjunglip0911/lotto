@@ -1,23 +1,22 @@
 import type { PositionBandDistributionRow } from '@/app/combination/types';
-import { BAND_TIER_REPEATS, MAX_BAND_LADDER_DEPTH } from '@/app/recommend/constants/comboThresholds';
+import { BAND_LADDER_START_TIER, MAX_BAND_LADDER_DEPTH } from '@/app/recommend/constants/comboThresholds';
 import {
   pickBandIndexForCascadeRank,
   pickBandIndexForRank,
   sortRowsForPosition,
 } from '@/app/combination/logic/rankPositionBands';
 
-/** rank 슬롯(1~20) → 자리별 band 순위 tier(1등·2등 …). tier마다 BAND_TIER_REPEATS회 반복 */
-export const bandTierForRank = (rank: number): number =>
-  Math.floor((rank - 1) / BAND_TIER_REPEATS) + 1;
+/** @deprecated BAND_LADDER_START_TIER(1) 사용 — rank마다 tier를 올리지 않음 */
+export const bandTierForRank = (_rank: number): number => BAND_LADDER_START_TIER;
 
 /** ladder[i][0] = 자리 i+1의 1등(또는 tier 시작) band 인덱스 */
 export const primaryBandTargetsFromLadder = (ladder: readonly (readonly number[])[]): number[] =>
   ladder.map((rungs) => rungs[0]!);
 
-/** tier부터 자리별 1등→2등→… band ladder. 1등 불가 시 해당 자리만 다음 순위 사용 */
+/** cascade 통계에서 자리별 1등→2등→… band ladder (기본 tier=1등) */
 export const buildBandLadderForRankCascade = (
   flatByWindow: readonly (readonly PositionBandDistributionRow[])[],
-  tier: number,
+  tier: number = BAND_LADDER_START_TIER,
   maxDepth: number = MAX_BAND_LADDER_DEPTH,
 ): number[][] | null => {
   if (tier < 1 || flatByWindow.length === 0) return null;

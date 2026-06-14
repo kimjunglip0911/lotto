@@ -32,3 +32,31 @@ export const bumpUsage = (
     innerSlotUsage.set(key, (innerSlotUsage.get(key) ?? 0) + 1);
   }
 };
+
+export const unbumpUsage = (
+  sorted: readonly number[],
+  usage: Map<number, number>,
+  innerSlotUsage: Map<string, number>,
+): void => {
+  for (const n of sorted) {
+    const next = (usage.get(n) ?? 0) - 1;
+    usage.set(n, next > 0 ? next : 0);
+    const key = innerSlotKey(n);
+    const slotNext = (innerSlotUsage.get(key) ?? 0) - 1;
+    innerSlotUsage.set(key, slotNext > 0 ? slotNext : 0);
+  }
+};
+
+export const sortedNumsFromSet = (set: GeneratedSet): number[] =>
+  [set.num1, set.num2, set.num3, set.num4, set.num5, set.num6];
+
+export const releaseGeneratedSet = (
+  set: GeneratedSet,
+  usedKeys: Set<string>,
+  usage: Map<number, number>,
+  innerSlotUsage: Map<string, number>,
+): void => {
+  const sorted = sortedNumsFromSet(set);
+  usedKeys.delete(setKey(sorted));
+  unbumpUsage(sorted, usage, innerSlotUsage);
+};

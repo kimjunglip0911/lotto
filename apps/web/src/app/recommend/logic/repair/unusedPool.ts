@@ -34,6 +34,7 @@ export const buildUnusedPoolSet = (
   maxSum: number,
   usage: ReadonlyMap<number, number>,
   usedKeys: ReadonlySet<string>,
+  avoidKeys: ReadonlySet<string> = new Set(),
 ): number[] | null => {
   const avail = sortByUsageAsc(filterUsageAvail([...poolSorted], usage), usage);
   if (avail.length < 6) return null;
@@ -45,7 +46,8 @@ export const buildUnusedPoolSet = (
 
     if (picked.length === 6) {
       const sorted = sortPickedAsc(picked);
-      if (usedKeys.has(setKeyFromSorted(sorted))) return null;
+      const key = setKeyFromSorted(sorted);
+      if (usedKeys.has(key) || avoidKeys.has(key)) return null;
       return sorted;
     }
     for (let i = from; i < avail.length; i++) {
