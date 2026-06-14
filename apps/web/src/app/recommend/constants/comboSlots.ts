@@ -1,6 +1,6 @@
 import { TARGET_SET_COUNT } from '@/app/recommend/constants/comboThresholds';
 
-/** rank 1~20 슬롯 — 세트 k는 자리별 k등 band 목표 */
+/** rank 1~20 슬롯 — 자리별 band tier는 rank 3개마다 1씩 증가(1~3→1등, 4~6→2등 …) */
 
 export const COMBO_RANK_SLOT_ORDER: readonly number[] = Array.from(
   { length: TARGET_SET_COUNT },

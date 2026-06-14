@@ -18,6 +18,29 @@ describe('sequentialPickByBands', () => {
     expect(new Set(picked).size).toBe(6);
   });
 
+  it('자리 ladder로 1등 band 불가 시 다음 순위 band를 쓴다', () => {
+    const pool = [1, 2, 3, 4, 5, 20, 21, 22, 23, 24, 25, 26];
+    const poolByBand = buildPoolByBand(pool);
+    const bandTargets = [0, 0, 10, 15, 20, 25];
+    const bandLadder = [
+      [0, 5],
+      [0, 5],
+      [10, 15],
+      [15, 20],
+      [20, 25],
+      [25, 20],
+    ];
+    const usage = new Map<number, number>();
+    for (const n of pool) usage.set(n, 0);
+
+    const picked = sequentialPickByBands(poolByBand, bandTargets, 60, 120, { usage }, bandLadder);
+    expect(picked).not.toBeNull();
+    if (!picked) return;
+    expect(picked[0]).toBe(1);
+    expect(picked[1]).not.toBe(1);
+    expect(new Set(picked).size).toBe(6);
+  });
+
   it('고저 구간 밖이면 null을 반환한다', () => {
     const pool = Array.from({ length: 20 }, (_, i) => i + 1);
     const poolByBand = buildPoolByBand(pool);

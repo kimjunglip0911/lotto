@@ -1,8 +1,11 @@
 import { COMBO_RANK_SLOT_ORDER } from '@/app/recommend/constants/comboSlots';
-import { MAX_NUM_USAGE } from '@/app/recommend/constants/comboThresholds';
+import { MAX_NUM_USAGE, TAIL_UNUSED_RANK_START } from '@/app/recommend/constants/comboThresholds';
 import type { GeneratedSet } from '@/app/recommend/types/generatedSet';
+import { bandTierForRank } from '@/app/recommend/logic/combo/buildBandTargets';
 import {
+  buildTailUnusedSet,
   diagnoseProfileBuild,
+  flatAdoptedPool,
   type ProfileConstraints,
   type ProfileFailureReason,
 } from '@/app/recommend/logic/repair';
@@ -15,6 +18,7 @@ export type FillCtx = {
   minSum: number;
   maxSum: number;
   targetsByRank: Map<number, number[]>;
+  laddersByRank: Map<number, number[][]>;
   usedKeys: Set<string>;
   usage: Map<number, number>;
   innerSlotUsage: Map<string, number>;
@@ -33,18 +37,26 @@ const FAILURE_REASON_KO: Record<ProfileFailureReason, string> = {
 
 const profileFailureSummary = (ctx: FillCtx, rank: number): string | null => {
   const bandTargets = ctx.targetsByRank.get(rank);
-  if (!bandTargets) return FAILURE_REASON_KO.rank_unavailable;
+  const bandLadder = ctx.laddersByRank.get(rank);
+  if (!bandTargets || !bandLadder) return FAILURE_REASON_KO.rank_unavailable;
+  if (rank >= TAIL_UNUSED_RANK_START) {
+    const flat = flatAdoptedPool(ctx.poolByBand);
+    const tail = buildTailUnusedSet(flat, ctx.usage, ctx.usedKeys);
+    if (tail) return null;
+    return FAILURE_REASON_KO.no_band_in_pool;
+  }
   const constraints: ProfileConstraints = {
     minSum: ctx.minSum,
     maxSum: ctx.maxSum,
     bandTargets,
+    bandLadder,
   };
   const reason = diagnoseProfileBuild(
     ctx.poolByBand,
     constraints,
     ctx.usedKeys,
     { usage: ctx.usage, innerSlotUsage: ctx.innerSlotUsage },
-    { allowBacktrack: true, bandTier: rank },
+    { allowBacktrack: true, bandTier: bandTierForRank(rank) },
   );
   return FAILURE_REASON_KO[reason] || null;
 };
@@ -71,7 +83,8 @@ export const tryFillOneSlot = async (ctx: FillCtx, slot: number): Promise<boolea
   const rank = COMBO_RANK_SLOT_ORDER[slot];
   if (rank === undefined) return false;
   const bandTargets = ctx.targetsByRank.get(rank);
-  if (!bandTargets) return false;
+  const bandLadder = ctx.laddersByRank.get(rank);
+  if (!bandTargets || !bandLadder) return false;
 
   const one = await findOneSetForRank(
     ctx.poolByBand,
@@ -79,6 +92,7 @@ export const tryFillOneSlot = async (ctx: FillCtx, slot: number): Promise<boolea
     ctx.maxSum,
     rank,
     bandTargets,
+    bandLadder,
     ctx.usedKeys,
     ctx.usage,
     ctx.innerSlotUsage,

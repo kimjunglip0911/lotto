@@ -13,7 +13,12 @@ export const tryBuildOneSet = (
   pickCtx: RepairPickCtx,
 ): number[] | null => {
   for (let attempt = 0; attempt < MAX_SEED_ATTEMPTS; attempt++) {
-    const picked = randomPerPositionPick(poolByBand, constraints.bandTargets, pickCtx);
+    const picked = randomPerPositionPick(
+      poolByBand,
+      constraints.bandTargets,
+      pickCtx,
+      constraints.bandLadder,
+    );
     if (!picked) continue;
     const work = [...picked];
     let state = validatePickedSet(work, constraints);

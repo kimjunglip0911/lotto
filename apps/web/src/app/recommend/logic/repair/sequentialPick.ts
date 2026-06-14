@@ -4,7 +4,7 @@
  */
 import { MAX_NUM_USAGE } from '@/app/recommend/constants/comboThresholds';
 import type { RepairPickCtx } from '@/app/recommend/logic/repair/types';
-import { collectBandCands } from '@/app/recommend/logic/repair/bandFallback';
+import { bandRungsForPos, collectBandCands } from '@/app/recommend/logic/repair/bandFallback';
 import { flatAdoptedPool } from '@/app/recommend/logic/repair/pool';
 import { filterUsageAvail } from '@/app/recommend/logic/repair/usageLimit';
 import { sortPickedAsc } from '@/app/recommend/logic/repair/runLen';
@@ -31,6 +31,7 @@ export const sequentialPickByBands = (
   minSum: number,
   maxSum: number,
   pickCtx: RepairPickCtx = {},
+  bandLadder?: readonly (readonly number[])[],
 ): number[] | null => {
   if (bandTargets.length !== 6) return null;
   const flat = flatAdoptedPool(poolByBand);
@@ -40,40 +41,43 @@ export const sequentialPickByBands = (
   const used = new Set<number>();
 
   for (let pos = 0; pos < 6; pos++) {
-    const band = bandTargets[pos]!;
-    let candidates = collectBandCands(poolByBand, band, used, pickCtx);
-    if (candidates.length === 0) {
-      candidates = filterUsageAvail(flat.filter((n) => !used.has(n)), pickCtx.usage);
-    }
-    candidates = candidates.filter((n) => {
-      const usage = pickCtx.usage?.get(n) ?? 0;
-      return usage < MAX_NUM_USAGE;
-    });
-    candidates.sort((a, b) => a - b);
-
+    const rungs = bandRungsForPos(pos, bandTargets, bandLadder);
     const partialSum = picked.reduce((a, b) => a + b, 0);
     const remainingAfter = 5 - pos;
     let chosen: number | null = null;
 
-    for (const n of candidates) {
-      if (used.has(n)) continue;
-      const nextPartial = partialSum + n;
-      const availAfter = filterUsageAvail(
-        flat.filter((x) => !used.has(x) && x !== n),
-        pickCtx.usage,
-      ).sort((a, b) => a - b);
+    for (const band of rungs) {
+      if (chosen !== null) break;
+      let candidates = collectBandCands(poolByBand, band, used, pickCtx);
+      if (candidates.length === 0) {
+        candidates = filterUsageAvail(flat.filter((n) => !used.has(n)), pickCtx.usage);
+      }
+      candidates = candidates.filter((n) => {
+        const usage = pickCtx.usage?.get(n) ?? 0;
+        return usage < MAX_NUM_USAGE;
+      });
+      candidates.sort((a, b) => a - b);
 
-      if (remainingAfter === 0) {
-        if (nextPartial >= minSum && nextPartial <= maxSum) {
+      for (const n of candidates) {
+        if (used.has(n)) continue;
+        const nextPartial = partialSum + n;
+        const availAfter = filterUsageAvail(
+          flat.filter((x) => !used.has(x) && x !== n),
+          pickCtx.usage,
+        ).sort((a, b) => a - b);
+
+        if (remainingAfter === 0) {
+          if (nextPartial >= minSum && nextPartial <= maxSum) {
+            chosen = n;
+            break;
+          }
+          continue;
+        }
+
+        if (sumRangeFeasible(nextPartial, remainingAfter, availAfter, minSum, maxSum)) {
           chosen = n;
           break;
         }
-        continue;
-      }
-
-      if (sumRangeFeasible(nextPartial, remainingAfter, availAfter, minSum, maxSum)) {
-        chosen = n;
-        break;
       }
     }
 

@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
+import { sliceLatestStatsHistory } from '@/lib/pickStatsHistory';
+import { STATS_POSITION_BAND_WINDOW, STATS_WINDOW_DRAWS } from '@/lib/statsWindow';
 import { loadCombinationHistory } from '../api/loadHistory';
-import { runComboAnalysis } from '../logic/runComboAnalysis';
+import { buildPositionBandDistribution } from '../logic/buildPositionBandDistribution';
+import { buildSumExtremeStats } from '../logic/buildSumExtremeStats';
 import type { PositionBandDistributionRow, SumExtremeStats } from '../types';
 
 export type UseCombinationAnalysisDataResult = {
@@ -26,20 +29,22 @@ export function useCombinationAnalysisData(): UseCombinationAnalysisDataResult {
       setIsLoading(true);
       setLoadError(null);
       try {
-        const sortedRows = await loadCombinationHistory({ signal: abortController.signal });
+        const allRows = await loadCombinationHistory({ signal: abortController.signal });
         if (!isMounted) return;
 
-        if (sortedRows.length === 0) {
+        if (allRows.length === 0) {
           setTotalDraws(0);
           setPositionBandRows([]);
           setSumExtremeStats(null);
           return;
         }
 
-        const result = runComboAnalysis(sortedRows);
-        setTotalDraws(result.totalDraws);
-        setPositionBandRows(result.positionBandRows);
-        setSumExtremeStats(result.sumExtremeStats);
+        const positionRows = sliceLatestStatsHistory(allRows, STATS_POSITION_BAND_WINDOW);
+        const sumRows = sliceLatestStatsHistory(allRows, STATS_WINDOW_DRAWS);
+        const positionBand = buildPositionBandDistribution(positionRows);
+        setTotalDraws(positionBand.totalDraws);
+        setPositionBandRows(positionBand.rows);
+        setSumExtremeStats(buildSumExtremeStats(sumRows));
       } catch (error) {
         if (abortController.signal.aborted || !isMounted) return;
         console.error('Error loading combination analysis:', error);

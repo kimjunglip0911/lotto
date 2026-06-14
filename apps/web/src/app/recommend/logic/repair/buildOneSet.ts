@@ -23,6 +23,7 @@ export const buildOneSetWithFallback = (
     constraints.minSum,
     constraints.maxSum,
     pickCtx,
+    constraints.bandLadder,
   );
   if (sequential) return { sorted: sequential, usedFallback: false };
 
@@ -40,7 +41,12 @@ export const buildOneSetWithFallback = (
   const attemptDraws: number[][] = [];
 
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
-    const picked = randomPerPositionPick(poolByBand, constraints.bandTargets, pickCtx);
+    const picked = randomPerPositionPick(
+      poolByBand,
+      constraints.bandTargets,
+      pickCtx,
+      constraints.bandLadder,
+    );
     if (!picked) continue;
     if (!firstDraw) firstDraw = [...picked];
     attemptDraws.push([...picked]);
@@ -61,7 +67,12 @@ export const buildOneSetWithFallback = (
   if (fromBases) return { sorted: fromBases, usedFallback: true };
 
   for (let extra = 0; extra < maxAttempts; extra++) {
-    const picked = randomPerPositionPick(poolByBand, constraints.bandTargets, pickCtx);
+    const picked = randomPerPositionPick(
+      poolByBand,
+      constraints.bandTargets,
+      pickCtx,
+      constraints.bandLadder,
+    );
     if (!picked) continue;
     const work = [...picked];
     if (repairFallbackUntil(work, constraints, poolByBand, pickCtx, 'both')) {

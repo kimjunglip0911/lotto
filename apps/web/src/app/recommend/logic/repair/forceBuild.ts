@@ -29,7 +29,12 @@ export const forceBuildOneSet = (
   const seedAttempts = heavySearch ? MAX_SEED_ATTEMPTS : 20;
 
   for (let attempt = 0; attempt < seedAttempts; attempt++) {
-    const picked = randomPerPositionPick(poolByBand, constraints.bandTargets, pickCtx);
+    const picked = randomPerPositionPick(
+      poolByBand,
+      constraints.bandTargets,
+      pickCtx,
+      constraints.bandLadder,
+    );
     if (!picked) continue;
     const work = [...picked];
     if (aggressiveRepairUntilOk(work, constraints, poolByBand, pickCtx)) {
@@ -64,7 +69,12 @@ export const forceBuildOneSet = (
     }
   }
 
-  const seed = randomPerPositionPick(poolByBand, constraints.bandTargets, pickCtx);
+  const seed = randomPerPositionPick(
+    poolByBand,
+    constraints.bandTargets,
+    pickCtx,
+    constraints.bandLadder,
+  );
   if (seed) {
     const bfs = bfsRepairUntilOk(seed, constraints, poolByBand, pickCtx, bfsCap);
     if (bfs) return bfs;

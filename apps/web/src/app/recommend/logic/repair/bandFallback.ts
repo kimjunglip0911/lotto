@@ -18,6 +18,24 @@ export const isBandFallbackOk = (targetBand: number, actualBand: number): boolea
 export const matchesBandTarget = (targetBand: number, actualBand: number): boolean =>
   targetBand === actualBand || isBandFallbackOk(targetBand, actualBand);
 
+export const bandRungsForPos = (
+  pos: number,
+  bandTargets: readonly number[],
+  bandLadder?: readonly (readonly number[])[],
+): readonly number[] => {
+  const rungs = bandLadder?.[pos];
+  if (rungs && rungs.length > 0) return rungs;
+  return [bandTargets[pos]!];
+};
+
+export const matchesBandAtPos = (
+  pos: number,
+  actualBand: number,
+  bandTargets: readonly number[],
+  bandLadder?: readonly (readonly number[])[],
+): boolean =>
+  bandRungsForPos(pos, bandTargets, bandLadder).some((b) => matchesBandTarget(b, actualBand));
+
 const midBandIndices = (): number[] =>
   Array.from(
     { length: MID_BAND_MAX_INDEX - MID_BAND_MIN_INDEX + 1 },

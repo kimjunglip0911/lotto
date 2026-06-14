@@ -39,7 +39,8 @@ export { buildOneSetWithFallback } from '@/app/recommend/logic/repair/buildOneSe
 export { sequentialPickByBands } from '@/app/recommend/logic/repair/sequentialPick';
 export { forceBuildOneSet } from '@/app/recommend/logic/repair/forceBuild';
 export { diagnoseProfileBuild } from '@/app/recommend/logic/repair/diagnose';
-export { canPickBandSkeleton } from '@/app/recommend/logic/repair/backtrack';
+export { backtrackPositionPicks, backtrackBuildOneSet, canPickBandSkeleton } from '@/app/recommend/logic/repair/backtrack';
+export { buildUnusedPoolSet, buildTailUnusedSet } from '@/app/recommend/logic/repair/unusedPool';
 export {
   canUseNum,
   filterUsageAvail,

@@ -1,11 +1,39 @@
 import { MAX_BACKTRACK_NODES } from '@/app/recommend/constants/repairLimits';
 import type { ProfileConstraints, RepairPickCtx } from '@/app/recommend/logic/repair/types';
+import { bandRungsForPos, collectBandCands } from '@/app/recommend/logic/repair/bandFallback';
 import { diverseCandidateOrder } from '@/app/recommend/logic/repair/diverse';
-import { collectBandCands } from '@/app/recommend/logic/repair/bandFallback';
+import { isSetWithinUsageLimit } from '@/app/recommend/logic/repair/usageLimit';
 import { validatePickedSet } from '@/app/recommend/logic/repair/validate';
 import { sortPickedAsc } from '@/app/recommend/logic/repair/runLen';
 
 const MAX_BACKTRACK_CANDS_PER_POS = 9;
+
+const setKeyFromSorted = (sorted: readonly number[]): string => [...sorted].join(',');
+
+const candsForPos = (
+  poolByBand: ReadonlyMap<number, number[]>,
+  constraints: ProfileConstraints,
+  pickCtx: RepairPickCtx,
+  pos: number,
+  picked: number[],
+): number[] => {
+  const used = new Set(picked);
+  const rungs = bandRungsForPos(pos, constraints.bandTargets, constraints.bandLadder);
+  const seen = new Set<number>();
+  const merged: number[] = [];
+  for (const band of rungs) {
+    for (const n of diverseCandidateOrder(
+      collectBandCands(poolByBand, band, used, pickCtx),
+      pickCtx,
+    )) {
+      if (seen.has(n)) continue;
+      seen.add(n);
+      merged.push(n);
+      if (merged.length >= MAX_BACKTRACK_CANDS_PER_POS) return merged;
+    }
+  }
+  return merged;
+};
 
 /** band 골격·전체 제약 백트래킹 */
 
@@ -43,23 +71,31 @@ export const backtrackBuildOneSet = (
   pos: number,
   picked: number[],
   nodes: { count: number },
+  usedKeys: ReadonlySet<string> = new Set(),
 ): number[] | null => {
   if (nodes.count >= MAX_BACKTRACK_NODES) return null;
   nodes.count++;
   if (pos === 6) {
     const state = validatePickedSet(picked, constraints);
-    return state.ok ? sortPickedAsc(picked) : null;
+    if (!state.ok) return null;
+    const sorted = sortPickedAsc(picked);
+    if (usedKeys.has(setKeyFromSorted(sorted))) return null;
+    if (!isSetWithinUsageLimit(sorted, pickCtx.usage)) return null;
+    return sorted;
   }
-  const band = constraints.bandTargets[pos]!;
-  const used = new Set(picked);
-  const candidates = diverseCandidateOrder(
-    collectBandCands(poolByBand, band, used, pickCtx),
-    pickCtx,
-  ).slice(0, MAX_BACKTRACK_CANDS_PER_POS);
+  const candidates = candsForPos(poolByBand, constraints, pickCtx, pos, picked);
   if (candidates.length === 0) return null;
   for (const n of candidates) {
     picked.push(n);
-    const found = backtrackBuildOneSet(poolByBand, constraints, pickCtx, pos + 1, picked, nodes);
+    const found = backtrackBuildOneSet(
+      poolByBand,
+      constraints,
+      pickCtx,
+      pos + 1,
+      picked,
+      nodes,
+      usedKeys,
+    );
     if (found) return found;
     picked.pop();
   }

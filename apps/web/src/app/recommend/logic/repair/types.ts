@@ -19,6 +19,8 @@ export type ProfileConstraints = {
   minSum: number;
   maxSum: number;
   bandTargets: readonly number[];
+  /** 자리별 1등→2등→… band 인덱스. 있으면 해당 rung 중 하나면 band OK */
+  bandLadder?: readonly (readonly number[])[];
 };
 
 export type ValidateResult = {

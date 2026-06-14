@@ -27,6 +27,9 @@ export {
   buildBandTargetsForRank,
   buildBandTargetsForRankCascade,
   buildBandTargetsPerPosition,
+  buildBandLadderForRankCascade,
+  primaryBandTargetsFromLadder,
+  bandTierForRank,
 } from '@/app/recommend/logic/combo/buildBandTargets';
 
 export {
