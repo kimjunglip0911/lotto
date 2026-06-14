@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { WinningNumberRow } from '@/lib/accu-nums/types';
 import type { PositionBandDistributionRow } from '@/app/combination/types';
+import type { GeneratedSet } from '@/app/recommend/types/generatedSet';
 import {
   bandInnerSlot,
   buildBandTargetsForRank,
@@ -66,23 +67,26 @@ describe('bandInnerSlot', () => {
 });
 
 describe('bandTierForRank', () => {
-  it('모든 rank는 1등 band tier를 사용한다', () => {
+  it('rank N은 tier N을 사용한다', () => {
     expect(BAND_LADDER_START_TIER).toBe(1);
     expect(bandTierForRank(1)).toBe(1);
-    expect(bandTierForRank(19)).toBe(1);
-    expect(bandTierForRank(20)).toBe(1);
+    expect(bandTierForRank(19)).toBe(19);
+    expect(bandTierForRank(20)).toBe(20);
   });
 
-  it('rank1과 rank20의 cascade band 목표가 같다', () => {
+  it('rank1과 rank2의 cascade band 목표가 다르다', () => {
     const rows: PositionBandDistributionRow[] = [];
     for (let pos = 1; pos <= 6; pos++) {
       rows.push({ position: pos, bandLabel: '1', drawCount: 10, percentage: 50 });
       rows.push({ position: pos, bandLabel: '2', drawCount: 5, percentage: 25 });
+      rows.push({ position: pos, bandLabel: '3', drawCount: 2, percentage: 10 });
     }
     const flat = [rows];
-    expect(buildBandTargetsForRankCascade(flat, 1)).toEqual(buildBandTargetsForRankCascade(flat, 1));
-    const ladder = buildBandLadderForRankCascade(flat)!;
-    expect(primaryBandTargetsFromLadder(ladder)).toEqual(buildBandTargetsForRankCascade(flat, 1));
+    const t1 = buildBandTargetsForRankCascade(flat, 1)!;
+    const t2 = buildBandTargetsForRankCascade(flat, 2)!;
+    expect(t1).not.toEqual(t2);
+    const ladder1 = buildBandLadderForRankCascade(flat, 1)!;
+    expect(primaryBandTargetsFromLadder(ladder1)).toEqual(t1);
   });
 });
 
@@ -153,10 +157,10 @@ describe('generateCombinationBasedSets', () => {
     expect(r.warning).toBeTruthy();
   });
 
-  it('이력이 비어 있으면 합산 통계 부재로 세트를 만들지 않는다', async () => {
+  it('이력이 비어 있으면 자리대 통계 부재로 세트를 만들지 않는다', async () => {
     const r = await generateCombinationBasedSets([], [], Array.from({ length: 20 }, (_, i) => i + 1), 0);
     expect(r.sets).toHaveLength(0);
-    expect(r.summaryLines.some((l) => l.includes('고저 합산'))).toBe(true);
+    expect(r.summaryLines.some((l) => l.includes('자리대'))).toBe(true);
   });
 
   it(
@@ -168,7 +172,7 @@ describe('generateCombinationBasedSets', () => {
       expect(r.sets.length).toBeGreaterThan(0);
       expect(r.sets.length).toBeLessThanOrEqual(TARGET_SET_COUNT);
       expect(r.sets.every((s) => /^combo:rank\d+$/.test(s.strategy ?? ''))).toBe(true);
-      expect(r.summaryLines.some((l) => l.includes('고저 합산'))).toBe(true);
+      expect(r.summaryLines.some((l) => l.includes('미적용'))).toBe(true);
       expect(r.summaryLines.some((l) => l.includes('ladder'))).toBe(true);
       expect(r.summaryLines.some((l) => l.includes('rank 1~20'))).toBe(true);
       const keys = new Set(

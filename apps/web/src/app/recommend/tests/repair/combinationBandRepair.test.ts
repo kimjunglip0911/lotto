@@ -47,7 +47,7 @@ describe('buildHistCounts', () => {
 })
 
 describe('repairOneStep', () => {
-  it('band 위반 자리는 목표 band·폴백 band(16~30) 후보로 수리한다', () => {
+  it('band 위반 자리는 ladder 후보로 수리한다', () => {
     const pool = Array.from({ length: 30 }, (_, i) => i + 1)
     const poolByBand = buildPoolByBand(pool)
     const picked = [1, 2, 3, 4, 35, 6]
@@ -55,6 +55,7 @@ describe('repairOneStep', () => {
       minSum: 50,
       maxSum: 200,
       bandTargets: [0, 1, 2, 3, 4, 5],
+      bandLadder: [[0], [1], [2], [3], [4, 5], [5]],
     };
     const usage = new Map<number, number>()
     for (let i = 1; i <= 30; i++) usage.set(i, 0)
@@ -66,7 +67,7 @@ describe('repairOneStep', () => {
     expect(picked[4]).toBe(5)
   })
 
-  it('번호 1~15 목표에 16~30 번호는 band 위반이 아니다', () => {
+  it('목표 band와 다른 band 번호는 band 위반이다', () => {
     const picked = [16, 17, 18, 19, 20, 21]
     const constraints = {
       minSum: 50,
@@ -74,7 +75,7 @@ describe('repairOneStep', () => {
       bandTargets: [0, 1, 2, 2, 2, 5],
     };
     const before = validatePickedSet(picked, constraints)
-    expect(before.violations).not.toContain('band')
+    expect(before.violations).toContain('band')
   })
 })
 
@@ -165,20 +166,19 @@ describe('buildMetricsOnlyFromPool', () => {
 })
 
 describe('buildOneSetWithFallback', () => {
-  it('PROFILE_BUILD_ATTEMPTS회 실패 시 폴백으로 band를 맞춘 6개를 반환한다', () => {
+  it('band skeleton 불가 시 metricsOnly 폴백으로 6개를 반환한다', () => {
     const pool = Array.from({ length: 30 }, (_, i) => i + 1);
     const poolByBand = buildPoolByBand(pool);
     const constraints = {
-      minSum: 1,
-      maxSum: 2,
-      bandTargets: [0, 1, 2, 3, 4, 5],
+      minSum: 21,
+      maxSum: 255,
+      bandTargets: [0, 1, 2, 3, 4, 44],
     };
     const r = buildOneSetWithFallback(poolByBand, constraints, {}, PROFILE_BUILD_ATTEMPTS)
     expect(r).not.toBeNull()
     if (!r) return
     expect(r.picked).toHaveLength(6)
     expect(r.usedFallback).toBe(true)
-    expect(hasFallbackMetricOk(r.picked, constraints)).toBe(true)
     expect(validateSet(r.picked, constraints).ok).toBe(false)
   })
 })

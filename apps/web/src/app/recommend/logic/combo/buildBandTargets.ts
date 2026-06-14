@@ -6,14 +6,14 @@ import {
   sortRowsForPosition,
 } from '@/app/combination/logic/rankPositionBands';
 
-/** @deprecated BAND_LADDER_START_TIER(1) 사용 — rank마다 tier를 올리지 않음 */
-export const bandTierForRank = (_rank: number): number => BAND_LADDER_START_TIER;
+/** rank N 세트는 N등 band부터 ladder 시작 */
+export const bandTierForRank = (rank: number): number => rank;
 
-/** ladder[i][0] = 자리 i+1의 1등(또는 tier 시작) band 인덱스 */
+/** ladder[i][0] = 자리 i+1의 tier 시작 band 인덱스 */
 export const primaryBandTargetsFromLadder = (ladder: readonly (readonly number[])[]): number[] =>
   ladder.map((rungs) => rungs[0]!);
 
-/** cascade 통계에서 자리별 1등→2등→… band ladder (기본 tier=1등) */
+/** cascade 통계에서 자리별 tier등→다음등→… band ladder (tier=rank) */
 export const buildBandLadderForRankCascade = (
   flatByWindow: readonly (readonly PositionBandDistributionRow[])[],
   tier: number = BAND_LADDER_START_TIER,

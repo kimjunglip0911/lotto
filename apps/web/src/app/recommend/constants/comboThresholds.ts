@@ -5,7 +5,11 @@ export const TARGET_SET_COUNT = 20;
 /** 20세트 전체에서 동일 번호 최대 사용 횟수 */
 export const MAX_NUM_USAGE = 3;
 
-/** 모든 rank 슬롯의 band ladder 시작 tier(항상 1등) */
+/** 고저 미적용 시 허용 합산 하한·상한 (1+2+3+4+5+6 ~ 40+41+42+43+44+45) */
+export const LOTTO_SUM_MIN = 21;
+export const LOTTO_SUM_MAX = 255;
+
+/** rank 1의 band ladder 시작 tier(1등). rank N은 tier N 사용 */
 export const BAND_LADDER_START_TIER = 1;
 
 /** 자리별 band 순위 ladder 최대 깊이(1등→2등→… per position, 최대 45) */

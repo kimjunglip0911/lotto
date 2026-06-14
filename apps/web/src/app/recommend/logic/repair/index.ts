@@ -50,6 +50,5 @@ export {
 } from '@/app/recommend/logic/repair/usageLimit';
 export {
   collectBandCands,
-  isBandFallbackOk,
   matchesBandTarget,
 } from '@/app/recommend/logic/repair/bandFallback';

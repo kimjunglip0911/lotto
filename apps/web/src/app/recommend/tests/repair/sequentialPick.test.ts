@@ -1,20 +1,20 @@
 import { describe, expect, it } from 'vitest';
 import { buildPoolByBand, sequentialPickByBands } from '@/app/recommend/logic/repair';
+import { LOTTO_SUM_MAX, LOTTO_SUM_MIN } from '@/app/recommend/constants/comboThresholds';
 
 describe('sequentialPickByBands', () => {
-  it('1구간부터 순차 선택하고 고저 합 구간을 만족한다', () => {
+  it('1구간부터 순차 선택하고 6개 중복 없이 고른다', () => {
     const pool = Array.from({ length: 30 }, (_, i) => i + 1);
     const poolByBand = buildPoolByBand(pool);
     const bandTargets = [0, 5, 10, 15, 20, 25];
     const usage = new Map<number, number>();
     for (const n of pool) usage.set(n, 0);
 
-    const picked = sequentialPickByBands(poolByBand, bandTargets, 50, 200, { usage });
+    const picked = sequentialPickByBands(poolByBand, bandTargets, LOTTO_SUM_MIN, LOTTO_SUM_MAX, {
+      usage,
+    });
     expect(picked).not.toBeNull();
     if (!picked) return;
-    const sum = picked.reduce((a, b) => a + b, 0);
-    expect(sum).toBeGreaterThanOrEqual(50);
-    expect(sum).toBeLessThanOrEqual(200);
     expect(new Set(picked).size).toBe(6);
   });
 
@@ -33,7 +33,14 @@ describe('sequentialPickByBands', () => {
     const usage = new Map<number, number>();
     for (const n of pool) usage.set(n, 0);
 
-    const picked = sequentialPickByBands(poolByBand, bandTargets, 21, 60, { usage }, bandLadder);
+    const picked = sequentialPickByBands(
+      poolByBand,
+      bandTargets,
+      LOTTO_SUM_MIN,
+      LOTTO_SUM_MAX,
+      { usage },
+      bandLadder,
+    );
     expect(picked).not.toBeNull();
     if (!picked) return;
     expect(picked).toContain(1);
@@ -51,8 +58,8 @@ describe('sequentialPickByBands', () => {
     const picked = sequentialPickByBands(
       poolByBand,
       [0, 1, 2, 3, 4, 5],
-      89,
-      179,
+      LOTTO_SUM_MIN,
+      LOTTO_SUM_MAX,
       { usage },
       ladder,
     );
@@ -60,11 +67,12 @@ describe('sequentialPickByBands', () => {
     expect(picked).toContain(3);
   });
 
-  it('고저 구간 밖이면 null을 반환한다', () => {
+  it('고저 구간과 무관하게 선택한다', () => {
     const pool = Array.from({ length: 20 }, (_, i) => i + 1);
     const poolByBand = buildPoolByBand(pool);
     const bandTargets = [0, 1, 2, 3, 4, 5];
     const picked = sequentialPickByBands(poolByBand, bandTargets, 500, 600, {});
-    expect(picked).toBeNull();
+    expect(picked).not.toBeNull();
+    expect(new Set(picked!).size).toBe(6);
   });
 });
