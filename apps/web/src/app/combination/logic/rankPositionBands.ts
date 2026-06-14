@@ -44,6 +44,34 @@ export const pickBandIndexForRank = (
   return null;
 };
 
+/** drawCount > 0인 band만 유지(정렬 순서 유지). */
+export const filterAppearedBands = (
+  sorted: readonly PositionBandDistributionRow[],
+): PositionBandDistributionRow[] => sorted.filter((row) => row.drawCount > 0);
+
+/**
+ * 다중 윈도우 cascade: 3개월→6개월→1년 순으로 출현 band만 순위 매김.
+ * rankIdx는 0부터(1등=0). cascade로도 부족하면 최장 윈도우 pickBandIndexForRank tail로 보충.
+ */
+export const pickBandIndexForCascadeRank = (
+  windowsSorted: readonly (readonly PositionBandDistributionRow[])[],
+  rankIdx: number,
+): number | null => {
+  let offset = rankIdx;
+  for (const sorted of windowsSorted) {
+    const appeared = filterAppearedBands(sorted);
+    if (offset < appeared.length) {
+      return bandIndexFromLabel(appeared[offset]!.bandLabel);
+    }
+    offset -= appeared.length;
+  }
+  const lastSorted = windowsSorted[windowsSorted.length - 1];
+  if (lastSorted && lastSorted.length > 0) {
+    return pickBandIndexForRank(lastSorted, rankIdx);
+  }
+  return null;
+};
+
 export function rankPositionBandRows(
   rows: readonly PositionBandDistributionRow[],
 ): PositionBandRankRow[] {

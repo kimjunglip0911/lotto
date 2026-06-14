@@ -25,6 +25,7 @@ export { effectiveBandRankIdx } from '@/app/recommend/logic/combo/bandRankPick';
 
 export {
   buildBandTargetsForRank,
+  buildBandTargetsForRankCascade,
   buildBandTargetsPerPosition,
 } from '@/app/recommend/logic/combo/buildBandTargets';
 

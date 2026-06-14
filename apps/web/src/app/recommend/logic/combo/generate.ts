@@ -6,7 +6,7 @@ import { MAX_NUM_USAGE, TARGET_SET_COUNT } from '@/app/recommend/constants/combo
 import { PROFILE_BUILD_ATTEMPTS } from '@/app/recommend/constants/repairLimits';
 import type { GeneratedSet } from '@/app/recommend/types/generatedSet';
 import { buildPoolByBand } from '@/app/recommend/logic/repair';
-import { buildBandTargetsForRank } from '@/app/recommend/logic/combo/buildBandTargets';
+import { buildBandTargetsForRankCascade } from '@/app/recommend/logic/combo/buildBandTargets';
 import { fillFallbackSlots } from '@/app/recommend/logic/combo/fillFallback';
 import { withSortedMains } from '@/app/recommend/logic/combo/sortMains';
 import {
@@ -15,7 +15,7 @@ import {
   type FillCtx,
 } from '@/app/recommend/logic/combo/fillSlots';
 import { setsInProfileSlotOrder } from '@/app/recommend/logic/combo/orderSets';
-import { STATS_WINDOW_LABEL } from '@/lib/statsWindow';
+import { STATS_BAND_CASCADE_LABEL } from '@/lib/statsWindow';
 import { DEFAULT_REPAIR_YIELD_EVERY, MAX_PRIORITY_ROUNDS } from '@/app/recommend/logic/combo/yieldMain';
 
 export type CombinationGenerationResult = {
@@ -24,18 +24,19 @@ export type CombinationGenerationResult = {
   warning: string | null;
 };
 
-/** 1~45 전체 풀·당첨 이력 통계(상위에서 3개월 윈도우 적용)로 최대 20세트 생성 */
+/** 1~45 전체 풀·고저=전체 누적·자리대=3→6→12개월 cascade로 최대 20세트 생성 */
 
 export const generateCombinationBasedSets = async (
-  fullHistory: readonly WinningNumberRow[],
+  sumHistory: readonly WinningNumberRow[],
+  bandWindowHistories: readonly (readonly WinningNumberRow[])[],
   numberPool: readonly number[],
   _referenceDrawNo: number,
   repairYieldEvery: number = DEFAULT_REPAIR_YIELD_EVERY,
 ): Promise<CombinationGenerationResult> => {
   const summaryLines: string[] = [];
 
-  const sortedHistory = [...fullHistory].sort((a, b) => a.draw_no - b.draw_no).map(withSortedMains);
-  const sumStats = buildSumExtremeStats(sortedHistory);
+  const sortedSumHistory = [...sumHistory].sort((a, b) => a.draw_no - b.draw_no).map(withSortedMains);
+  const sumStats = buildSumExtremeStats(sortedSumHistory);
   if (!sumStats || sumStats.trimmedMinSum === null || sumStats.trimmedMaxSum === null) {
     return {
       sets: [],
@@ -46,11 +47,25 @@ export const generateCombinationBasedSets = async (
 
   const minSum = sumStats.trimmedMinSum;
   const maxSum = sumStats.trimmedMaxSum;
-  const positionBand = buildPositionBandDistribution(sortedHistory);
 
   summaryLines.push(
-    `고저 합산 허용 구간: ${minSum} ~ ${maxSum} (최근 ${sumStats.totalDraws}회차·${STATS_WINDOW_LABEL} 기준 극단 제외 후)`,
+    `고저 합산 허용 구간: ${minSum} ~ ${maxSum} (전체 누적 ${sumStats.totalDraws}회차·극단 제외 후)`,
   );
+
+  const flatByWindow = bandWindowHistories.map((hist) => {
+    const sorted = [...hist].sort((a, b) => a.draw_no - b.draw_no).map(withSortedMains);
+    return buildPositionBandDistribution(sorted).rows;
+  });
+
+  if (flatByWindow.length === 0 || flatByWindow.every((rows) => rows.length === 0)) {
+    return {
+      sets: [],
+      summaryLines: [...summaryLines, '자리대 band 통계를 계산할 수 없습니다.'],
+      warning: '자리대 통계 없음',
+    };
+  }
+
+  summaryLines.push(`자리대 순위: ${STATS_BAND_CASCADE_LABEL} cascade(출현 번호만 순위)`);
 
   const poolSorted = [...new Set(numberPool)].filter((n) => n >= 1 && n <= 45).sort((a, b) => a - b);
   if (poolSorted.length < 6) {
@@ -69,11 +84,11 @@ export const generateCombinationBasedSets = async (
 
   const targetsByRank = new Map<number, number[]>();
   for (const rank of COMBO_RANK_SLOT_ORDER) {
-    const targets = buildBandTargetsForRank(positionBand.rows, rank);
+    const targets = buildBandTargetsForRankCascade(flatByWindow, rank);
     if (!targets) {
       return {
         sets: [],
-        summaryLines: [...summaryLines, `rank${rank} 자리별 band 통계를 해석할 수 없습니다.`],
+        summaryLines: [...summaryLines, `rank${rank} 자리별 band cascade 통계를 해석할 수 없습니다.`],
         warning: '자리대 통계 없음',
       };
     }

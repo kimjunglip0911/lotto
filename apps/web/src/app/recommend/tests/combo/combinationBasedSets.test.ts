@@ -4,6 +4,7 @@ import type { PositionBandDistributionRow } from '@/app/combination/types';
 import {
   bandInnerSlot,
   buildBandTargetsForRank,
+  buildBandTargetsForRankCascade,
   buildBandTargetsPerPosition,
   COMBO_RANK_SLOT_ORDER,
   generateCombinationBasedSets,
@@ -37,21 +38,18 @@ function mkRow(drawNo: number, nums: [number, number, number, number, number, nu
   };
 }
 
-const SYNTHETIC_MAIN_PATTERNS: [number, number, number, number, number, number][] = [
-  [1, 2, 3, 4, 5, 6],
-  [15, 16, 17, 18, 19, 20],
-  [7, 8, 9, 10, 11, 12],
-  [2, 4, 6, 8, 10, 12],
-  [5, 7, 9, 11, 13, 15],
-  [3, 6, 9, 12, 15, 18],
-  [4, 8, 12, 16, 17, 18],
-  [1, 5, 10, 14, 18, 20],
-];
-
 function syntheticHistory(count: number): WinningNumberRow[] {
   const rows: WinningNumberRow[] = [];
   for (let i = 0; i < count; i++) {
-    const nums = SYNTHETIC_MAIN_PATTERNS[i % SYNTHETIC_MAIN_PATTERNS.length];
+    const base = (i % 40) + 1;
+    const nums: [number, number, number, number, number, number] = [
+      base,
+      ((base + 3) % 45) + 1,
+      ((base + 7) % 45) + 1,
+      ((base + 11) % 45) + 1,
+      ((base + 17) % 45) + 1,
+      ((base + 23) % 45) + 1,
+    ];
     rows.push(mkRow(i + 1, nums));
   }
   return rows;
@@ -61,6 +59,17 @@ describe('bandInnerSlot', () => {
   it('1단위 구간에서는 innerSlot이 항상 0이다', () => {
     expect(bandInnerSlot(1)).toBe(0);
     expect(bandInnerSlot(45)).toBe(0);
+  });
+});
+
+describe('buildBandTargetsForRankCascade', () => {
+  it('단일 윈도우면 buildBandTargetsForRank와 동일하게 동작한다', () => {
+    const rows: PositionBandDistributionRow[] = [];
+    for (let pos = 1; pos <= 6; pos++) {
+      rows.push({ position: pos, bandLabel: '1', drawCount: 10, percentage: 50 });
+      rows.push({ position: pos, bandLabel: '2', drawCount: 5, percentage: 25 });
+    }
+    expect(buildBandTargetsForRankCascade([rows], 1)).toEqual(buildBandTargetsForRank(rows, 1));
   });
 });
 
@@ -92,16 +101,21 @@ describe('COMBO_RANK_SLOT_ORDER', () => {
   });
 });
 
+function bandWindows(hist: WinningNumberRow[]): WinningNumberRow[][] {
+  const slice = (n: number) => (hist.length <= n ? hist : hist.slice(-n));
+  return [slice(13), slice(26), slice(52)];
+}
+
 describe('generateCombinationBasedSets', () => {
   it('번호 풀이 6개 미만이면 세트를 만들지 않는다', async () => {
     const hist = syntheticHistory(40);
-    const r = await generateCombinationBasedSets(hist, [1, 2, 3], 0);
+    const r = await generateCombinationBasedSets(hist, bandWindows(hist), [1, 2, 3], 0);
     expect(r.sets).toHaveLength(0);
     expect(r.warning).toBeTruthy();
   });
 
   it('이력이 비어 있으면 합산 통계 부재로 세트를 만들지 않는다', async () => {
-    const r = await generateCombinationBasedSets([], Array.from({ length: 20 }, (_, i) => i + 1), 0);
+    const r = await generateCombinationBasedSets([], [], Array.from({ length: 20 }, (_, i) => i + 1), 0);
     expect(r.sets).toHaveLength(0);
     expect(r.summaryLines.some((l) => l.includes('고저 합산'))).toBe(true);
   });
@@ -111,11 +125,12 @@ describe('generateCombinationBasedSets', () => {
     async () => {
       const hist = syntheticHistory(80);
       const numberPool = [...FULL_LOTTO_POOL];
-      const r = await generateCombinationBasedSets(hist, numberPool, 81);
+      const r = await generateCombinationBasedSets(hist, bandWindows(hist), numberPool, 81);
       expect(r.sets.length).toBeGreaterThan(0);
       expect(r.sets.length).toBeLessThanOrEqual(TARGET_SET_COUNT);
       expect(r.sets.every((s) => /^combo:(fallback:)?rank\d+$/.test(s.strategy ?? ''))).toBe(true);
       expect(r.summaryLines.some((l) => l.includes('고저 합산'))).toBe(true);
+      expect(r.summaryLines.some((l) => l.includes('cascade'))).toBe(true);
       expect(r.summaryLines.some((l) => l.includes('rank 1~20'))).toBe(true);
       const keys = new Set(
         r.sets.map((s) => [s.num1, s.num2, s.num3, s.num4, s.num5, s.num6].sort((a, b) => a - b).join(',')),

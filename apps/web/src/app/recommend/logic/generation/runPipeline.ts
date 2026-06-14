@@ -9,6 +9,7 @@ import {
 } from '@/app/recommend/helpers/genMessages';
 import { fetchGenerationInputs } from '@/app/recommend/logic/generation/fetchInputs';
 import { pickStatsHistory } from '@/lib/pickStatsHistory';
+import { STATS_BAND_CASCADE_WINDOWS } from '@/lib/statsWindow';
 import { assertSetsNonEmpty } from '@/app/recommend/logic/generation/validateGenSets';
 import {
   generateCombinationBasedSets,
@@ -27,10 +28,14 @@ export const runRecommendGeneration = async (
   phases?: GenerationPhaseHandlers,
 ): Promise<GenerationPipelineResult> => {
   const { fullHistory } = await fetchGenerationInputs(apiUrl);
-  const statsHistory = pickStatsHistory(fullHistory, selectedDraw);
+  const sumHistory = fullHistory.filter((r) => r.draw_no < selectedDraw);
+  const bandWindowHistories = STATS_BAND_CASCADE_WINDOWS.map((size) =>
+    pickStatsHistory(fullHistory, selectedDraw, size),
+  );
 
   const { sets, summaryLines, warning } = await generateCombinationBasedSets(
-    statsHistory,
+    sumHistory,
+    bandWindowHistories,
     FULL_LOTTO_POOL,
     selectedDraw,
   );

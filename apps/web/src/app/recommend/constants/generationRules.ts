@@ -3,5 +3,6 @@
 export const APPLIED_RULE_IDS = [
   'full-pool-45',
   'combination-rank-20sets',
-  'stats-window-three-month',
+  'stats-window-cascade-3-6-12',
+  'sum-stats-full-history',
 ] as const;
