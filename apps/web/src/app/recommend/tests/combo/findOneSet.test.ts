@@ -18,6 +18,7 @@ const callFindOne = (
   usage: Map<number, number>,
   innerSlotUsage: Map<string, number>,
   repairYieldEvery = 0,
+  avoidKeys: ReadonlySet<string> = new Set(),
 ) =>
   findOneSetForRank(
     poolByBand,
@@ -33,6 +34,7 @@ const callFindOne = (
     EMPTY_RANK_LOOKUP,
     EMPTY_DRAW_LOOKUP,
     repairYieldEvery,
+    avoidKeys,
   );
 
 describe('findOneSetForRank', () => {
@@ -130,5 +132,46 @@ describe('findOneSetForRank', () => {
 
     expect(rank19).not.toBeNull();
     expect(rank19!.strategy).toBe('combo:rank19');
+  });
+
+  it('avoidKeys에 있는 조합은 세트 후보에서 제외한다', async () => {
+    const pool = Array.from({ length: 45 }, (_, i) => i + 1);
+    const poolByBand = buildPoolByBand(pool);
+    const bandTargets = [0, 3, 8, 15, 22, 30];
+    const bandLadder = bandTargets.map((b, i) => [b, b + 1, b + 2 + i]);
+    const usage = new Map<number, number>(pool.map((n) => [n, 0]));
+    const innerSlotUsage = new Map<string, number>();
+    const usedKeys = new Set<string>();
+
+    const first = await callFindOne(
+      poolByBand,
+      1,
+      bandTargets,
+      bandLadder,
+      usedKeys,
+      usage,
+      innerSlotUsage,
+    );
+    expect(first).not.toBeNull();
+    const blockedKey = setKey([first!.num1, first!.num2, first!.num3, first!.num4, first!.num5, first!.num6]);
+
+    const nextUsage = new Map<number, number>(pool.map((n) => [n, 0]));
+    const nextInnerSlotUsage = new Map<string, number>();
+    const nextUsedKeys = new Set<string>();
+    const next = await callFindOne(
+      poolByBand,
+      1,
+      bandTargets,
+      bandLadder,
+      nextUsedKeys,
+      nextUsage,
+      nextInnerSlotUsage,
+      0,
+      new Set([blockedKey]),
+    );
+
+    expect(next).not.toBeNull();
+    const nextKey = setKey([next!.num1, next!.num2, next!.num3, next!.num4, next!.num5, next!.num6]);
+    expect(nextKey).not.toBe(blockedKey);
   });
 });

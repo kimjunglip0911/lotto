@@ -38,6 +38,7 @@ export type FillCtx = {
   positionDrawCountLookup: PositionDrawCountLookup;
   repairYieldEvery: number;
   profileSlots: (GeneratedSet | null)[];
+  pastWinningKeys: ReadonlySet<string>;
 };
 
 const FAILURE_REASON_KO: Record<ProfileFailureReason, string> = {
@@ -47,6 +48,17 @@ const FAILURE_REASON_KO: Record<ProfileFailureReason, string> = {
   constraints_unsat: '합·자리대를 동시에 맞출 조합 없음(탐색 한도 내)',
   duplicate_only: '조건은 맞지만 이미 만든 6개 번호 조합과 중복',
   usage_limit: `번호가 20세트 전체에서 ${MAX_NUM_USAGE}회 사용 한도에 도달`,
+};
+
+const EMPTY_AVOID_KEYS = new Set<string>();
+
+const mergeAvoidKeys = (
+  globalKeys: ReadonlySet<string>,
+  localKeys: ReadonlySet<string>,
+): ReadonlySet<string> => {
+  if (globalKeys.size === 0) return localKeys;
+  if (localKeys.size === 0) return globalKeys;
+  return new Set([...globalKeys, ...localKeys]);
 };
 
 const profileFailureSummary = (ctx: FillCtx, rank: number): string | null => {
@@ -89,7 +101,7 @@ export const appendMissingProfileDiagnostics = (
 export const tryFillOneSlot = async (
   ctx: FillCtx,
   slot: number,
-  avoidKeys: ReadonlySet<string> = new Set(),
+  avoidKeys: ReadonlySet<string> = EMPTY_AVOID_KEYS,
 ): Promise<boolean> => {
   if (ctx.profileSlots[slot]) return false;
   const rank = COMBO_RANK_SLOT_ORDER[slot];
@@ -98,6 +110,7 @@ export const tryFillOneSlot = async (
   const bandLadder = ctx.laddersByRank.get(rank);
   if (!bandTargets || !bandLadder) return false;
 
+  const blockedKeys = mergeAvoidKeys(ctx.pastWinningKeys, avoidKeys);
   const one = await findOneSetForRank(
     ctx.poolByBand,
     ctx.minSum,
@@ -112,7 +125,7 @@ export const tryFillOneSlot = async (
     ctx.positionRankLookup,
     ctx.positionDrawCountLookup,
     ctx.repairYieldEvery,
-    avoidKeys,
+    blockedKeys,
   );
   if (!one) return false;
   ctx.profileSlots[slot] = one;

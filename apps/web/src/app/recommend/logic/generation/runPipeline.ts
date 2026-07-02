@@ -11,6 +11,8 @@ import { fetchGenerationInputs } from '@/app/recommend/logic/generation/fetchInp
 import { pickStatsHistory } from '@/lib/pickStatsHistory';
 import { STATS_BAND_CASCADE_WINDOWS, STATS_POSITION_BAND_WINDOW } from '@/lib/statsWindow';
 import { assertSetsNonEmpty } from '@/app/recommend/logic/generation/validateGenSets';
+import { setKey } from '@/app/recommend/logic/combo/toSet';
+import { toMainNumbersOnly } from '@/lib/accu-nums/logic/numCounts';
 import {
   generateCombinationBasedSets,
   orderSetsByProfileSlots,
@@ -19,8 +21,19 @@ import type {
   GenerationPhaseHandlers,
   GenerationPipelineResult,
 } from '@/app/recommend/types/generationHook';
+import type { WinningNumberRow } from '@/lib/accu-nums/types';
 
 /** 20세트 생성·저장 파이프라인(React 상태 없음) */
+
+const buildPastWinningKeys = (
+  rows: readonly WinningNumberRow[],
+  referenceDrawNo: number,
+): ReadonlySet<string> =>
+  new Set(
+    rows
+      .filter((row) => row.draw_no < referenceDrawNo)
+      .map((row) => setKey(toMainNumbersOnly(row))),
+  );
 
 export const runRecommendGeneration = async (
   apiUrl: string,
@@ -32,12 +45,14 @@ export const runRecommendGeneration = async (
   const bandWindowHistories = STATS_BAND_CASCADE_WINDOWS.map((size) =>
     pickStatsHistory(fullHistory, selectedDraw, size),
   );
+  const pastWinningKeys = buildPastWinningKeys(fullHistory, selectedDraw);
 
   const { sets, summaryLines, warning } = await generateCombinationBasedSets(
     sumHistory,
     bandWindowHistories,
     FULL_LOTTO_POOL,
     selectedDraw,
+    { pastWinningKeys },
   );
   assertSetsNonEmpty(sets, summaryLines);
 

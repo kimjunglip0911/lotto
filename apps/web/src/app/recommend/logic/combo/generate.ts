@@ -37,6 +37,11 @@ export type CombinationGenerationResult = {
   warning: string | null;
 };
 
+export type CombinationGenerationOptions = {
+  repairYieldEvery?: number;
+  pastWinningKeys?: ReadonlySet<string>;
+};
+
 /** 1~45 전체 풀·자리대=최근 3년(156회) 표본·rank N=N등 band 시작으로 최대 20세트 생성 */
 
 export const generateCombinationBasedSets = async (
@@ -44,14 +49,17 @@ export const generateCombinationBasedSets = async (
   bandWindowHistories: readonly (readonly WinningNumberRow[])[],
   numberPool: readonly number[],
   referenceDrawNo: number,
-  repairYieldEvery: number = DEFAULT_REPAIR_YIELD_EVERY,
+  options: CombinationGenerationOptions = {},
 ): Promise<CombinationGenerationResult> => {
   const summaryLines: string[] = [];
+  const repairYieldEvery = options.repairYieldEvery ?? DEFAULT_REPAIR_YIELD_EVERY;
+  const pastWinningKeys = options.pastWinningKeys ?? new Set<string>();
 
   const minSum = LOTTO_SUM_MIN;
   const maxSum = LOTTO_SUM_MAX;
 
   summaryLines.push(`고저 합산: 미적용 (${minSum}~${maxSum} 전체 허용)`);
+  summaryLines.push(`과거 당첨 조합 제외: ${pastWinningKeys.size}개`);
 
   const flatByWindow = bandWindowHistories.map((hist) => {
     const sorted = [...hist].sort((a, b) => a.draw_no - b.draw_no).map(withSortedMains);
@@ -136,6 +144,7 @@ export const generateCombinationBasedSets = async (
     positionDrawCountLookup,
     repairYieldEvery,
     profileSlots,
+    pastWinningKeys,
   };
 
   for (let round = 0; round < MAX_PRIORITY_ROUNDS; round++) {

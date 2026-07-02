@@ -18,6 +18,7 @@ import { BAND_LADDER_START_TIER, MAX_NUM_USAGE } from '@/app/recommend/constants
 import { FULL_LOTTO_POOL } from '@/app/recommend/constants/lottoPool';
 import { numberToBandIndex } from '@/app/combination/logic/numberToBand';
 import { STATS_BAND_CASCADE_WINDOWS } from '@/lib/statsWindow';
+import { setKey } from '@/app/recommend/logic/combo/toSet';
 
 function countUsageInPool(sets: GeneratedSet[], pool: number[]): Map<number, number> {
   const u = new Map<number, number>(pool.map((n) => [n, 0]));
@@ -28,6 +29,9 @@ function countUsageInPool(sets: GeneratedSet[], pool: number[]): Map<number, num
   }
   return u;
 }
+
+const setKeyFromGenerated = (set: GeneratedSet): string =>
+  setKey([set.num1, set.num2, set.num3, set.num4, set.num5, set.num6]);
 
 function mkRow(drawNo: number, nums: [number, number, number, number, number, number]): WinningNumberRow {
   return {
@@ -178,7 +182,7 @@ describe('generateCombinationBasedSets', () => {
       expect(r.summaryLines.some((l) => l.includes('ladder'))).toBe(true);
       expect(r.summaryLines.some((l) => l.includes('rank 1~20'))).toBe(true);
       const keys = new Set(
-        r.sets.map((s) => [s.num1, s.num2, s.num3, s.num4, s.num5, s.num6].sort((a, b) => a - b).join(',')),
+        r.sets.map(setKeyFromGenerated),
       );
       expect(keys.size).toBe(r.sets.length);
       for (const s of r.sets) {
@@ -199,6 +203,30 @@ describe('generateCombinationBasedSets', () => {
         }
       }
       expect(bandsUsed.size).toBeGreaterThanOrEqual(12);
+    },
+    120_000,
+  );
+
+  it(
+    '과거 당첨 조합 키와 같은 세트는 결과에서 제외한다',
+    async () => {
+      const hist = syntheticHistory(80);
+      const numberPool = [...FULL_LOTTO_POOL];
+      const base = await generateCombinationBasedSets(hist, bandWindows(hist), numberPool, 81);
+      expect(base.sets.length).toBeGreaterThan(3);
+
+      const blockedKeys = new Set(base.sets.slice(0, 3).map(setKeyFromGenerated));
+      const filtered = await generateCombinationBasedSets(hist, bandWindows(hist), numberPool, 81, {
+        repairYieldEvery: 0,
+        pastWinningKeys: blockedKeys,
+      });
+      const filteredKeys = new Set(filtered.sets.map(setKeyFromGenerated));
+
+      expect(filtered.sets.length).toBeGreaterThan(0);
+      for (const key of blockedKeys) {
+        expect(filteredKeys.has(key)).toBe(false);
+      }
+      expect(filtered.summaryLines).toContain(`과거 당첨 조합 제외: ${blockedKeys.size}개`);
     },
     120_000,
   );
