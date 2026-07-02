@@ -40,6 +40,7 @@ lotto/
 │   │   └── src/
 │   │       ├── app/                   # App Router 엔트리
 │   │       │   ├── combination/       # 조합 분석 페이지 (/combination)
+│   │       │   ├── interval/          # 번호별 간격 페이지 (/interval)
 │   │       │   └── recommend/         # 번호 추천 (/recommend)
 │   │       └── lib/
 │   │           └── accu-nums/         # 당첨번호 API 클라이언트·타입(combination·recommend 공유)
@@ -85,4 +86,4 @@ lotto/
 
 ---
 
-*Last Updated: 2026-06-14 (app/analysis 삭제·lib/accu-nums 이전)*
+*Last Updated: 2026-07-02 (interval 페이지 추가)*

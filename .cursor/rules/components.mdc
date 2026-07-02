@@ -54,6 +54,7 @@ alwaysApply: false
 | `app/home/ui/` | 홈 화면 전용 UI (`LotteryGrid`, `SimulationStats`, `LotterySetList` 등) |
 | `app/recommend/ui/` | 추천 화면 전용 UI (`AnalysisController`, `AnalysisResultList`) |
 | `app/combination/ui/` | 조합 분석 전용 UI |
+| `app/interval/ui/` | 번호별 간격 전용 UI (`IntervalMain`, `GapTable`) |
 
 > 마이그레이션 중인 기존 코드는 `app/<route>/components/`에 남아 있을 수 있으나, 리팩터링 시 위 `ui/` 구조로 옮긴다.
 
