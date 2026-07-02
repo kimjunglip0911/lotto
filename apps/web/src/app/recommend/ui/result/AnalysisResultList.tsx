@@ -2,6 +2,7 @@
 
 import type { GeneratedSet } from '@/app/recommend/types/generatedSet';
 import type { PositionRankLookup } from '@/app/recommend/helpers/positionRankLookup';
+import type { GapRankLookup } from '@/app/recommend/types/gapRank';
 import { SetList } from '@/app/recommend/ui/result/SetList';
 
 /** 추천 생성 결과 요약·세트 목록 */
@@ -13,6 +14,7 @@ type Props = {
   sets?: GeneratedSet[];
   winningNumbers?: number[];
   rankLookup: PositionRankLookup;
+  gapLookup: GapRankLookup;
 };
 
 export const AnalysisResultList = ({
@@ -21,6 +23,7 @@ export const AnalysisResultList = ({
   combinationSummaryLines = [],
   sets = [],
   rankLookup,
+  gapLookup,
 }: Props) => {
   return (
     <div className="mt-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -43,7 +46,7 @@ export const AnalysisResultList = ({
           </div>
         ) : null}
 
-        <SetList sets={sets} rankLookup={rankLookup} />
+        <SetList sets={sets} rankLookup={rankLookup} gapLookup={gapLookup} />
       </div>
     </div>
   );

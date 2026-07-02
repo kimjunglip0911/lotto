@@ -180,7 +180,9 @@ describe('generateCombinationBasedSets', () => {
       expect(r.sets.every((s) => /^combo:rank\d+$/.test(s.strategy ?? ''))).toBe(true);
       expect(r.summaryLines.some((l) => l.includes('미적용'))).toBe(true);
       expect(r.summaryLines.some((l) => l.includes('ladder'))).toBe(true);
-      expect(r.summaryLines.some((l) => l.includes('rank 1~20'))).toBe(true);
+      expect(r.summaryLines.some((l) => l.includes('번호별 간격'))).toBe(true);
+      expect(r.summaryLines.some((l) => l.includes('RANK1~10'))).toBe(true);
+      expect(r.summaryLines.some((l) => l.includes('RANK11~20'))).toBe(true);
       const keys = new Set(
         r.sets.map(setKeyFromGenerated),
       );

@@ -1,5 +1,7 @@
 'use client';
 
+import { formatGapCell } from '@/app/recommend/helpers/formatGap';
+import { currentGapAtNumber, gapRankAtNumber } from '@/app/recommend/helpers/gapRankLookup';
 import {
   comboRankTitle,
   numsFromSet,
@@ -7,6 +9,7 @@ import {
   rankAtPosition,
   type PositionRankLookup,
 } from '@/app/recommend/helpers/positionRankLookup';
+import type { GapRankLookup } from '@/app/recommend/types/gapRank';
 import { getStrategyBadge } from '@/app/recommend/constants/resultView';
 import type { GeneratedSet } from '@/app/recommend/types/generatedSet';
 import { LotteryBall } from '@/components/ui/LotteryBall';
@@ -15,6 +18,7 @@ type Props = {
   set: GeneratedSet;
   index: number;
   rankLookup: PositionRankLookup;
+  gapLookup: GapRankLookup;
 };
 
 const cellClass =
@@ -24,7 +28,7 @@ const ballCellClass =
 const labelClass =
   'py-1 px-2 text-right text-xs font-medium text-slate-400 border border-white/[0.08] whitespace-nowrap bg-slate-900/40';
 
-export function SetRankTable({ set, index, rankLookup }: Props) {
+export function SetRankTable({ set, index, rankLookup, gapLookup }: Props) {
   const nums = numsFromSet(set);
   const title = comboRankTitle(set.strategy);
   const badge = set.strategy ? getStrategyBadge(set.strategy) : '';
@@ -65,6 +69,32 @@ export function SetRankTable({ set, index, rankLookup }: Props) {
                 return (
                   <td key={`rank-${slot}`} className={`${cellClass} text-sky-300`}>
                     {rank ?? '—'}
+                  </td>
+                );
+              })}
+            </tr>
+            <tr>
+              <th scope="row" className={labelClass}>
+                간격
+              </th>
+              {nums.map((num, i) => {
+                const gap = currentGapAtNumber(gapLookup, num);
+                return (
+                  <td key={`gap-${i}`} className={`${cellClass} text-amber-300`}>
+                    {formatGapCell(gap)}
+                  </td>
+                );
+              })}
+            </tr>
+            <tr>
+              <th scope="row" className={labelClass}>
+                간격순위
+              </th>
+              {nums.map((num, i) => {
+                const gapRank = gapRankAtNumber(gapLookup, num);
+                return (
+                  <td key={`gap-rank-${i}`} className={`${cellClass} text-amber-200/80`}>
+                    {gapRank ?? '—'}
                   </td>
                 );
               })}

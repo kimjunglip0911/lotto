@@ -18,6 +18,7 @@ import type {
   PositionDrawCountLookup,
   PositionRankLookup,
 } from '@/app/recommend/helpers/positionRankLookup';
+import type { GapRankLookup } from '@/app/recommend/types/gapRank';
 
 /** 한 rank 프로필에 맞는 세트 1개(기존 조합·번호 한도와 중복되지 않음) */
 
@@ -47,6 +48,7 @@ export const findOneSetForRank = async (
   positionDrawCountLookup: PositionDrawCountLookup,
   repairYieldEvery: number,
   avoidKeys: ReadonlySet<string> = new Set(),
+  gapRankLookup: GapRankLookup = new Map(),
 ): Promise<GeneratedSet | null> => {
   const pickCtx: RepairPickCtx = {
     usage,
@@ -54,6 +56,7 @@ export const findOneSetForRank = async (
     histCounts,
     positionRankLookup,
     positionDrawCountLookup,
+    gapRankLookup,
   };
   if (bandTargets.length !== 6 || bandLadder.length !== 6) return null;
 

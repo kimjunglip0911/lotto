@@ -40,7 +40,7 @@ export const randomPerPositionPick = (
     for (const band of rungs) {
       const candidates = collectBandCands(poolByBand, band, used, pickCtx);
       if (candidates.length === 0) continue;
-      pick = pickDiverseOne(candidates, pickCtx) ?? candidates[0]!;
+      pick = pickDiverseOne(candidates, pickCtx, i + 1) ?? candidates[0]!;
       break;
     }
     if (pick === null) return null;

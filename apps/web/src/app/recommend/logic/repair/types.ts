@@ -4,6 +4,7 @@ import type {
   PositionDrawCountLookup,
   PositionRankLookup,
 } from '@/app/recommend/helpers/positionRankLookup';
+import type { GapRankLookup } from '@/app/recommend/types/gapRank';
 
 export type ProfileFailureReason =
   | 'rank_unavailable'
@@ -42,6 +43,8 @@ export type RepairPickCtx = {
   positionRankLookup?: PositionRankLookup;
   /** 구간별 조합분석 총 회차(drawCount) lookup */
   positionDrawCountLookup?: PositionDrawCountLookup;
+  /** 번호별 현재 간격과 평균 간격의 근접 순위 */
+  gapRankLookup?: GapRankLookup;
 };
 
 export type RepairStepOptions = {

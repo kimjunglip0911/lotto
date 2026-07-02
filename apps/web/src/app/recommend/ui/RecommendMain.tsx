@@ -5,6 +5,7 @@ import { AnalysisController } from '@/app/recommend/ui/controller/AnalysisContro
 import { AnalysisResultList } from '@/app/recommend/ui/result/AnalysisResultList';
 import { useRecommendData } from '@/app/recommend/hooks/useRecommendData';
 import { useRecommendGeneration } from '@/app/recommend/hooks/useRecommendGeneration';
+import { useGapRankLookup } from '@/app/recommend/hooks/useGapRankLookup';
 import { usePositionRankLookup } from '@/app/recommend/hooks/usePositionRankLookup';
 import { useApiUrl } from '@/app/recommend/hooks/useApiUrl';
 
@@ -14,6 +15,7 @@ export const RecommendMain = () => {
   const apiUrl = useApiUrl();
   const data = useRecommendData();
   const rankLookup = usePositionRankLookup(apiUrl, data.selectedDraw);
+  const gapLookup = useGapRankLookup(apiUrl, data.selectedDraw);
   const gen = useRecommendGeneration({
     selectedDraw: data.selectedDraw,
     setGeneratedSets: data.setGeneratedSets,
@@ -42,6 +44,7 @@ export const RecommendMain = () => {
         sets={data.generatedSets}
         winningNumbers={data.winningNumbers ?? undefined}
         rankLookup={rankLookup}
+        gapLookup={gapLookup}
       />
     </main>
   );

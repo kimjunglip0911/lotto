@@ -3,6 +3,10 @@ import { buildPositionBandDistribution } from '@/app/combination/logic/buildPosi
 import { rankPositionBandRows } from '@/app/combination/logic/rankPositionBands';
 import { COMBO_RANK_SLOT_ORDER } from '@/app/recommend/constants/comboSlots';
 import {
+  SECTION_SET_RANK_START,
+  toSectionRank,
+} from '@/app/recommend/constants/gapSetRanks';
+import {
   LOTTO_SUM_MAX,
   LOTTO_SUM_MIN,
   MAX_BAND_LADDER_DEPTH,
@@ -10,8 +14,12 @@ import {
   TARGET_SET_COUNT,
 } from '@/app/recommend/constants/comboThresholds';
 import type { GeneratedSet } from '@/app/recommend/types/generatedSet';
-import { buildPositionRankLookup, buildPositionDrawCountLookup } from '@/app/recommend/helpers/positionRankLookup';
+import {
+  buildPositionDrawCountLookup,
+  buildPositionRankLookup,
+} from '@/app/recommend/helpers/positionRankLookup';
 import { buildPoolByBand, buildHistCounts } from '@/app/recommend/logic/repair';
+import { buildGapRankLookup } from '@/app/recommend/logic/gap/gapRank';
 import {
   buildBandLadderForRankCascade,
   buildBandTargetsForRankCascade,
@@ -78,6 +86,8 @@ export const generateCombinationBasedSets = async (
   summaryLines.push(
     `자리대 순위: ${formatStatsBandSummary(STATS_BAND_CASCADE_LABEL, STATS_POSITION_BAND_WINDOW, sampleDraws)}·rank N=N등 band 시작→ladder(최대 ${MAX_BAND_LADDER_DEPTH}단·출현 band만)`,
   );
+  summaryLines.push('번호별 간격: RANK1~10은 간격순위 6칸씩(1~6, 7~12, …)');
+  summaryLines.push('구간별 순위: RANK11~20은 구간 1~10등 band ladder');
 
   const poolSorted = [...new Set(numberPool)].filter((n) => n >= 1 && n <= 45).sort((a, b) => a - b);
   if (poolSorted.length < 6) {
@@ -106,12 +116,15 @@ export const generateCombinationBasedSets = async (
   const rankedRows = rankPositionBandRows(flatForRank);
   const positionRankLookup = buildPositionRankLookup(rankedRows);
   const positionDrawCountLookup = buildPositionDrawCountLookup(rankedRows);
+  const gapRankLookup = buildGapRankLookup(appearHist, referenceDrawNo);
 
   const targetsByRank = new Map<number, number[]>();
   const laddersByRank = new Map<number, number[][]>();
   for (const rank of COMBO_RANK_SLOT_ORDER) {
-    const targets = buildBandTargetsForRankCascade(flatByWindow, rank);
-    const ladder = buildBandLadderForRankCascade(flatByWindow, rank);
+    if (rank < SECTION_SET_RANK_START) continue;
+    const sectionRank = toSectionRank(rank);
+    const targets = buildBandTargetsForRankCascade(flatByWindow, sectionRank);
+    const ladder = buildBandLadderForRankCascade(flatByWindow, sectionRank);
     if (!targets || !ladder) continue;
     targetsByRank.set(rank, targets);
     laddersByRank.set(rank, ladder);
@@ -142,6 +155,7 @@ export const generateCombinationBasedSets = async (
     histCounts,
     positionRankLookup,
     positionDrawCountLookup,
+    gapRankLookup,
     repairYieldEvery,
     profileSlots,
     pastWinningKeys,
@@ -158,7 +172,7 @@ export const generateCombinationBasedSets = async (
   }
 
   const builtCount = profileSlots.filter((s) => s !== null).length;
-  summaryLines.push(`조합 세트: ${builtCount}개 (rank 1~${COMBO_RANK_SLOT_ORDER.length}·rank별 band)`);
+  summaryLines.push(`조합 세트: ${builtCount}개 (RANK1~10 간격·RANK11~20 구간)`);
 
   const maxSetsByUsage = Math.floor((poolSorted.length * MAX_NUM_USAGE) / 6);
   if (maxSetsByUsage < TARGET_SET_COUNT) {
@@ -171,7 +185,7 @@ export const generateCombinationBasedSets = async (
   const sets = setsInProfileSlotOrder(profileSlots);
 
   summaryLines.push(
-    `세트 구성: rank 1~20·1구간→6구간 순차·rank별 band ladder·${sets.length}개.`,
+    `세트 구성: RANK1~10 간격순위·RANK11~20 구간 ladder·${sets.length}개.`,
   );
   const warning =
     sets.length < TARGET_SET_COUNT

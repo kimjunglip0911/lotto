@@ -147,6 +147,7 @@ export const replaceCandidatesForPosition = (
       (n) => n !== current && !used.has(n),
     ),
     pickCtx,
+    position + 1,
   );
 };
 

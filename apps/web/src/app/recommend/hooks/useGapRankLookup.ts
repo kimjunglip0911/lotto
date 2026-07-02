@@ -1,26 +1,21 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { buildPositionBandDistribution } from '@/app/combination/logic/buildPositionBandDistribution';
-import { rankPositionBandRows } from '@/app/combination/logic/rankPositionBands';
-import {
-  buildPositionRankLookup,
-  type PositionRankLookup,
-} from '@/app/recommend/helpers/positionRankLookup';
-import { withSortedMains } from '@/app/recommend/logic/combo/sortMains';
+import { buildGapRankLookup } from '@/app/recommend/logic/gap/gapRank';
+import type { GapRankLookup } from '@/app/recommend/types/gapRank';
 import { fetchWinningNumbersRange } from '@/lib/accu-nums/api';
 import { sliceLatestStatsHistory } from '@/lib/pickStatsHistory';
 import { STATS_POSITION_BAND_WINDOW } from '@/lib/statsWindow';
 
-const EMPTY_LOOKUP: PositionRankLookup = new Map();
+const EMPTY_LOOKUP: GapRankLookup = new Map();
 
-/** 기준 회차 직전 3년 표본으로 자리별 번호 순위 lookup */
+/** 기준 회차 직전 3년 표본으로 번호별 현재·평균 간격 lookup */
 
-export const usePositionRankLookup = (
+export const useGapRankLookup = (
   apiUrl: string,
   drawNo: number | null,
-): PositionRankLookup => {
-  const [lookup, setLookup] = useState<PositionRankLookup>(() => new Map());
+): GapRankLookup => {
+  const [lookup, setLookup] = useState<GapRankLookup>(() => new Map());
 
   useEffect(() => {
     if (!drawNo) return;
@@ -34,9 +29,7 @@ export const usePositionRankLookup = (
         if (!isMounted || abortController.signal.aborted) return;
 
         const windowRows = sliceLatestStatsHistory(rows, STATS_POSITION_BAND_WINDOW);
-        const sorted = windowRows.sort((a, b) => a.draw_no - b.draw_no).map(withSortedMains);
-        const { rows: flat } = buildPositionBandDistribution(sorted);
-        setLookup(buildPositionRankLookup(rankPositionBandRows(flat)));
+        setLookup(buildGapRankLookup(windowRows, drawNo));
       } catch {
         if (isMounted) setLookup(new Map());
       }

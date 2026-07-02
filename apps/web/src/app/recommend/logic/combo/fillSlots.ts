@@ -10,6 +10,11 @@ import {
   type ProfileConstraints,
   type ProfileFailureReason,
 } from '@/app/recommend/logic/repair';
+import {
+  isGapSetRank,
+  isSectionSetRank,
+} from '@/app/recommend/constants/gapSetRanks';
+import { findOneGapSetForRank } from '@/app/recommend/logic/combo/findOneGapSet';
 import { findOneSetForRank } from '@/app/recommend/logic/combo/findOneSet';
 import {
   bumpUsage,
@@ -21,6 +26,7 @@ import type {
   PositionDrawCountLookup,
   PositionRankLookup,
 } from '@/app/recommend/helpers/positionRankLookup';
+import type { GapRankLookup } from '@/app/recommend/types/gapRank';
 
 /** 20슬롯(rank 1~20) 채우기·미생성 진단 */
 
@@ -36,6 +42,7 @@ export type FillCtx = {
   histCounts: readonly number[];
   positionRankLookup: PositionRankLookup;
   positionDrawCountLookup: PositionDrawCountLookup;
+  gapRankLookup: GapRankLookup;
   repairYieldEvery: number;
   profileSlots: (GeneratedSet | null)[];
   pastWinningKeys: ReadonlySet<string>;
@@ -62,6 +69,10 @@ const mergeAvoidKeys = (
 };
 
 const profileFailureSummary = (ctx: FillCtx, rank: number): string | null => {
+  if (isGapSetRank(rank)) {
+    if (ctx.gapRankLookup.size === 0) return '간격순위 계산 불가';
+    return '간격순위·번호 한도·중복 조건 미충족';
+  }
   const bandTargets = ctx.targetsByRank.get(rank);
   const bandLadder = ctx.laddersByRank.get(rank);
   if (!bandTargets || !bandLadder) return FAILURE_REASON_KO.rank_unavailable;
@@ -106,11 +117,28 @@ export const tryFillOneSlot = async (
   if (ctx.profileSlots[slot]) return false;
   const rank = COMBO_RANK_SLOT_ORDER[slot];
   if (rank === undefined) return false;
+  const blockedKeys = mergeAvoidKeys(ctx.pastWinningKeys, avoidKeys);
+
+  if (isGapSetRank(rank)) {
+    const one = await findOneGapSetForRank(
+      rank,
+      ctx.gapRankLookup,
+      ctx.usedKeys,
+      ctx.usage,
+      ctx.innerSlotUsage,
+      blockedKeys,
+      ctx.repairYieldEvery,
+    );
+    if (!one) return false;
+    ctx.profileSlots[slot] = one;
+    return true;
+  }
+
+  if (!isSectionSetRank(rank)) return false;
   const bandTargets = ctx.targetsByRank.get(rank);
   const bandLadder = ctx.laddersByRank.get(rank);
   if (!bandTargets || !bandLadder) return false;
 
-  const blockedKeys = mergeAvoidKeys(ctx.pastWinningKeys, avoidKeys);
   const one = await findOneSetForRank(
     ctx.poolByBand,
     ctx.minSum,
@@ -126,6 +154,7 @@ export const tryFillOneSlot = async (
     ctx.positionDrawCountLookup,
     ctx.repairYieldEvery,
     blockedKeys,
+    new Map(),
   );
   if (!one) return false;
   ctx.profileSlots[slot] = one;
