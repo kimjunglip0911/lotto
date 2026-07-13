@@ -39,8 +39,8 @@ home/
 
 ## 환경·DB
 
-- SQLite 테이블: `lotto_drawings`, `lotto_winners`
-- DB 경로: 루트 `apps/api/README.md`의 `LOTTO_DB_PATH` 참고
+- Postgres 테이블: `lotto_drawings`, `lotto_winners`
+- 접속: `apps/api/README.md`의 `DATABASE_URL` 참고
 
 ## 실행·검증
 

@@ -7,7 +7,8 @@ import {
   pickTopNumber,
   replaceExcludedInRows,
 } from './recommend.helpers';
-import { RecommendRepository, WINDOW_SIZES } from './recommend.repository';
+import { RecommendRepository } from './recommend.repository';
+import { WINDOW_SIZES } from './window-sizes';
 import {
   analyzeDrawDuplicateSets,
   generateJlWheelSets,

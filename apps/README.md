@@ -15,13 +15,12 @@
 
 ```bash
 npm install
-npm run db:copy      # 최초: 이전 경로 → apps/api/data/lotto.db
+# apps/api/.env 에 DATABASE_URL 설정
 npm run dev          # api 기동 후 8010 응답 확인 → web(3010)
 ```
 
 ## 주의
 
 - `npm run dev` 시 web은 API(`8010`)가 준비될 때까지 대기합니다. API만 따로 띄울 때는 `npm run dev:api`를 사용하세요.
-
 - 정본 프론트는 `apps/web/` (`frontend/`는 삭제 가능)
-- API DB 정본: `apps/api/data/lotto.db` (`LOTTO_DB_PATH`로 오버라이드)
+- API DB: Supabase Postgres (`DATABASE_URL`) — 상세는 `apps/api/README.md`

@@ -13,7 +13,7 @@ alwaysApply: true
 | **프론트** | `apps/web/` | **TypeScript** 5.9 · **Node.js** 24.x | **Next.js** (App Router) · **React** | Next **16.1.6** · React **19.2.3** |
 | **프론트 UI** | `apps/web/` | — | **Tailwind CSS** · shadcn / radix-ui | Tailwind **4.2.1** |
 | **백엔드** | `apps/api/` | **TypeScript** · **Node.js** 24.x | **NestJS** · Express | NestJS **11.1.24** |
-| **백엔드 DB** | `apps/api/` | — | **SQLite** (`better-sqlite3`) | — |
+| **백엔드 DB** | `apps/api/` | — | **Supabase Postgres** (`pg`) | — |
 | **백엔드 검증** | `apps/api/` | — | **class-validator** · class-transformer | — |
 
 - **dev 포트**: 프론트 **3010** · API **8010** — 루트에서 `npm run dev`로 동시 기동 (`dev:web` / `dev:api` 개별 가능)

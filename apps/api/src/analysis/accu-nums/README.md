@@ -45,8 +45,8 @@ accu-nums/
 
 ## 환경·DB
 
-- SQLite: `lotto_winners`, `accumulated_number_snapshots`
-- DB 경로: 루트 `apps/api/README.md`의 `LOTTO_DB_PATH` 참고
+- Postgres: `lotto_winners`, `accumulated_number_snapshots`
+- 접속: `apps/api/README.md`의 `DATABASE_URL` 참고
 
 ## 실행·검증
 

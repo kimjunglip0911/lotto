@@ -22,7 +22,7 @@ git clone git@github.com:kimjunglip0911/lotto.git
 
 ```bash
 npm install
-npm run db:copy    # 최초 1회: SQLite DB 복사
+# apps/api/.env 에 DATABASE_URL 설정 (Supabase Connection URI)
 npm run dev        # api(8010) 준비 후 web(3010) 기동
 ```
 

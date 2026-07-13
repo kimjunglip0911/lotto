@@ -1,9 +1,9 @@
 import { Global, Module } from '@nestjs/common';
-import { SqliteService } from './sqlite.service';
+import { PgService } from './pg.service';
 
 @Global()
 @Module({
-  providers: [SqliteService],
-  exports: [SqliteService],
+  providers: [PgService],
+  exports: [PgService],
 })
 export class DbModule {}

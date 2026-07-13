@@ -1,15 +1,15 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { SqliteService } from '../../db/sqlite.service';
+import { PgService } from '../../db/pg.service';
 
 @Injectable()
 export class AnalysisDbUtil {
-  constructor(private readonly sqlite: SqliteService) {}
+  constructor(private readonly db: PgService) {}
 
   async fetchDrawNumbers(
     sql: string,
     params: unknown[] = [],
   ): Promise<number[]> {
-    const rows = await this.sqlite.fetchAll(sql, params);
+    const rows = await this.db.fetchAll(sql, params);
     return rows.map((r) => Number(r.draw_no ?? Object.values(r)[0]));
   }
 
@@ -18,7 +18,7 @@ export class AnalysisDbUtil {
     params: unknown[],
     notFoundDetail: string,
   ): Promise<Record<string, unknown>> {
-    const row = await this.sqlite.fetchOne(sql, params);
+    const row = await this.db.fetchOne(sql, params);
     if (!row) {
       throw new HttpException(notFoundDetail, HttpStatus.NOT_FOUND);
     }
@@ -29,6 +29,6 @@ export class AnalysisDbUtil {
     sql: string,
     params: unknown[] = [],
   ): Promise<Record<string, unknown>[]> {
-    return this.sqlite.fetchAll(sql, params);
+    return this.db.fetchAll(sql, params);
   }
 }
