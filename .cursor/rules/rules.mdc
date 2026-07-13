@@ -5,19 +5,18 @@ alwaysApply: true
 
 ## 0. 기술 스택 (요약)
 
-> 버전·의존성 **정본**은 **본 §0** · 루트 `package.json` · `package-lock.json` · `apps/web/package.json` · `apps/api/package.json`. 스택 변경 시 위를 **함께 갱신**한다.
+> 버전·의존성 **정본**은 **본 §0** · 루트 `package.json` · `package-lock.json` · `apps/web/package.json`. 스택 변경 시 위를 **함께 갱신**한다.
 
 | 구분 | 위치 | 언어·런타임 | 프레임워크 | 버전 |
 |:---|:---|:---|:---|:---|
-| **모노레포** | 루트 | **Node.js** 24.x (`>=24 <25`) | npm workspaces (`apps/web`, `apps/api`) | — |
-| **프론트** | `apps/web/` | **TypeScript** 7.0 · **Node.js** 24.x | **Next.js** (App Router) · **React** | Next **16.1.6** · React **19.2.3** |
-| **프론트 UI** | `apps/web/` | — | **Tailwind CSS** · shadcn / radix-ui | Tailwind **4.2.1** |
-| **백엔드** | `apps/api/` | **TypeScript** 7.0 · **Node.js** 24.x | **NestJS** · Express | NestJS **11.1.24** |
-| **백엔드 DB** | `apps/api/` | — | **Supabase Postgres** (`pg`) | — |
-| **백엔드 검증** | `apps/api/` | — | **class-validator** · class-transformer | — |
+| **모노레포** | 루트 | **Node.js** 24.x (`>=24 <25`) | npm workspaces (`apps/web`) | — |
+| **앱** | `apps/web/` | **TypeScript** 7.0 · **Node.js** 24.x | **Next.js** (App Router) · **React** | Next **16.1.6** · React **19.2.3** |
+| **UI** | `apps/web/` | — | **Tailwind CSS** · shadcn / radix-ui | Tailwind **4.2.1** |
+| **API** | `apps/web/src/app/api` | — | Next Route Handlers | — |
+| **DB** | `apps/web/src/server/db` | — | **Supabase Postgres** (`pg`) | — |
 
-- **dev 포트**: 프론트 **3010** · API **8010** — 루트에서 `npm run dev`로 동시 기동 (`dev:web` / `dev:api` 개별 가능)
-- **TypeScript**: 타입체크는 **7.0** 네이티브(`@typescript/native`). ESLint·Nest·Jest 등 Compiler API 도구는 **`typescript@6`** 병행 (7.1 API 전까지)
+- **dev 포트**: **3010** — 루트에서 `npm run dev` (단일 Next 서버, `/api` 포함)
+- **TypeScript**: 타입체크는 **7.0** 네이티브(`@typescript/native`). ESLint 등 Compiler API 도구는 **`typescript@6`** 병행 (7.1 API 전까지)
 - **구조 정본**: `.cursor/rules/project-structure.mdc`
 
 ## 0.1 Git 저장소
@@ -52,7 +51,7 @@ alwaysApply: true
 | 자료 | 용도 |
 |:---|:---|
 | `.cursor/rules/` (`rules.mdc` §0, `project-structure.mdc` 등) | 스택·트리·작업 범위 확인 |
-| `apps/web/README.md` · `apps/api/README.md` | 앱별 실행·환경 변수 |
+| `apps/web/README.md` | 앱 실행·환경 변수 |
 | 기능별 `README.md` (예: `apps/web/src/app/recommend/README.md`) | 페이지·모듈 목적·주의사항 |
 | `docs/로직.md` | 도메인·비즈니스 로직 메모 |
 

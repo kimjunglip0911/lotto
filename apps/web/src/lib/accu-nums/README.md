@@ -2,22 +2,22 @@
 
 ## 목적
 
-당첨번호 조회·파싱·검증 로직을 **공유 라이브러리**로 제공합니다. 전용 화면은 없으며, `combination`·`recommend`가 Nest API와 이 모듈을 통해 당첨 이력을 사용합니다.
+당첨번호 조회·파싱·검증 로직을 **공유 라이브러리**로 제공합니다. `combination`·`recommend`가 같은 오리진 `/api`와 이 모듈을 통해 당첨 이력을 사용합니다.
 
 ## 주요 파일
 
 | 경로 | 역할 |
 |:---|:---|
-| `api/` | 백엔드 API 클라이언트(`draw-numbers`, `winning-numbers-range` 등) |
+| `api/` | `/api/analysis/accu-nums/*` 클라이언트 |
 | `types/` | `WinningNumberRow` 등 공유 타입 |
 | `logic/numCounts.ts` | 행 검증·누적 집계 순수 함수 |
 | `constants/` | 번호 범위 상수 |
 
-## Nest API
+## API
 
 - `/api/analysis/accu-nums/draw-numbers`
 - `/api/analysis/accu-nums/winning-numbers-range`
-- 상세: `apps/api/src/analysis/accu-nums/README.md`
+- 서버 구현: `apps/web/src/server/analysis/accu-nums/`
 
 ## 주의
 

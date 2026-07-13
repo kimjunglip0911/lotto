@@ -6,84 +6,53 @@ alwaysApply: false
 
 # Lotto 프로젝트 구조
 
-> Next.js 16(web) + NestJS(api) 로또 서비스 (2026-05 기준)
+> Next.js 16 단일 풀스택 (UI + Route Handlers + pg) (2026-07)
 
 ---
 
 ```text
 lotto/
 ├── .cursor/
-│   ├── rules/
-│   │   ├── rules.mdc
-│   │   ├── 01.pln-doc.mdc
-│   │   ├── 02.dev-gd.mdc
-│   │   ├── project-structure.mdc
-│   │   ├── components.mdc
-│   │   ├── refactoring-guide.mdc
-│   │   ├── skill-list.mdc
-│   │   ├── bug-lessons.mdc
-│   │   └── git-commit-guide.mdc
-│   └── skills/
+│   └── rules/
+│       ├── rules.mdc
+│       └── project-structure.mdc
 │
 ├── apps/
 │   ├── README.md
-│   ├── web/                           # Next.js (구 frontend/)
-│   │   ├── package.json
-│   │   ├── next.config.ts
-│   │   ├── eslint.config.mjs
-│   │   ├── postcss.config.mjs
-│   │   ├── components.json
-│   │   ├── .env.local
-│   │   ├── next-env.d.ts
-│   │   ├── tsconfig.json
-│   │   ├── README.md
-│   │   └── src/
-│   │       ├── app/                   # App Router 엔트리
-│   │       │   ├── combination/       # 조합 분석 페이지 (/combination)
-│   │       │   ├── interval/          # 번호별 간격 페이지 (/interval)
-│   │       │   └── recommend/         # 번호 추천 (/recommend)
-│   │       └── lib/
-│   │           └── accu-nums/         # 당첨번호 API 클라이언트·타입(combination·recommend 공유)
-│   └── api/                           # NestJS API
+│   └── web/                           # Next.js 풀스택
 │       ├── package.json
-│       ├── README.md
+│       ├── next.config.ts
+│       ├── .env.local                 # DATABASE_URL (gitignore)
+│       ├── scripts/                   # db:migrate 등
 │       └── src/
-│           ├── dist/                  # 빌드 산출물
-│           ├── scripts/               # db:migrate 등
-│           ├── db/
-│           │   ├── schema.pg.sql      # Supabase Postgres 스키마
-│           │   └── pg.service.ts
-│           ├── home/                  # /api/drawings — controller·service·queries (README.md)
-│           ├── recommend/             # 8폴더 리팩터링 완료 (api·ui·hooks·logic/combo·logic/repair·types·constants·tests)
-│           └── analysis/
-│               └── accu-nums/         # API: controller·service·queries·repository·helpers (README.md; legacy URL)
+│           ├── app/
+│           │   ├── api/               # Route Handlers (/api/*)
+│           │   ├── home/
+│           │   ├── combination/
+│           │   ├── interval/
+│           │   └── recommend/
+│           ├── server/                # 서버 전용 (server-only)
+│           │   ├── db/                # pool·pg·schema.pg.sql
+│           │   ├── home/
+│           │   ├── recommend/
+│           │   └── analysis/accu-nums/
+│           ├── components/
+│           └── lib/
 │
-├── frontend/                          # 이전됨 → apps/web (삭제 예정)
-│   └── README.md
-│
-│   # apps/web/src/app 상세 트리는 저장소 apps/web/ 참고 (문서 중복 생략)
-│   # Sidebar: apps/web/src/components/sidebar/{Sidebar.tsx,types,constants,logic,hooks,ui}/
-│
-├── .gitignore
-├── package.json                       # 루트 스크립트 (npm run dev)
-├── package-lock.json
-├── pick.json
-├── tsconfig.json
-├── 로직.md
-├── 작업지시.md
-└── 리팩토링지시서.md
+├── package.json                       # npm workspaces (apps/web)
+└── package-lock.json
 ```
 
 ---
 
 ## 운영 기준 메모
 
-- 개발 포트: web `3010`, api `8010` (`npm run dev`)
-- DB: Supabase Postgres (`DATABASE_URL`), 스키마 `apps/api/src/db/schema.pg.sql`
-- 구조 변경 시 함께 갱신: `apps/api/README.md`, 기능별 `README.md`, 본 파일
-- **기능 폴더 8대표 구조**: 신규/리팩터링 시 각 기능 폴더 루트(`apps/web/src/app/<route>/`)는 `refactoring-guide.mdc` `## 핵심 4`에 따라 다음 8개 폴더(`api/`, `ui/`, `hooks/`, `logic/`, `helpers/`, `types/`, `constants/`, `tests/`)를 항상 생성한다(빈 폴더는 `.gitkeep` 유지). 루트에는 `page.tsx`와 `README.md`만 둔다.
-- 페이지 전용 UI 위치는 `components.mdc`(3계층: `app/<route>/ui/`)와 일치시킨다.
+- 개발 포트: web `3010` (`npm run dev`) — Nest/8010 없음
+- DB: Supabase Postgres (`DATABASE_URL`), 스키마 `apps/web/src/server/db/schema.pg.sql`
+- `app/<route>/api/` = 클라이언트 fetch 모듈 / `app/api/` = HTTP Route Handlers
+- 구조 변경 시 함께 갱신: `apps/web/README.md`, 기능별 `README.md`, 본 파일
+- **기능 폴더 8대표 구조**: `refactoring-guide.mdc` `## 핵심 4`에 따라 `api/`, `ui/`, `hooks/`, `logic/`, `helpers/`, `types/`, `constants/`, `tests/`
 
 ---
 
-*Last Updated: 2026-07-02 (interval 페이지 추가)*
+*Last Updated: 2026-07-13 (Next 풀스택 통합, Nest 삭제)*

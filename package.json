@@ -5,34 +5,27 @@
         "node": ">=24 <25"
     },
     "workspaces": [
-        "apps/web",
-        "apps/api"
+        "apps/web"
     ],
     "scripts": {
         "check:node": "node -e \"const ok=process.versions.modules==='137'; if(!ok){console.error('Node 24.x 필요 (현재 '+process.version+', modules='+process.versions.modules+')'); process.exit(1)}\"",
         "predev": "npm run check:node",
-        "dev": "npm run dev:raw",
-        "dev:raw": "concurrently -k \"npm run dev:api\" \"wait-on http-get://127.0.0.1:8010/api -t 120000 && npm run dev -w web\"",
+        "dev": "npm run dev -w web",
         "dev:web": "npm run dev -w web",
         "dev:web:clean": "npm run dev:clean -w web",
-        "dev:api": "npm run start:dev -w api",
-        "db:migrate": "npm run db:migrate -w api",
-    "build": "npm run build -w web",
-    "build:api": "npm run build -w api",
-    "typecheck": "npm run typecheck -w web && npm run typecheck -w api",
-    "start": "npm run start -w web",
+        "db:migrate": "npm run db:migrate -w web",
+        "build": "npm run build -w web",
+        "typecheck": "npm run typecheck -w web",
+        "start": "npm run start -w web",
         "lint": "npm run lint -w web",
-        "test:api": "npm run test -w api",
         "cursor-sdk:example": "node scripts/cursor-sdk-example.mjs"
     },
     "devDependencies": {
         "@tailwindcss/postcss": "^4.2.1",
         "autoprefixer": "^10.4.27",
-        "concurrently": "^9.2.1",
         "dotenv": "^17.4.2",
         "postcss": "^8.5.6",
-        "tailwindcss": "^4.2.1",
-        "wait-on": "^8.0.5"
+        "tailwindcss": "^4.2.1"
     },
     "dependencies": {
         "@cursor/sdk": "^1.0.10"

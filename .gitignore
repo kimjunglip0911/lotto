@@ -20,9 +20,6 @@ __pycache__/
 # Backend runtime
 backend/*.log
 
-# Nest API build output
-apps/api/dist/
-
 # Local database files
 *.db
 *.db-shm
@@ -30,8 +27,8 @@ apps/api/dist/
 *.sqlite
 *.sqlite3
 
-# Nest API SQLite data (로컬 정본·WAL, src 밖 — 커밋 제외)
-apps/api/data/*
+# 로컬 마이그레이션 덤프
+apps/web/data/*
 
 # 누적 스냅샷 스테이징(배치 스크립트 산출물, 커밋 금지)
 frontend/src/app/analysis/accu-nums/accumulated-snapshots-staging.md

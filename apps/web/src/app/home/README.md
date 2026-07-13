@@ -11,7 +11,7 @@
 
 ## 환경 변수
 
-- `NEXT_PUBLIC_API_URL`: 백엔드 베이스 URL. 비우면 같은 출처의 `/api/...` 를 호출합니다.
+- API: 같은 출처 `/api/...` (Next Route Handlers). DB: `DATABASE_URL`.
 
 ## 폴더 구조 (8대표)
 

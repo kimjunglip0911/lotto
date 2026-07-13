@@ -1,26 +1,24 @@
-# apps (모노레포 애플리케이션)
+# apps
 
 ## 목적
 
-웹(Next.js)과 API(NestJS) 실행 단위를 모읍니다.
+Next.js 풀스택 앱 실행 단위입니다.
 
 ## 구성
 
 | 패키지 | 경로 | 역할 | 포트 |
 |:---|:---|:---|:---|
-| **web** | `apps/web/` | Next.js UI | 3010 |
-| **api** | `apps/api/` | NestJS REST API | 8010 |
+| **web** | `apps/web/` | Next.js UI + `/api` Route Handlers | 3010 |
 
 ## 실행
 
 ```bash
 npm install
-# apps/api/.env 에 DATABASE_URL 설정
-npm run dev          # api 기동 후 8010 응답 확인 → web(3010)
+# apps/web/.env.local 에 DATABASE_URL 설정
+npm run dev          # web(3010)
 ```
 
 ## 주의
 
-- `npm run dev` 시 web은 API(`8010`)가 준비될 때까지 대기합니다. API만 따로 띄울 때는 `npm run dev:api`를 사용하세요.
-- 정본 프론트는 `apps/web/` (`frontend/`는 삭제 가능)
-- API DB: Supabase Postgres (`DATABASE_URL`) — 상세는 `apps/api/README.md`
+- DB: Supabase Postgres (`DATABASE_URL`) — 스키마 정본 `apps/web/src/server/db/schema.pg.sql`
+- NestJS `apps/api`는 제거됨. API는 `apps/web/src/app/api` + `src/server`

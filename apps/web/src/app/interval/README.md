@@ -27,7 +27,7 @@ DB에 저장된 전체 당첨 이력을 기준으로 1~45번 주번호가 다시
 
 ## 환경 변수
 
-- `NEXT_PUBLIC_API_URL`: Nest API 주소입니다. 기본 개발 포트는 `8010`입니다.
+- API는 같은 오리진 `/api/...` (Next Route Handlers). DB는 `DATABASE_URL`.
 
 ## 주의사항
 

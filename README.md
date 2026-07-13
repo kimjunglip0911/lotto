@@ -1,6 +1,6 @@
 # lotto
 
-로또 관련 웹 애플리케이션입니다. Next.js(web) + NestJS(api) npm workspaces 모노레포입니다.
+로또 관련 웹 애플리케이션입니다. Next.js 단일 풀스택(npm workspaces)입니다.
 
 ## 저장소
 
@@ -15,33 +15,23 @@ git clone git@github.com:kimjunglip0911/lotto.git
 
 | 패키지 | 경로 | 역할 | 포트 |
 |:---|:---|:---|:---|
-| **web** | `apps/web/` | Next.js UI | **3010** |
-| **api** | `apps/api/` | NestJS REST API | **8010** |
+| **web** | `apps/web/` | Next.js UI + API Route Handlers | **3010** |
 
 ## 실행
 
 ```bash
 npm install
-# apps/api/.env 에 DATABASE_URL 설정 (Supabase Connection URI)
-npm run dev        # api(8010) 준비 후 web(3010) 기동
-```
-
-개별 기동:
-
-```bash
-npm run dev:api    # API만
-npm run dev:web    # web만
+# apps/web/.env.local 에 DATABASE_URL 설정 (Supabase Session pooler URI)
+npm run dev        # web(3010)
 ```
 
 타입체크(TypeScript **7.0** 네이티브):
 
 ```bash
 npm run typecheck -w web
-npm run typecheck -w api
 ```
 
-## 환경 변수·상세
+## Vercel
 
-- web: `apps/web/README.md` · `apps/web/.env.example`
-- api: `apps/api/README.md` · `apps/api/.env.example`
-- 앱 개요: `apps/README.md`
+- Root Directory: `apps/web`
+- Environment: `DATABASE_URL`

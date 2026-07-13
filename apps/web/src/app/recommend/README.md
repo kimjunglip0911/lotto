@@ -30,8 +30,8 @@ recommend/
 
 ## 실행·환경
 
-- 개발: 루트 `npm run dev` → web `3010`, api `8010`
-- `NEXT_PUBLIC_API_URL` — API 베이스(예: `http://localhost:8010`)
+- 개발: 루트 `npm run dev` → web `3010` (같은 오리진 `/api`)
+- `DATABASE_URL` — Supabase Session pooler (서버 전용)
 
 ## 검증
 
