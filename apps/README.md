@@ -8,14 +8,19 @@ Next.js 풀스택 앱 실행 단위입니다.
 
 | 패키지 | 경로 | 역할 | 포트 |
 |:---|:---|:---|:---|
-| **web** | `apps/web/` | Next.js UI + `/api` Route Handlers | 3010 |
+| **web** | `apps/web/` | Next.js UI + `/api` Route Handlers | 1060 |
 
 ## 실행
 
 ```bash
+# 저장소 루트
+run.bat
+
+# 또는
+cd apps/web
 npm install
-# apps/web/.env.local 에 DATABASE_URL 설정
-npm run dev          # web(3010)
+# .env.local 에 DATABASE_URL 설정
+npm run dev          # web(1060)
 ```
 
 ## 주의

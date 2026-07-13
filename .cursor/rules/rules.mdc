@@ -5,17 +5,16 @@ alwaysApply: true
 
 ## 0. 기술 스택 (요약)
 
-> 버전·의존성 **정본**은 **본 §0** · 루트 `package.json` · `package-lock.json` · `apps/web/package.json`. 스택 변경 시 위를 **함께 갱신**한다.
+> 버전·의존성 **정본**은 **본 §0** · `apps/web/package.json` · `apps/web/package-lock.json`. 스택 변경 시 위를 **함께 갱신**한다.
 
 | 구분 | 위치 | 언어·런타임 | 프레임워크 | 버전 |
 |:---|:---|:---|:---|:---|
-| **모노레포** | 루트 | **Node.js** 24.x (`>=24 <25`) | npm workspaces (`apps/web`) | — |
-| **앱** | `apps/web/` | **TypeScript** 7.0 · **Node.js** 24.x | **Next.js** (App Router) · **React** | Next **16.1.6** · React **19.2.3** |
+| **앱** | `apps/web/` | **TypeScript** 7.0 · **Node.js** 24.x (`>=24 <25`) | **Next.js** (App Router) · **React** | Next **16.2.10** · React **19.2.3** |
 | **UI** | `apps/web/` | — | **Tailwind CSS** · shadcn / radix-ui | Tailwind **4.2.1** |
 | **API** | `apps/web/src/app/api` | — | Next Route Handlers | — |
 | **DB** | `apps/web/src/server/db` | — | **Supabase Postgres** (`pg`) | — |
 
-- **dev 포트**: **3010** — 루트에서 `npm run dev` (단일 Next 서버, `/api` 포함)
+- **dev 포트**: **1060** — 루트 `run.bat` 또는 `cd apps/web && npm run dev` (단일 Next 서버, `/api` 포함)
 - **TypeScript**: 타입체크는 **7.0** 네이티브(`@typescript/native`). ESLint 등 Compiler API 도구는 **`typescript@6`** 병행 (7.1 API 전까지)
 - **구조 정본**: `.cursor/rules/project-structure.mdc`
 

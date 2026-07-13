@@ -6,8 +6,7 @@
 
 ## 실행 방법
 
-- 저장소 루트에서 `npm run dev` 후 브라우저에서 홈(`/home`)으로 이동합니다.
-- 프론트만 단독 실행: `cd apps/web` 후 `npm run dev` (포트 **3010**).
+- 루트 `run.bat` 또는 `cd apps/web && npm run dev` 후 홈(`/home`)으로 이동합니다 (포트 **1060**).
 
 ## 환경 변수
 

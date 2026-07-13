@@ -21,6 +21,7 @@ lotto/
 │   ├── README.md
 │   └── web/                           # Next.js 풀스택
 │       ├── package.json
+│       ├── package-lock.json
 │       ├── next.config.ts
 │       ├── .env.local                 # DATABASE_URL (gitignore)
 │       ├── scripts/                   # db:migrate 등
@@ -39,15 +40,14 @@ lotto/
 │           ├── components/
 │           └── lib/
 │
-├── package.json                       # npm workspaces (apps/web)
-└── package-lock.json
+└── run.bat                            # install → 1060 kill → npm run dev
 ```
 
 ---
 
 ## 운영 기준 메모
 
-- 개발 포트: web `3010` (`npm run dev`) — Nest/8010 없음
+- 개발 포트: web `1060` — 루트 `run.bat` 또는 `cd apps/web && npm run dev` — Nest/8010 없음
 - DB: Supabase Postgres (`DATABASE_URL`), 스키마 `apps/web/src/server/db/schema.pg.sql`
 - `app/<route>/api/` = 클라이언트 fetch 모듈 / `app/api/` = HTTP Route Handlers
 - 구조 변경 시 함께 갱신: `apps/web/README.md`, 기능별 `README.md`, 본 파일
@@ -55,4 +55,4 @@ lotto/
 
 ---
 
-*Last Updated: 2026-07-13 (Next 풀스택 통합, Nest 삭제)*
+*Last Updated: 2026-07-13 (단일 package.json, run.bat)*

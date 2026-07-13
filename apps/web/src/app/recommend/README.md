@@ -30,7 +30,7 @@ recommend/
 
 ## 실행·환경
 
-- 개발: 루트 `npm run dev` → web `3010` (같은 오리진 `/api`)
+- 개발: 루트 `run.bat` 또는 `cd apps/web && npm run dev` → `1060` (같은 오리진 `/api`)
 - `DATABASE_URL` — Supabase Session pooler (서버 전용)
 
 ## 검증

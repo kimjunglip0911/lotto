@@ -23,7 +23,7 @@ DB에 저장된 전체 당첨 이력을 기준으로 1~45번 주번호가 다시
 
 ## 로컬에서 확인
 
-루트에서 `npm run dev` 후 사이드바 **번호별 간격**을 클릭하거나 `http://localhost:3010/interval`로 이동합니다.
+루트 `run.bat` 또는 `cd apps/web && npm run dev` 후 사이드바 **번호별 간격**을 클릭하거나 `http://localhost:1060/interval`로 이동합니다.
 
 ## 환경 변수
 

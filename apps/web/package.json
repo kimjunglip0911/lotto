@@ -5,14 +5,19 @@
   "engines": {
     "node": ">=24 <25"
   },
+  "overrides": {
+    "postcss": "^8.5.10"
+  },
   "scripts": {
+    "check:node": "node -e \"const ok=process.versions.modules==='137'; if(!ok){console.error('Node 24.x 필요 (현재 '+process.version+', modules='+process.versions.modules+')'); process.exit(1)}\"",
+    "predev": "npm run check:node",
     "clean:next": "node -e \"require('fs').rmSync('.next',{recursive:true,force:true})\"",
-    "dev": "next dev --webpack -p 3010",
+    "dev": "next dev --webpack -p 1060",
     "dev:clean": "npm run clean:next && npm run dev",
     "build": "next build --webpack",
-    "start": "next start -p 3010",
+    "start": "next start -p 1060",
     "lint": "eslint",
-    "typecheck": "node ../../node_modules/@typescript/native/bin/tsc --noEmit -p tsconfig.json",
+    "typecheck": "node ./node_modules/@typescript/native/bin/tsc --noEmit -p tsconfig.json",
     "test": "vitest run",
     "test:watch": "vitest",
     "db:migrate": "npx tsx scripts/migrate-sqlite-to-pg.ts"
@@ -24,7 +29,7 @@
     "html-to-image": "^1.11.13",
     "html2canvas": "^1.4.1",
     "lucide-react": "^0.575.0",
-    "next": "16.1.6",
+    "next": "^16.2.10",
     "pg": "^8.22.0",
     "radix-ui": "^1.4.3",
     "react": "19.2.3",
@@ -42,7 +47,7 @@
     "@types/react-dom": "^19",
     "@typescript/native": "npm:typescript@^7.0.2",
     "eslint": "^9",
-    "eslint-config-next": "16.1.6",
+    "eslint-config-next": "^16.2.10",
     "shadcn": "^3.8.5",
     "tailwindcss": "^4",
     "tsx": "^4.23.1",

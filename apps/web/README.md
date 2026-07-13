@@ -1,15 +1,17 @@
 # web (Next.js 풀스택)
 
-저장소 루트 워크스페이스 `web` 패키지입니다. UI + Route Handlers(`/api/*`) + Supabase Postgres(`pg`)를 한 앱에서 제공합니다.
+UI + Route Handlers(`/api/*`) + Supabase Postgres(`pg`)를 한 앱에서 제공합니다. 패키지 정본은 이 디렉터리의 `package.json` / `package-lock.json`입니다.
 
 ## 실행
 
-저장소 루트에서:
-
 ```bash
+# 저장소 루트 (권장)
+run.bat   # npm install → 포트 1060 정리 → npm run dev
+
+# 또는 이 디렉터리에서
 npm install
-# apps/web/.env.local 에 DATABASE_URL 설정
-npm run dev   # http://localhost:3010
+# .env.local 에 DATABASE_URL 설정
+npm run dev   # http://localhost:1060
 ```
 
 ## 환경 변수
@@ -33,8 +35,8 @@ npm run dev   # http://localhost:3010
 ## 타입체크
 
 ```bash
-npm run typecheck -w web
-npm run build -w web
+npm run typecheck
+npm run build
 ```
 
 Editor/ESLint는 `typescript@6`, `typecheck`는 `@typescript/native`(TS 7.0)을 사용합니다.
