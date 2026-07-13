@@ -33,6 +33,13 @@ npm run dev:api    # API만
 npm run dev:web    # web만
 ```
 
+타입체크(TypeScript **7.0** 네이티브):
+
+```bash
+npm run typecheck -w web
+npm run typecheck -w api
+```
+
 ## 환경 변수·상세
 
 - web: `apps/web/README.md` · `apps/web/.env.example`

@@ -2,7 +2,7 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "module": "ESNext",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "plugins": []
   },
   "include": ["scripts/**/*.ts", "src/**/*.ts", "src/**/*.tsx"]

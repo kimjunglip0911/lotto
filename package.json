@@ -17,9 +17,10 @@
         "dev:web:clean": "npm run dev:clean -w web",
         "dev:api": "npm run start:dev -w api",
         "db:migrate": "npm run db:migrate -w api",
-        "build": "npm run build -w web",
-        "build:api": "npm run build -w api",
-        "start": "npm run start -w web",
+    "build": "npm run build -w web",
+    "build:api": "npm run build -w api",
+    "typecheck": "npm run typecheck -w web && npm run typecheck -w api",
+    "start": "npm run start -w web",
         "lint": "npm run lint -w web",
         "test:api": "npm run test -w api",
         "cursor-sdk:example": "node scripts/cursor-sdk-example.mjs"

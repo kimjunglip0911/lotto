@@ -23,6 +23,15 @@ npm run dev
 
 `NEXT_PUBLIC_API_URL` 없이 상대 경로(`/api/...`)만 쓰는 경우, 개발 서버가 `next.config.ts` **rewrites**로 Nest(`8010`)에 프록시합니다. 브라우저에서 API를 직접 부르려면 `.env.example`을 복사해 `.env.local`을 만든 뒤 `npm run dev`를 **다시 시작**하세요.
 
+## 타입체크
+
+```bash
+npm run typecheck -w web   # TypeScript 7 네이티브 tsc
+npm run build -w web       # next build --webpack
+```
+
+Editor/ESLint는 `typescript@6` API를 쓰고, `typecheck`는 `@typescript/native`(TS 7.0)을 사용합니다.
+
 ---
 
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).

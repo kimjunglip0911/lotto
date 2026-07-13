@@ -50,6 +50,12 @@ src/
 
 ```bash
 npm run test -w api
+npm run typecheck -w api   # TypeScript 7 네이티브 tsc
 ```
 
 e2e는 `DATABASE_URL`이 설정된 실DB를 사용합니다.
+
+## 주의사항
+
+- 타입체크: `@typescript/native`(TS **7.0** Go `tsc`). ESLint·`ts-jest`·`ts-node`·Nest emit은 `typescript@6` API를 사용합니다 (TS 7.1 Compiler API 전까지).
+- `emitDecoratorMetadata` / `experimentalDecorators`는 Nest DI용으로 유지합니다.
