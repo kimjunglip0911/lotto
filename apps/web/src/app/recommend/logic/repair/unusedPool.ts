@@ -1,19 +1,21 @@
 import { filterUsageAvail } from '@/app/recommend/logic/repair/usageLimit';
 import { setKey } from '@/app/recommend/logic/combo/toSet';
 
-/** band 무시·한도 남은 번호(적게 쓴 순)로 고저 합·중복만 맞춘 6개 */
+/** band 무시·적게 쓴 번호 우선으로 고저 합·중복만 맞춘 6개 (3회 한도는 임시 비활성) */
 
 const sumRangeFeasible = (
   partialSum: number,
-  remainingSorted: readonly number[],
+  remaining: readonly number[],
   remainingCount: number,
   minSum: number,
   maxSum: number,
 ): boolean => {
   if (remainingCount === 0) return partialSum >= minSum && partialSum <= maxSum;
-  if (remainingSorted.length < remainingCount) return false;
-  const minRem = remainingSorted.slice(0, remainingCount).reduce((a, b) => a + b, 0);
-  const maxRem = remainingSorted.slice(-remainingCount).reduce((a, b) => a + b, 0);
+  if (remaining.length < remainingCount) return false;
+  // 사용횟수 순 배열이어도 합 가능 여부는 번호 값 기준 min/max로 본다
+  const byValue = [...remaining].sort((a, b) => a - b);
+  const minRem = byValue.slice(0, remainingCount).reduce((a, b) => a + b, 0);
+  const maxRem = byValue.slice(-remainingCount).reduce((a, b) => a + b, 0);
   return partialSum + minRem <= maxSum && partialSum + maxRem >= minSum;
 };
 
@@ -61,7 +63,7 @@ export const buildUnusedPoolSet = (
   return search(0, []);
 };
 
-/** rank 19~20: 미사용(0회) 번호 우선·고저 무시·중복·3회 한도만 */
+/** rank 19~20: 미사용(0회) 번호 우선·고저 무시·중복만 (3회 한도 임시 비활성) */
 
 const searchSixNoSum = (
   avail: readonly number[],

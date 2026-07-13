@@ -3,7 +3,7 @@ import { buildTailUnusedSet, buildUnusedPoolSet } from '@/app/recommend/logic/re
 import { setKey } from '@/app/recommend/logic/combo/toSet';
 
 describe('buildUnusedPoolSet', () => {
-  it('한도 남은 번호로 고저 합·중복 없는 조합을 만든다', () => {
+  it('적게 쓴 번호 우선으로 고저 합·중복 없는 조합을 만든다', () => {
     const pool = Array.from({ length: 20 }, (_, i) => i + 1);
     const usage = new Map<number, number>(pool.map((n) => [n, 0]));
     usage.set(1, 3);
@@ -12,6 +12,7 @@ describe('buildUnusedPoolSet', () => {
 
     const found = buildUnusedPoolSet(pool, 80, 120, usage, usedKeys);
     expect(found).not.toBeNull();
+    // 3회 한도 비활성 — 1·2도 후보이나, 사용횟수 낮은 번호를 우선한다
     expect(found!.every((n) => n !== 1 && n !== 2)).toBe(true);
     const sum = found!.reduce((a, b) => a + b, 0);
     expect(sum).toBeGreaterThanOrEqual(80);
@@ -29,13 +30,14 @@ describe('buildUnusedPoolSet', () => {
     expect(setKey(second!)).not.toBe(setKey(first!));
   });
 
-  it('한도 남은 번호가 6개 미만이면 null', () => {
+  it('한도 비활성 시 사용횟수만으로는 후보를 줄이지 않는다', () => {
     const pool = Array.from({ length: 10 }, (_, i) => i + 1);
     const usage = new Map<number, number>(pool.map((n) => [n, 3]));
     usage.set(1, 0);
     usage.set(2, 1);
     const found = buildUnusedPoolSet(pool, 21, 300, usage, new Set());
-    expect(found).toBeNull();
+    expect(found).not.toBeNull();
+    expect(found).toHaveLength(6);
   });
 });
 

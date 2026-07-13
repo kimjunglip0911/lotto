@@ -14,21 +14,22 @@ import {
   generateCombinationBasedSets,
   TARGET_SET_COUNT,
 } from '@/app/recommend/logic/combo';
-import { BAND_LADDER_START_TIER, MAX_NUM_USAGE } from '@/app/recommend/constants/comboThresholds';
+import { BAND_LADDER_START_TIER } from '@/app/recommend/constants/comboThresholds';
 import { FULL_LOTTO_POOL } from '@/app/recommend/constants/lottoPool';
 import { numberToBandIndex } from '@/app/combination/logic/numberToBand';
 import { STATS_BAND_CASCADE_WINDOWS } from '@/lib/statsWindow';
 import { setKey } from '@/app/recommend/logic/combo/toSet';
 
-function countUsageInPool(sets: GeneratedSet[], pool: number[]): Map<number, number> {
-  const u = new Map<number, number>(pool.map((n) => [n, 0]));
-  for (const s of sets) {
-    for (const n of [s.num1, s.num2, s.num3, s.num4, s.num5, s.num6]) {
-      u.set(n, (u.get(n) ?? 0) + 1);
-    }
-  }
-  return u;
-}
+// 3회 한도 임시 비활성 — 재활성화 시 countUsageInPool + MAX_NUM_USAGE 단언을 되돌린다
+// function countUsageInPool(sets: GeneratedSet[], pool: number[]): Map<number, number> {
+//   const u = new Map<number, number>(pool.map((n) => [n, 0]));
+//   for (const s of sets) {
+//     for (const n of [s.num1, s.num2, s.num3, s.num4, s.num5, s.num6]) {
+//       u.set(n, (u.get(n) ?? 0) + 1);
+//     }
+//   }
+//   return u;
+// }
 
 const setKeyFromGenerated = (set: GeneratedSet): string =>
   setKey([set.num1, set.num2, set.num3, set.num4, set.num5, set.num6]);
@@ -194,10 +195,11 @@ describe('generateCombinationBasedSets', () => {
           expect(numberPool.includes(n)).toBe(true);
         }
       }
-      const usage = countUsageInPool(r.sets, numberPool);
-      for (const [, count] of usage) {
-        expect(count).toBeLessThanOrEqual(MAX_NUM_USAGE);
-      }
+      // 3회 한도 임시 비활성
+      // const usage = countUsageInPool(r.sets, numberPool);
+      // for (const [, count] of usage) {
+      //   expect(count).toBeLessThanOrEqual(MAX_NUM_USAGE);
+      // }
       const bandsUsed = new Set<number>();
       for (const s of r.sets) {
         for (const n of [s.num1, s.num2, s.num3, s.num4, s.num5, s.num6]) {

@@ -38,11 +38,11 @@ describe('bandFallback', () => {
     expect(cands).toEqual([1]);
   });
 
-  it('collectBandCands: 한도 소진이면 빈 배열(ladder 다음 등수)', () => {
+  it('collectBandCands: 한도 비활성 시 사용횟수와 무관하게 후보를 반환한다', () => {
     const poolByBand = buildPoolByBand(Array.from({ length: 45 }, (_, i) => i + 1));
     const usage = new Map<number, number>([[1, 3]]);
 
-    expect(collectBandCands(poolByBand, 0, new Set(), { usage })).toEqual([]);
+    expect(collectBandCands(poolByBand, 0, new Set(), { usage })).toEqual([1]);
     expect(collectBandCands(poolByBand, 2, new Set(), { usage })).toEqual([3]);
   });
 

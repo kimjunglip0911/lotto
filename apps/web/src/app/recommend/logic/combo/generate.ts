@@ -10,7 +10,7 @@ import {
   LOTTO_SUM_MAX,
   LOTTO_SUM_MIN,
   MAX_BAND_LADDER_DEPTH,
-  MAX_NUM_USAGE,
+  // MAX_NUM_USAGE, // 3회 한도 임시 비활성
   TARGET_SET_COUNT,
 } from '@/app/recommend/constants/comboThresholds';
 import type { GeneratedSet } from '@/app/recommend/types/generatedSet';
@@ -174,12 +174,13 @@ export const generateCombinationBasedSets = async (
   const builtCount = profileSlots.filter((s) => s !== null).length;
   summaryLines.push(`조합 세트: ${builtCount}개 (RANK1~10 간격·RANK11~20 구간)`);
 
-  const maxSetsByUsage = Math.floor((poolSorted.length * MAX_NUM_USAGE) / 6);
-  if (maxSetsByUsage < TARGET_SET_COUNT) {
-    summaryLines.push(
-      `번호당 ${MAX_NUM_USAGE}회 한도·풀 ${poolSorted.length}개 기준 이론상 최대 ${maxSetsByUsage}세트(20세트는 풀 ${Math.ceil((TARGET_SET_COUNT * 6) / MAX_NUM_USAGE)}개 이상 필요).`,
-    );
-  }
+  // 3회 한도 임시 비활성 — 재활성화 시 아래 요약 블록을 되돌린다
+  // const maxSetsByUsage = Math.floor((poolSorted.length * MAX_NUM_USAGE) / 6);
+  // if (maxSetsByUsage < TARGET_SET_COUNT) {
+  //   summaryLines.push(
+  //     `번호당 ${MAX_NUM_USAGE}회 한도·풀 ${poolSorted.length}개 기준 이론상 최대 ${maxSetsByUsage}세트(20세트는 풀 ${Math.ceil((TARGET_SET_COUNT * 6) / MAX_NUM_USAGE)}개 이상 필요).`,
+  //   );
+  // }
 
   appendMissingProfileDiagnostics(ctx, summaryLines);
   const sets = setsInProfileSlotOrder(profileSlots);

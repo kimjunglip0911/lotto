@@ -35,11 +35,10 @@ describe('pickGapSetNumbers', () => {
     expect(picked).toEqual([7, 8, 9, 10, 11, 12]);
   });
 
-  it('번호 한도에 걸리면 다음 간격순위로 넘긴다', () => {
+  it('번호 한도 비활성 시 한도 도달 번호도 그대로 고른다', () => {
     const usage = new Map<number, number>([[1, MAX_NUM_USAGE]]);
     const picked = pickGapSetNumbers(1, fullLookup(), usage);
-    expect(picked?.[0]).toBe(2);
-    expect(picked?.slice(1)).toEqual([3, 4, 5, 6, 7]);
+    expect(picked).toEqual([1, 2, 3, 4, 5, 6]);
   });
 
   it('RANK10은 45 초과 목표를 간격순위 낮은 미사용 번호로 채운다', () => {

@@ -7,8 +7,13 @@ export const canUseNum = (
   usage: ReadonlyMap<number, number> | undefined,
   max: number = MAX_NUM_USAGE,
 ): boolean => {
-  if (!usage) return true;
-  return (usage.get(n) ?? 0) < max;
+  // 3회 한도 임시 비활성 — 재활성화 시 아래 주석을 되돌린다
+  void n;
+  void usage;
+  void max;
+  return true;
+  // if (!usage) return true;
+  // return (usage.get(n) ?? 0) < max;
 };
 
 export const filterUsageAvail = (
@@ -16,8 +21,12 @@ export const filterUsageAvail = (
   usage: ReadonlyMap<number, number> | undefined,
   max: number = MAX_NUM_USAGE,
 ): number[] => {
-  if (!usage) return [...nums];
-  return nums.filter((n) => canUseNum(n, usage, max));
+  // 3회 한도 임시 비활성 — 재활성화 시 아래 주석을 되돌린다
+  void usage;
+  void max;
+  return [...nums];
+  // if (!usage) return [...nums];
+  // return nums.filter((n) => canUseNum(n, usage, max));
 };
 
 export const isSetWithinUsageLimit = (
@@ -25,6 +34,11 @@ export const isSetWithinUsageLimit = (
   usage: ReadonlyMap<number, number> | undefined,
   max: number = MAX_NUM_USAGE,
 ): boolean => {
-  if (!usage) return true;
-  return sorted.every((n) => canUseNum(n, usage, max));
+  // 3회 한도 임시 비활성 — 재활성화 시 아래 주석을 되돌린다
+  void sorted;
+  void usage;
+  void max;
+  return true;
+  // if (!usage) return true;
+  // return sorted.every((n) => canUseNum(n, usage, max));
 };

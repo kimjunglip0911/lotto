@@ -71,12 +71,12 @@ describe('orderCandidatesByPriority (repair nudge)', () => {
 });
 
 describe('sequentialPickByBands (section path)', () => {
-  it('사용 한도에 걸린 번호는 건너뛴다', () => {
+  it('사용 한도 비활성 시 한도 도달 번호도 고른다', () => {
     const usage = new Map<number, number>([[7, MAX_NUM_USAGE]]);
     const picked = sequentialPickByBands(pool(), [0, 1, 2, 3, 4, 5], 0, 999, {
       usage,
     });
 
-    expect(picked?.[0]).toBe(8);
+    expect(picked?.[0]).toBe(7);
   });
 });
