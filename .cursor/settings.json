@@ -2,9 +2,6 @@
   "plugins": {
     "vercel": {
       "enabled": true
-    },
-    "superpowers": {
-      "enabled": true
     }
   }
 }
