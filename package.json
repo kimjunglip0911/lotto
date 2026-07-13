@@ -17,17 +17,6 @@
         "build": "npm run build -w web",
         "typecheck": "npm run typecheck -w web",
         "start": "npm run start -w web",
-        "lint": "npm run lint -w web",
-        "cursor-sdk:example": "node scripts/cursor-sdk-example.mjs"
-    },
-    "devDependencies": {
-        "@tailwindcss/postcss": "^4.2.1",
-        "autoprefixer": "^10.4.27",
-        "dotenv": "^17.4.2",
-        "postcss": "^8.5.6",
-        "tailwindcss": "^4.2.1"
-    },
-    "dependencies": {
-        "@cursor/sdk": "^1.0.10"
+        "lint": "npm run lint -w web"
     }
 }

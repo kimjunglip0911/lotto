@@ -5,20 +5,16 @@ node_modules
 .env.local
 .env.*.local
 
-# Python
+# Python 로컬 환경·캐시
+.venv/
 __pycache__/
 **/__pycache__/
 *.pyc
 **/*.pyc
 *.pyo
 **/*.pyo
-
-# pytest (로컬 캐시 — 버전 관리 제외)
 .pytest_cache/
 **/.pytest_cache/
-
-# Backend runtime
-backend/*.log
 
 # Local database files
 *.db
@@ -29,12 +25,6 @@ backend/*.log
 
 # 로컬 마이그레이션 덤프
 apps/web/data/*
-
-# 누적 스냅샷 스테이징(배치 스크립트 산출물, 커밋 금지)
-frontend/src/app/analysis/accu-nums/accumulated-snapshots-staging.md
-frontend/accumulated-snapshots-staging-test.md
-
-# 카이제곱 워크포워드 스테이징(배치 스크립트 산출물, 커밋 금지) — chi-square 페이지 삭제로 미사용
 
 # Local instruction docs
 리팩터링지시서.md
