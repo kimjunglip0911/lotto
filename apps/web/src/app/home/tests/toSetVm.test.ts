@@ -19,7 +19,7 @@ describe('toSetVm', () => {
       {
         id: undefined,
         numbers: [1, 2, 3, 4, 5, 6],
-        method: undefined,
+        method: '간격 추출 로직',
         drawNo: 0,
       },
     ]);
