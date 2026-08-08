@@ -13,6 +13,7 @@ const gapRow = (number: number, rank: number): GapRankRow => ({
   draws: [],
   currentGap: rank,
   avgGap: rank,
+  maxGap: rank,
   distance: 0,
 });
 

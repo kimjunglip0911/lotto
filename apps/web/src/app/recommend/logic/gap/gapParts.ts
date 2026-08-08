@@ -2,7 +2,7 @@
  * 추천 간격 순위 계산에 필요한 작은 부품입니다.
  *
  * 하는 일
- * - 기준 회차 앞의 당첨 이력을 번호별 출현 회차로 묶습니다.
+ * - 기준 회차 앞의 당첨 이력을 번호별 출현 회차로 묶습니다(본번호+보너스).
  * - 연속 출현 묶음을 접어 평균 간격 계산에 쓸 숫자 목록을 만듭니다.
  *
  * 역할 나눔
@@ -10,7 +10,7 @@
  */
 
 import type { WinningNumberRow } from '@/lib/accu-nums/types';
-import { toMainNumbersOnly } from '@/lib/accu-nums/logic/numCounts';
+import { numsForGapDraw } from '@/app/recommend/logic/gap/numsForGap';
 
 export const LOTTO_MIN = 1;
 export const LOTTO_MAX = 45;
@@ -19,6 +19,9 @@ export const avgGap = (values: readonly number[]): number | null =>
   values.length === 0
     ? null
     : Math.round(values.reduce((sum, value) => sum + value, 0) / values.length);
+
+export const maxGapOf = (values: readonly number[]): number | null =>
+  values.length === 0 ? null : Math.max(...values);
 
 export const buildGaps = (draws: readonly number[]): number[] => {
   const result: number[] = [];
@@ -42,8 +45,8 @@ export const collectNumberDraws = (
   const buckets = Array.from({ length: LOTTO_MAX + 1 }, () => [] as number[]);
   for (const row of rows) {
     if (row.draw_no >= referenceDrawNo) continue;
-    for (const num of toMainNumbersOnly(row)) {
-      if (num >= LOTTO_MIN && num <= LOTTO_MAX) buckets[num]!.push(row.draw_no);
+    for (const num of numsForGapDraw(row)) {
+      buckets[num]!.push(row.draw_no);
     }
   }
   return buckets;

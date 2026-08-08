@@ -14,20 +14,19 @@ const draw = (draw_no: number, nums: number[]): WinningNumberRow => ({
 });
 
 describe('buildGapRankRows', () => {
-  it('기준 회차 직전 마지막 출현부터 현재 간격을 계산한다', () => {
-    const lookup = buildGapRankLookup(
+  it('현재·최대 간격과 거리를 계산한다', () => {
+    const row = buildGapRankLookup(
       [draw(1, [7]), draw(4, [7]), draw(10, [7]), draw(11, [7])],
       11,
-    );
+    ).get(7);
 
-    const row = lookup.get(7);
     expect(row?.draws).toEqual([1, 4, 10]);
-    expect(row?.avgGap).toBe(5);
+    expect(row?.maxGap).toBe(6);
     expect(row?.currentGap).toBe(1);
-    expect(row?.distance).toBe(4);
+    expect(row?.distance).toBe(5);
   });
 
-  it('평균 간격에 가까운 번호를 더 높은 순위로 둔다', () => {
+  it('최대 간격에 가까운 번호를 더 높은 순위로 둔다', () => {
     const rows = buildGapRankRows(
       [
         draw(1, [7]),
@@ -40,29 +39,40 @@ describe('buildGapRankRows', () => {
       12,
     );
 
-    expect(rows[0]?.number).toBe(8);
     expect(rows.find((row) => row.number === 8)?.rank).toBeLessThan(
       rows.find((row) => row.number === 7)?.rank ?? 99,
     );
   });
 
-  it('연속 출현은 마지막 연속 회차부터 다음 출현까지의 간격으로 본다', () => {
-    const row = buildGapRankLookup(
-      [draw(10, [12]), draw(11, [12]), draw(12, [12]), draw(20, [12])],
-      28,
-    ).get(12);
-
-    expect(row?.avgGap).toBe(8);
-    expect(row?.currentGap).toBe(8);
-    expect(row?.distance).toBe(0);
+  it('현재가 최대를 넘기면 초과폭이 큰 번호를 최우선한다', () => {
+    const rows = buildGapRankRows(
+      [draw(1, [7]), draw(4, [7]), draw(1, [8]), draw(5, [8])],
+      20,
+    );
+    const seven = rows.find((row) => row.number === 7)!;
+    const eight = rows.find((row) => row.number === 8)!;
+    // 7: max=3, current=16, excess=13 / 8: max=4, current=15, excess=11
+    expect(seven.rank).toBeLessThan(eight.rank);
   });
 
-  it('평균 간격이 없으면 순위 하단으로 밀린다', () => {
+  it('최대 간격이 없으면 순위 하단으로 밀린다', () => {
     const rows = buildGapRankRows([draw(5, [30]), draw(1, [7]), draw(4, [7])], 6);
 
-    expect(rows.find((row) => row.number === 30)?.avgGap).toBeNull();
+    expect(rows.find((row) => row.number === 30)?.maxGap).toBeNull();
     expect(rows.find((row) => row.number === 30)?.rank).toBeGreaterThan(
       rows.find((row) => row.number === 7)?.rank ?? 99,
     );
+  });
+
+  it('보너스 번호 출현도 간격 집계에 포함한다', () => {
+    const rows: WinningNumberRow[] = [
+      { ...draw(1, [1, 2, 3, 4, 5, 6]), bonus_num: 20 },
+      { ...draw(5, [1, 2, 3, 4, 5, 6]), bonus_num: 20 },
+      { ...draw(9, [1, 2, 3, 4, 5, 6]), bonus_num: 21 },
+    ];
+    const row = buildGapRankLookup(rows, 12).get(20);
+    expect(row?.draws).toEqual([1, 5]);
+    expect(row?.maxGap).toBe(4);
+    expect(row?.currentGap).toBe(7);
   });
 });

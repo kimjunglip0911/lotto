@@ -1,0 +1,27 @@
+import {
+  findPrevDrawRow,
+  numsFromDrawRow,
+  poolWithoutNums,
+} from '@/app/recommend/logic/generation/prevDrawExclude';
+import { buildPastWinningKeys } from '@/app/recommend/logic/generation/pastWinKeys';
+import { pickStatsHistory } from '@/lib/pickStatsHistory';
+import { STATS_BAND_CASCADE_WINDOWS, STATS_POSITION_BAND_WINDOW } from '@/lib/statsWindow';
+import type { WinningNumberRow } from '@/lib/accu-nums/types';
+
+/** 이력·기준 회차로 생성 입력(표본·풀·제외)을 만든다 */
+
+export const buildGenArgs = (
+  fullHistory: readonly WinningNumberRow[],
+  selectedDraw: number,
+) => {
+  const excludedNumbers = numsFromDrawRow(findPrevDrawRow(fullHistory, selectedDraw));
+  return {
+    sumHistory: pickStatsHistory(fullHistory, selectedDraw, STATS_POSITION_BAND_WINDOW),
+    bandWindowHistories: STATS_BAND_CASCADE_WINDOWS.map((size) =>
+      pickStatsHistory(fullHistory, selectedDraw, size),
+    ),
+    pastWinningKeys: buildPastWinningKeys(fullHistory, selectedDraw),
+    excludedNumbers,
+    numberPool: poolWithoutNums(excludedNumbers),
+  };
+};

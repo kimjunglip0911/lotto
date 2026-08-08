@@ -20,6 +20,7 @@ import {
 } from '@/app/recommend/helpers/positionRankLookup';
 import { buildPoolByBand, buildHistCounts } from '@/app/recommend/logic/repair';
 import { buildGapRankLookup } from '@/app/recommend/logic/gap/gapRank';
+import { keepPoolGapLookup } from '@/app/recommend/logic/gap/keepPoolGaps';
 import {
   buildBandLadderForRankCascade,
   buildBandTargetsForRankCascade,
@@ -86,7 +87,7 @@ export const generateCombinationBasedSets = async (
   summaryLines.push(
     `자리대 순위: ${formatStatsBandSummary(STATS_BAND_CASCADE_LABEL, STATS_POSITION_BAND_WINDOW, sampleDraws)}·rank N=N등 band 시작→ladder(최대 ${MAX_BAND_LADDER_DEPTH}단·출현 band만)`,
   );
-  summaryLines.push('번호별 간격: RANK1~10은 간격순위 6칸씩(1~6, 7~12, …)');
+  summaryLines.push('번호별 간격: RANK1~10은 최대간격 근접·초과 최우선 순위 6칸씩(1~6, 7~12, …)');
   summaryLines.push('구간별 순위: RANK11~20은 구간 1~10등 band ladder');
 
   const poolSorted = [...new Set(numberPool)].filter((n) => n >= 1 && n <= 45).sort((a, b) => a - b);
@@ -116,7 +117,10 @@ export const generateCombinationBasedSets = async (
   const rankedRows = rankPositionBandRows(flatForRank);
   const positionRankLookup = buildPositionRankLookup(rankedRows);
   const positionDrawCountLookup = buildPositionDrawCountLookup(rankedRows);
-  const gapRankLookup = buildGapRankLookup(appearHist, referenceDrawNo);
+  const gapRankLookup = keepPoolGapLookup(
+    buildGapRankLookup(appearHist, referenceDrawNo),
+    poolSorted,
+  );
 
   const targetsByRank = new Map<number, number[]>();
   const laddersByRank = new Map<number, number[][]>();

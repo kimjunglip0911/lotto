@@ -2,6 +2,7 @@
 
 export const APPLIED_RULE_IDS = [
   'full-pool-45',
+  'exclude-prev-draw-7',
   'combination-rank-20sets',
   'stats-window-three-year',
   'gap-set-ranks-1-10',

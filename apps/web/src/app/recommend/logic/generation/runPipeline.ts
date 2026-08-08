@@ -1,18 +1,15 @@
 import { generateAndSaveSets } from '@/app/recommend/api/recommend/generateSave';
 import { APPLIED_RULE_IDS } from '@/app/recommend/constants/generationRules';
 import { TARGET_SET_COUNT } from '@/app/recommend/constants/comboThresholds';
-import { FULL_LOTTO_POOL } from '@/app/recommend/constants/lottoPool';
 import { buildPayloadSets } from '@/app/recommend/helpers/genPayload';
+import { formatExcludeSummary } from '@/app/recommend/helpers/excludeSummary';
 import {
   buildSuccessStatusMessage,
   mergeSummaryLines,
 } from '@/app/recommend/helpers/genMessages';
 import { fetchGenerationInputs } from '@/app/recommend/logic/generation/fetchInputs';
-import { pickStatsHistory } from '@/lib/pickStatsHistory';
-import { STATS_BAND_CASCADE_WINDOWS, STATS_POSITION_BAND_WINDOW } from '@/lib/statsWindow';
+import { buildGenArgs } from '@/app/recommend/logic/generation/buildGenArgs';
 import { assertSetsNonEmpty } from '@/app/recommend/logic/generation/validateGenSets';
-import { setKey } from '@/app/recommend/logic/combo/toSet';
-import { toMainNumbersOnly } from '@/lib/accu-nums/logic/numCounts';
 import {
   generateCombinationBasedSets,
   orderSetsByProfileSlots,
@@ -21,19 +18,8 @@ import type {
   GenerationPhaseHandlers,
   GenerationPipelineResult,
 } from '@/app/recommend/types/generationHook';
-import type { WinningNumberRow } from '@/lib/accu-nums/types';
 
 /** 20세트 생성·저장 파이프라인(React 상태 없음) */
-
-const buildPastWinningKeys = (
-  rows: readonly WinningNumberRow[],
-  referenceDrawNo: number,
-): ReadonlySet<string> =>
-  new Set(
-    rows
-      .filter((row) => row.draw_no < referenceDrawNo)
-      .map((row) => setKey(toMainNumbersOnly(row))),
-  );
 
 export const runRecommendGeneration = async (
   apiUrl: string,
@@ -41,43 +27,41 @@ export const runRecommendGeneration = async (
   phases?: GenerationPhaseHandlers,
 ): Promise<GenerationPipelineResult> => {
   const { fullHistory } = await fetchGenerationInputs(apiUrl);
-  const sumHistory = pickStatsHistory(fullHistory, selectedDraw, STATS_POSITION_BAND_WINDOW);
-  const bandWindowHistories = STATS_BAND_CASCADE_WINDOWS.map((size) =>
-    pickStatsHistory(fullHistory, selectedDraw, size),
-  );
-  const pastWinningKeys = buildPastWinningKeys(fullHistory, selectedDraw);
+  const args = buildGenArgs(fullHistory, selectedDraw);
 
   const { sets, summaryLines, warning } = await generateCombinationBasedSets(
-    sumHistory,
-    bandWindowHistories,
-    FULL_LOTTO_POOL,
+    args.sumHistory,
+    args.bandWindowHistories,
+    args.numberPool,
     selectedDraw,
-    { pastWinningKeys },
+    { pastWinningKeys: args.pastWinningKeys },
   );
   assertSetsNonEmpty(sets, summaryLines);
 
-  const mergedSummary = mergeSummaryLines(null, summaryLines);
+  const mergedSummary = mergeSummaryLines(null, [
+    formatExcludeSummary(args.excludedNumbers),
+    ...summaryLines,
+  ]);
   phases?.onSummaryReady?.(mergedSummary);
 
   const ruleIds = [...APPLIED_RULE_IDS];
-  const payloadSets = buildPayloadSets(sets, ruleIds);
-
   phases?.onSaving?.();
   const generatedData = await generateAndSaveSets(apiUrl, {
     drawNo: selectedDraw,
     appliedRuleIds: ruleIds,
-    excludedNumbers: [],
-    sets: payloadSets,
+    excludedNumbers: args.excludedNumbers,
+    sets: buildPayloadSets(sets, ruleIds, args.excludedNumbers),
   });
 
-  const orderedSets = orderSetsByProfileSlots(generatedData);
-  const statusMessage = buildSuccessStatusMessage({
-    drawNo: selectedDraw,
-    count: generatedData.length,
-    targetCount: TARGET_SET_COUNT,
-    infoMessage: null,
-    warning,
-  });
-
-  return { orderedSets, summaryLines: mergedSummary, statusMessage };
+  return {
+    orderedSets: orderSetsByProfileSlots(generatedData),
+    summaryLines: mergedSummary,
+    statusMessage: buildSuccessStatusMessage({
+      drawNo: selectedDraw,
+      count: generatedData.length,
+      targetCount: TARGET_SET_COUNT,
+      infoMessage: null,
+      warning,
+    }),
+  };
 };
