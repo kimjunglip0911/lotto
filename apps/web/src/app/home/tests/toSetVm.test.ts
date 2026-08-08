@@ -53,4 +53,13 @@ describe('toSetVm', () => {
       expect.objectContaining({ method: '항목별 순위 로직' }),
     ]);
   });
+
+  it('strategy가 없어도 세트 순번으로 기법명을 넣는다', () => {
+    const rows = Array.from({ length: 12 }, () => mkData({ method: 'JL Wheel Method' }));
+    const vms = toSetVm(rows, null);
+    expect(vms[0]?.method).toBe('간격 추출 로직');
+    expect(vms[9]?.method).toBe('간격 추출 로직');
+    expect(vms[10]?.method).toBe('항목별 순위 로직');
+    expect(vms[11]?.method).toBe('항목별 순위 로직');
+  });
 });
