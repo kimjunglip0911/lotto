@@ -1,22 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import type { WinningNumberRow } from '@/lib/accu-nums/types';
 import { buildEqualBuckets } from '../logic/buildBuckets';
 import { countWithBonus } from '../logic/countWithBonus';
-
-const draw = (
-  draw_no: number,
-  nums: [number, number, number, number, number, number],
-  bonus_num: number,
-): WinningNumberRow => ({
-  draw_no,
-  num1: nums[0],
-  num2: nums[1],
-  num3: nums[2],
-  num4: nums[3],
-  num5: nums[4],
-  num6: nums[5],
-  bonus_num,
-});
+import { draw } from './fixtures';
 
 describe('countWithBonus', () => {
   it('보너스 번호를 출현 횟수에 포함한다', () => {

@@ -17,6 +17,7 @@
 | `logic/buildBuckets.ts` | 0·1·2·3+ 버킷 분할 |
 | `constants/window.ts` | `EQUAL_WINDOW = 6` |
 | `tests/buildBuckets.test.ts` | 보너스 포함·3+ 합침·전수 검증 |
+| `tests/equalWindow.test.ts` | 최근 6회 슬라이스 반영 |
 
 ## 로컬에서 확인
 
