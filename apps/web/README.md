@@ -21,8 +21,15 @@ npm run dev   # http://localhost:1060
 | 변수 | 설명 |
 |:---|:---|
 | `DATABASE_URL` | Supabase Session pooler URI (필수, 서버 전용) |
+| `CRON_SECRET` | Vercel Cron(`/api/cron/keepalive`) 인증용 Bearer 비밀값 |
 
-클라이언트는 같은 오리진의 `/api/...` 를 호출합니다. Vercel에는 Root Directory=`apps/web`, Env에 `DATABASE_URL`만 등록하면 됩니다.
+클라이언트는 같은 오리진의 `/api/...` 를 호출합니다. Vercel에는 Root Directory=`apps/web`, Env에 `DATABASE_URL`·`CRON_SECRET`을 등록합니다.
+
+## DB 휴면 방지 (Cron)
+
+- `vercel.json` cron: 매일 UTC 00:00(`0 0 * * *`, 한국 시간 09:00)에 `GET /api/cron/keepalive`
+- 핸들러가 `lotto_winners` 건수를 조회해 Supabase 무료 프로젝트 휴면을 막습니다.
+- Vercel이 `Authorization: Bearer $CRON_SECRET` 헤더를 붙여 호출합니다.
 
 ## API vs 클라이언트 `api/` 폴더
 
