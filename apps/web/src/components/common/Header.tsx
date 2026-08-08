@@ -15,6 +15,7 @@ export function Header({ onMenuClick }: HeaderProps) {
         '/recommend': '로또 번호 추천',
         '/combination': '조합 분석',
         '/interval': '번호별 간격',
+        '/equal': '균등 분석',
     };
     const pageTitle = titleMap[pathname] ?? '로또 번호 생성기';
 

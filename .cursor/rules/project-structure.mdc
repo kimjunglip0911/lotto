@@ -31,6 +31,7 @@ lotto/
 │           │   ├── home/
 │           │   ├── combination/
 │           │   ├── interval/
+│           │   ├── equal/
 │           │   └── recommend/
 │           ├── server/                # 서버 전용 (server-only)
 │           │   ├── db/                # pool·pg·schema.pg.sql
