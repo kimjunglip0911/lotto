@@ -12,4 +12,5 @@ export const EMPTY_EQUAL_DATA: EqualDataState = {
   loadError: null,
   analyzedDraws: 0,
   buckets: EMPTY_BUCKETS,
+  excludeNums: [],
 };

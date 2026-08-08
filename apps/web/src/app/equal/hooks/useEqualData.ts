@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react';
+import { numsFromDrawRow } from '@/app/recommend/logic/generation/prevDrawExclude';
 import { sliceLatestStatsHistory } from '@/lib/pickStatsHistory';
 import { loadEqualHistory } from '../api/loadHistory';
 import { EMPTY_BUCKETS, EMPTY_EQUAL_DATA } from '../constants/empty';
 import { EQUAL_WINDOW } from '../constants/window';
 import { buildEqualBuckets } from '../logic/buildBuckets';
+import { buildEqualExclude } from '../logic/buildExclude';
 import type { EqualDataState } from '../types/equal';
 
-/** 최근 6회차(보너스 포함) 균등 버킷을 로드한다. */
+/** 최근 6회차 버킷·추천 제외번호를 로드한다. */
 export function useEqualData(): EqualDataState {
   const [data, setData] = useState<EqualDataState>(EMPTY_EQUAL_DATA);
 
@@ -19,11 +21,13 @@ export function useEqualData(): EqualDataState {
         const history = await loadEqualHistory({ signal: abortController.signal });
         if (!isMounted) return;
         const windowRows = sliceLatestStatsHistory(history, EQUAL_WINDOW);
+        const latest = windowRows[windowRows.length - 1] ?? null;
         setData({
           isLoading: false,
           loadError: null,
           analyzedDraws: windowRows.length,
           buckets: buildEqualBuckets(windowRows),
+          excludeNums: buildEqualExclude(windowRows, numsFromDrawRow(latest)),
         });
       } catch (error) {
         if (abortController.signal.aborted || !isMounted) return;
@@ -33,6 +37,7 @@ export function useEqualData(): EqualDataState {
           loadError: '데이터를 불러오지 못했습니다.',
           analyzedDraws: 0,
           buckets: EMPTY_BUCKETS,
+          excludeNums: [],
         });
       }
     };

@@ -145,18 +145,20 @@ export const findOneGapSetForRank = async (
   innerSlotUsage: Map<string, number>,
   avoidKeys: ReadonlySet<string> = new Set(),
   repairYieldEvery: number = 0,
+  /** 간격 칸 선택용 rank(기본=setRank). 0회 세트는 1 등 사용. */
+  pickRank: number = setRank,
 ): Promise<GeneratedSet | null> => {
   if (repairYieldEvery > 0) await yieldToMain();
 
   const blockedKeys =
     avoidKeys.size > 0 ? new Set([...usedKeys, ...avoidKeys]) : usedKeys;
 
-  let picked = pickGapSetNumbers(setRank, gapRankLookup, usage);
+  let picked = pickGapSetNumbers(pickRank, gapRankLookup, usage);
   if (
     picked !== null &&
     (usedKeys.has(setKey(picked)) || avoidKeys.has(setKey(picked)))
   ) {
-    picked = nudgeGapDuplicate(picked, setRank, gapRankLookup, usage, blockedKeys);
+    picked = nudgeGapDuplicate(picked, pickRank, gapRankLookup, usage, blockedKeys);
   }
 
   if (!isUsableGapSet(picked, usedKeys, usage, avoidKeys)) return null;

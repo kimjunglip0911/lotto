@@ -14,6 +14,11 @@ import {
   isGapSetRank,
   isSectionSetRank,
 } from '@/app/recommend/constants/gapSetRanks';
+import {
+  isZeroEqualComboRank,
+  isZeroEqualGapRank,
+  ZERO_EQUAL_GAP_PICK,
+} from '@/app/recommend/constants/zeroEqualRanks';
 import { findOneGapSetForRank } from '@/app/recommend/logic/combo/findOneGapSet';
 import { findOneSetForRank } from '@/app/recommend/logic/combo/findOneSet';
 import {
@@ -32,6 +37,8 @@ import type { GapRankLookup } from '@/app/recommend/types/gapRank';
 
 export type FillCtx = {
   poolByBand: ReadonlyMap<number, number[]>;
+  /** RANK18~20용 균등 0회 풀 band */
+  zeroPoolByBand: ReadonlyMap<number, number[]>;
   minSum: number;
   maxSum: number;
   targetsByRank: Map<number, number[]>;
@@ -43,6 +50,8 @@ export type FillCtx = {
   positionRankLookup: PositionRankLookup;
   positionDrawCountLookup: PositionDrawCountLookup;
   gapRankLookup: GapRankLookup;
+  /** RANK18용 0회 번호만 남긴 간격 lookup */
+  zeroGapRankLookup: GapRankLookup;
   repairYieldEvery: number;
   profileSlots: (GeneratedSet | null)[];
   pastWinningKeys: ReadonlySet<string>;
@@ -69,13 +78,19 @@ const mergeAvoidKeys = (
 };
 
 const profileFailureSummary = (ctx: FillCtx, rank: number): string | null => {
-  if (isGapSetRank(rank)) {
-    if (ctx.gapRankLookup.size === 0) return '간격순위 계산 불가';
-    return '간격순위·번호 한도·중복 조건 미충족';
+  if (isZeroEqualGapRank(rank) || isGapSetRank(rank)) {
+    const lookup = isZeroEqualGapRank(rank) ? ctx.zeroGapRankLookup : ctx.gapRankLookup;
+    if (lookup.size === 0) {
+      return isZeroEqualGapRank(rank) ? '균등 0회·간격 후보 없음' : '간격순위 계산 불가';
+    }
+    return isZeroEqualGapRank(rank)
+      ? '균등 0회·간격 조건 미충족'
+      : '간격순위·번호 한도·중복 조건 미충족';
   }
   const bandTargets = ctx.targetsByRank.get(rank);
   const bandLadder = ctx.laddersByRank.get(rank);
   if (!bandTargets || !bandLadder) return FAILURE_REASON_KO.rank_unavailable;
+  const pool = isZeroEqualComboRank(rank) ? ctx.zeroPoolByBand : ctx.poolByBand;
   const constraints: ProfileConstraints = {
     minSum: ctx.minSum,
     maxSum: ctx.maxSum,
@@ -83,7 +98,7 @@ const profileFailureSummary = (ctx: FillCtx, rank: number): string | null => {
     bandLadder,
   };
   const reason = diagnoseProfileBuild(
-    ctx.poolByBand,
+    pool,
     constraints,
     ctx.usedKeys,
     { usage: ctx.usage, innerSlotUsage: ctx.innerSlotUsage },
@@ -119,6 +134,22 @@ export const tryFillOneSlot = async (
   if (rank === undefined) return false;
   const blockedKeys = mergeAvoidKeys(ctx.pastWinningKeys, avoidKeys);
 
+  if (isZeroEqualGapRank(rank)) {
+    const one = await findOneGapSetForRank(
+      rank,
+      ctx.zeroGapRankLookup,
+      ctx.usedKeys,
+      ctx.usage,
+      ctx.innerSlotUsage,
+      blockedKeys,
+      ctx.repairYieldEvery,
+      ZERO_EQUAL_GAP_PICK,
+    );
+    if (!one) return false;
+    ctx.profileSlots[slot] = one;
+    return true;
+  }
+
   if (isGapSetRank(rank)) {
     const one = await findOneGapSetForRank(
       rank,
@@ -139,8 +170,11 @@ export const tryFillOneSlot = async (
   const bandLadder = ctx.laddersByRank.get(rank);
   if (!bandTargets || !bandLadder) return false;
 
+  const poolByBand = isZeroEqualComboRank(rank)
+    ? ctx.zeroPoolByBand
+    : ctx.poolByBand;
   const one = await findOneSetForRank(
-    ctx.poolByBand,
+    poolByBand,
     ctx.minSum,
     ctx.maxSum,
     rank,

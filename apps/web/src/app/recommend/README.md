@@ -4,10 +4,10 @@
 
 ## 목적
 
-- **1~45 전체 번호 풀**에서 **직전 회차 당첨번호(본번호 6+보너스 1)** 를 뺀 뒤, 당첨 통계로 **목표 20세트**를 만들어 저장합니다.
+- **1~45 전체 번호 풀**에서 **제외 번호**(직전 회차 본6+보너스 ∪ 최근 6회 2회↑ 출현, 보너스 포함)를 뺀 뒤, 당첨 통계로 **목표 20세트**를 만들어 저장합니다.
 - **자리대 순위** — 최근 **3년(156회)** 표본(출현 번호만 순위, 미출현 제외).
 - **번호별 간격** — 기준 회차 직전까지 **본번호+보너스** 출현으로 현재·최대 간격을 구해, **최대 초과 최우선 → 최대 근접** 순으로 우선합니다(최대 없으면 하단).
-- **① 조합 생성** — **RANK1~10(간격 추출 로직)**: 최대간격 근접·초과 우선 6칸. **RANK11~20(항목별 순위 로직)**: 구간 1~10등 band ladder·**1구→6구 순차**. 번호 **20세트 전체 3회 한도는 현재 임시 비활성**(주석). **고저 합·mid-band 폴백 없음**.
+- **① 조합 생성** — **RANK1~10(간격)**: 최대간격 근접·초과 우선 6칸. **RANK11~17(항목별 순위)**: 구간 band ladder. **RANK18~20(균등 0회 3세트)**: 최근 6회 0회 번호만 — 18=간격, 19~20=조합. 번호 **20세트 전체 3회 한도는 현재 임시 비활성**(주석).
 - 생성 후보가 **기준 회차 이전 실제 당첨 본번호 6개 조합**과 같으면 제외합니다(보너스 번호 제외).
 - **②** strategy 형식: `combo:rank{k}`.
 - **④** 홀짝 제약은 사용하지 않습니다.
@@ -48,13 +48,16 @@ npm run lint
 - `@/lib/statsWindow.ts` — 윈도우 상수(3년 156회)·`STATS_BAND_CASCADE_WINDOWS`
 - `logic/generation/fetchInputs.ts` — 당첨 이력 조회
 - `@/lib/pickStatsHistory` — 기준 회차 직전 이력 슬라이스
-- `logic/generation/runPipeline.ts` — 생성·저장 파이프라인(band=최근 3년, 직전 7개 제외, 과거 당첨 조합 제외)
-- `logic/generation/prevDrawExclude.ts` — 직전 회차 본번호+보너스 제외 목록·풀 필터
+- `logic/generation/runPipeline.ts` — 생성·저장 파이프라인(band=최근 3년, 균등·직전 제외, 과거 당첨 조합 제외)
+- `logic/generation/buildGenArgs.ts` — 제외 = `buildEqualExclude`(6회 2회↑ ∪ 직전 7)
+- `logic/generation/prevDrawExclude.ts` — 직전 회차 행·번호 추출·풀 필터
+- `@/app/equal/logic/buildExclude.ts` — 제외 집합 계산(균등 페이지와 공유)
 - `logic/gap/keepPoolGaps.ts` — 제외 후 풀에 맞게 간격순위 lookup 축소
-- `logic/combo/generate.ts` — 20세트 생성(RANK1~10 간격·RANK11~20 구간)
-- `logic/combo/findOneGapSet.ts` — RANK1~10 간격순위 세트 1개 생성
+- `logic/combo/generate.ts` — 20세트 생성(간격·구간·균등0회)
+- `logic/combo/findOneGapSet.ts` — 간격순위 세트(RANK1~10·RANK18)
 - `logic/gap/gapTargets.ts` — 간격순위 6칸 목표·역 lookup
-- `constants/gapSetRanks.ts` — RANK1~10 / RANK11~20 슬롯 분할 상수
+- `constants/gapSetRanks.ts` — RANK1~10 / RANK11~ 슬롯 분할 상수
+- `constants/zeroEqualRanks.ts` — RANK18~20 균등 0회 3세트
 - `logic/gap/gapRank.ts` — 번호별 현재·최대 간격 근접 순위 계산(본번호+보너스, 초과 최우선)
 - `logic/gap/gapCompare.ts` — 최대 초과 → 최대 근접 → 하단 정렬
 - `logic/repair/sequentialPick.ts` — 1구간→6구간 rank ladder 순차 선택
@@ -68,9 +71,9 @@ npm run lint
 ## 주의사항
 
 - 백엔드 응답은 `unknown` 수신 후 `helpers/validators`로 검증합니다.
-- 저장 시 `excluded_numbers`에 **직전 회차 본번호+보너스(최대 7개)** 를 넣습니다. 직전 회차가 없으면 빈 배열입니다.
-- 적용 규칙 ID: `full-pool-45`, `exclude-prev-draw-7`, `combination-rank-20sets`, `stats-window-three-year`, `gap-set-ranks-1-10`, `pos-band-ranks-11-20`, `pos-band-ladder-fallback`, `unused-pool-tail-fill`.
-- **RANK1~10**은 간격순위 6칸(**최대 간격 초과 최우선 → 최대 근접**). **RANK11~20**은 **3년(156회)** 자리대 band·구간 1~10등 ladder. **겹치면** ladder 다음 등수로 넘어감. (번호당 3회 한도는 임시 비활성)
+- 저장 시 `excluded_numbers`에 **제외 번호 전체**(2회↑ ∪ 직전)를 넣습니다. 둘 다 없으면 빈 배열입니다.
+- 적용 규칙 ID: `full-pool-45`, `exclude-prev-draw-7`, `combination-rank-20sets`, `stats-window-three-year`, `gap-set-ranks-1-10`, `pos-band-ranks-11-17`, `equal-zero-ranks-18-20`, `pos-band-ladder-fallback`, `unused-pool-tail-fill`.
+- **RANK1~10** 간격, **RANK11~17** 자리대 ladder, **RANK18~20** 균등 0회(18 간격·19~20 조합). (번호당 3회 한도는 임시 비활성)
 - **과거 당첨 조합 제외**는 `selectedDraw` 기준 **이전 회차**의 본번호 6개만 비교합니다. 과거 회차를 선택해 재생성할 때도 해당 회차 자체는 제외 대상에 넣지 않습니다.
 - rank 19~20 미생성 시 **직전 rank 세트를 되돌리며 다른 조합으로 재시도**(ripple recovery).
 - **동일 조합 중복** 시 번호 **1개만** 교체합니다(백트래킹 전체 재생성 없음). 대상 구간은 구간별 조합분석 **총 회차(drawCount)가 가장 낮은** 번호부터 순서대로 시도합니다.

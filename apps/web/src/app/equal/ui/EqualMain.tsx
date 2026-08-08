@@ -1,12 +1,13 @@
 import type { EqualDataState } from '../types/equal';
 import { BucketSection } from './BucketSection';
 
-/** 균등 분석 본문: 로딩·오류·네 버킷 섹션. */
+/** 균등 분석 본문: 제외번호 → 네 버킷. */
 export function EqualMain({
   isLoading,
   loadError,
   analyzedDraws,
   buckets,
+  excludeNums,
 }: EqualDataState) {
   return (
     <main className="flex-1 overflow-y-auto pb-12 px-4 pt-4 space-y-8">
@@ -20,6 +21,7 @@ export function EqualMain({
       {!isLoading && !loadError && analyzedDraws > 0 && (
         <>
           <p className="text-sm text-slate-400">최근 {analyzedDraws}회차 · 보너스 포함</p>
+          <BucketSection title="제외 번호" numbers={excludeNums} />
           <BucketSection title="0회" numbers={buckets.zero} />
           <BucketSection title="1회" numbers={buckets.one} />
           <BucketSection title="2회" numbers={buckets.two} />

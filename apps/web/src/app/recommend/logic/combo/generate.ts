@@ -49,6 +49,8 @@ export type CombinationGenerationResult = {
 export type CombinationGenerationOptions = {
   repairYieldEvery?: number;
   pastWinningKeys?: ReadonlySet<string>;
+  /** 균등 분석 0회 번호(RANK18~20 전용 풀) */
+  zeroPool?: readonly number[];
 };
 
 /** 1~45 전체 풀·자리대=최근 3년(156회) 표본·rank N=N등 band 시작으로 최대 20세트 생성 */
@@ -88,7 +90,8 @@ export const generateCombinationBasedSets = async (
     `자리대 순위: ${formatStatsBandSummary(STATS_BAND_CASCADE_LABEL, STATS_POSITION_BAND_WINDOW, sampleDraws)}·rank N=N등 band 시작→ladder(최대 ${MAX_BAND_LADDER_DEPTH}단·출현 band만)`,
   );
   summaryLines.push('번호별 간격: RANK1~10은 최대간격 근접·초과 최우선 순위 6칸씩(1~6, 7~12, …)');
-  summaryLines.push('구간별 순위: RANK11~20은 구간 1~10등 band ladder');
+  summaryLines.push('구간별 순위: RANK11~17은 구간 band ladder');
+  summaryLines.push('균등 0회: RANK18 간격·RANK19~20 조합(0회 번호만)');
 
   const poolSorted = [...new Set(numberPool)].filter((n) => n >= 1 && n <= 45).sort((a, b) => a - b);
   if (poolSorted.length < 6) {
@@ -99,7 +102,14 @@ export const generateCombinationBasedSets = async (
     };
   }
 
+  const allowed = new Set(poolSorted);
+  const zeroSorted = [...new Set(options.zeroPool ?? [])]
+    .filter((n) => n >= 1 && n <= 45 && allowed.has(n))
+    .sort((a, b) => a - b);
+  summaryLines.push(`균등 0회 풀: ${zeroSorted.length}개`);
+
   const poolByBand = buildPoolByBand(poolSorted);
+  const zeroPoolByBand = buildPoolByBand(zeroSorted);
   const usage = new Map<number, number>();
   for (const n of poolSorted) usage.set(n, 0);
   const innerSlotUsage = new Map<string, number>();
@@ -117,10 +127,9 @@ export const generateCombinationBasedSets = async (
   const rankedRows = rankPositionBandRows(flatForRank);
   const positionRankLookup = buildPositionRankLookup(rankedRows);
   const positionDrawCountLookup = buildPositionDrawCountLookup(rankedRows);
-  const gapRankLookup = keepPoolGapLookup(
-    buildGapRankLookup(appearHist, referenceDrawNo),
-    poolSorted,
-  );
+  const fullGapLookup = buildGapRankLookup(appearHist, referenceDrawNo);
+  const gapRankLookup = keepPoolGapLookup(fullGapLookup, poolSorted);
+  const zeroGapRankLookup = keepPoolGapLookup(fullGapLookup, zeroSorted);
 
   const targetsByRank = new Map<number, number[]>();
   const laddersByRank = new Map<number, number[][]>();
@@ -149,6 +158,7 @@ export const generateCombinationBasedSets = async (
 
   const ctx: FillCtx = {
     poolByBand,
+    zeroPoolByBand,
     minSum,
     maxSum,
     targetsByRank,
@@ -160,6 +170,7 @@ export const generateCombinationBasedSets = async (
     positionRankLookup,
     positionDrawCountLookup,
     gapRankLookup,
+    zeroGapRankLookup,
     repairYieldEvery,
     profileSlots,
     pastWinningKeys,
@@ -176,7 +187,9 @@ export const generateCombinationBasedSets = async (
   }
 
   const builtCount = profileSlots.filter((s) => s !== null).length;
-  summaryLines.push(`조합 세트: ${builtCount}개 (RANK1~10 간격·RANK11~20 구간)`);
+  summaryLines.push(
+    `조합 세트: ${builtCount}개 (RANK1~10 간격·RANK11~17 구간·RANK18~20 균등0회)`,
+  );
 
   // 3회 한도 임시 비활성 — 재활성화 시 아래 요약 블록을 되돌린다
   // const maxSetsByUsage = Math.floor((poolSorted.length * MAX_NUM_USAGE) / 6);
@@ -190,7 +203,7 @@ export const generateCombinationBasedSets = async (
   const sets = setsInProfileSlotOrder(profileSlots);
 
   summaryLines.push(
-    `세트 구성: RANK1~10 간격순위·RANK11~20 구간 ladder·${sets.length}개.`,
+    `세트 구성: RANK1~10 간격·RANK11~17 구간·RANK18~20 균등0회·${sets.length}개.`,
   );
   const warning =
     sets.length < TARGET_SET_COUNT

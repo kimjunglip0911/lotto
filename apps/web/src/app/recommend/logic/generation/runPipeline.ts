@@ -34,7 +34,10 @@ export const runRecommendGeneration = async (
     args.bandWindowHistories,
     args.numberPool,
     selectedDraw,
-    { pastWinningKeys: args.pastWinningKeys },
+    {
+      pastWinningKeys: args.pastWinningKeys,
+      zeroPool: args.zeroPool,
+    },
   );
   assertSetsNonEmpty(sets, summaryLines);
 

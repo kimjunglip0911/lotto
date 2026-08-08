@@ -52,6 +52,9 @@ describe('toSetVm', () => {
     expect(toSetVm([mkData({ strategy: 'combo:rank12', method: 'JL' })], null)).toEqual([
       expect.objectContaining({ method: '항목별 순위 로직' }),
     ]);
+    expect(toSetVm([mkData({ strategy: 'combo:rank18', method: 'JL' })], null)).toEqual([
+      expect.objectContaining({ method: '균등0회·간격' }),
+    ]);
   });
 
   it('strategy가 없어도 세트 순번으로 기법명을 넣는다', () => {
