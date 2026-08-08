@@ -10,7 +10,7 @@ import {
   type PositionRankLookup,
 } from '@/app/recommend/helpers/positionRankLookup';
 import type { GapRankLookup } from '@/app/recommend/types/gapRank';
-import { getStrategyBadge } from '@/app/recommend/constants/resultView';
+import { getStrategyBadge, getStrategyLabel } from '@/app/recommend/constants/resultView';
 import type { GeneratedSet } from '@/app/recommend/types/generatedSet';
 import { LotteryBall } from '@/components/ui/LotteryBall';
 
@@ -36,7 +36,14 @@ export function SetRankTable({ set, index, rankLookup, gapLookup }: Props) {
   return (
     <div className="rounded-lg border border-white/10 bg-slate-950/35 p-3 space-y-2">
       <div className="flex items-center justify-between gap-2">
-        <p className="text-sm font-bold tracking-wide text-violet-200">{title}</p>
+        <div className="min-w-0">
+          <p className="text-sm font-bold tracking-wide text-violet-200">{title}</p>
+          {set.strategy ? (
+            <p className="text-[10px] text-slate-400 truncate">
+              {getStrategyLabel(set.strategy)}
+            </p>
+          ) : null}
+        </div>
         {set.strategy ? (
           <span
             className={`shrink-0 inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-semibold border ${badge}`}

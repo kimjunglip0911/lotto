@@ -4,6 +4,7 @@ export interface LotterySetData {
   id?: number;
   draw_no?: number;
   method?: string;
+  strategy?: string;
   num1: number;
   num2: number;
   num3: number;

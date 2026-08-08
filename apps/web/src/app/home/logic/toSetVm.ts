@@ -18,6 +18,7 @@
  * - 회차가 모두 비어 있으면 카드에 0회차로 보일 수 있습니다(기존과 동일).
  * - 카드·PNG 표시용 numbers는 오름차순 정렬합니다(추천 페이지의 1~6구 순서와 별개).
  */
+import { techLabelFromStrategy } from '@/app/recommend/helpers/techLabel';
 import type { LotterySetData, LotterySetViewModel } from '../types/home';
 
 const displayNumsAsc = (set: LotterySetData): number[] =>
@@ -30,6 +31,6 @@ export const toSetVm = (
   sets.map((set) => ({
     id: set.id,
     numbers: displayNumsAsc(set),
-    method: set.method,
+    method: techLabelFromStrategy(set.strategy) ?? set.method,
     drawNo: set.draw_no ?? selectedDraw ?? 0,
   }));

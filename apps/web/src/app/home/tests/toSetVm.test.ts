@@ -44,4 +44,13 @@ describe('toSetVm', () => {
       toSetVm([mkData({ num1: 30, num2: 5, num3: 44, num4: 12, num5: 1, num6: 28 })], null),
     ).toEqual([expect.objectContaining({ numbers: [1, 5, 12, 28, 30, 44] })]);
   });
+
+  it('strategy로 분석 기법 표시명을 넣는다', () => {
+    expect(toSetVm([mkData({ strategy: 'combo:rank2', method: 'JL' })], null)).toEqual([
+      expect.objectContaining({ method: '간격 추출 로직' }),
+    ]);
+    expect(toSetVm([mkData({ strategy: 'combo:rank12', method: 'JL' })], null)).toEqual([
+      expect.objectContaining({ method: '항목별 순위 로직' }),
+    ]);
+  });
 });

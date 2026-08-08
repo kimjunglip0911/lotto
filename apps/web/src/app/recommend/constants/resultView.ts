@@ -1,5 +1,7 @@
 /** 세트 전략 라벨·배지 스타일 */
 
+import { techLabelFromStrategy } from '@/app/recommend/helpers/techLabel';
+
 const STRATEGY_LABEL: Record<string, string> = {
   deterministic: '최적 커버리지',
   'position-diversity': '위치별 다양성',
@@ -19,6 +21,8 @@ export const getStrategyLabel = (strategy: string): string => {
     return `조합 폴백 ${strategy.replace('combo:fallback:', '')}`;
   }
   if (strategy.startsWith('theme:')) return strategy.replace('theme:', '');
+  const tech = techLabelFromStrategy(strategy);
+  if (tech) return tech;
   if (strategy.startsWith('combo:')) return strategy.replace('combo:', '조합 ');
   return STRATEGY_LABEL[strategy] ?? strategy;
 };
