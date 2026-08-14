@@ -10,7 +10,7 @@ import { buildPastWinningKeys } from '@/app/recommend/logic/generation/pastWinKe
 import { pickStatsHistory } from '@/lib/pickStatsHistory';
 import {
   STATS_BAND_CASCADE_WINDOWS,
-  STATS_WINDOW_THREE_YEAR,
+  STATS_WINDOW_ALL,
 } from '@/lib/statsWindow';
 import type { WinningNumberRow } from '@/lib/accu-nums/types';
 
@@ -30,7 +30,7 @@ export const buildGenArgs = (
     bandWindowHistories: STATS_BAND_CASCADE_WINDOWS.map((size) =>
       pickStatsHistory(fullHistory, selectedDraw, size),
     ),
-    gapHistory: pickStatsHistory(fullHistory, selectedDraw, STATS_WINDOW_THREE_YEAR),
+    gapHistory: pickStatsHistory(fullHistory, selectedDraw, STATS_WINDOW_ALL),
     pastWinningKeys: buildPastWinningKeys(fullHistory, selectedDraw),
     excludedNumbers,
     numberPool: poolWithoutNums(excludedNumbers),

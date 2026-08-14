@@ -184,7 +184,7 @@ describe('generateCombinationBasedSets', () => {
       expect(r.summaryLines.some((l) => l.includes('ladder'))).toBe(true);
       expect(r.summaryLines.some((l) => l.includes('미추첨 간격'))).toBe(true);
       expect(r.summaryLines.some((l) => l.includes('번호별 간격'))).toBe(false);
-      expect(r.summaryLines.some((l) => l.includes('RANK1~10'))).toBe(true);
+      expect(r.summaryLines.some((l) => l.includes('RANK1~5'))).toBe(true);
       expect(r.summaryLines.some((l) => l.includes('균등 0회'))).toBe(true);
       const keys = new Set(
         r.sets.map(setKeyFromGenerated),

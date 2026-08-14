@@ -9,8 +9,10 @@ import {
 import { getStrategyLabel } from '@/app/recommend/constants/resultView';
 
 describe('techLabelFromStrategy', () => {
-  it('RANK1~10은 미추첨 간격 추출이다', () => {
+  it('RANK1~10은 미추첨 간격이다', () => {
     expect(techLabelFromStrategy('combo:rank1')).toBe('미추첨 간격 추출');
+    expect(techLabelFromStrategy('combo:rank5')).toBe(TECH_GAP_EXTRACT);
+    expect(techLabelFromStrategy('combo:rank6')).toBe(TECH_GAP_EXTRACT);
     expect(techLabelFromStrategy('combo:rank10')).toBe(TECH_GAP_EXTRACT);
   });
 
@@ -25,9 +27,9 @@ describe('techLabelFromStrategy', () => {
     expect(techLabelFromStrategy('combo:rank20')).toBe(TECH_ZERO_COMBO);
   });
 
-  it('RANK21부터 25는 간격, RANK26부터 30은 항목별이다', () => {
-    expect(techLabelFromStrategy('combo:rank21')).toBe(TECH_GAP_EXTRACT);
-    expect(techLabelFromStrategy('combo:rank25')).toBe(TECH_GAP_EXTRACT);
+  it('RANK21부터 30은 항목별 순위 로직이다', () => {
+    expect(techLabelFromStrategy('combo:rank21')).toBe(TECH_ITEM_RANK);
+    expect(techLabelFromStrategy('combo:rank25')).toBe(TECH_ITEM_RANK);
     expect(techLabelFromStrategy('combo:rank26')).toBe(TECH_ITEM_RANK);
     expect(techLabelFromStrategy('combo:rank30')).toBe(TECH_ITEM_RANK);
   });

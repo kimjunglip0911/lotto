@@ -2,7 +2,7 @@
 
 ## 목적
 
-최신 회차 기준 **최근 3년(156회)** 당첨 이력으로 1~45번의 미추첨 기간을 확인합니다.
+최신 회차 기준 **DB 전체** 당첨 이력으로 1~45번의 미추첨 기간을 확인합니다.
 
 - 본번호 6개와 보너스 번호(한 회차 안 중복은 한 번)를 사용합니다.
 - 연속 출현은 하나의 묶음으로 보고, 끝난 간격과 현재 미추첨 기간 중 큰 값이 최대입니다.
@@ -18,10 +18,10 @@
 | `page.tsx` | `Header`/`Sidebar`/`useGapData`/`IntervalMain` 조립 |
 | `api/loadHistory.ts` | `@/lib/accu-nums/api`로 당첨 이력 조회 |
 | `hooks/useGapData.ts` | 이력 로딩·오류·표 행 상태 관리 |
-| `logic/buildGapRows.ts` | 3년 표본·`buildGapRankRows`로 표 행 계산 |
+| `logic/buildGapRows.ts` | 전체 표본·`buildGapRankRows`로 표 행 계산 |
 | `ui/table/` | 미추첨 간격 표 UI |
 | `tests/buildGapRows.test.ts` | 보너스 포함·열 계약 단위 테스트 |
-| `tests/gapSlice.test.ts` | 3년 창·순위 단위 테스트 |
+| `tests/gapSlice.test.ts` | 전체 창·순위 단위 테스트 |
 
 ## 로컬에서 확인
 
@@ -35,5 +35,5 @@
 
 - 데이터는 `src/lib/accu-nums/` 공유 클라이언트가 사용하는 `/api/analysis/accu-nums/draw-numbers`, `/api/analysis/accu-nums/winning-numbers-range`를 통해 가져옵니다.
 - 간격 계산 엔진은 추천과 같은 `recommend/logic/gap/gapRank.ts`입니다.
-- 이력이 156회보다 짧으면 있는 만큼만 집계합니다.
-- 최근 3년 창 안에서 한 번도 안 나온 번호는 미추첨 기간·최대를 `-`로 표시하고 순위 하단입니다.
+- 이력이 짧으면 있는 만큼만 집계합니다.
+- 전체 창 안에서 한 번도 안 나온 번호는 미추첨 기간·최대를 `-`로 표시하고 순위 하단입니다.

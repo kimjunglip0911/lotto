@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
   GAP_RANKS_PER_SET,
+  GAP_SEQ_RANK_MAX,
   GAP_SET_RANK_MAX,
+  isGapDecadeRank,
+  isGapSeqRank,
   isGapSetRank,
   isSectionSetRank,
   toSectionRank,
@@ -9,9 +12,7 @@ import {
 import {
   LEFT_BAND_START,
   isLeftBandRank,
-  isLeftGapRank,
   leftBandTier,
-  leftGapStartRank,
 } from '@/app/recommend/constants/leftRanks';
 import { APPLIED_RULE_IDS } from '@/app/recommend/constants/generationRules';
 import {
@@ -38,6 +39,9 @@ const lookupFromRanks = (entries: readonly [number, number][]): GapRankLookup =>
 describe('gapSetRanks constants', () => {
   it('간격·구간 슬롯 구분을 판별한다', () => {
     expect(isGapSetRank(1)).toBe(true);
+    expect(isGapSeqRank(5)).toBe(true);
+    expect(isGapSeqRank(6)).toBe(false);
+    expect(isGapDecadeRank(6)).toBe(true);
     expect(isGapSetRank(10)).toBe(true);
     expect(isGapSetRank(11)).toBe(false);
     expect(isSectionSetRank(11)).toBe(true);
@@ -47,11 +51,12 @@ describe('gapSetRanks constants', () => {
 });
 
 describe('targetGapRanksForSetRank', () => {
-  it('RANK1은 1~6, RANK2는 7~12, RANK10은 55~60 목표를 만든다', () => {
+  it('RANK1은 1~6, RANK5는 25~30 목표를 만든다', () => {
     expect(targetGapRanksForSetRank(1)).toEqual([1, 2, 3, 4, 5, 6]);
     expect(targetGapRanksForSetRank(2)).toEqual([7, 8, 9, 10, 11, 12]);
-    expect(targetGapRanksForSetRank(GAP_SET_RANK_MAX)).toEqual([55, 56, 57, 58, 59, 60]);
+    expect(targetGapRanksForSetRank(GAP_SEQ_RANK_MAX)).toEqual([25, 26, 27, 28, 29, 30]);
     expect(GAP_RANKS_PER_SET).toBe(6);
+    expect(GAP_SET_RANK_MAX).toBe(10);
   });
 
   it('45 초과 목표는 beyond pool로 표시한다', () => {
@@ -69,36 +74,31 @@ describe('targetGapRanksForSetRank', () => {
   });
 });
 
-describe('leftover gap windows', () => {
+describe('leftover combo ranks', () => {
   it('시작 등수부터 6칸 창을 만든다', () => {
     expect(targetGapRanksFromStart(11)).toEqual([11, 12, 13, 14, 15, 16]);
-  });
-
-  it('21세트는 1부터 6, 25세트는 25부터 30이다', () => {
-    expect(targetGapRanksFromStart(leftGapStartRank(21))).toEqual([
-      1, 2, 3, 4, 5, 6,
-    ]);
-    expect(targetGapRanksFromStart(leftGapStartRank(25))).toEqual([
-      25, 26, 27, 28, 29, 30,
-    ]);
   });
 
   it('targetGapRanksForSetRank(11)은 leftover 창이 아니다', () => {
     expect(targetGapRanksForSetRank(11)).toEqual([61, 62, 63, 64, 65, 66]);
   });
 
-  it('26부터 30세트는 항목별 11등부터이다', () => {
-    expect(isLeftGapRank(21)).toBe(true);
-    expect(isLeftGapRank(26)).toBe(false);
-    expect(isLeftBandRank(26)).toBe(true);
-    expect(leftBandTier(26)).toBe(LEFT_BAND_START);
-    expect(leftBandTier(30)).toBe(15);
+  it('21부터 30세트는 조합분석 8등부터 17등이다', () => {
+    expect(isLeftBandRank(21)).toBe(true);
+    expect(isLeftBandRank(30)).toBe(true);
+    expect(isLeftBandRank(20)).toBe(false);
+    expect(leftBandTier(21)).toBe(LEFT_BAND_START);
+    expect(leftBandTier(21)).toBe(8);
+    expect(leftBandTier(30)).toBe(17);
   });
 
   it('규칙 ID는 30세트이다', () => {
     expect(APPLIED_RULE_IDS).toContain('combination-rank-30sets');
     expect(APPLIED_RULE_IDS).not.toContain('combination-rank-20sets');
-    expect(APPLIED_RULE_IDS).toContain('gap-window-three-year');
-    expect(APPLIED_RULE_IDS).toContain('stats-window-three-year');
+    expect(APPLIED_RULE_IDS).toContain('gap-decade-ranks-6-10');
+    expect(APPLIED_RULE_IDS).not.toContain('gap-mix-high-low');
+    expect(APPLIED_RULE_IDS).not.toContain('equal-zero-ranks-8-10');
+    expect(APPLIED_RULE_IDS).toContain('stats-window-all');
+    expect(APPLIED_RULE_IDS).toContain('gap-window-all');
   });
 });

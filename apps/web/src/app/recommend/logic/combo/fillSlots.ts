@@ -14,7 +14,7 @@ import {
   isGapSetRank,
   isSectionSetRank,
 } from '@/app/recommend/constants/gapSetRanks';
-import { isLeftBandRank, isLeftGapRank } from '@/app/recommend/constants/leftRanks';
+import { isLeftBandRank } from '@/app/recommend/constants/leftRanks';
 import {
   isZeroEqualComboRank,
   isZeroEqualGapRank,
@@ -23,6 +23,7 @@ import {
 import { findOneGapSetForRank } from '@/app/recommend/logic/combo/findOneGapSet';
 import { findOneSetForRank } from '@/app/recommend/logic/combo/findOneSet';
 import { fillLeftIfMatch } from '@/app/recommend/logic/combo/leftSlot';
+import { fillGapIfMatch } from '@/app/recommend/logic/combo/gapSlot';
 import {
   bumpUsage,
   releaseGeneratedSet,
@@ -54,18 +55,14 @@ const mergeAvoidKeys = (
 };
 
 const profileFailureSummary = (ctx: FillCtx, rank: number): string | null => {
-  if (isZeroEqualGapRank(rank) || isGapSetRank(rank) || isLeftGapRank(rank)) {
+  if (isZeroEqualGapRank(rank) || isGapSetRank(rank)) {
     const lookup = isZeroEqualGapRank(rank)
       ? ctx.zeroGapRankLookup
-      : isLeftGapRank(rank)
-        ? ctx.leftGapLookup
-        : ctx.gapRankLookup;
+      : ctx.gapRankLookup;
     if (lookup.size === 0) {
       return isZeroEqualGapRank(rank)
         ? '균등 0회·미추첨 간격 후보 없음'
-        : isLeftGapRank(rank)
-          ? 'leftover 미추첨 간격 후보 없음'
-          : '미추첨 순위 계산 불가';
+        : '미추첨 순위 계산 불가';
     }
     return isZeroEqualGapRank(rank)
       ? '균등 0회·미추첨 간격 조건 미충족'
@@ -129,6 +126,13 @@ export const tryFillOneSlot = async (
     return true;
   }
 
+  const gap = await fillGapIfMatch(ctx, rank, blockedKeys);
+  if (gap !== undefined) {
+    if (!gap) return false;
+    ctx.profileSlots[slot] = gap;
+    return true;
+  }
+
   if (isZeroEqualGapRank(rank)) {
     const one = await findOneGapSetForRank(
       rank,
@@ -139,21 +143,6 @@ export const tryFillOneSlot = async (
       blockedKeys,
       ctx.repairYieldEvery,
       ZERO_EQUAL_GAP_PICK,
-    );
-    if (!one) return false;
-    ctx.profileSlots[slot] = one;
-    return true;
-  }
-
-  if (isGapSetRank(rank)) {
-    const one = await findOneGapSetForRank(
-      rank,
-      ctx.gapRankLookup,
-      ctx.usedKeys,
-      ctx.usage,
-      ctx.innerSlotUsage,
-      blockedKeys,
-      ctx.repairYieldEvery,
     );
     if (!one) return false;
     ctx.profileSlots[slot] = one;

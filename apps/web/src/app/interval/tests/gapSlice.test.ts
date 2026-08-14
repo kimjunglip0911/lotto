@@ -14,14 +14,14 @@ const draw = (draw_no: number, num: number): WinningNumberRow => ({
 });
 
 describe('interval gap window', () => {
-  it('최근 156회 밖 출현은 최대에 넣지 않는다', () => {
+  it('전체 이력의 초반 출현도 최대에 넣는다', () => {
     const history = Array.from({ length: 160 }, (_, i) =>
       draw(i + 1, i === 0 ? 7 : 8),
     );
     const seven = buildGapRows(history).find((row) => row.number === 7);
-    expect(gapDrawCount(history)).toBe(156);
-    expect(seven?.maxGap).toBeNull();
-    expect(seven?.currentGap).toBeNull();
+    expect(gapDrawCount(history)).toBe(160);
+    expect(seven?.maxGap).not.toBeNull();
+    expect(seven?.currentGap).not.toBeNull();
   });
 
   it('최대에 도달한 번호 중 미추첨 기간이 긴 번호가 더 위다', () => {

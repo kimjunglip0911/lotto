@@ -70,11 +70,11 @@ export const formatStatsBandSummary = (
 };
 
 /** 조합 분석 구간별 번호 확률 표본 */
-export const STATS_POSITION_BAND_WINDOW = STATS_WINDOW_THREE_YEAR;
+export const STATS_POSITION_BAND_WINDOW = STATS_WINDOW_ALL;
 
-export const STATS_POSITION_BAND_LABEL = STATS_WINDOW_THREE_YEAR_LABEL;
+export const STATS_POSITION_BAND_LABEL = STATS_WINDOW_ALL_LABEL;
 
-/** 추천 band 순위 표본(3년 단일 윈도우) */
-export const STATS_BAND_CASCADE_WINDOWS = [STATS_WINDOW_THREE_YEAR] as const;
+/** 추천 band 순위 표본(전체 단일 윈도우) */
+export const STATS_BAND_CASCADE_WINDOWS = [STATS_WINDOW_ALL] as const;
 
-export const STATS_BAND_CASCADE_LABEL = STATS_WINDOW_THREE_YEAR_LABEL;
+export const STATS_BAND_CASCADE_LABEL = STATS_WINDOW_ALL_LABEL;

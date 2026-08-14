@@ -14,7 +14,7 @@ import { STATS_POSITION_BAND_WINDOW } from '@/lib/statsWindow';
 
 const EMPTY_LOOKUP: PositionRankLookup = new Map();
 
-/** 기준 회차 직전 3년 표본으로 자리별 번호 순위 lookup */
+/** 기준 회차 직전 전체 표본으로 자리별 번호 순위 lookup */
 
 export const usePositionRankLookup = (
   apiUrl: string,

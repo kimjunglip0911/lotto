@@ -3,11 +3,7 @@ import type { WinningNumberRow } from '@/lib/accu-nums/types';
 import { FULL_LOTTO_POOL } from '@/app/recommend/constants/lottoPool';
 import { TARGET_SET_COUNT } from '@/app/recommend/constants/comboThresholds';
 import { generateCombinationBasedSets } from '@/app/recommend/logic/combo';
-import { fillLeftGap } from '@/app/recommend/logic/combo/leftGapPick';
 import { setKey } from '@/app/recommend/logic/combo/toSet';
-import { rerankGapLookup } from '@/app/recommend/logic/gap/keepPoolGaps';
-import type { FillCtx } from '@/app/recommend/logic/combo/fillCtx';
-import type { GapRankLookup, GapRankRow } from '@/app/recommend/types/gapRank';
 import { STATS_BAND_CASCADE_WINDOWS } from '@/lib/statsWindow';
 
 const mk = (
@@ -42,38 +38,6 @@ const numsOf = (set: {
   num6: number;
 }) => [set.num1, set.num2, set.num3, set.num4, set.num5, set.num6];
 
-const gapRow = (number: number, rank: number): GapRankRow => ({
-  number,
-  rank,
-  draws: [],
-  currentGap: rank,
-  avgGap: rank,
-  maxGap: rank,
-  distance: 0,
-});
-
-const leftCtx = (lookup: GapRankLookup): FillCtx => ({
-  poolByBand: new Map(),
-  zeroPoolByBand: new Map(),
-  minSum: 21,
-  maxSum: 255,
-  targetsByRank: new Map(),
-  laddersByRank: new Map(),
-  usedKeys: new Set(),
-  usage: new Map(),
-  innerSlotUsage: new Map(),
-  histCounts: [],
-  positionRankLookup: new Map(),
-  positionDrawCountLookup: new Map(),
-  gapRankLookup: new Map(),
-  zeroGapRankLookup: new Map(),
-  leftGapLookup: lookup,
-  leftPoolByBand: new Map(),
-  repairYieldEvery: 0,
-  profileSlots: [],
-  pastWinningKeys: new Set(),
-});
-
 describe('leftover 21부터 30세트', () => {
   it(
     '목표 30세트를 만들고 조합은 서로 다르다',
@@ -87,21 +51,8 @@ describe('leftover 21부터 30세트', () => {
       });
       expect(r.sets.length).toBe(TARGET_SET_COUNT);
       expect(new Set(r.sets.map((s) => setKey(numsOf(s)))).size).toBe(r.sets.length);
+      expect(r.summaryLines.some((line) => line.includes('8등부터 17등'))).toBe(true);
     },
     120_000,
   );
-
-  it('leftover 8개면 서로 다른 간격 5세트를 만든다', async () => {
-    const orig = new Map(
-      [11, 17, 23, 29, 35, 41, 12, 18].map((rank, i) => [i + 1, gapRow(i + 1, rank)]),
-    );
-    const ctx = leftCtx(rerankGapLookup(orig));
-    const keys = new Set<string>();
-    for (const rank of [21, 22, 23, 24, 25]) {
-      const set = await fillLeftGap(ctx, rank, new Set());
-      expect(set).not.toBeNull();
-      keys.add(setKey(numsOf(set!)));
-    }
-    expect(keys.size).toBe(5);
-  });
 });

@@ -9,7 +9,6 @@ import {
 import {
   CORE_SET_COUNT,
   isLeftBandRank,
-  isLeftGapRank,
 } from '@/app/recommend/constants/leftRanks';
 import {
   LOTTO_SUM_MAX,
@@ -42,8 +41,8 @@ import {
   formatStatsBandSummary,
   STATS_BAND_CASCADE_LABEL,
   STATS_POSITION_BAND_WINDOW,
-  STATS_WINDOW_THREE_YEAR,
-  STATS_WINDOW_THREE_YEAR_LABEL,
+  STATS_WINDOW_ALL,
+  STATS_WINDOW_ALL_LABEL,
 } from '@/lib/statsWindow';
 import { DEFAULT_REPAIR_YIELD_EVERY } from '@/app/recommend/logic/combo/yieldMain';
 
@@ -96,11 +95,11 @@ export const generateCombinationBasedSets = async (
     `자리대 순위: ${formatStatsBandSummary(STATS_BAND_CASCADE_LABEL, STATS_POSITION_BAND_WINDOW, sampleDraws)}·rank N=N등 band 시작→ladder(최대 ${MAX_BAND_LADDER_DEPTH}단·출현 band만)`,
   );
   summaryLines.push(
-    `미추첨 간격: ${formatStatsBandSummary(STATS_WINDOW_THREE_YEAR_LABEL, STATS_WINDOW_THREE_YEAR, options.gapHistory?.length)}·RANK1~10은 최대간격 근접 순위 6칸씩(1~6, 7~12, …)`,
+    `미추첨 간격: ${formatStatsBandSummary(STATS_WINDOW_ALL_LABEL, STATS_WINDOW_ALL, options.gapHistory?.length)}·RANK1~5는 1등부터 6칸·RANK6~10은 번호대(5세트 안 중복 없음)`,
   );
   summaryLines.push('구간별 순위: RANK11~17은 구간 band ladder');
-  summaryLines.push('균등 0회: RANK18 미추첨 간격·RANK19~20 조합(0회 번호만)');
-  summaryLines.push('leftover: RANK21부터 25는 1부터 10 미사용·leftover 간격 1등부터, RANK26부터 30은 11부터 20 미사용·항목별 11등. 부족하면 풀에서 채움');
+  summaryLines.push('균등 0회: RANK18 미추첨 간격·RANK19~20 조합');
+  summaryLines.push('leftover: RANK21부터 30은 조합분석 미사용 등수(8등부터 17등) band');
 
   const poolSorted = [...new Set(numberPool)].filter((n) => n >= 1 && n <= 45).sort((a, b) => a - b);
   if (poolSorted.length < 6) {
@@ -145,7 +144,7 @@ export const generateCombinationBasedSets = async (
   const laddersByRank = new Map<number, number[][]>();
   for (const rank of COMBO_RANK_SLOT_ORDER) {
     if (rank < SECTION_SET_RANK_START) continue;
-    if (isLeftGapRank(rank) || isLeftBandRank(rank)) continue;
+    if (isLeftBandRank(rank)) continue;
     const sectionRank = toSectionRank(rank);
     const targets = buildBandTargetsForRankCascade(flatByWindow, sectionRank);
     const ladder = buildBandLadderForRankCascade(flatByWindow, sectionRank);
@@ -190,9 +189,7 @@ export const generateCombinationBasedSets = async (
   };
 
   await fillSlotRange(ctx, 0, CORE_SET_COUNT);
-  const leftPools = attachLeftPools(ctx, poolSorted, fullGapLookup, flatByWindow);
-  summaryLines.push(`leftover 간격 풀: ${leftPools.gapPool.length}개`);
-  summaryLines.push(`leftover 구간 풀: ${leftPools.bandPool.length}개`);
+  attachLeftPools(ctx, flatByWindow);
   await fillSlotRange(ctx, CORE_SET_COUNT, TARGET_SET_COUNT);
 
   const builtCount = profileSlots.filter((s) => s !== null).length;
