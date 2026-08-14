@@ -19,10 +19,17 @@ describe('techLabelFromStrategy', () => {
     expect(techLabelFromStrategy('combo:rank17')).toBe(TECH_ITEM_RANK);
   });
 
-  it('RANK18~20은 균등 0회 기법이다', () => {
+  it('RANK18부터 20은 균등 0회 기법이다', () => {
     expect(techLabelFromStrategy('combo:rank18')).toBe(TECH_ZERO_GAP);
     expect(techLabelFromStrategy('combo:rank19')).toBe(TECH_ZERO_COMBO);
     expect(techLabelFromStrategy('combo:rank20')).toBe(TECH_ZERO_COMBO);
+  });
+
+  it('RANK21부터 25는 간격, RANK26부터 30은 항목별이다', () => {
+    expect(techLabelFromStrategy('combo:rank21')).toBe(TECH_GAP_EXTRACT);
+    expect(techLabelFromStrategy('combo:rank25')).toBe(TECH_GAP_EXTRACT);
+    expect(techLabelFromStrategy('combo:rank26')).toBe(TECH_ITEM_RANK);
+    expect(techLabelFromStrategy('combo:rank30')).toBe(TECH_ITEM_RANK);
   });
 });
 

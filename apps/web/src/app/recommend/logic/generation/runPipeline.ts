@@ -19,7 +19,7 @@ import type {
   GenerationPipelineResult,
 } from '@/app/recommend/types/generationHook';
 
-/** 20세트 생성·저장 파이프라인(React 상태 없음) */
+/** 30세트 생성·저장 파이프라인(React 상태 없음) */
 
 export const runRecommendGeneration = async (
   apiUrl: string,

@@ -7,7 +7,7 @@ import { GEN_STATUS_LOADING, GEN_STATUS_SAVING } from '@/app/recommend/helpers/g
 import { runRecommendGeneration } from '@/app/recommend/logic/generation/runPipeline';
 import type { GenOpts } from '@/app/recommend/types/generationHook';
 
-/** 조합 20세트 생성·저장 */
+/** 조합 30세트 생성·저장 */
 
 export const useRecommendGeneration = ({
   selectedDraw,

@@ -43,7 +43,7 @@ export const AnalysisController = ({
           <WinningNumbersView winningNumbers={winningNumbers} />
         </div>
         <p className="text-sm text-slate-400">
-          1~45 전체 번호 풀에서 조합 분석 통계를 적용해 20세트를 생성합니다.
+          1부터 45 전체 번호 풀에서 조합 분석 통계를 적용해 30세트를 생성합니다.
         </p>
         <p className="text-xs text-slate-500 leading-relaxed max-w-xl">
           추천 세트는 최근 당첨 이력·추세를 반영한 휴리스틱이며 당첨을 보장하지 않습니다.

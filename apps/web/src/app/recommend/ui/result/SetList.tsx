@@ -25,8 +25,9 @@ export const SetList = ({ sets, rankLookup, gapLookup }: Props) => {
     <div className="pt-1 space-y-3">
       <p className="text-slate-100 font-semibold">생성된 추천 세트</p>
       <p className="text-[11px] text-slate-500">
-        RANK1~10은 {TECH_GAP_EXTRACT}, RANK11~17은 {TECH_ITEM_RANK}, RANK18은{' '}
-        {TECH_ZERO_GAP}, RANK19~20은 {TECH_ZERO_COMBO}으로 생성됩니다.
+        RANK1부터 10은 {TECH_GAP_EXTRACT}, RANK11부터 17은 {TECH_ITEM_RANK}, RANK18은{' '}
+        {TECH_ZERO_GAP}, RANK19부터 20은 {TECH_ZERO_COMBO}, RANK21부터 25는 1부터 10
+        미사용 간격, RANK26부터 30은 11부터 20 미사용 항목별입니다.
         순위·간격·간격순위는 표 참고용이며, 번호는 1구~6구 뽑기 순서(num1~6)입니다.
         중복 조합 시 총 회차(drawCount)가 낮은 구간부터 1개 번호를 교체합니다.
       </p>

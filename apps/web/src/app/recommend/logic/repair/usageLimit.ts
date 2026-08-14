@@ -1,6 +1,6 @@
 import { MAX_NUM_USAGE } from '@/app/recommend/constants/comboThresholds';
 
-/** 번호가 20세트 전체 사용 한도 내인지 */
+/** 번호가 30세트 전체 사용 한도 내인지 */
 
 export const canUseNum = (
   n: number,

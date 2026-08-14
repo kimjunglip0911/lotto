@@ -65,4 +65,18 @@ describe('toSetVm', () => {
     expect(vms[10]?.method).toBe('항목별 순위 로직');
     expect(vms[11]?.method).toBe('항목별 순위 로직');
   });
+
+  it('leftover 21부터 30세트도 기본이 아닌 기법명을 넣는다', () => {
+    expect(toSetVm([mkData({ strategy: 'combo:rank21' })], null)[0]?.method).toBe(
+      '간격 추출 로직',
+    );
+    expect(toSetVm([mkData({ strategy: 'combo:rank26' })], null)[0]?.method).toBe(
+      '항목별 순위 로직',
+    );
+    const vms = toSetVm(Array.from({ length: 30 }, () => mkData()), null);
+    expect(vms[20]?.method).toBe('간격 추출 로직');
+    expect(vms[24]?.method).toBe('간격 추출 로직');
+    expect(vms[25]?.method).toBe('항목별 순위 로직');
+    expect(vms[29]?.method).toBe('항목별 순위 로직');
+  });
 });
