@@ -2,7 +2,7 @@
 
 ## 목적
 
-현재 회차의 **분석 번호 세트(최대 30세트)** 를 카드로 보여 주고, 당첨번호 입력·저장·세트별 당첨 등수·통계·10세트 단위 PNG 다운로드를 제공합니다.
+현재 회차의 **분석 번호 세트(최대 30세트)** 를 카드로 보여 주고, 당첨번호 입력·저장·세트별 당첨 등수·통계·선택한 10세트 PNG 다운로드를 제공합니다. 화면 이름은 **추천 번호 확인**입니다.
 
 ## 실행 방법
 
@@ -17,9 +17,9 @@
 | 폴더 | 역할 |
 |:---|:---|
 | `api/` | HTTP 클라이언트 (`loadDrawNumbers`, `loadDrawings`, `loadWinByNo`, `saveWin`; 경로는 `constants/apiPath`) |
-| `ui/` | 화면 컴포넌트 (`HomeMain` 본문 조립, `HomeCard` 카드 꾸밈, `controls/`, `stats/`: `RankStats`, `RankGuide`, `RankSummary`, `RankList`, `list/`, `card/`) |
-| `hooks/` | `useHomeView`(입력·회차·저장·표시 세트 조합), `useGridData`, `useDrawList`, `useDrawBundle`, `useWinInput`(`winByDraw` 동기화), `useSaveWinning`, `useSaveDly`(저장 결과 idle 복귀 지연), `useGrpPng` |
-| `logic/` | 등수 판정·당첨 등수 집계(`rankStats`: `calcRankStats`)·당첨번호 정규화(`normalize`: `toNumOrNull`, `toWinNums`, `canCalcWins`)·저장 본문 조립(`saveBody`: `makeSaveBody`)·10세트 묶음(`chunkSets`)·입력 파싱(`parseNum`: `toInputNum`)·회차 목록/세트 변환(`parseDrawArr`, `buildDrawList`, `toLotterySets`, `toSetVm`) |
+| `ui/` | 화면 컴포넌트 (`HomeMain` 본문 조립, `HomeCard` 카드 꾸밈, `controls/`, `stats/`: `RankStats`, `RankGuide`, `RankSummary`, `RankList`, `list/`:`GroupBtns`·`SetList`·`SetGroup`·`SetCards`·`EmptyBox`, `card/`) |
+| `hooks/` | `useHomeView`(입력·회차·저장·표시 세트 조합), `useGridData`, `useDrawList`, `useDrawBundle`, `useWinInput`(`winByDraw` 동기화), `useSaveWinning`, `useSaveDly`(저장 결과 idle 복귀 지연), `useGrpPng`, `useGrpSel`(10세트 묶음 선택) |
+| `logic/` | 등수 판정·당첨 등수 집계(`rankStats`: `calcRankStats`)·당첨번호 정규화(`normalize`: `toNumOrNull`, `toWinNums`, `canCalcWins`)·저장 본문 조립(`saveBody`: `makeSaveBody`)·10세트 묶음(`chunkSets`, `fillGroups`)·묶음 문구(`grpLabel`)·입력 파싱(`parseNum`: `toInputNum`)·회차 목록/세트 변환(`parseDrawArr`, `buildDrawList`, `toLotterySets`, `toSetVm`) |
 | `helpers/` | API 묶음 fetch·PNG 다운로드(`helpers/png/`: `capHtmlImg`, `capCanvas`, `dlGroupPng`) |
 | `types/` | 세트·당첨·통계 타입 |
 | `constants/` | 그룹 크기·피드백 지연·초기값·API 경로(`apiPath`: 회차 목록·추천 세트·당첨 등) |
@@ -29,8 +29,10 @@
 
 ## UI 규칙
 
-- 분석 번호 카드는 **10세트씩 3개 영역**으로 나누어 표시합니다.
-- 각 영역 헤더에 세트 범위(예: `1~10세트`)와 **10세트 다운로드** 버튼이 있습니다.
+- 분석 번호 카드는 **10세트 묶음 버튼 3개**(1부터 10세트, 11부터 20세트, 21부터 30세트)로 고르고, **선택한 묶음만** 표시합니다.
+- 버튼은 세트가 비어 있어도 항상 3개입니다. 회차를 바꾸면 첫 묶음으로 돌아갑니다.
+- 당첨 통계(`RankStats`)는 **전체 세트** 기준입니다.
+- 선택한 묶음 헤더에 세트 범위(예: `1부터 10세트`)와 **10세트 다운로드** 버튼이 있습니다.
 - PNG 파일명: `1~10세트.png` 형식. 버튼은 `다운로드 완료` / `다운로드 실패`로 잠시 피드백합니다.
 - 카드의 분석 기법 값이 비어 있으면 화면에는 기본값 `기본`으로 표시합니다.
 - 카드·PNG에 보이는 6개 번호는 **오름차순**으로 정렬합니다(`logic/toSetVm.ts`). 추천 페이지의 1~6구 순서와는 별개입니다.

@@ -8,7 +8,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "로또 번호 생성기",
+  title: "추천 번호 확인",
   description: "통계 기반 로또 번호 추천·분석",
 };
 

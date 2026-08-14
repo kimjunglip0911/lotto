@@ -8,6 +8,9 @@ import type { InputNumber } from '../types/home';
 /** 조합 카드 그룹 표시 크기 */
 export const GROUP_SIZE = 10;
 
+/** 홈에서 항상 보여 주는 10세트 묶음 개수 */
+export const GROUP_COUNT = 3;
+
 /** 저장 완료/실패 상태를 idle로 되돌리는 지연 시간(ms) */
 export const SAVE_STATUS_RESET_DELAY_MS = 2000;
 

@@ -10,14 +10,14 @@ interface HeaderProps {
 export function Header({ onMenuClick }: HeaderProps) {
     const pathname = usePathname();
     const titleMap: Record<string, string> = {
-        '/': '로또 번호 생성기',
-        '/home': '로또 번호 생성기',
+        '/': '추천 번호 확인',
+        '/home': '추천 번호 확인',
         '/recommend': '로또 번호 추천',
         '/combination': '조합 분석',
         '/interval': '번호별 간격',
         '/equal': '균등 분석',
     };
-    const pageTitle = titleMap[pathname] ?? '로또 번호 생성기';
+    const pageTitle = titleMap[pathname] ?? '추천 번호 확인';
 
     return (
         <header className="flex items-center justify-between p-4 sticky top-0 z-50 bg-background/95 backdrop-blur-md border-b border-card-border/30">

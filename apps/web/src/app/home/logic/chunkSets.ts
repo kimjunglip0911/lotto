@@ -16,12 +16,24 @@
  * 주의·화면에 미치는 영향
  * - 묶음 크기가 0 이하이거나 세트가 없으면 빈 배열을 돌려 줍니다(그룹이 하나도 안 보임).
  * - 실제 화면에서는 `GROUP_SIZE=10`만 쓰므로, 정상 데이터에서는 기존과 같이 1~3개 그룹이 나옵니다.
+ * - 홈 버튼 3개는 `fillGroups`로 빈 묶음까지 고정 개수를 맞춘다.
  */
 import type { LotterySetViewModel } from '../types/home';
 
 export const chunkSets = (sets: LotterySetViewModel[], size: number): LotterySetViewModel[][] => {
   if (size <= 0 || sets.length === 0) return [];
   return Array.from({ length: Math.ceil(sets.length / size) }, (_, i) =>
+    sets.slice(i * size, (i + 1) * size),
+  );
+};
+
+export const fillGroups = (
+  sets: LotterySetViewModel[],
+  size: number,
+  count: number,
+): LotterySetViewModel[][] => {
+  if (size <= 0 || count <= 0) return [];
+  return Array.from({ length: count }, (_, i) =>
     sets.slice(i * size, (i + 1) * size),
   );
 };

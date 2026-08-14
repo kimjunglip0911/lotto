@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { chunkSets } from '../logic/chunkSets';
+import { chunkSets, fillGroups } from '../logic/chunkSets';
 import type { LotterySetViewModel } from '../types/home';
 
 const mkSet = (id: number): LotterySetViewModel => ({
@@ -33,5 +33,28 @@ describe('chunkSets', () => {
     expect(groups[0]).toHaveLength(10);
     expect(groups[1]).toHaveLength(10);
     expect(groups[2]).toHaveLength(5);
+  });
+});
+
+describe('fillGroups', () => {
+  it('30세트를 10개씩 나누면 묶음 3개다', () => {
+    const sets = Array.from({ length: 30 }, (_, i) => mkSet(i + 1));
+    const groups = fillGroups(sets, 10, 3);
+    expect(groups).toHaveLength(3);
+    expect(groups.every((g) => g.length === 10)).toBe(true);
+  });
+
+  it('묶음 2는 인덱스 20부터 29다', () => {
+    const sets = Array.from({ length: 30 }, (_, i) => mkSet(i + 1));
+    expect(fillGroups(sets, 10, 3)[2]?.map((s) => s.id)).toEqual([
+      21, 22, 23, 24, 25, 26, 27, 28, 29, 30,
+    ]);
+  });
+
+  it('세트가 20개면 세 번째 묶음은 빈 배열이다', () => {
+    const sets = Array.from({ length: 20 }, (_, i) => mkSet(i + 1));
+    const groups = fillGroups(sets, 10, 3);
+    expect(groups).toHaveLength(3);
+    expect(groups[2]).toEqual([]);
   });
 });

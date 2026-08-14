@@ -28,7 +28,7 @@ lotto/
 │       └── src/
 │           ├── app/
 │           │   ├── api/               # Route Handlers (/api/*)
-│           │   ├── home/
+│           │   ├── home/              # 추천 번호 확인 · ui/list/GroupBtns
 │           │   ├── combination/
 │           │   ├── interval/
 │           │   ├── equal/

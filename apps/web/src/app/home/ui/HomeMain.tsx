@@ -67,7 +67,7 @@ export const HomeMain = ({ view }: { view: HomeView }) => {
             winningNumbers={winningNumbers}
             bonusNumber={winningBonus}
           />
-          <SetList sets={displaySets} />
+          <SetList key={selectedDraw ?? 'none'} sets={displaySets} />
         </HomeCard>
       </section>
     </main>
