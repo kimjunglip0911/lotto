@@ -6,7 +6,7 @@ import { Sidebar } from '@/components/sidebar/Sidebar';
 import { useGapData } from './hooks/useGapData';
 import { IntervalMain } from './ui/IntervalMain';
 
-// "번호별 간격" 화면: 공통 레이아웃과 데이터 훅을 조립해 본문에 넘깁니다.
+// "미추첨 간격" 화면: 공통 레이아웃과 데이터 훅을 조립해 본문에 넘깁니다.
 
 export default function IntervalPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);

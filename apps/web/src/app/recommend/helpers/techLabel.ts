@@ -13,9 +13,9 @@ import {
 
 /** RANK별 분석 기법 표시명 */
 
-export const TECH_GAP_EXTRACT = '간격 추출 로직';
+export const TECH_GAP_EXTRACT = '미추첨 간격 추출';
 export const TECH_ITEM_RANK = '항목별 순위 로직';
-export const TECH_ZERO_GAP = '균등0회·간격';
+export const TECH_ZERO_GAP = '균등0회·미추첨 간격';
 export const TECH_ZERO_COMBO = '균등0회·항목별';
 
 export const techLabelFromRank = (rank: number): string | null => {

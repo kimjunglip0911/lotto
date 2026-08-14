@@ -62,14 +62,14 @@ const profileFailureSummary = (ctx: FillCtx, rank: number): string | null => {
         : ctx.gapRankLookup;
     if (lookup.size === 0) {
       return isZeroEqualGapRank(rank)
-        ? '균등 0회·간격 후보 없음'
+        ? '균등 0회·미추첨 간격 후보 없음'
         : isLeftGapRank(rank)
-          ? 'leftover 간격 후보 없음'
-          : '간격순위 계산 불가';
+          ? 'leftover 미추첨 간격 후보 없음'
+          : '미추첨 순위 계산 불가';
     }
     return isZeroEqualGapRank(rank)
-      ? '균등 0회·간격 조건 미충족'
-      : '간격순위·번호 한도·중복 조건 미충족';
+      ? '균등 0회·미추첨 간격 조건 미충족'
+      : '미추첨 순위·번호 한도·중복 조건 미충족';
   }
   const bandTargets = ctx.targetsByRank.get(rank);
   const bandLadder = ctx.laddersByRank.get(rank);

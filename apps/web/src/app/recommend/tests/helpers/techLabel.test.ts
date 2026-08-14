@@ -9,8 +9,8 @@ import {
 import { getStrategyLabel } from '@/app/recommend/constants/resultView';
 
 describe('techLabelFromStrategy', () => {
-  it('RANK1~10은 간격 추출 로직이다', () => {
-    expect(techLabelFromStrategy('combo:rank1')).toBe(TECH_GAP_EXTRACT);
+  it('RANK1~10은 미추첨 간격 추출이다', () => {
+    expect(techLabelFromStrategy('combo:rank1')).toBe('미추첨 간격 추출');
     expect(techLabelFromStrategy('combo:rank10')).toBe(TECH_GAP_EXTRACT);
   });
 

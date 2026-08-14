@@ -14,7 +14,7 @@ export function Header({ onMenuClick }: HeaderProps) {
         '/home': '추천 번호 확인',
         '/recommend': '로또 번호 추천',
         '/combination': '조합 분석',
-        '/interval': '번호별 간격',
+        '/interval': '미추첨 간격',
         '/equal': '균등 분석',
     };
     const pageTitle = titleMap[pathname] ?? '추천 번호 확인';

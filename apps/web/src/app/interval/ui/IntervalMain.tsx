@@ -2,7 +2,7 @@ import type { UseGapDataResult } from '../hooks/useGapData';
 import { GapTable } from './table/GapTable';
 
 /**
- * 번호별 간격 화면의 본문을 조립하는 파일입니다.
+ * 미추첨 간격 화면의 본문을 조립하는 파일입니다.
  *
  * 하는 일
  * - 데이터를 불러오는 중, 오류, 정상 표 상태를 나누어 보여 줍니다.

@@ -82,7 +82,7 @@ export function SetRankTable({ set, index, rankLookup, gapLookup }: Props) {
             </tr>
             <tr>
               <th scope="row" className={labelClass}>
-                간격
+                미추첨 기간
               </th>
               {nums.map((num, i) => {
                 const gap = currentGapAtNumber(gapLookup, num);
@@ -95,7 +95,7 @@ export function SetRankTable({ set, index, rankLookup, gapLookup }: Props) {
             </tr>
             <tr>
               <th scope="row" className={labelClass}>
-                간격순위
+                미추첨 순위
               </th>
               {nums.map((num, i) => {
                 const gapRank = gapRankAtNumber(gapLookup, num);
