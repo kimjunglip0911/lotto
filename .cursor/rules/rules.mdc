@@ -9,7 +9,7 @@ alwaysApply: true
 
 | 구분 | 위치 | 언어·런타임 | 프레임워크 | 버전 |
 |:---|:---|:---|:---|:---|
-| **앱** | `apps/web/` | **TypeScript** 7.0 · **Node.js** 24.x (`>=24 <25`) | **Next.js** (App Router) · **React** | Next **16.2.10** · React **19.2.3** |
+| **앱** | `apps/web/` | **TypeScript** 7.0 · **Node.js** 24.x (`>=24 <25`) | **Next.js** (App Router) · **React** | Next **16.3.1** · React **19.2.3** |
 | **UI** | `apps/web/` | — | **Tailwind CSS** · shadcn / radix-ui | Tailwind **4.2.1** |
 | **API** | `apps/web/src/app/api` | — | Next Route Handlers | — |
 | **DB** | `apps/web/src/server/db` | — | **Supabase Postgres** (`pg`) | — |
