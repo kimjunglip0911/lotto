@@ -42,6 +42,8 @@ import {
   formatStatsBandSummary,
   STATS_BAND_CASCADE_LABEL,
   STATS_POSITION_BAND_WINDOW,
+  STATS_WINDOW_ONE_YEAR,
+  STATS_WINDOW_ONE_YEAR_LABEL,
 } from '@/lib/statsWindow';
 import { DEFAULT_REPAIR_YIELD_EVERY } from '@/app/recommend/logic/combo/yieldMain';
 
@@ -56,6 +58,8 @@ export type CombinationGenerationOptions = {
   pastWinningKeys?: ReadonlySet<string>;
   /** 균등 분석 0회 번호(RANK18~20 전용 풀) */
   zeroPool?: readonly number[];
+  /** 미추첨 간격 전용 표본(자리대 창과 분리) */
+  gapHistory?: readonly WinningNumberRow[];
 };
 
 /** 1부터 45 전체 풀·최대 30세트 생성 */
@@ -94,7 +98,9 @@ export const generateCombinationBasedSets = async (
   summaryLines.push(
     `자리대 순위: ${formatStatsBandSummary(STATS_BAND_CASCADE_LABEL, STATS_POSITION_BAND_WINDOW, sampleDraws)}·rank N=N등 band 시작→ladder(최대 ${MAX_BAND_LADDER_DEPTH}단·출현 band만)`,
   );
-  summaryLines.push('번호별 간격: RANK1~10은 최대간격 근접·초과 최우선 순위 6칸씩(1~6, 7~12, …)');
+  summaryLines.push(
+    `번호별 간격: ${formatStatsBandSummary(STATS_WINDOW_ONE_YEAR_LABEL, STATS_WINDOW_ONE_YEAR, options.gapHistory?.length)}·RANK1~10은 최대간격 근접·초과 최우선 순위 6칸씩(1~6, 7~12, …)`,
+  );
   summaryLines.push('구간별 순위: RANK11~17은 구간 band ladder');
   summaryLines.push('균등 0회: RANK18 간격·RANK19~20 조합(0회 번호만)');
   summaryLines.push('leftover: RANK21부터 25는 1부터 10 미사용·간격 11등, RANK26부터 30은 11부터 20 미사용·항목별 11등');
@@ -133,7 +139,8 @@ export const generateCombinationBasedSets = async (
   const rankedRows = rankPositionBandRows(flatForRank);
   const positionRankLookup = buildPositionRankLookup(rankedRows);
   const positionDrawCountLookup = buildPositionDrawCountLookup(rankedRows);
-  const fullGapLookup = buildGapRankLookup(appearHist, referenceDrawNo);
+  const gapHist = options.gapHistory ?? appearHist;
+  const fullGapLookup = buildGapRankLookup(gapHist, referenceDrawNo);
   const gapRankLookup = keepPoolGapLookup(fullGapLookup, poolSorted);
   const zeroGapRankLookup = keepPoolGapLookup(fullGapLookup, zeroSorted);
 

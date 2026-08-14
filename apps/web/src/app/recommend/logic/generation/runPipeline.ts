@@ -37,6 +37,7 @@ export const runRecommendGeneration = async (
     {
       pastWinningKeys: args.pastWinningKeys,
       zeroPool: args.zeroPool,
+      gapHistory: args.gapHistory,
     },
   );
   assertSetsNonEmpty(sets, summaryLines);

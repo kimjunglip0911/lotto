@@ -8,7 +8,11 @@ import {
 } from '@/app/recommend/logic/generation/prevDrawExclude';
 import { buildPastWinningKeys } from '@/app/recommend/logic/generation/pastWinKeys';
 import { pickStatsHistory } from '@/lib/pickStatsHistory';
-import { STATS_BAND_CASCADE_WINDOWS, STATS_POSITION_BAND_WINDOW } from '@/lib/statsWindow';
+import {
+  STATS_BAND_CASCADE_WINDOWS,
+  STATS_POSITION_BAND_WINDOW,
+  STATS_WINDOW_ONE_YEAR,
+} from '@/lib/statsWindow';
 import type { WinningNumberRow } from '@/lib/accu-nums/types';
 
 /** 이력·기준 회차로 생성 입력(표본·풀·제외·0회 풀)을 만든다 */
@@ -28,6 +32,7 @@ export const buildGenArgs = (
     bandWindowHistories: STATS_BAND_CASCADE_WINDOWS.map((size) =>
       pickStatsHistory(fullHistory, selectedDraw, size),
     ),
+    gapHistory: pickStatsHistory(fullHistory, selectedDraw, STATS_WINDOW_ONE_YEAR),
     pastWinningKeys: buildPastWinningKeys(fullHistory, selectedDraw),
     excludedNumbers,
     numberPool: poolWithoutNums(excludedNumbers),
