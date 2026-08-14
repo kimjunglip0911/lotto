@@ -7,7 +7,7 @@ export const APPLIED_RULE_IDS = [
   'stats-window-all',
   'gap-window-all',
   'gap-set-ranks-1-10',
-  'gap-decade-ranks-6-10',
+  'gap-rev-ranks-6-10',
   'pos-band-ranks-11-17',
   'equal-zero-ranks-18-20',
   'pos-band-ladder-fallback',

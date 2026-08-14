@@ -25,7 +25,7 @@ export const SetList = ({ sets, rankLookup, gapLookup }: Props) => {
     <div className="pt-1 space-y-3">
       <p className="text-slate-100 font-semibold">생성된 추천 세트</p>
       <p className="text-[11px] text-slate-500">
-        RANK1부터 5는 {TECH_GAP_EXTRACT}(1등부터), RANK6부터 10은 번호대 개수, RANK11부터 17은{' '}
+        RANK1부터 5는 {TECH_GAP_EXTRACT}(1등부터), RANK6부터 10은 45등부터 역순, RANK11부터 17은{' '}
         {TECH_ITEM_RANK}, RANK18은 {TECH_ZERO_GAP}, RANK19부터 20은 {TECH_ZERO_COMBO}, RANK21부터 30은
         조합분석 8등부터 {TECH_ITEM_RANK}입니다.
         순위·미추첨 기간·미추첨 순위는 표 참고용이며, 번호는 1구~6구 뽑기 순서(num1~6)입니다.

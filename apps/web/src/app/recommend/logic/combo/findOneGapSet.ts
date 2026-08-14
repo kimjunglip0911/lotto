@@ -68,6 +68,7 @@ export const pickGapSetNumbers = (
   gapRankLookup: GapRankLookup,
   usage: ReadonlyMap<number, number>,
   startRank?: number,
+  taken: ReadonlySet<number> = new Set(),
 ): number[] | null => {
   if (gapRankLookup.size === 0) return null;
 
@@ -78,7 +79,7 @@ export const pickGapSetNumbers = (
   const byRank = buildNumberByGapRank(gapRankLookup);
   const rankDesc = gapRowsByRankDesc(gapRankLookup);
   const picked: number[] = [];
-  const used = new Set<number>();
+  const used = new Set(taken);
 
   for (const targetRank of targets) {
     let chosen: number | null = null;
@@ -111,6 +112,7 @@ const nudgeGapDuplicate = (
   usage: ReadonlyMap<number, number>,
   blockedKeys: ReadonlySet<string>,
   startRank?: number,
+  taken: ReadonlySet<number> = new Set(),
 ): number[] | null => {
   const byRank = buildNumberByGapRank(gapRankLookup);
   const rankDesc = gapRowsByRankDesc(gapRankLookup);
@@ -120,11 +122,16 @@ const nudgeGapDuplicate = (
       : targetGapRanksFromStart(startRank);
 
   for (let pos = 0; pos < 6; pos++) {
-    const used = new Set(picked.filter((_, index) => index !== pos));
+    const used = new Set([
+      ...taken,
+      ...picked.filter((_, index) => index !== pos),
+    ]);
     const startRank = targets[pos]!;
 
     const trySwap = (candidate: number | null): number[] | null => {
-      if (candidate === null || candidate === picked[pos]) return null;
+      if (candidate === null || candidate === picked[pos] || used.has(candidate)) {
+        return null;
+      }
       const next = [...picked];
       next[pos] = candidate;
       if (new Set(next).size !== 6) return null;
@@ -157,13 +164,20 @@ export const findOneGapSetForRank = async (
   /** 간격 칸 선택용 rank(기본=setRank). 0회 세트는 1 등 사용. */
   pickRank: number = setRank,
   gapStart?: number,
+  taken: ReadonlySet<number> = new Set(),
 ): Promise<GeneratedSet | null> => {
   if (repairYieldEvery > 0) await yieldToMain();
 
   const blockedKeys =
     avoidKeys.size > 0 ? new Set([...usedKeys, ...avoidKeys]) : usedKeys;
 
-  let picked = pickGapSetNumbers(pickRank, gapRankLookup, usage, gapStart);
+  let picked = pickGapSetNumbers(
+    pickRank,
+    gapRankLookup,
+    usage,
+    gapStart,
+    taken,
+  );
   if (
     picked !== null &&
     (usedKeys.has(setKey(picked)) || avoidKeys.has(setKey(picked)))
@@ -175,6 +189,7 @@ export const findOneGapSetForRank = async (
       usage,
       blockedKeys,
       gapStart,
+      taken,
     );
   }
 

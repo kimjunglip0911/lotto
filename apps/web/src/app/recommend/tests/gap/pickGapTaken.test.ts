@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { decadeQuota } from '@/app/recommend/constants/decadeQuota';
-import { pickDecadeGapNumbers } from '@/app/recommend/logic/gap/pickDecade';
+import { pickGapSetNumbers } from '@/app/recommend/logic/combo/findOneGapSet';
 import type { GapRankLookup, GapRankRow } from '@/app/recommend/types/gapRank';
 
 const gapRow = (number: number, rank: number): GapRankRow => ({
@@ -21,14 +20,13 @@ const fullLookup = (): GapRankLookup =>
     }),
   );
 
-describe('pickDecadeGapNumbers taken', () => {
-  it('6~10세트는 서로 다른 30개 번호를 쓴다', () => {
-    const lookup = fullLookup();
+describe('pickGapSetNumbers taken', () => {
+  it('1~5세트는 서로 다른 30개 번호를 쓴다', () => {
     const taken = new Set<number>();
     const all: number[] = [];
-    for (const rank of [6, 7, 8, 9, 10]) {
-      const picked = pickDecadeGapNumbers(lookup, decadeQuota(rank)!, taken);
-      expect(picked).toEqual(expect.any(Array));
+    for (let rank = 1; rank <= 5; rank++) {
+      const picked = pickGapSetNumbers(rank, fullLookup(), new Map(), undefined, taken);
+      expect(picked).toHaveLength(6);
       for (const n of picked!) {
         expect(taken.has(n)).toBe(false);
         taken.add(n);
@@ -36,9 +34,16 @@ describe('pickDecadeGapNumbers taken', () => {
       all.push(...picked!);
     }
     expect(new Set(all).size).toBe(30);
-    expect(all).toEqual([
-      1, 10, 20, 21, 30, 40, 2, 11, 22, 31, 32, 41, 3, 12, 13, 23, 24, 33, 14,
-      15, 25, 26, 34, 35, 4, 27, 28, 29, 36, 42,
-    ]);
+    expect(all).toEqual(Array.from({ length: 30 }, (_, i) => i + 1));
+  });
+  it('이미 쓴 번호는 다음 등수로 건너뛴다', () => {
+    const picked = pickGapSetNumbers(
+      2,
+      fullLookup(),
+      new Map(),
+      undefined,
+      new Set([7]),
+    );
+    expect(picked).toEqual([8, 9, 10, 11, 12, 13]);
   });
 });

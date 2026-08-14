@@ -95,7 +95,7 @@ export const generateCombinationBasedSets = async (
     `자리대 순위: ${formatStatsBandSummary(STATS_BAND_CASCADE_LABEL, STATS_POSITION_BAND_WINDOW, sampleDraws)}·rank N=N등 band 시작→ladder(최대 ${MAX_BAND_LADDER_DEPTH}단·출현 band만)`,
   );
   summaryLines.push(
-    `미추첨 간격: ${formatStatsBandSummary(STATS_WINDOW_ALL_LABEL, STATS_WINDOW_ALL, options.gapHistory?.length)}·RANK1~5는 1등부터 6칸·RANK6~10은 번호대(5세트 안 중복 없음)`,
+    `미추첨 간격: ${formatStatsBandSummary(STATS_WINDOW_ALL_LABEL, STATS_WINDOW_ALL, options.gapHistory?.length)}·RANK1~5는 1~30등(그룹 내 중복 없음)·RANK6~10은 45등부터 역순`,
   );
   summaryLines.push('구간별 순위: RANK11~17은 구간 band ladder');
   summaryLines.push('균등 0회: RANK18 미추첨 간격·RANK19~20 조합');

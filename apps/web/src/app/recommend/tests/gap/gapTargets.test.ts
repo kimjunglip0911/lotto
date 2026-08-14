@@ -3,7 +3,7 @@ import {
   GAP_RANKS_PER_SET,
   GAP_SEQ_RANK_MAX,
   GAP_SET_RANK_MAX,
-  isGapDecadeRank,
+  isGapRevRank,
   isGapSeqRank,
   isGapSetRank,
   isSectionSetRank,
@@ -20,6 +20,7 @@ import {
   isBeyondGapRankPool,
   targetGapRanksForSetRank,
   targetGapRanksFromStart,
+  targetRevGapRanks,
 } from '@/app/recommend/logic/gap/gapTargets';
 import type { GapRankLookup, GapRankRow } from '@/app/recommend/types/gapRank';
 
@@ -41,7 +42,7 @@ describe('gapSetRanks constants', () => {
     expect(isGapSetRank(1)).toBe(true);
     expect(isGapSeqRank(5)).toBe(true);
     expect(isGapSeqRank(6)).toBe(false);
-    expect(isGapDecadeRank(6)).toBe(true);
+    expect(isGapRevRank(6)).toBe(true);
     expect(isGapSetRank(10)).toBe(true);
     expect(isGapSetRank(11)).toBe(false);
     expect(isSectionSetRank(11)).toBe(true);
@@ -55,6 +56,8 @@ describe('targetGapRanksForSetRank', () => {
     expect(targetGapRanksForSetRank(1)).toEqual([1, 2, 3, 4, 5, 6]);
     expect(targetGapRanksForSetRank(2)).toEqual([7, 8, 9, 10, 11, 12]);
     expect(targetGapRanksForSetRank(GAP_SEQ_RANK_MAX)).toEqual([25, 26, 27, 28, 29, 30]);
+    expect(targetRevGapRanks(6)).toEqual([45, 44, 43, 42, 41, 40]);
+    expect(targetRevGapRanks(10)).toEqual([21, 20, 19, 18, 17, 16]);
     expect(GAP_RANKS_PER_SET).toBe(6);
     expect(GAP_SET_RANK_MAX).toBe(10);
   });
@@ -95,7 +98,8 @@ describe('leftover combo ranks', () => {
   it('규칙 ID는 30세트이다', () => {
     expect(APPLIED_RULE_IDS).toContain('combination-rank-30sets');
     expect(APPLIED_RULE_IDS).not.toContain('combination-rank-20sets');
-    expect(APPLIED_RULE_IDS).toContain('gap-decade-ranks-6-10');
+    expect(APPLIED_RULE_IDS).toContain('gap-rev-ranks-6-10');
+    expect(APPLIED_RULE_IDS).not.toContain('gap-decade-ranks-6-10');
     expect(APPLIED_RULE_IDS).not.toContain('gap-mix-high-low');
     expect(APPLIED_RULE_IDS).not.toContain('equal-zero-ranks-8-10');
     expect(APPLIED_RULE_IDS).toContain('stats-window-all');
