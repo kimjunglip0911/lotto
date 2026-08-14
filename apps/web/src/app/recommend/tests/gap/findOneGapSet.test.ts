@@ -31,9 +31,9 @@ describe('pickGapSetNumbers', () => {
     expect(picked).toEqual([1, 2, 3, 4, 5, 6]);
   });
 
-  it('RANK2는 간격순위 7~12번 번호를 고른다', () => {
-    const picked = pickGapSetNumbers(2, fullLookup(), new Map());
-    expect(picked).toEqual([7, 8, 9, 10, 11, 12]);
+  it('시작 등수 11은 11부터 16번을 고른다', () => {
+    const picked = pickGapSetNumbers(21, fullLookup(), new Map(), 11);
+    expect(picked).toEqual([11, 12, 13, 14, 15, 16]);
   });
 
   it('번호 한도 비활성 시 한도 도달 번호도 그대로 고른다', () => {

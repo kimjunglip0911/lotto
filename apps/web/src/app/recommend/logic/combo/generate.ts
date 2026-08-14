@@ -7,6 +7,11 @@ import {
   toSectionRank,
 } from '@/app/recommend/constants/gapSetRanks';
 import {
+  CORE_SET_COUNT,
+  isLeftBandRank,
+  isLeftGapRank,
+} from '@/app/recommend/constants/leftRanks';
+import {
   LOTTO_SUM_MAX,
   LOTTO_SUM_MIN,
   MAX_BAND_LADDER_DEPTH,
@@ -27,10 +32,10 @@ import {
 } from '@/app/recommend/logic/combo/buildBandTargets';
 import {
   appendMissingProfileDiagnostics,
-  fillTargetProfiles,
-  recoverMissingSlots,
   type FillCtx,
 } from '@/app/recommend/logic/combo/fillSlots';
+import { fillSlotRange } from '@/app/recommend/logic/combo/fillRange';
+import { attachLeftPools } from '@/app/recommend/logic/combo/leftFill';
 import { withSortedMains } from '@/app/recommend/logic/combo/sortMains';
 import { setsInProfileSlotOrder } from '@/app/recommend/logic/combo/orderSets';
 import {
@@ -38,7 +43,7 @@ import {
   STATS_BAND_CASCADE_LABEL,
   STATS_POSITION_BAND_WINDOW,
 } from '@/lib/statsWindow';
-import { DEFAULT_REPAIR_YIELD_EVERY, MAX_PRIORITY_ROUNDS } from '@/app/recommend/logic/combo/yieldMain';
+import { DEFAULT_REPAIR_YIELD_EVERY } from '@/app/recommend/logic/combo/yieldMain';
 
 export type CombinationGenerationResult = {
   sets: GeneratedSet[];
@@ -53,7 +58,7 @@ export type CombinationGenerationOptions = {
   zeroPool?: readonly number[];
 };
 
-/** 1~45 전체 풀·자리대=최근 3년(156회) 표본·rank N=N등 band 시작으로 최대 20세트 생성 */
+/** 1부터 45 전체 풀·최대 30세트 생성 */
 
 export const generateCombinationBasedSets = async (
   _sumHistory: readonly WinningNumberRow[],
@@ -92,6 +97,7 @@ export const generateCombinationBasedSets = async (
   summaryLines.push('번호별 간격: RANK1~10은 최대간격 근접·초과 최우선 순위 6칸씩(1~6, 7~12, …)');
   summaryLines.push('구간별 순위: RANK11~17은 구간 band ladder');
   summaryLines.push('균등 0회: RANK18 간격·RANK19~20 조합(0회 번호만)');
+  summaryLines.push('leftover: RANK21부터 25는 1부터 10 미사용·간격 11등, RANK26부터 30은 11부터 20 미사용·항목별 11등');
 
   const poolSorted = [...new Set(numberPool)].filter((n) => n >= 1 && n <= 45).sort((a, b) => a - b);
   if (poolSorted.length < 6) {
@@ -135,6 +141,7 @@ export const generateCombinationBasedSets = async (
   const laddersByRank = new Map<number, number[][]>();
   for (const rank of COMBO_RANK_SLOT_ORDER) {
     if (rank < SECTION_SET_RANK_START) continue;
+    if (isLeftGapRank(rank) || isLeftBandRank(rank)) continue;
     const sectionRank = toSectionRank(rank);
     const targets = buildBandTargetsForRankCascade(flatByWindow, sectionRank);
     const ladder = buildBandLadderForRankCascade(flatByWindow, sectionRank);
@@ -171,24 +178,22 @@ export const generateCombinationBasedSets = async (
     positionDrawCountLookup,
     gapRankLookup,
     zeroGapRankLookup,
+    leftGapLookup: new Map(),
+    leftPoolByBand: new Map(),
     repairYieldEvery,
     profileSlots,
     pastWinningKeys,
   };
 
-  for (let round = 0; round < MAX_PRIORITY_ROUNDS; round++) {
-    const gained = await fillTargetProfiles(ctx);
-    if (gained === 0) break;
-    if (profileSlots.every((s) => s !== null)) break;
-  }
-
-  if (profileSlots.some((s) => s === null)) {
-    await recoverMissingSlots(ctx);
-  }
+  await fillSlotRange(ctx, 0, CORE_SET_COUNT);
+  const leftPools = attachLeftPools(ctx, poolSorted, fullGapLookup, flatByWindow);
+  summaryLines.push(`leftover 간격 풀: ${leftPools.gapPool.length}개`);
+  summaryLines.push(`leftover 구간 풀: ${leftPools.bandPool.length}개`);
+  await fillSlotRange(ctx, CORE_SET_COUNT, TARGET_SET_COUNT);
 
   const builtCount = profileSlots.filter((s) => s !== null).length;
   summaryLines.push(
-    `조합 세트: ${builtCount}개 (RANK1~10 간격·RANK11~17 구간·RANK18~20 균등0회)`,
+    `조합 세트: ${builtCount}개 (RANK1부터 20 기존·RANK21부터 30 leftover)`,
   );
 
   // 3회 한도 임시 비활성 — 재활성화 시 아래 요약 블록을 되돌린다
@@ -203,7 +208,7 @@ export const generateCombinationBasedSets = async (
   const sets = setsInProfileSlotOrder(profileSlots);
 
   summaryLines.push(
-    `세트 구성: RANK1~10 간격·RANK11~17 구간·RANK18~20 균등0회·${sets.length}개.`,
+    `세트 구성: RANK1부터 20 기존·RANK21부터 30 leftover·${sets.length}개.`,
   );
   const warning =
     sets.length < TARGET_SET_COUNT

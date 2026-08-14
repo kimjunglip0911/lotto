@@ -14,6 +14,7 @@ import {
   isGapSetRank,
   isSectionSetRank,
 } from '@/app/recommend/constants/gapSetRanks';
+import { isLeftBandRank, isLeftGapRank } from '@/app/recommend/constants/leftRanks';
 import {
   isZeroEqualComboRank,
   isZeroEqualGapRank,
@@ -21,41 +22,16 @@ import {
 } from '@/app/recommend/constants/zeroEqualRanks';
 import { findOneGapSetForRank } from '@/app/recommend/logic/combo/findOneGapSet';
 import { findOneSetForRank } from '@/app/recommend/logic/combo/findOneSet';
+import { fillLeftIfMatch } from '@/app/recommend/logic/combo/leftSlot';
 import {
   bumpUsage,
   releaseGeneratedSet,
   setKey,
   sortedNumsFromSet,
 } from '@/app/recommend/logic/combo/toSet';
-import type {
-  PositionDrawCountLookup,
-  PositionRankLookup,
-} from '@/app/recommend/helpers/positionRankLookup';
-import type { GapRankLookup } from '@/app/recommend/types/gapRank';
+import type { FillCtx } from '@/app/recommend/logic/combo/fillCtx';
 
-/** 20슬롯(rank 1~20) 채우기·미생성 진단 */
-
-export type FillCtx = {
-  poolByBand: ReadonlyMap<number, number[]>;
-  /** RANK18~20용 균등 0회 풀 band */
-  zeroPoolByBand: ReadonlyMap<number, number[]>;
-  minSum: number;
-  maxSum: number;
-  targetsByRank: Map<number, number[]>;
-  laddersByRank: Map<number, number[][]>;
-  usedKeys: Set<string>;
-  usage: Map<number, number>;
-  innerSlotUsage: Map<string, number>;
-  histCounts: readonly number[];
-  positionRankLookup: PositionRankLookup;
-  positionDrawCountLookup: PositionDrawCountLookup;
-  gapRankLookup: GapRankLookup;
-  /** RANK18용 0회 번호만 남긴 간격 lookup */
-  zeroGapRankLookup: GapRankLookup;
-  repairYieldEvery: number;
-  profileSlots: (GeneratedSet | null)[];
-  pastWinningKeys: ReadonlySet<string>;
-};
+export type { FillCtx };
 
 const FAILURE_REASON_KO: Record<ProfileFailureReason, string> = {
   ok: '',
@@ -78,10 +54,18 @@ const mergeAvoidKeys = (
 };
 
 const profileFailureSummary = (ctx: FillCtx, rank: number): string | null => {
-  if (isZeroEqualGapRank(rank) || isGapSetRank(rank)) {
-    const lookup = isZeroEqualGapRank(rank) ? ctx.zeroGapRankLookup : ctx.gapRankLookup;
+  if (isZeroEqualGapRank(rank) || isGapSetRank(rank) || isLeftGapRank(rank)) {
+    const lookup = isZeroEqualGapRank(rank)
+      ? ctx.zeroGapRankLookup
+      : isLeftGapRank(rank)
+        ? ctx.leftGapLookup
+        : ctx.gapRankLookup;
     if (lookup.size === 0) {
-      return isZeroEqualGapRank(rank) ? '균등 0회·간격 후보 없음' : '간격순위 계산 불가';
+      return isZeroEqualGapRank(rank)
+        ? '균등 0회·간격 후보 없음'
+        : isLeftGapRank(rank)
+          ? 'leftover 간격 후보 없음'
+          : '간격순위 계산 불가';
     }
     return isZeroEqualGapRank(rank)
       ? '균등 0회·간격 조건 미충족'
@@ -90,7 +74,11 @@ const profileFailureSummary = (ctx: FillCtx, rank: number): string | null => {
   const bandTargets = ctx.targetsByRank.get(rank);
   const bandLadder = ctx.laddersByRank.get(rank);
   if (!bandTargets || !bandLadder) return FAILURE_REASON_KO.rank_unavailable;
-  const pool = isZeroEqualComboRank(rank) ? ctx.zeroPoolByBand : ctx.poolByBand;
+  const pool = isZeroEqualComboRank(rank)
+    ? ctx.zeroPoolByBand
+    : isLeftBandRank(rank)
+      ? ctx.leftPoolByBand
+      : ctx.poolByBand;
   const constraints: ProfileConstraints = {
     minSum: ctx.minSum,
     maxSum: ctx.maxSum,
@@ -133,6 +121,13 @@ export const tryFillOneSlot = async (
   const rank = COMBO_RANK_SLOT_ORDER[slot];
   if (rank === undefined) return false;
   const blockedKeys = mergeAvoidKeys(ctx.pastWinningKeys, avoidKeys);
+
+  const leftover = await fillLeftIfMatch(ctx, rank, blockedKeys);
+  if (leftover !== undefined) {
+    if (!leftover) return false;
+    ctx.profileSlots[slot] = leftover;
+    return true;
+  }
 
   if (isZeroEqualGapRank(rank)) {
     const one = await findOneGapSetForRank(
@@ -195,9 +190,13 @@ export const tryFillOneSlot = async (
   return true;
 };
 
-export const fillTargetProfiles = async (ctx: FillCtx): Promise<number> => {
+export const fillTargetProfiles = async (
+  ctx: FillCtx,
+  fromSlot = 0,
+  toSlot = COMBO_RANK_SLOT_ORDER.length,
+): Promise<number> => {
   let gained = 0;
-  for (let slot = 0; slot < COMBO_RANK_SLOT_ORDER.length; slot++) {
+  for (let slot = fromSlot; slot < toSlot; slot++) {
     if (await tryFillOneSlot(ctx, slot)) gained++;
   }
   return gained;
@@ -227,24 +226,32 @@ const restoreProfileSlots = (
   }
 };
 
-const highestMissingSlot = (slots: readonly (GeneratedSet | null)[]): number | null => {
-  for (let slot = slots.length - 1; slot >= 0; slot--) {
+const highestMissingSlot = (
+  slots: readonly (GeneratedSet | null)[],
+  minSlot: number,
+  maxSlot: number,
+): number | null => {
+  for (let slot = maxSlot - 1; slot >= minSlot; slot--) {
     if (!slots[slot]) return slot;
   }
   return null;
 };
 
-/** rank 19~20 등 후반 미생성: 직전 rank 세트를 되돌리며 다른 조합으로 재시도 */
-export const recoverMissingSlots = async (ctx: FillCtx): Promise<number> => {
+/** 미생성 슬롯 복구: minSlot 아래는 되돌리지 않음 */
+export const recoverMissingSlots = async (
+  ctx: FillCtx,
+  minSlot = 0,
+  maxSlot = ctx.profileSlots.length,
+): Promise<number> => {
   let gained = 0;
   for (let attempt = 0; attempt < MAX_SLOT_RECOVERY_ATTEMPTS; attempt++) {
-    const missing = highestMissingSlot(ctx.profileSlots);
+    const missing = highestMissingSlot(ctx.profileSlots, minSlot, maxSlot);
     if (missing === null) break;
 
     let recovered = false;
     for (let depth = 1; depth <= MAX_SLOT_RECOVERY_DEPTH; depth++) {
       const start = missing - depth;
-      if (start < 0) break;
+      if (start < minSlot) break;
 
       const backup = ctx.profileSlots.slice(start, missing);
       const avoidKeys = new Set<string>();

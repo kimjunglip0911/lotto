@@ -16,6 +16,7 @@ import {
   gapRowsByRankDesc,
   isBeyondGapRankPool,
   targetGapRanksForSetRank,
+  targetGapRanksFromStart,
 } from '@/app/recommend/logic/gap/gapTargets';
 import { isSetWithinUsageLimit, canUseNum } from '@/app/recommend/logic/repair/usageLimit';
 import type { GeneratedSet } from '@/app/recommend/types/generatedSet';
@@ -66,10 +67,14 @@ export const pickGapSetNumbers = (
   setRank: number,
   gapRankLookup: GapRankLookup,
   usage: ReadonlyMap<number, number>,
+  startRank?: number,
 ): number[] | null => {
   if (gapRankLookup.size === 0) return null;
 
-  const targets = targetGapRanksForSetRank(setRank);
+  const targets =
+    startRank === undefined
+      ? targetGapRanksForSetRank(setRank)
+      : targetGapRanksFromStart(startRank);
   const byRank = buildNumberByGapRank(gapRankLookup);
   const rankDesc = gapRowsByRankDesc(gapRankLookup);
   const picked: number[] = [];
@@ -105,10 +110,14 @@ const nudgeGapDuplicate = (
   gapRankLookup: GapRankLookup,
   usage: ReadonlyMap<number, number>,
   blockedKeys: ReadonlySet<string>,
+  startRank?: number,
 ): number[] | null => {
   const byRank = buildNumberByGapRank(gapRankLookup);
   const rankDesc = gapRowsByRankDesc(gapRankLookup);
-  const targets = targetGapRanksForSetRank(setRank);
+  const targets =
+    startRank === undefined
+      ? targetGapRanksForSetRank(setRank)
+      : targetGapRanksFromStart(startRank);
 
   for (let pos = 0; pos < 6; pos++) {
     const used = new Set(picked.filter((_, index) => index !== pos));
@@ -147,18 +156,26 @@ export const findOneGapSetForRank = async (
   repairYieldEvery: number = 0,
   /** 간격 칸 선택용 rank(기본=setRank). 0회 세트는 1 등 사용. */
   pickRank: number = setRank,
+  gapStart?: number,
 ): Promise<GeneratedSet | null> => {
   if (repairYieldEvery > 0) await yieldToMain();
 
   const blockedKeys =
     avoidKeys.size > 0 ? new Set([...usedKeys, ...avoidKeys]) : usedKeys;
 
-  let picked = pickGapSetNumbers(pickRank, gapRankLookup, usage);
+  let picked = pickGapSetNumbers(pickRank, gapRankLookup, usage, gapStart);
   if (
     picked !== null &&
     (usedKeys.has(setKey(picked)) || avoidKeys.has(setKey(picked)))
   ) {
-    picked = nudgeGapDuplicate(picked, pickRank, gapRankLookup, usage, blockedKeys);
+    picked = nudgeGapDuplicate(
+      picked,
+      pickRank,
+      gapRankLookup,
+      usage,
+      blockedKeys,
+      gapStart,
+    );
   }
 
   if (!isUsableGapSet(picked, usedKeys, usage, avoidKeys)) return null;

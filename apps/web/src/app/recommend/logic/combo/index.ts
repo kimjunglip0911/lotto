@@ -1,4 +1,4 @@
-/** 조합 기반 20세트 생성 — 공개 API */
+/** 조합 기반 30세트 생성 — 공개 API */
 
 export { TARGET_SET_COUNT } from '@/app/recommend/constants/comboThresholds';
 
