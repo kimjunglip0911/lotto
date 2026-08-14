@@ -1,8 +1,8 @@
 /** 조합 생성 임계값 — band·rank 기준 */
 
-export const TARGET_SET_COUNT = 20;
+export const TARGET_SET_COUNT = 30;
 
-/** 20세트 전체에서 동일 번호 최대 사용 횟수 (현재 생성 로직에서 한도 검사 임시 비활성) */
+/** 30세트 전체에서 동일 번호 최대 사용 횟수 (현재 생성 로직에서 한도 검사 임시 비활성) */
 export const MAX_NUM_USAGE = 3;
 
 /** 고저 미적용 시 허용 합산 하한·상한 (1+2+3+4+5+6 ~ 40+41+42+43+44+45) */

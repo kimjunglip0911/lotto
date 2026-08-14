@@ -142,10 +142,12 @@ describe('buildBandTargetsForRank', () => {
 });
 
 describe('COMBO_RANK_SLOT_ORDER', () => {
-  it('rank 1~20 슬롯을 가진다', () => {
+  it('rank 1부터 30 슬롯을 가진다', () => {
+    expect(TARGET_SET_COUNT).toBe(30);
     expect(COMBO_RANK_SLOT_ORDER).toHaveLength(TARGET_SET_COUNT);
     expect(COMBO_RANK_SLOT_ORDER[0]).toBe(1);
     expect(COMBO_RANK_SLOT_ORDER[19]).toBe(20);
+    expect(COMBO_RANK_SLOT_ORDER[29]).toBe(30);
   });
 });
 

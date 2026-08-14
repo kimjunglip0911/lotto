@@ -12,10 +12,11 @@ import {
 } from '@/app/recommend/constants/gapSetRanks';
 import type { GapRankLookup, GapRankRow } from '@/app/recommend/types/gapRank';
 
-export const targetGapRanksForSetRank = (setRank: number): number[] => {
-  const start = (setRank - 1) * GAP_RANKS_PER_SET + 1;
-  return Array.from({ length: GAP_RANKS_PER_SET }, (_, index) => start + index);
-};
+export const targetGapRanksFromStart = (start: number): number[] =>
+  Array.from({ length: GAP_RANKS_PER_SET }, (_, index) => start + index);
+
+export const targetGapRanksForSetRank = (setRank: number): number[] =>
+  targetGapRanksFromStart((setRank - 1) * GAP_RANKS_PER_SET + 1);
 
 export const buildNumberByGapRank = (lookup: GapRankLookup): ReadonlyMap<number, number> => {
   const map = new Map<number, number>();

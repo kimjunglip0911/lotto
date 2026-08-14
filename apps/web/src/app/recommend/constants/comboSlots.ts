@@ -1,6 +1,6 @@
 import { TARGET_SET_COUNT } from '@/app/recommend/constants/comboThresholds';
 
-/** rank 1~20 슬롯 — rank N = N등 band 시작 */
+/** rank 1부터 TARGET_SET_COUNT 슬롯 */
 
 export const COMBO_RANK_SLOT_ORDER: readonly number[] = Array.from(
   { length: TARGET_SET_COUNT },
