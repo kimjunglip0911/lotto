@@ -69,7 +69,7 @@ export const formatStatsBandSummary = (
   return `${label}(${windowSize}회)`;
 };
 
-/** 조합 분석 구간별 번호 확률·고저 합산 표본 */
+/** 조합 분석 구간별 번호 확률 표본 */
 export const STATS_POSITION_BAND_WINDOW = STATS_WINDOW_THREE_YEAR;
 
 export const STATS_POSITION_BAND_LABEL = STATS_WINDOW_THREE_YEAR_LABEL;

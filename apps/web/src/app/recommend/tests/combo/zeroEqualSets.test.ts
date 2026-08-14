@@ -38,7 +38,6 @@ describe('RANK18~20 균등 0회 세트', () => {
       const win = STATS_BAND_CASCADE_WINDOWS[0]!;
       const band = hist.length <= win ? hist : hist.slice(-win);
       const r = await generateCombinationBasedSets(
-        hist,
         [band],
         [...FULL_LOTTO_POOL],
         81,

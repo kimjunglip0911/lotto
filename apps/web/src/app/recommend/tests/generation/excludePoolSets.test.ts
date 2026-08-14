@@ -52,7 +52,7 @@ describe('제외 풀 생성', () => {
     const excluded = [1, 2, 3, 4, 5, 6, 7];
     const pool = poolWithoutNums(excluded, FULL_LOTTO_POOL);
     const bandWindows = STATS_BAND_CASCADE_WINDOWS.map(() => hist);
-    const result = await generateCombinationBasedSets(hist, bandWindows, pool, 81);
+    const result = await generateCombinationBasedSets(bandWindows, pool, 81);
     const banned = new Set(excluded);
     for (const set of result.sets) {
       for (const n of [set.num1, set.num2, set.num3, set.num4, set.num5, set.num6]) {

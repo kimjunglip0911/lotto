@@ -42,8 +42,8 @@ import {
   formatStatsBandSummary,
   STATS_BAND_CASCADE_LABEL,
   STATS_POSITION_BAND_WINDOW,
-  STATS_WINDOW_ONE_YEAR,
-  STATS_WINDOW_ONE_YEAR_LABEL,
+  STATS_WINDOW_THREE_YEAR,
+  STATS_WINDOW_THREE_YEAR_LABEL,
 } from '@/lib/statsWindow';
 import { DEFAULT_REPAIR_YIELD_EVERY } from '@/app/recommend/logic/combo/yieldMain';
 
@@ -65,7 +65,6 @@ export type CombinationGenerationOptions = {
 /** 1부터 45 전체 풀·최대 30세트 생성 */
 
 export const generateCombinationBasedSets = async (
-  _sumHistory: readonly WinningNumberRow[],
   bandWindowHistories: readonly (readonly WinningNumberRow[])[],
   numberPool: readonly number[],
   referenceDrawNo: number,
@@ -74,11 +73,9 @@ export const generateCombinationBasedSets = async (
   const summaryLines: string[] = [];
   const repairYieldEvery = options.repairYieldEvery ?? DEFAULT_REPAIR_YIELD_EVERY;
   const pastWinningKeys = options.pastWinningKeys ?? new Set<string>();
-
   const minSum = LOTTO_SUM_MIN;
   const maxSum = LOTTO_SUM_MAX;
 
-  summaryLines.push(`고저 합산: 미적용 (${minSum}~${maxSum} 전체 허용)`);
   summaryLines.push(`과거 당첨 조합 제외: ${pastWinningKeys.size}개`);
 
   const flatByWindow = bandWindowHistories.map((hist) => {
@@ -99,7 +96,7 @@ export const generateCombinationBasedSets = async (
     `자리대 순위: ${formatStatsBandSummary(STATS_BAND_CASCADE_LABEL, STATS_POSITION_BAND_WINDOW, sampleDraws)}·rank N=N등 band 시작→ladder(최대 ${MAX_BAND_LADDER_DEPTH}단·출현 band만)`,
   );
   summaryLines.push(
-    `미추첨 간격: ${formatStatsBandSummary(STATS_WINDOW_ONE_YEAR_LABEL, STATS_WINDOW_ONE_YEAR, options.gapHistory?.length)}·RANK1~10은 최대간격 근접 순위 6칸씩(1~6, 7~12, …)`,
+    `미추첨 간격: ${formatStatsBandSummary(STATS_WINDOW_THREE_YEAR_LABEL, STATS_WINDOW_THREE_YEAR, options.gapHistory?.length)}·RANK1~10은 최대간격 근접 순위 6칸씩(1~6, 7~12, …)`,
   );
   summaryLines.push('구간별 순위: RANK11~17은 구간 band ladder');
   summaryLines.push('균등 0회: RANK18 미추첨 간격·RANK19~20 조합(0회 번호만)');

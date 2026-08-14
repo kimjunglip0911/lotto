@@ -45,7 +45,7 @@ describe('leftover 21부터 30세트', () => {
       const rows = hist();
       const win = STATS_BAND_CASCADE_WINDOWS[0]!;
       const band = rows.length <= win ? rows : rows.slice(-win);
-      const r = await generateCombinationBasedSets(rows, [band], [...FULL_LOTTO_POOL], 81);
+      const r = await generateCombinationBasedSets([band], [...FULL_LOTTO_POOL], 81);
       expect(r.sets.length).toBeLessThanOrEqual(TARGET_SET_COUNT);
       const byRank = (rank: number) => r.sets.find((s) => s.strategy === `combo:rank${rank}`);
       const used10 = new Set(

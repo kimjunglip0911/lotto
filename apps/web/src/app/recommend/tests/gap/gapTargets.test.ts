@@ -98,7 +98,7 @@ describe('leftover gap windows', () => {
   it('규칙 ID는 30세트이다', () => {
     expect(APPLIED_RULE_IDS).toContain('combination-rank-30sets');
     expect(APPLIED_RULE_IDS).not.toContain('combination-rank-20sets');
-    expect(APPLIED_RULE_IDS).toContain('gap-window-one-year');
+    expect(APPLIED_RULE_IDS).toContain('gap-window-three-year');
     expect(APPLIED_RULE_IDS).toContain('stats-window-three-year');
   });
 });

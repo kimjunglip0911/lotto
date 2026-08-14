@@ -32,12 +32,12 @@ describe('buildGenArgs exclude', () => {
 });
 
 describe('buildGenArgs gap window', () => {
-  it('간격 이력은 1년 52회, 자리대는 3년 156회다', () => {
+  it('간격 이력과 자리대는 모두 3년 156회다', () => {
     const history = Array.from({ length: 160 }, (_, i) =>
       mk(i + 1, [1, 2, 3, 4, 5, 6], 7),
     );
     const args = buildGenArgs(history, 161);
-    expect(args.gapHistory).toHaveLength(52);
+    expect(args.gapHistory).toHaveLength(156);
     expect(args.bandWindowHistories[0]).toHaveLength(156);
   });
 });

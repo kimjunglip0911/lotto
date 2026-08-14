@@ -30,7 +30,6 @@ export const runRecommendGeneration = async (
   const args = buildGenArgs(fullHistory, selectedDraw);
 
   const { sets, summaryLines, warning } = await generateCombinationBasedSets(
-    args.sumHistory,
     args.bandWindowHistories,
     args.numberPool,
     selectedDraw,

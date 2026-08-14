@@ -3,7 +3,7 @@ import { buildTailUnusedSet, buildUnusedPoolSet } from '@/app/recommend/logic/re
 import { setKey } from '@/app/recommend/logic/combo/toSet';
 
 describe('buildUnusedPoolSet', () => {
-  it('적게 쓴 번호 우선으로 고저 합·중복 없는 조합을 만든다', () => {
+  it('적게 쓴 번호 우선으로 합 범위·중복 없는 조합을 만든다', () => {
     const pool = Array.from({ length: 20 }, (_, i) => i + 1);
     const usage = new Map<number, number>(pool.map((n) => [n, 0]));
     usage.set(1, 3);
@@ -51,7 +51,7 @@ describe('buildTailUnusedSet', () => {
     expect(found!.every((n) => n >= 31)).toBe(true);
   });
 
-  it('고저 구간과 무관하게 작은 번호 조합도 허용한다', () => {
+  it('합 구간과 무관하게 작은 번호 조합도 허용한다', () => {
     const pool = [1, 2, 3, 4, 5, 6, 40, 41, 42];
     const usage = new Map<number, number>(pool.map((n) => [n, 0]));
     const found = buildTailUnusedSet(pool, usage, new Set());

@@ -67,7 +67,7 @@ describe('sequentialPickByBands', () => {
     expect(picked).toContain(3);
   });
 
-  it('고저 구간과 무관하게 선택한다', () => {
+  it('합 구간 인자와 무관하게 선택한다', () => {
     const pool = Array.from({ length: 20 }, (_, i) => i + 1);
     const poolByBand = buildPoolByBand(pool);
     const bandTargets = [0, 1, 2, 3, 4, 5];

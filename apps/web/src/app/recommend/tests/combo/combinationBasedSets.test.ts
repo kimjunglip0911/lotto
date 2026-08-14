@@ -161,13 +161,13 @@ function bandWindows(hist: WinningNumberRow[]): WinningNumberRow[][] {
 describe('generateCombinationBasedSets', () => {
   it('번호 풀이 6개 미만이면 세트를 만들지 않는다', async () => {
     const hist = syntheticHistory(40);
-    const r = await generateCombinationBasedSets(hist, bandWindows(hist), [1, 2, 3], 0);
+    const r = await generateCombinationBasedSets(bandWindows(hist), [1, 2, 3], 0);
     expect(r.sets).toHaveLength(0);
     expect(r.warning).toBeTruthy();
   });
 
   it('이력이 비어 있으면 자리대 통계 부재로 세트를 만들지 않는다', async () => {
-    const r = await generateCombinationBasedSets([], [], Array.from({ length: 20 }, (_, i) => i + 1), 0);
+    const r = await generateCombinationBasedSets([], Array.from({ length: 20 }, (_, i) => i + 1), 0);
     expect(r.sets).toHaveLength(0);
     expect(r.summaryLines.some((l) => l.includes('자리대'))).toBe(true);
   });
@@ -177,11 +177,10 @@ describe('generateCombinationBasedSets', () => {
     async () => {
       const hist = syntheticHistory(80);
       const numberPool = [...FULL_LOTTO_POOL];
-      const r = await generateCombinationBasedSets(hist, bandWindows(hist), numberPool, 81);
+      const r = await generateCombinationBasedSets(bandWindows(hist), numberPool, 81);
       expect(r.sets.length).toBeGreaterThan(0);
       expect(r.sets.length).toBeLessThanOrEqual(TARGET_SET_COUNT);
       expect(r.sets.every((s) => /^combo:rank\d+$/.test(s.strategy ?? ''))).toBe(true);
-      expect(r.summaryLines.some((l) => l.includes('미적용'))).toBe(true);
       expect(r.summaryLines.some((l) => l.includes('ladder'))).toBe(true);
       expect(r.summaryLines.some((l) => l.includes('미추첨 간격'))).toBe(true);
       expect(r.summaryLines.some((l) => l.includes('번호별 간격'))).toBe(false);
@@ -219,11 +218,11 @@ describe('generateCombinationBasedSets', () => {
     async () => {
       const hist = syntheticHistory(80);
       const numberPool = [...FULL_LOTTO_POOL];
-      const base = await generateCombinationBasedSets(hist, bandWindows(hist), numberPool, 81);
+      const base = await generateCombinationBasedSets(bandWindows(hist), numberPool, 81);
       expect(base.sets.length).toBeGreaterThan(3);
 
       const blockedKeys = new Set(base.sets.slice(0, 3).map(setKeyFromGenerated));
-      const filtered = await generateCombinationBasedSets(hist, bandWindows(hist), numberPool, 81, {
+      const filtered = await generateCombinationBasedSets(bandWindows(hist), numberPool, 81, {
         repairYieldEvery: 0,
         pastWinningKeys: blockedKeys,
       });

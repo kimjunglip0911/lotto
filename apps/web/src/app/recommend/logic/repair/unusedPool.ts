@@ -1,7 +1,7 @@
 import { filterUsageAvail } from '@/app/recommend/logic/repair/usageLimit';
 import { setKey } from '@/app/recommend/logic/combo/toSet';
 
-/** band 무시·적게 쓴 번호 우선으로 고저 합·중복만 맞춘 6개 (3회 한도는 임시 비활성) */
+/** band 무시·적게 쓴 번호 우선으로 합 범위·중복만 맞춘 6개 (3회 한도는 임시 비활성) */
 
 const sumRangeFeasible = (
   partialSum: number,
@@ -63,7 +63,7 @@ export const buildUnusedPoolSet = (
   return search(0, []);
 };
 
-/** rank 19~20: 미사용(0회) 번호 우선·고저 무시·중복만 (3회 한도 임시 비활성) */
+/** rank 19~20: 미사용(0회) 번호 우선·합 무시·중복만 (3회 한도 임시 비활성) */
 
 const searchSixNoSum = (
   avail: readonly number[],

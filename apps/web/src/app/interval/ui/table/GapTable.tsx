@@ -1,11 +1,6 @@
 import type { GapRow } from '../../types/interval';
 import { GAP_HEADERS, GAP_HINT } from '../../constants/copy';
 import { GapTableRows } from './GapTableRows';
-import {
-  formatStatsSampleDesc,
-  STATS_WINDOW_ONE_YEAR,
-  STATS_WINDOW_ONE_YEAR_LABEL,
-} from '@/lib/statsWindow';
 
 type Props = {
   totalDraws: number;
@@ -18,9 +13,6 @@ export const GapTable = ({ totalDraws, rows }: Props) => (
       <h3 className="text-xl font-semibold text-white">미추첨 간격</h3>
       <p className="text-xs text-slate-400 mt-1 leading-relaxed">{GAP_HINT}</p>
     </div>
-    <p className="text-[11px] text-slate-500">
-      {formatStatsSampleDesc(STATS_WINDOW_ONE_YEAR_LABEL, STATS_WINDOW_ONE_YEAR, totalDraws)}
-    </p>
     {totalDraws === 0 ? (
       <p className="text-sm text-slate-300">집계할 당첨 이력이 없습니다.</p>
     ) : (
