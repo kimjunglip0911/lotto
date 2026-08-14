@@ -100,7 +100,7 @@ export const generateCombinationBasedSets = async (
   );
   summaryLines.push('구간별 순위: RANK11~17은 구간 band ladder');
   summaryLines.push('균등 0회: RANK18 미추첨 간격·RANK19~20 조합(0회 번호만)');
-  summaryLines.push('leftover: RANK21부터 25는 1부터 10 미사용·미추첨 순위 11등, RANK26부터 30은 11부터 20 미사용·항목별 11등');
+  summaryLines.push('leftover: RANK21부터 25는 1부터 10 미사용·leftover 간격 1등부터, RANK26부터 30은 11부터 20 미사용·항목별 11등. 부족하면 풀에서 채움');
 
   const poolSorted = [...new Set(numberPool)].filter((n) => n >= 1 && n <= 45).sort((a, b) => a - b);
   if (poolSorted.length < 6) {

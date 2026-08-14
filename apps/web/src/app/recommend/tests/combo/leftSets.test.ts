@@ -3,7 +3,11 @@ import type { WinningNumberRow } from '@/lib/accu-nums/types';
 import { FULL_LOTTO_POOL } from '@/app/recommend/constants/lottoPool';
 import { TARGET_SET_COUNT } from '@/app/recommend/constants/comboThresholds';
 import { generateCombinationBasedSets } from '@/app/recommend/logic/combo';
+import { fillLeftGap } from '@/app/recommend/logic/combo/leftGapPick';
 import { setKey } from '@/app/recommend/logic/combo/toSet';
+import { rerankGapLookup } from '@/app/recommend/logic/gap/keepPoolGaps';
+import type { FillCtx } from '@/app/recommend/logic/combo/fillCtx';
+import type { GapRankLookup, GapRankRow } from '@/app/recommend/types/gapRank';
 import { STATS_BAND_CASCADE_WINDOWS } from '@/lib/statsWindow';
 
 const mk = (
@@ -38,40 +42,66 @@ const numsOf = (set: {
   num6: number;
 }) => [set.num1, set.num2, set.num3, set.num4, set.num5, set.num6];
 
+const gapRow = (number: number, rank: number): GapRankRow => ({
+  number,
+  rank,
+  draws: [],
+  currentGap: rank,
+  avgGap: rank,
+  maxGap: rank,
+  distance: 0,
+});
+
+const leftCtx = (lookup: GapRankLookup): FillCtx => ({
+  poolByBand: new Map(),
+  zeroPoolByBand: new Map(),
+  minSum: 21,
+  maxSum: 255,
+  targetsByRank: new Map(),
+  laddersByRank: new Map(),
+  usedKeys: new Set(),
+  usage: new Map(),
+  innerSlotUsage: new Map(),
+  histCounts: [],
+  positionRankLookup: new Map(),
+  positionDrawCountLookup: new Map(),
+  gapRankLookup: new Map(),
+  zeroGapRankLookup: new Map(),
+  leftGapLookup: lookup,
+  leftPoolByBand: new Map(),
+  repairYieldEvery: 0,
+  profileSlots: [],
+  pastWinningKeys: new Set(),
+});
+
 describe('leftover 21부터 30세트', () => {
   it(
-    '21부터 25는 1부터 10에 없고 26부터 30은 11부터 20에 없다',
+    '목표 30세트를 만들고 조합은 서로 다르다',
     async () => {
       const rows = hist();
       const win = STATS_BAND_CASCADE_WINDOWS[0]!;
       const band = rows.length <= win ? rows : rows.slice(-win);
-      const r = await generateCombinationBasedSets([band], [...FULL_LOTTO_POOL], 81);
-      expect(r.sets.length).toBeLessThanOrEqual(TARGET_SET_COUNT);
-      const byRank = (rank: number) => r.sets.find((s) => s.strategy === `combo:rank${rank}`);
-      const used10 = new Set(
-        [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].flatMap((rank) => {
-          const set = byRank(rank);
-          return set ? numsOf(set) : [];
-        }),
-      );
-      const used20 = new Set(
-        [11, 12, 13, 14, 15, 16, 17, 18, 19, 20].flatMap((rank) => {
-          const set = byRank(rank);
-          return set ? numsOf(set) : [];
-        }),
-      );
-      for (const rank of [21, 22, 23, 24, 25]) {
-        const set = byRank(rank);
-        if (!set) continue;
-        for (const n of numsOf(set)) expect(used10.has(n)).toBe(false);
-      }
-      for (const rank of [26, 27, 28, 29, 30]) {
-        const set = byRank(rank);
-        if (!set) continue;
-        for (const n of numsOf(set)) expect(used20.has(n)).toBe(false);
-      }
+      const zeroPool = Array.from({ length: 15 }, (_, i) => i + 31);
+      const r = await generateCombinationBasedSets([band], [...FULL_LOTTO_POOL], 81, {
+        zeroPool,
+      });
+      expect(r.sets.length).toBe(TARGET_SET_COUNT);
       expect(new Set(r.sets.map((s) => setKey(numsOf(s)))).size).toBe(r.sets.length);
     },
     120_000,
   );
+
+  it('leftover 8개면 서로 다른 간격 5세트를 만든다', async () => {
+    const orig = new Map(
+      [11, 17, 23, 29, 35, 41, 12, 18].map((rank, i) => [i + 1, gapRow(i + 1, rank)]),
+    );
+    const ctx = leftCtx(rerankGapLookup(orig));
+    const keys = new Set<string>();
+    for (const rank of [21, 22, 23, 24, 25]) {
+      const set = await fillLeftGap(ctx, rank, new Set());
+      expect(set).not.toBeNull();
+      keys.add(setKey(numsOf(set!)));
+    }
+    expect(keys.size).toBe(5);
+  });
 });

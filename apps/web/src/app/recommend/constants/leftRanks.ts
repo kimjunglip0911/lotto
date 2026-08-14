@@ -7,8 +7,9 @@ export const LEFT_GAP_MIN = 21;
 export const LEFT_GAP_MAX = 25;
 export const LEFT_BAND_MIN = 26;
 export const LEFT_BAND_MAX = 30;
-export const LEFT_GAP_START = 11;
+export const LEFT_GAP_START = 1;
 export const LEFT_BAND_START = 11;
+export const LEFT_POOL_MIN = 8;
 
 export const isLeftGapRank = (rank: number): boolean =>
   rank >= LEFT_GAP_MIN && rank <= LEFT_GAP_MAX;

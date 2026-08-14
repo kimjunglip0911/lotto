@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { METHOD_JL } from '@/app/recommend/constants/comboThresholds';
 import {
+  expandLeftPool,
+  leftoverPool,
   numsUsedInSlots,
   unusedFromPool,
 } from '@/app/recommend/logic/combo/leftPool';
@@ -32,5 +34,17 @@ describe('leftover pool', () => {
   it('미사용이 6개 미만이면 빈 풀이 될 수 있다', () => {
     const used = new Set([1, 2, 3, 4, 5]);
     expect(unusedFromPool([1, 2, 3, 4, 5], used)).toEqual([]);
+  });
+
+  it('미사용이 부족하면 풀에서 최소 개수까지 채운다', () => {
+    expect(expandLeftPool([3, 5], [1, 2, 3, 4, 5, 6, 7, 8], 8)).toEqual([
+      3, 5, 1, 2, 4, 6, 7, 8,
+    ]);
+  });
+
+  it('슬롯 미사용이 충분하면 그대로 둔다', () => {
+    const slots = [mk([1, 2, 3, 4, 5, 6])];
+    const pool = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14];
+    expect(leftoverPool(slots, pool, 0, 1, 8)).toEqual([7, 8, 9, 10, 11, 12, 13, 14]);
   });
 });

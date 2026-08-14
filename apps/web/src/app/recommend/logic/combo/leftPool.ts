@@ -21,3 +21,29 @@ export const unusedFromPool = (
   pool: readonly number[],
   used: ReadonlySet<number>,
 ): number[] => pool.filter((n) => !used.has(n));
+
+/** 미사용이 부족하면 풀에서 번호를 채워 leftover 세트를 만들 수 있게 한다 */
+
+export const expandLeftPool = (
+  unused: readonly number[],
+  pool: readonly number[],
+  minSize = 6,
+): number[] => {
+  if (unused.length >= minSize) return [...unused];
+  const have = new Set(unused);
+  const extra = pool.filter((n) => !have.has(n));
+  return [...unused, ...extra].slice(0, minSize);
+};
+
+export const leftoverPool = (
+  slots: readonly (GeneratedSet | null)[],
+  pool: readonly number[],
+  from: number,
+  to: number,
+  minSize: number,
+): number[] =>
+  expandLeftPool(
+    unusedFromPool(pool, numsUsedInSlots(slots, from, to)),
+    pool,
+    minSize,
+  );

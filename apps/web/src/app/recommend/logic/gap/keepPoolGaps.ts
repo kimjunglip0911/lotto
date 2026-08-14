@@ -13,3 +13,14 @@ export const keepPoolGapLookup = (
   }
   return next;
 };
+
+/** leftover 풀 번호를 1등부터 다시 매긴다 */
+
+export const rerankGapLookup = (lookup: GapRankLookup): GapRankLookup => {
+  const rows = [...lookup.values()].sort(
+    (a, b) => a.rank - b.rank || a.number - b.number,
+  );
+  return new Map(
+    rows.map((row, index) => [row.number, { ...row, rank: index + 1 }]),
+  );
+};

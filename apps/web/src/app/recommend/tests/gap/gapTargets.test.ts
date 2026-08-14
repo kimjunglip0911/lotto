@@ -74,12 +74,12 @@ describe('leftover gap windows', () => {
     expect(targetGapRanksFromStart(11)).toEqual([11, 12, 13, 14, 15, 16]);
   });
 
-  it('21세트는 11부터 16, 25세트는 35부터 40이다', () => {
+  it('21세트는 1부터 6, 25세트는 25부터 30이다', () => {
     expect(targetGapRanksFromStart(leftGapStartRank(21))).toEqual([
-      11, 12, 13, 14, 15, 16,
+      1, 2, 3, 4, 5, 6,
     ]);
     expect(targetGapRanksFromStart(leftGapStartRank(25))).toEqual([
-      35, 36, 37, 38, 39, 40,
+      25, 26, 27, 28, 29, 30,
     ]);
   });
 
