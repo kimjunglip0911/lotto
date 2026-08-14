@@ -24,7 +24,7 @@ describe('interval gap window', () => {
     expect(seven?.currentGap).toBeNull();
   });
 
-  it('현재가 최대를 넘긴 번호가 더 위다', () => {
+  it('최대에 도달한 번호 중 미추첨 기간이 긴 번호가 더 위다', () => {
     const rows = buildGapRows([
       draw(1, 7),
       draw(4, 7),
@@ -34,14 +34,17 @@ describe('interval gap window', () => {
     ]);
     const seven = rows.find((row) => row.number === 7)!;
     const eight = rows.find((row) => row.number === 8)!;
+    expect(seven.maxGap).toBe(seven.currentGap);
+    expect(eight.maxGap).toBe(eight.currentGap);
     expect(seven.rank).toBeLessThan(eight.rank);
   });
 
-  it('최대를 못 만들면 순위 하단이다', () => {
+  it('창 안에서 한 번도 안 나온 번호는 순위 하단이다', () => {
     const rows = buildGapRows([draw(5, 30), draw(1, 7), draw(4, 7)]);
-    const thirty = rows.find((row) => row.number === 30);
+    const one = rows.find((row) => row.number === 1);
     const seven = rows.find((row) => row.number === 7);
-    expect(thirty?.maxGap).toBeNull();
-    expect(thirty?.rank).toBeGreaterThan(seven?.rank ?? 0);
+    expect(one?.maxGap).toBeNull();
+    expect(one?.currentGap).toBeNull();
+    expect(one?.rank).toBeGreaterThan(seven?.rank ?? 0);
   });
 });

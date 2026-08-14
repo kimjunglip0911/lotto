@@ -99,7 +99,7 @@ export const generateCombinationBasedSets = async (
     `자리대 순위: ${formatStatsBandSummary(STATS_BAND_CASCADE_LABEL, STATS_POSITION_BAND_WINDOW, sampleDraws)}·rank N=N등 band 시작→ladder(최대 ${MAX_BAND_LADDER_DEPTH}단·출현 band만)`,
   );
   summaryLines.push(
-    `미추첨 간격: ${formatStatsBandSummary(STATS_WINDOW_ONE_YEAR_LABEL, STATS_WINDOW_ONE_YEAR, options.gapHistory?.length)}·RANK1~10은 최대간격 근접·초과 최우선 순위 6칸씩(1~6, 7~12, …)`,
+    `미추첨 간격: ${formatStatsBandSummary(STATS_WINDOW_ONE_YEAR_LABEL, STATS_WINDOW_ONE_YEAR, options.gapHistory?.length)}·RANK1~10은 최대간격 근접 순위 6칸씩(1~6, 7~12, …)`,
   );
   summaryLines.push('구간별 순위: RANK11~17은 구간 band ladder');
   summaryLines.push('균등 0회: RANK18 미추첨 간격·RANK19~20 조합(0회 번호만)');

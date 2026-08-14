@@ -3,7 +3,7 @@
  *
  * 하는 일
  * - 기준 회차보다 앞선 당첨 이력(본번호+보너스)으로 현재·최대 간격을 구합니다.
- * - 최대를 넘긴 번호 → 최대에 가까운 번호 순으로 순위를 매깁니다.
+ * - 현재가 더 길면 최대를 갱신하고, 최대에 가까운 번호 순으로 순위를 매깁니다.
  *
  * 역할 나눔
  * - 이 파일은 계산만 담당하고, 화면 표시는 하지 않습니다.
@@ -19,6 +19,7 @@ import {
   collectNumberDraws,
   LOTTO_MAX,
   maxGapOf,
+  mergeMaxGap,
 } from '@/app/recommend/logic/gap/gapParts';
 
 export const buildGapRankRows = (
@@ -32,9 +33,9 @@ export const buildGapRankRows = (
     const draws = byNumber[number] ?? [];
     const gaps = buildGaps(draws);
     const avg = avgGap(gaps);
-    const maxGap = maxGapOf(gaps);
     const last = draws[draws.length - 1] ?? null;
     const currentGap = last === null ? null : referenceDrawNo - last;
+    const maxGap = mergeMaxGap(maxGapOf(gaps), currentGap);
     const distance =
       maxGap === null || currentGap === null ? null : Math.abs(currentGap - maxGap);
     return { number, draws, currentGap, avgGap: avg, maxGap, distance, rank: LOTTO_MAX };

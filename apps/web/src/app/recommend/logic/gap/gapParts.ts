@@ -1,13 +1,4 @@
-/**
- * 추천 간격 순위 계산에 필요한 작은 부품입니다.
- *
- * 하는 일
- * - 기준 회차 앞의 당첨 이력을 번호별 출현 회차로 묶습니다(본번호+보너스).
- * - 연속 출현 묶음을 접어 평균 간격 계산에 쓸 숫자 목록을 만듭니다.
- *
- * 역할 나눔
- * - `gapRank.ts`는 이 부품을 이용해 최종 순위만 매깁니다.
- */
+/** 번호별 출현 회차와 연속 묶음 간격을 만듭니다. */
 
 import type { WinningNumberRow } from '@/lib/accu-nums/types';
 import { numsForGapDraw } from '@/app/recommend/logic/gap/numsForGap';
@@ -22,6 +13,10 @@ export const avgGap = (values: readonly number[]): number | null =>
 
 export const maxGapOf = (values: readonly number[]): number | null =>
   values.length === 0 ? null : Math.max(...values);
+
+/** 현재가 더 길면 최대를 그 값으로 갱신합니다. */
+export const mergeMaxGap = (closedMax: number | null, current: number | null): number | null =>
+  closedMax === null ? current : current === null ? closedMax : Math.max(closedMax, current);
 
 export const buildGaps = (draws: readonly number[]): number[] => {
   const result: number[] = [];

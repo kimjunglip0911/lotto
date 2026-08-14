@@ -45,4 +45,12 @@ describe('buildGapRows', () => {
     ]).find((row) => row.number === 12);
     expect(stat?.maxGap).toBe(8);
   });
+
+  it('현재 미추첨 기간이 더 길면 최대를 그 값으로 갱신한다', () => {
+    const stat = buildGapRows([draw(1, [7]), draw(4, [7]), draw(20, [9])]).find(
+      (row) => row.number === 7,
+    );
+    expect(stat?.currentGap).toBe(17);
+    expect(stat?.maxGap).toBe(17);
+  });
 });
