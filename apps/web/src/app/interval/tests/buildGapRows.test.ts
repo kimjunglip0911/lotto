@@ -2,7 +2,11 @@ import { describe, expect, it } from 'vitest';
 import type { WinningNumberRow } from '@/lib/accu-nums/types';
 import { buildGapRows } from '../logic/buildGapRows';
 
-const draw = (draw_no: number, nums: number[]): WinningNumberRow => ({
+const draw = (
+  draw_no: number,
+  nums: number[],
+  bonus_num = 45,
+): WinningNumberRow => ({
   draw_no,
   num1: nums[0] ?? 1,
   num2: nums[1] ?? 2,
@@ -10,37 +14,35 @@ const draw = (draw_no: number, nums: number[]): WinningNumberRow => ({
   num4: nums[3] ?? 4,
   num5: nums[4] ?? 5,
   num6: nums[5] ?? 6,
-  bonus_num: 45,
+  bonus_num,
 });
 
 describe('buildGapRows', () => {
-  it('일반 출현 간격의 평균 최대를 계산한다', () => {
-    const rows = [draw(1, [7]), draw(4, [7]), draw(10, [7])];
-    const stat = buildGapRows(rows).find((row) => row.number === 7);
-
-    expect(stat?.draws).toEqual([1, 4, 10]);
-    expect(stat?.gaps).toEqual([3, 6]);
-    expect(Object.keys(stat ?? {})).toEqual(['number', 'draws', 'gaps', 'avgGap', 'maxGap']);
-    expect(stat?.avgGap).toBe(5);
-    expect(stat?.maxGap).toBe(6);
+  it('표 행은 순위·번호·미추첨 기간·최대만 가진다', () => {
+    const stat = buildGapRows([draw(1, [7]), draw(10, [7])]).find(
+      (row) => row.number === 7,
+    );
+    expect(Object.keys(stat ?? {}).sort()).toEqual(['currentGap', 'maxGap', 'number', 'rank']);
+    expect(stat?.maxGap).toBe(9);
+    expect(stat?.currentGap).toBe(1);
   });
 
-  it('3회 이상 연속 출현하면 마지막 연속 회차부터 다음 출현까지 계산한다', () => {
-    const rows = [draw(10, [12]), draw(11, [12]), draw(12, [12]), draw(20, [12])];
-    const stat = buildGapRows(rows).find((row) => row.number === 12);
+  it('보너스만 나온 번호도 집계한다', () => {
+    const stat = buildGapRows([
+      draw(1, [1, 2, 3, 4, 5, 6], 20),
+      draw(5, [1, 2, 3, 4, 5, 6], 20),
+    ]).find((row) => row.number === 20);
+    expect(stat?.maxGap).toBe(4);
+    expect(stat?.currentGap).toBe(1);
+  });
 
-    expect(stat?.draws).toEqual([10, 11, 12, 20]);
-    expect(stat?.gaps).toEqual([8]);
-    expect(stat?.avgGap).toBe(8);
+  it('연속 출현은 묶음 끝에서 다음까지 최대를 계산한다', () => {
+    const stat = buildGapRows([
+      draw(10, [12]),
+      draw(11, [12]),
+      draw(12, [12]),
+      draw(20, [12]),
+    ]).find((row) => row.number === 12);
     expect(stat?.maxGap).toBe(8);
-  });
-
-  it('다음 출현까지의 간격이 없으면 통계를 비워 둔다', () => {
-    const stat = buildGapRows([draw(5, [30])]).find((row) => row.number === 30);
-
-    expect(stat?.draws).toEqual([5]);
-    expect(stat?.gaps).toEqual([]);
-    expect(stat?.avgGap).toBeNull();
-    expect(stat?.maxGap).toBeNull();
   });
 });
