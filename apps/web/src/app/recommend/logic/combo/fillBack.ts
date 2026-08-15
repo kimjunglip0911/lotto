@@ -2,10 +2,10 @@ import {
   MAX_SLOT_RECOVERY_ATTEMPTS,
   MAX_SLOT_RECOVERY_DEPTH,
 } from '@/app/recommend/constants/repairLimits';
-import { setKey, sortedNumsFromSet } from '@/app/recommend/logic/combo/toSet';
 import type { FillCtx } from '@/app/recommend/logic/combo/fillCtx';
 import { tryFillOneSlot } from '@/app/recommend/logic/combo/fillOne';
 import {
+  avoidKeysFromSets,
   highestMissingSlot,
   releaseProfileSlot,
   restoreProfileSlots,
@@ -25,10 +25,7 @@ export const recoverMissingSlots = async (
       const start = missing - depth;
       if (start < minSlot) break;
       const backup = ctx.profileSlots.slice(start, missing);
-      const avoidKeys = new Set<string>();
-      for (const set of backup) {
-        if (set) avoidKeys.add(setKey(sortedNumsFromSet(set)));
-      }
+      const avoidKeys = avoidKeysFromSets(backup);
       for (let slot = start; slot < missing; slot++) releaseProfileSlot(ctx, slot);
       let ok = true;
       for (let slot = start; slot <= missing; slot++) {

@@ -25,9 +25,16 @@ export const restoreProfileSlots = (
     const orig = backup[i] ?? null;
     if (!orig) continue;
     ctx.profileSlots[slot] = orig;
-    bumpUsage(sortedNumsFromSet(orig), ctx.usage, ctx.innerSlotUsage);
-    ctx.usedKeys.add(setKey(sortedNumsFromSet(orig)));
+    const nums = sortedNumsFromSet(orig);
+    bumpUsage(nums, ctx.usage, ctx.innerSlotUsage);
+    ctx.usedKeys.add(setKey(nums));
   }
+};
+
+export const avoidKeysFromSets = (sets: readonly (GeneratedSet | null)[]): Set<string> => {
+  const keys = new Set<string>();
+  for (const set of sets) if (set) keys.add(setKey(sortedNumsFromSet(set)));
+  return keys;
 };
 
 export const highestMissingSlot = (

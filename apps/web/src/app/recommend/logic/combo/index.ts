@@ -4,10 +4,6 @@ export { TARGET_SET_COUNT } from '@/app/recommend/constants/comboThresholds';
 
 export {
   COMBO_RANK_SLOT_ORDER,
-  COMBO_PROFILE_SLOT_CYCLE,
-  COMBO_PROFILE_SLOT_ORDER,
-  COMBO_RANK_PAIR_PRIORITY_ORDER,
-  COMBO_RANK_TRIPLE_PRIORITY_ORDER,
 } from '@/app/recommend/constants/comboSlots';
 
 export {
@@ -34,12 +30,10 @@ export {
 
 export {
   parseComboStrategyRank,
-  parseComboStrategyRanks,
   sortGeneratedSetsByComboStrategy,
   orderSetsByProfileSlots,
   formatProfileRank,
-  formatProfilePair,
-  formatProfileTriple,
+  comboStrategyForRank,
   setsInProfileSlotOrder,
 } from '@/app/recommend/logic/combo/orderSets';
 

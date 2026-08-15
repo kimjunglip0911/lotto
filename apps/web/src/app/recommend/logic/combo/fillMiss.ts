@@ -1,6 +1,7 @@
 import { COMBO_RANK_SLOT_ORDER } from '@/app/recommend/constants/comboSlots';
 import type { FillCtx } from '@/app/recommend/logic/combo/fillCtx';
 import { FAILURE_REASON_KO } from '@/app/recommend/logic/combo/fillFail';
+import { formatProfileRank } from '@/app/recommend/logic/combo/orderSets';
 import { diagnoseProfileBuild, type ProfileConstraints } from '@/app/recommend/logic/repair';
 
 const profileFailureSummary = (ctx: FillCtx, rank: number): string | null => {
@@ -35,6 +36,8 @@ export const appendMissingProfileDiagnostics = (
   summaryLines.push(`최종 미생성 슬롯 ${missingSlots.length}개:`);
   for (const slot of missingSlots) {
     const rank = COMBO_RANK_SLOT_ORDER[slot]!;
-    summaryLines.push(`  · ${slot + 1}. rank${rank}: ${profileFailureSummary(ctx, rank) ?? '알 수 없음'}`);
+    summaryLines.push(
+      `  · ${slot + 1}. ${formatProfileRank(rank)}: ${profileFailureSummary(ctx, rank) ?? '알 수 없음'}`,
+    );
   }
 };

@@ -24,7 +24,6 @@ type CtxArgs = {
 export const makeFillCtx = (args: CtxArgs): FillCtx => {
   const usage = new Map<number, number>();
   for (const n of args.poolSorted) usage.set(n, 0);
-  const ranked = [...args.appearHist].sort((a, b) => a.draw_no - b.draw_no);
   return {
     poolByBand: buildPoolByBand([...args.poolSorted]),
     minSum: args.minSum,
@@ -34,7 +33,7 @@ export const makeFillCtx = (args: CtxArgs): FillCtx => {
     usedKeys: new Set<string>(),
     usage,
     innerSlotUsage: new Map<string, number>(),
-    histCounts: buildHistCounts(ranked, args.referenceDrawNo),
+    histCounts: buildHistCounts(args.appearHist, args.referenceDrawNo),
     positionRankLookup: buildPositionRankLookup(args.rankedRows),
     positionDrawCountLookup: buildPositionDrawCountLookup(args.rankedRows),
     repairYieldEvery: args.repairYieldEvery,

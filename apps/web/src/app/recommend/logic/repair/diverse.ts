@@ -35,7 +35,7 @@ export const diverseCandidateOrder = (
   ctx: RepairPickCtx,
   position?: number,
 ): number[] =>
-  orderCandidatesByPriority(list, ctx, position).slice(0, Math.min(DIVERSE_TOP_K, list.length));
+  orderCandidatesByPriority(list, ctx, position).slice(0, DIVERSE_TOP_K);
 
 export const pickDiverseOne = (
   candidates: readonly number[],

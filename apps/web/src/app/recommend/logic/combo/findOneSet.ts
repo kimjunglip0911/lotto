@@ -13,6 +13,7 @@ import { nudgeDuplicateCombo } from '@/app/recommend/logic/repair/nudgeDuplicate
 import { isOneNumberSetDiff } from '@/app/recommend/logic/repair/nudgeSwap';
 import { sequentialPickByBands } from '@/app/recommend/logic/repair/sequentialPick';
 import { bumpUsage, setKey, toGeneratedSet } from '@/app/recommend/logic/combo/toSet';
+import { comboStrategyForRank } from '@/app/recommend/logic/combo/orderSets';
 import { yieldToMain } from '@/app/recommend/logic/combo/yieldMain';
 import type {
   PositionDrawCountLookup,
@@ -120,5 +121,5 @@ export const findOneSetForRank = async (
 
   usedKeys.add(setKey(picked));
   bumpUsage(picked, usage, innerSlotUsage);
-  return toGeneratedSet(picked, `combo:rank${rank}`);
+  return toGeneratedSet(picked, comboStrategyForRank(rank));
 };

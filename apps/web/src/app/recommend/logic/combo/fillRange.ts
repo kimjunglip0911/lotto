@@ -1,9 +1,7 @@
 import { MAX_PRIORITY_ROUNDS } from '@/app/recommend/logic/combo/yieldMain';
-import {
-  fillTargetProfiles,
-  recoverMissingSlots,
-  type FillCtx,
-} from '@/app/recommend/logic/combo/fillSlots';
+import { recoverMissingSlots } from '@/app/recommend/logic/combo/fillBack';
+import type { FillCtx } from '@/app/recommend/logic/combo/fillCtx';
+import { fillTargetProfiles } from '@/app/recommend/logic/combo/fillSlots';
 
 /** 슬롯 구간만 채우고, 같은 구간만 복구한다 */
 

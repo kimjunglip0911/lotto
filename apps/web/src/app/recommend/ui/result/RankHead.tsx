@@ -21,9 +21,7 @@ export function RankHead({ set, index }: Props) {
         ) : null}
       </div>
       {set.strategy ? (
-        <span
-          className={`shrink-0 inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-semibold border ${badge}`}
-        >
+        <span className={`shrink-0 inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-semibold border ${badge}`}>
           {index + 1}번 세트
         </span>
       ) : (

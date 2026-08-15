@@ -3,10 +3,7 @@ import { APPLIED_RULE_IDS } from '@/app/recommend/constants/generationRules';
 import { TARGET_SET_COUNT } from '@/app/recommend/constants/comboThresholds';
 import { buildPayloadSets } from '@/app/recommend/helpers/genPayload';
 import { formatExcludeSummary } from '@/app/recommend/helpers/excludeSummary';
-import {
-  buildSuccessStatusMessage,
-  mergeSummaryLines,
-} from '@/app/recommend/helpers/genMessages';
+import { buildSuccessStatusMessage } from '@/app/recommend/helpers/genMessages';
 import { fetchGenerationInputs } from '@/app/recommend/logic/generation/fetchInputs';
 import { buildGenArgs } from '@/app/recommend/logic/generation/buildGenArgs';
 import { assertSetsNonEmpty } from '@/app/recommend/logic/generation/validateGenSets';
@@ -39,10 +36,10 @@ export const runRecommendGeneration = async (
   );
   assertSetsNonEmpty(sets, summaryLines);
 
-  const mergedSummary = mergeSummaryLines(null, [
+  const mergedSummary = [
     formatExcludeSummary(args.excludedNumbers),
     ...summaryLines,
-  ]);
+  ];
   phases?.onSummaryReady?.(mergedSummary);
 
   const ruleIds = [...APPLIED_RULE_IDS];

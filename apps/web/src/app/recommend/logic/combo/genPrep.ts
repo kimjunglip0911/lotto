@@ -1,4 +1,5 @@
 import type { WinningNumberRow } from '@/lib/accu-nums/types';
+import { NUMBER_RANGE_MAX } from '@/lib/accu-nums/constants';
 import { buildPositionBandDistribution } from '@/app/combination/logic/buildPositionBandDistribution';
 import { withSortedMains } from '@/app/recommend/logic/combo/sortMains';
 import type { CombinationGenerationResult } from '@/app/recommend/logic/combo/genTypes';
@@ -18,7 +19,7 @@ export const flattenBandWindows = (
   });
 
 export const uniquePool = (numberPool: readonly number[]) =>
-  [...new Set(numberPool)].filter((n) => n >= 1 && n <= 45).sort((a, b) => a - b);
+  [...new Set(numberPool)].filter((n) => n >= 1 && n <= NUMBER_RANGE_MAX).sort((a, b) => a - b);
 
 export const lastHist = (histories: readonly (readonly WinningNumberRow[])[]) =>
   histories[histories.length - 1] ?? histories[0] ?? [];

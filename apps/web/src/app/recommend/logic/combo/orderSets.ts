@@ -6,16 +6,9 @@ import type { GeneratedSet } from '@/app/recommend/types/generatedSet';
 
 const COMBO_STRATEGY_RE = /^combo:rank(\d+)$/;
 
-const comboStrategyForRank = (rank: number): string => `combo:rank${rank}`;
+export const comboStrategyForRank = (rank: number): string => `combo:rank${rank}`;
 
 export const formatProfileRank = (rank: number): string => `rank${rank}`;
-
-/** @deprecated formatProfileRank 사용 */
-export const formatProfilePair = (_oe: number, band: number): string => formatProfileRank(band);
-
-/** @deprecated formatProfileRank 사용 */
-export const formatProfileTriple = (_oe: number, _run: number, band: number): string =>
-  formatProfileRank(band);
 
 const fallbackStrategyForRank = (rank: number): string =>
   `${FALLBACK_STRATEGY_PREFIX}${formatProfileRank(rank)}`;
@@ -29,12 +22,6 @@ export const parseComboStrategyRank = (strategy: string | undefined): number => 
   );
   if (fb) return Number(fb[1]);
   return 999;
-};
-
-/** @deprecated parseComboStrategyRank 사용 */
-export const parseComboStrategyRanks = (strategy: string | undefined): [number, number] => {
-  const rank = parseComboStrategyRank(strategy);
-  return [rank, rank];
 };
 
 export const sortGeneratedSetsByComboStrategy = (sets: readonly GeneratedSet[]): GeneratedSet[] =>
