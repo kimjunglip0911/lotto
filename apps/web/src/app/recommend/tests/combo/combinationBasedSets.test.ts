@@ -181,11 +181,14 @@ describe('generateCombinationBasedSets', () => {
       expect(r.sets.length).toBeGreaterThan(0);
       expect(r.sets.length).toBeLessThanOrEqual(TARGET_SET_COUNT);
       expect(r.sets.every((s) => /^combo:rank\d+$/.test(s.strategy ?? ''))).toBe(true);
+      expect(r.sets.map((s) => s.strategy)).toEqual(
+        r.sets.map((_, i) => `combo:rank${i + 1}`),
+      );
       expect(r.summaryLines.some((l) => l.includes('ladder'))).toBe(true);
-      expect(r.summaryLines.some((l) => l.includes('미추첨 간격'))).toBe(true);
-      expect(r.summaryLines.some((l) => l.includes('번호별 간격'))).toBe(false);
-      expect(r.summaryLines.some((l) => l.includes('RANK1~5'))).toBe(true);
-      expect(r.summaryLines.some((l) => l.includes('균등 0회'))).toBe(true);
+      expect(r.summaryLines.some((l) => l.includes('RANK N=N등'))).toBe(true);
+      expect(r.summaryLines.some((l) => l.includes('미추첨 간격'))).toBe(false);
+      expect(r.summaryLines.some((l) => l.includes('균등 0회'))).toBe(false);
+      expect(r.summaryLines.some((l) => l.includes('leftover'))).toBe(false);
       const keys = new Set(
         r.sets.map(setKeyFromGenerated),
       );

@@ -35,8 +35,6 @@ export const runRecommendGeneration = async (
     selectedDraw,
     {
       pastWinningKeys: args.pastWinningKeys,
-      zeroPool: args.zeroPool,
-      gapHistory: args.gapHistory,
     },
   );
   assertSetsNonEmpty(sets, summaryLines);

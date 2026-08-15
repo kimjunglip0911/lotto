@@ -31,13 +31,14 @@ describe('buildGenArgs exclude', () => {
   });
 });
 
-describe('buildGenArgs gap window', () => {
-  it('간격 이력과 자리대는 모두 전체 기간이다', () => {
+describe('buildGenArgs band window', () => {
+  it('자리대 표본은 전체 기간이고 간격·0회 풀 키는 없다', () => {
     const history = Array.from({ length: 160 }, (_, i) =>
       mk(i + 1, [1, 2, 3, 4, 5, 6], 7),
     );
     const args = buildGenArgs(history, 161);
-    expect(args.gapHistory).toHaveLength(160);
     expect(args.bandWindowHistories[0]).toHaveLength(160);
+    expect('gapHistory' in args).toBe(false);
+    expect('zeroPool' in args).toBe(false);
   });
 });

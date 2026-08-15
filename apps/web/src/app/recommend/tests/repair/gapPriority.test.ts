@@ -3,20 +3,6 @@ import { MAX_NUM_USAGE } from '@/app/recommend/constants/comboThresholds';
 import { buildPositionRankLookup } from '@/app/recommend/helpers/positionRankLookup';
 import { orderCandidatesByPriority } from '@/app/recommend/logic/repair/diverse';
 import { sequentialPickByBands } from '@/app/recommend/logic/repair/sequentialPick';
-import type { GapRankLookup, GapRankRow } from '@/app/recommend/types/gapRank';
-
-const gapRow = (number: number, rank: number): GapRankRow => ({
-  number,
-  rank,
-  draws: [],
-  currentGap: rank,
-  avgGap: rank,
-  maxGap: rank,
-  distance: 0,
-});
-
-const gapLookup = (entries: readonly [number, number][]): GapRankLookup =>
-  new Map(entries.map(([num, rank]) => [num, gapRow(num, rank)]));
 
 const rankLookup = (entries: readonly { num: number; rank: number }[]) =>
   buildPositionRankLookup(
@@ -40,33 +26,17 @@ const pool = (): Map<number, number[]> =>
   ]);
 
 describe('orderCandidatesByPriority (repair nudge)', () => {
-  it('간격 1등이면 구간 순위가 낮아도 먼저 고른다', () => {
-    const ordered = orderCandidatesByPriority([7, 8], {
-      gapRankLookup: gapLookup([
-        [7, 1],
-        [8, 2],
-      ]),
-      positionRankLookup: rankLookup([
-        { num: 7, rank: 3 },
-        { num: 8, rank: 1 },
-      ]),
-    });
-
-    expect(ordered[0]).toBe(7);
-  });
-
-  it('간격 순위가 같으면 구간별 순위가 높은 번호를 먼저 고른다', () => {
-    const ordered = orderCandidatesByPriority([7, 8], {
-      gapRankLookup: gapLookup([
-        [7, 1],
-        [8, 1],
-      ]),
-      positionRankLookup: rankLookup([
-        { num: 7, rank: 3 },
-        { num: 8, rank: 1 },
-      ]),
-    }, 1);
-
+  it('구간별 순위가 높은 번호를 먼저 고른다', () => {
+    const ordered = orderCandidatesByPriority(
+      [7, 8],
+      {
+        positionRankLookup: rankLookup([
+          { num: 7, rank: 3 },
+          { num: 8, rank: 1 },
+        ]),
+      },
+      1,
+    );
     expect(ordered[0]).toBe(8);
   });
 });
@@ -77,7 +47,6 @@ describe('sequentialPickByBands (section path)', () => {
     const picked = sequentialPickByBands(pool(), [0, 1, 2, 3, 4, 5], 0, 999, {
       usage,
     });
-
     expect(picked?.[0]).toBe(7);
   });
 });

@@ -19,7 +19,7 @@ describe('toSetVm', () => {
       {
         id: undefined,
         numbers: [1, 2, 3, 4, 5, 6],
-        method: '미추첨 간격 추출',
+        method: '항목별 순위 로직',
         drawNo: 0,
       },
     ]);
@@ -47,28 +47,28 @@ describe('toSetVm', () => {
 
   it('strategy로 분석 기법 표시명을 넣는다', () => {
     expect(toSetVm([mkData({ strategy: 'combo:rank2', method: 'JL' })], null)).toEqual([
-      expect.objectContaining({ method: '미추첨 간격 추출' }),
+      expect.objectContaining({ method: '항목별 순위 로직' }),
     ]);
     expect(toSetVm([mkData({ strategy: 'combo:rank12', method: 'JL' })], null)).toEqual([
       expect.objectContaining({ method: '항목별 순위 로직' }),
     ]);
     expect(toSetVm([mkData({ strategy: 'combo:rank18', method: 'JL' })], null)).toEqual([
-      expect.objectContaining({ method: '균등0회·미추첨 간격' }),
+      expect.objectContaining({ method: '항목별 순위 로직' }),
     ]);
   });
 
   it('strategy가 없어도 세트 순번으로 기법명을 넣는다', () => {
     const rows = Array.from({ length: 12 }, () => mkData({ method: 'JL Wheel Method' }));
     const vms = toSetVm(rows, null);
-    expect(vms[0]?.method).toBe('미추첨 간격 추출');
-    expect(vms[6]?.method).toBe('미추첨 간격 추출');
-    expect(vms[7]?.method).toBe('미추첨 간격 추출');
-    expect(vms[9]?.method).toBe('미추첨 간격 추출');
+    expect(vms[0]?.method).toBe('항목별 순위 로직');
+    expect(vms[6]?.method).toBe('항목별 순위 로직');
+    expect(vms[7]?.method).toBe('항목별 순위 로직');
+    expect(vms[9]?.method).toBe('항목별 순위 로직');
     expect(vms[10]?.method).toBe('항목별 순위 로직');
     expect(vms[11]?.method).toBe('항목별 순위 로직');
   });
 
-  it('leftover 21부터 30세트도 기본이 아닌 기법명을 넣는다', () => {
+  it('21부터 30세트도 항목별 순위 기법명을 넣는다', () => {
     expect(toSetVm([mkData({ strategy: 'combo:rank21' })], null)[0]?.method).toBe(
       '항목별 순위 로직',
     );

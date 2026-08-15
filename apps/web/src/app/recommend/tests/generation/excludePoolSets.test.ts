@@ -1,8 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { WinningNumberRow } from '@/lib/accu-nums/types';
 import { poolWithoutNums } from '@/app/recommend/logic/generation/prevDrawExclude';
-import { keepPoolGapLookup } from '@/app/recommend/logic/gap/keepPoolGaps';
-import type { GapRankLookup } from '@/app/recommend/types/gapRank';
 import { generateCombinationBasedSets } from '@/app/recommend/logic/combo';
 import { FULL_LOTTO_POOL } from '@/app/recommend/constants/lottoPool';
 import { STATS_BAND_CASCADE_WINDOWS } from '@/lib/statsWindow';
@@ -33,18 +31,6 @@ const syntheticHistory = (count: number): WinningNumberRow[] =>
       ((base + 23) % 45) + 1,
     ]);
   });
-
-describe('keepPoolGapLookup', () => {
-  it('풀 밖 번호를 lookup에서 제거한다', () => {
-    const lookup: GapRankLookup = new Map([
-      [1, { number: 1, draws: [], currentGap: 1, avgGap: 1, maxGap: 1, distance: 0, rank: 1 }],
-      [2, { number: 2, draws: [], currentGap: 2, avgGap: 1, maxGap: 1, distance: 1, rank: 2 }],
-    ]);
-    const kept = keepPoolGapLookup(lookup, [2]);
-    expect(kept.has(1)).toBe(false);
-    expect(kept.has(2)).toBe(true);
-  });
-});
 
 describe('제외 풀 생성', () => {
   it('제외 번호가 생성된 세트에 포함되지 않는다', async () => {
