@@ -112,7 +112,7 @@ export const findOneSetForRank = async (
     }
   }
 
-  if (!isUsableSet(picked, usedKeys, usage, avoidKeys) && !wasDuplicate) {
+  if (!isUsableSet(picked, usedKeys, usage, avoidKeys)) {
     const flat = flatAdoptedPool(poolByBand);
     picked = buildUnusedPoolSet(flat, minSum, maxSum, usage, usedKeys, avoidKeys);
   }

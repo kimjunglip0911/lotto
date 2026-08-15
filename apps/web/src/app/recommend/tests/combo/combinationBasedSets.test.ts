@@ -77,6 +77,8 @@ describe('bandTierForRank', () => {
     expect(bandTierForRank(1)).toBe(1);
     expect(bandTierForRank(19)).toBe(19);
     expect(bandTierForRank(20)).toBe(20);
+    expect(bandTierForRank(21)).toBe(21);
+    expect(bandTierForRank(30)).toBe(30);
   });
 
   it('rank1과 rank2의 cascade band 목표가 다르다', () => {
@@ -178,11 +180,10 @@ describe('generateCombinationBasedSets', () => {
       const hist = syntheticHistory(80);
       const numberPool = [...FULL_LOTTO_POOL];
       const r = await generateCombinationBasedSets(bandWindows(hist), numberPool, 81);
-      expect(r.sets.length).toBeGreaterThan(0);
-      expect(r.sets.length).toBeLessThanOrEqual(TARGET_SET_COUNT);
+      expect(r.sets.length).toBe(TARGET_SET_COUNT);
       expect(r.sets.every((s) => /^combo:rank\d+$/.test(s.strategy ?? ''))).toBe(true);
       expect(r.sets.map((s) => s.strategy)).toEqual(
-        r.sets.map((_, i) => `combo:rank${i + 1}`),
+        Array.from({ length: TARGET_SET_COUNT }, (_, i) => `combo:rank${i + 1}`),
       );
       expect(r.summaryLines.some((l) => l.includes('ladder'))).toBe(true);
       expect(r.summaryLines.some((l) => l.includes('RANK N=N등'))).toBe(true);

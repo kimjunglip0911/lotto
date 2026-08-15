@@ -3,13 +3,6 @@ export const GEN_STATUS_LOADING = '조합 통계를 불러오는 중입니다...
 
 export const GEN_STATUS_SAVING = '서버에 저장하는 중입니다...';
 
-/** 채택 안내와 조합 요약 줄을 합친다 */
-
-export const mergeSummaryLines = (
-  infoMessage: string | null,
-  summaryLines: readonly string[],
-): string[] => [...(infoMessage ? [infoMessage] : []), ...summaryLines];
-
 type SuccessStatusOpts = {
   drawNo: number;
   count: number;

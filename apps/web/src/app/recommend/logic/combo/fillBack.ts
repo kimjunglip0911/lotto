@@ -17,8 +17,9 @@ export const recoverMissingSlots = async (
   maxSlot = ctx.profileSlots.length,
 ): Promise<number> => {
   let gained = 0;
+  let hi = maxSlot;
   for (let attempt = 0; attempt < MAX_SLOT_RECOVERY_ATTEMPTS; attempt++) {
-    const missing = highestMissingSlot(ctx.profileSlots, minSlot, maxSlot);
+    const missing = highestMissingSlot(ctx.profileSlots, minSlot, hi);
     if (missing === null) break;
     let recovered = false;
     for (let depth = 1; depth <= MAX_SLOT_RECOVERY_DEPTH; depth++) {
@@ -41,7 +42,7 @@ export const recoverMissingSlots = async (
       }
       restoreProfileSlots(ctx, start, backup);
     }
-    if (!recovered) break;
+    if (!recovered) hi = missing;
   }
   return gained;
 };
