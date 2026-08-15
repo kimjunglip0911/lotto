@@ -39,7 +39,7 @@
 
 ## 주의
 
-- API 경로는 `constants/apiPath.ts`에 모아 둡니다. 추천 세트는 `HOME_RECOMMEND_DRAWINGS_PATH`(`api/recommend/drawings.ts`), 당첨 조회는 `HOME_WINNING_BY_NO_PATH`(`api/win/winByDraw.ts`의 `loadWinByNo`), 당첨번호 저장은 `HOME_SAVE_WIN_PATH`(`api/win/saveWin.ts`)를 사용합니다.
+- API 경로는 `constants/apiPath.ts`에 모아 둡니다. 추천 세트는 `HOME_RECOMMEND_DRAWINGS_PATH`(`api/recommend/drawings.ts`), 당첨 조회는 `HOME_WINNING_BY_NO_PATH`(`api/win/winByDraw.ts`의 `loadWinByNo`), 당첨번호 저장은 `HOME_SAVE_WIN_PATH`(`api/win/saveWin.ts`)를 사용합니다. 저장 성공 시 서버가 조합 분석 집계(`combo_pos_bands`)도 함께 갱신합니다.
 - `helpers/fetchBundle.ts`의 `fetchDrawBundle(drawNo)`는 추천 세트/당첨번호를 병렬 조회하며, 추천 응답이 없으면 `sets: []`, 당첨번호가 없거나 조회 실패면 `winning: null`을 반환합니다.
 - 저장 요청 본문 조립(`logic/saveBody.ts`) 단계에서 번호 빈칸이 남아 있으면 즉시 실패 처리되고, 화면은 `useSaveWinning`을 통해 저장 실패 상태를 잠시 보여 줍니다.
 - 회차 목록은 accu-nums `draw-numbers` 응답 기준이며, 첫 항목+1 회차가 기본 선택됩니다.

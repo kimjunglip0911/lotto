@@ -7,5 +7,6 @@ export const APPLIED_RULE_IDS = [
   'stats-window-all',
   'pos-band-ranks-1-30',
   'pos-band-ladder-fallback',
+  'pos-band-pct-ge-1-wrap',
   'unused-pool-tail-fill',
 ] as const;

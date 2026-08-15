@@ -23,15 +23,16 @@ export const runRecommendGeneration = async (
   selectedDraw: number,
   phases?: GenerationPhaseHandlers,
 ): Promise<GenerationPipelineResult> => {
-  const { fullHistory } = await fetchGenerationInputs(apiUrl);
+  const { fullHistory, comboRows } = await fetchGenerationInputs(apiUrl);
   const args = buildGenArgs(fullHistory, selectedDraw);
 
   const { sets, summaryLines, warning } = await generateCombinationBasedSets(
-    args.bandWindowHistories,
+    comboRows,
     args.numberPool,
     selectedDraw,
     {
       pastWinningKeys: args.pastWinningKeys,
+      appearHist: fullHistory,
     },
   );
   assertSetsNonEmpty(sets, summaryLines);

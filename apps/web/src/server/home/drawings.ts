@@ -1,9 +1,9 @@
 import 'server-only';
 import * as pg from '@/server/db/pg';
 import { HttpError } from '@/server/http/error';
-import type { SaveWinning } from '@/server/validate/winning';
 import * as DrawQ from './queries/draw.queries';
 import * as WinQ from './queries/win.queries';
+export { saveWinning } from './save-win';
 
 export async function getDrawings(): Promise<Record<string, unknown>[]> {
   return pg.fetchAll(DrawQ.GET_ALL_DRAWINGS);
@@ -36,20 +36,4 @@ export async function winningByNo(
     );
   }
   return row;
-}
-
-export async function saveWinning(
-  req: SaveWinning,
-): Promise<{ message: string }> {
-  await pg.run(WinQ.UPSERT_WINNING, [
-    req.draw_no,
-    req.num1,
-    req.num2,
-    req.num3,
-    req.num4,
-    req.num5,
-    req.num6,
-    req.bonus_num,
-  ]);
-  return { message: `${req.draw_no}회 당첨번호가 저장되었습니다.` };
 }

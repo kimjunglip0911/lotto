@@ -36,7 +36,7 @@ lotto/
 │           │   ├── db/                # pool·pg·schema.pg.sql
 │           │   ├── home/
 │           │   ├── recommend/
-│           │   └── analysis/accu-nums/
+│           │   └── analysis/          # accu-nums · combination
 │           ├── components/
 │           └── lib/
 │
@@ -55,4 +55,4 @@ lotto/
 
 ---
 
-*Last Updated: 2026-08-15 (interval 페이지 제거)*
+*Last Updated: 2026-08-15 (combo_pos_bands · analysis/combination)*

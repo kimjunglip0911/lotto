@@ -21,12 +21,14 @@ export { effectiveBandRankIdx } from '@/app/recommend/logic/combo/bandRankPick';
 
 export {
   buildBandTargetsForRank,
-  buildBandTargetsForRankCascade,
   buildBandTargetsPerPosition,
-  buildBandLadderForRankCascade,
   primaryBandTargetsFromLadder,
   bandTierForRank,
 } from '@/app/recommend/logic/combo/buildBandTargets';
+export {
+  buildBandTargetsForRankCascade,
+  buildBandLadderForRankCascade,
+} from '@/app/recommend/logic/combo/buildLadder';
 
 export {
   parseComboStrategyRank,

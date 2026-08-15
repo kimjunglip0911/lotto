@@ -1,4 +1,4 @@
-import type { WinningNumberRow } from '@/lib/accu-nums/types';
+import type { PositionBandDistributionRow } from '@/app/combination/types';
 import { TARGET_SET_COUNT } from '@/app/recommend/constants/comboThresholds';
 import { fillSlotRange } from '@/app/recommend/logic/combo/fillRange';
 import { finishGen } from '@/app/recommend/logic/combo/genDone';
@@ -10,15 +10,15 @@ import type {
 
 export type { CombinationGenerationOptions, CombinationGenerationResult };
 
-/** 1부터 45 전체 풀·최대 30세트 생성 */
+/** 저장본 자리대·최대 30세트 생성 */
 
 export const generateCombinationBasedSets = async (
-  bandWindowHistories: readonly (readonly WinningNumberRow[])[],
+  storedRows: readonly PositionBandDistributionRow[],
   numberPool: readonly number[],
   referenceDrawNo: number,
   options: CombinationGenerationOptions = {},
 ): Promise<CombinationGenerationResult> => {
-  const started = startGen(bandWindowHistories, numberPool, referenceDrawNo, options);
+  const started = startGen(storedRows, numberPool, referenceDrawNo, options);
   if ('result' in started) return started.result;
   await fillSlotRange(started.ctx, 0, TARGET_SET_COUNT);
   return finishGen(started.ctx, started.lines);

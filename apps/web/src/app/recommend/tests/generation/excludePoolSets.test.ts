@@ -3,7 +3,7 @@ import type { WinningNumberRow } from '@/lib/accu-nums/types';
 import { poolWithoutNums } from '@/app/recommend/logic/generation/prevDrawExclude';
 import { generateCombinationBasedSets } from '@/app/recommend/logic/combo';
 import { FULL_LOTTO_POOL } from '@/app/recommend/constants/lottoPool';
-import { STATS_BAND_CASCADE_WINDOWS } from '@/lib/statsWindow';
+import { buildPositionBandDistribution } from '@/app/combination/logic/buildPositionBandDistribution';
 
 const mkRow = (
   drawNo: number,
@@ -37,8 +37,12 @@ describe('제외 풀 생성', () => {
     const hist = syntheticHistory(80);
     const excluded = [1, 2, 3, 4, 5, 6, 7];
     const pool = poolWithoutNums(excluded, FULL_LOTTO_POOL);
-    const bandWindows = STATS_BAND_CASCADE_WINDOWS.map(() => hist);
-    const result = await generateCombinationBasedSets(bandWindows, pool, 81);
+    const result = await generateCombinationBasedSets(
+      buildPositionBandDistribution(hist).rows,
+      pool,
+      81,
+      { appearHist: hist },
+    );
     const banned = new Set(excluded);
     for (const set of result.sets) {
       for (const n of [set.num1, set.num2, set.num3, set.num4, set.num5, set.num6]) {

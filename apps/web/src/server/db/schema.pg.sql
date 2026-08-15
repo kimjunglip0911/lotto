@@ -38,6 +38,17 @@ CREATE TABLE IF NOT EXISTS accumulated_number_snapshots (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS combo_pos_bands (
+    position SMALLINT NOT NULL,
+    band_label TEXT NOT NULL,
+    draw_count INTEGER NOT NULL,
+    percentage NUMERIC(6,2) NOT NULL,
+    total_draws INTEGER NOT NULL,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    PRIMARY KEY (position, band_label)
+);
+
 ALTER TABLE lotto_winners ENABLE ROW LEVEL SECURITY;
 ALTER TABLE lotto_drawings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE accumulated_number_snapshots ENABLE ROW LEVEL SECURITY;
+ALTER TABLE combo_pos_bands ENABLE ROW LEVEL SECURITY;

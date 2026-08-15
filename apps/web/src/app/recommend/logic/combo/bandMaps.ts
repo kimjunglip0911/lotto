@@ -3,7 +3,7 @@ import type { PositionBandDistributionRow } from '@/app/combination/types';
 import {
   buildBandLadderForRankCascade,
   buildBandTargetsForRankCascade,
-} from '@/app/recommend/logic/combo/buildBandTargets';
+} from '@/app/recommend/logic/combo/buildLadder';
 
 /** rank N마다 N등 자리대 ladder를 만든다 */
 

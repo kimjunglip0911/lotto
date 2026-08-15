@@ -2,9 +2,9 @@
 
 ## 목적
 
-DB에 저장된 당첨 이력을 기준으로 주번호 6개(보너스 제외)의 조합 패턴을 집계합니다.
+당첨 이력 전체로 계산한 주번호 6개(보너스 제외) 자리별 번호대 확률을 **DB에 저장**해 보여 줍니다.
 
-- 구간별(num1~num6) 번호 확률(번호 1개 단위 45구간) — **DB 전체** · **1등~꼴등 순위** 표시
+- 구간별(num1~num6) 번호 확률(번호 1개 단위 45구간) — **저장된 최신 집계** · **1등~꼴등 순위** 표시(0.x% 행 포함)
 
 ## 주요 파일
 
@@ -13,14 +13,15 @@ DB에 저장된 당첨 이력을 기준으로 주번호 6개(보너스 제외)�
 | `page.tsx` | 레이아웃·`Header`/`Sidebar`·`useCombinationAnalysisData`·`CombinationMain` 조립 |
 | `ui/CombinationMain.tsx` | 로딩·에러·구간별 집계 표 레이아웃 |
 | `ui/table/` | 구간별 번호 확률 표 UI |
-| `hooks/useCombinationAnalysisData.ts` | 마운트 시 이력 로드·전체 집계 |
-| `api/loadHistory.ts` | `@/lib/accu-nums/api`로 draw 목록·당첨 범위 전체 조회 |
-| `logic/rankPositionBands.ts` | 자리별 band 1등~꼴등 순위 계산(추천과 공유) |
-| `logic/buildPositionBandDistribution.ts` | 구간별 분포 순수 함수 |
-| `logic/numberToBand.ts` | 번호→번호대 인덱스(추천 로직과 공유) |
+| `hooks/useCombinationAnalysisData.ts` | 마운트 시 저장본 GET |
+| `api/loadStored.ts` | `/api/analysis/combination` 조회 |
+| `logic/rankPositionBands.ts` | 자리별 band 1등~꼴등 순위(화면 표시) |
+| `logic/eligibleBands.ts` | 추천 채택: 1%↑ 목록·자리별 1등 순환 |
+| `logic/buildPositionBandDistribution.ts` | 구간별 분포 순수 함수(서버 재집계와 공유) |
+| `logic/storedRows.ts` · `fromStored.ts` | 저장 행 매핑 |
 | `constants/bandLabels.ts` | 번호대 라벨·폭 상수(1단위 45구간) |
 | `types/index.ts` | 집계 행 타입 |
-| `tests/` | 구간별 비율·순위 단위 테스트 |
+| `tests/` | 비율·순위·저장 매핑·1% 순환 테스트 |
 
 ## 로컬에서 확인
 
@@ -28,6 +29,7 @@ DB에 저장된 당첨 이력을 기준으로 주번호 6개(보너스 제외)�
 
 ## 주의
 
-- 데이터는 **accu-nums** Nest 엔드포인트(`/api/analysis/accu-nums/draw-numbers`, `winning-numbers-range`)를 사용합니다. Web 클라이언트는 `src/lib/accu-nums/`입니다.
-- **구간별 번호 확률** 표본은 **DB 전체**(`STATS_POSITION_BAND_WINDOW`)입니다. 상수는 `@/lib/statsWindow.ts`와 공유합니다.
-- `recommend` 모듈이 `logic/rankPositionBands.ts`·`logic/numberToBand.ts`·`constants/bandLabels.ts`를 import합니다. 경로·규칙 변경 시 추천 조합 생성 로직도 검증합니다.
+- 표 데이터는 `combo_pos_bands` 저장본입니다. 추천번호확인에서 당첨번호를 저장하면 전체 이력을 다시 집계해 덮어씁니다.
+- GET 시 테이블이 비어 있으면 서버가 `lotto_winners`로 한 번 채웁니다.
+- 화면은 0.x% 행도 보여 줍니다. 추천 생성만 1% 미만을 건너뜁니다.
+- `recommend`가 `eligibleBands`·`rankPositionBands`·`numberToBand`를 import합니다.

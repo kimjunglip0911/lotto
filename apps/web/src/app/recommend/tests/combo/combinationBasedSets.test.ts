@@ -17,7 +17,7 @@ import {
 import { BAND_LADDER_START_TIER } from '@/app/recommend/constants/comboThresholds';
 import { FULL_LOTTO_POOL } from '@/app/recommend/constants/lottoPool';
 import { numberToBandIndex } from '@/app/combination/logic/numberToBand';
-import { STATS_BAND_CASCADE_WINDOWS } from '@/lib/statsWindow';
+import { buildPositionBandDistribution } from '@/app/combination/logic/buildPositionBandDistribution';
 import { setKey } from '@/app/recommend/logic/combo/toSet';
 
 // 3회 한도 임시 비활성 — 재활성화 시 countUsageInPool + MAX_NUM_USAGE 단언을 되돌린다
@@ -153,17 +153,14 @@ describe('COMBO_RANK_SLOT_ORDER', () => {
   });
 });
 
-function bandWindows(hist: WinningNumberRow[]): WinningNumberRow[][] {
-  const win = STATS_BAND_CASCADE_WINDOWS[0]!;
-  const slice = (n: number) =>
-    !Number.isFinite(n) || hist.length <= n ? hist : hist.slice(-n);
-  return [slice(win)];
+function storedRows(hist: WinningNumberRow[]) {
+  return buildPositionBandDistribution(hist).rows;
 }
 
 describe('generateCombinationBasedSets', () => {
   it('번호 풀이 6개 미만이면 세트를 만들지 않는다', async () => {
     const hist = syntheticHistory(40);
-    const r = await generateCombinationBasedSets(bandWindows(hist), [1, 2, 3], 0);
+    const r = await generateCombinationBasedSets(storedRows(hist), [1, 2, 3], 0);
     expect(r.sets).toHaveLength(0);
     expect(r.warning).toBeTruthy();
   });
@@ -179,13 +176,15 @@ describe('generateCombinationBasedSets', () => {
     async () => {
       const hist = syntheticHistory(80);
       const numberPool = [...FULL_LOTTO_POOL];
-      const r = await generateCombinationBasedSets(bandWindows(hist), numberPool, 81);
+      const r = await generateCombinationBasedSets(storedRows(hist), numberPool, 81, {
+        appearHist: hist,
+      });
       expect(r.sets.length).toBe(TARGET_SET_COUNT);
       expect(r.sets.every((s) => /^combo:rank\d+$/.test(s.strategy ?? ''))).toBe(true);
       expect(r.sets.map((s) => s.strategy)).toEqual(
         Array.from({ length: TARGET_SET_COUNT }, (_, i) => `combo:rank${i + 1}`),
       );
-      expect(r.summaryLines.some((l) => l.includes('ladder'))).toBe(true);
+      expect(r.summaryLines.some((l) => l.includes('1%'))).toBe(true);
       expect(r.summaryLines.some((l) => l.includes('RANK N=N등'))).toBe(true);
       expect(r.summaryLines.some((l) => l.includes('미추첨 간격'))).toBe(false);
       expect(r.summaryLines.some((l) => l.includes('균등 0회'))).toBe(false);
@@ -222,13 +221,16 @@ describe('generateCombinationBasedSets', () => {
     async () => {
       const hist = syntheticHistory(80);
       const numberPool = [...FULL_LOTTO_POOL];
-      const base = await generateCombinationBasedSets(bandWindows(hist), numberPool, 81);
+      const base = await generateCombinationBasedSets(storedRows(hist), numberPool, 81, {
+        appearHist: hist,
+      });
       expect(base.sets.length).toBeGreaterThan(3);
 
       const blockedKeys = new Set(base.sets.slice(0, 3).map(setKeyFromGenerated));
-      const filtered = await generateCombinationBasedSets(bandWindows(hist), numberPool, 81, {
+      const filtered = await generateCombinationBasedSets(storedRows(hist), numberPool, 81, {
         repairYieldEvery: 0,
         pastWinningKeys: blockedKeys,
+        appearHist: hist,
       });
       const filteredKeys = new Set(filtered.sets.map(setKeyFromGenerated));
 

@@ -1,13 +1,19 @@
 import type { WinningNumberRow } from '@/lib/accu-nums/types';
+import type { PositionBandDistributionRow } from '@/app/combination/types';
 import { fetchWinningFullHistory } from '@/app/recommend/api/history/winningHistory';
-
-/** 조합 분석용 당첨 이력을 조회한다(풀·제외·통계 윈도우는 buildGenArgs에서 적용). */
+import { loadStoredCombo } from '@/app/combination/api/loadStored';
 
 export type GenerationInputs = {
   fullHistory: WinningNumberRow[];
+  comboRows: PositionBandDistributionRow[];
 };
 
-export const fetchGenerationInputs = async (apiUrl: string): Promise<GenerationInputs> => {
-  const fullHistory = await fetchWinningFullHistory(apiUrl);
-  return { fullHistory };
+export const fetchGenerationInputs = async (
+  apiUrl: string,
+): Promise<GenerationInputs> => {
+  const [fullHistory, stored] = await Promise.all([
+    fetchWinningFullHistory(apiUrl),
+    loadStoredCombo({ baseUrl: apiUrl }),
+  ]);
+  return { fullHistory, comboRows: stored.rows };
 };
