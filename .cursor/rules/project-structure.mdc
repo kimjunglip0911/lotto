@@ -30,7 +30,6 @@ lotto/
 │           │   ├── api/               # Route Handlers (/api/*)
 │           │   ├── home/              # 추천 번호 확인 · ui/list/GroupBtns
 │           │   ├── combination/
-│           │   ├── interval/
 │           │   ├── equal/
 │           │   └── recommend/
 │           ├── server/                # 서버 전용 (server-only)
@@ -56,4 +55,4 @@ lotto/
 
 ---
 
-*Last Updated: 2026-07-13 (단일 package.json, run.bat)*
+*Last Updated: 2026-08-15 (interval 페이지 제거)*
