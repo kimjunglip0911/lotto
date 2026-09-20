@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { numsFromDrawRow } from '@/app/recommend/logic/generation/prevDrawExclude';
 import { sliceLatestStatsHistory } from '@/lib/pickStatsHistory';
 import { loadEqualHistory } from '../api/loadHistory';
 import { EMPTY_BUCKETS, EMPTY_EQUAL_DATA } from '../constants/empty';
@@ -11,7 +10,6 @@ import type { EqualDataState } from '../types/equal';
 /** 최근 6회차 버킷·추천 제외번호를 로드한다. */
 export function useEqualData(): EqualDataState {
   const [data, setData] = useState<EqualDataState>(EMPTY_EQUAL_DATA);
-
   useEffect(() => {
     let isMounted = true;
     const abortController = new AbortController();
@@ -21,13 +19,12 @@ export function useEqualData(): EqualDataState {
         const history = await loadEqualHistory({ signal: abortController.signal });
         if (!isMounted) return;
         const windowRows = sliceLatestStatsHistory(history, EQUAL_WINDOW);
-        const latest = windowRows[windowRows.length - 1] ?? null;
         setData({
           isLoading: false,
           loadError: null,
           analyzedDraws: windowRows.length,
           buckets: buildEqualBuckets(windowRows),
-          excludeNums: buildEqualExclude(windowRows, numsFromDrawRow(latest)),
+          excludeNums: buildEqualExclude(windowRows),
         });
       } catch (error) {
         if (abortController.signal.aborted || !isMounted) return;

@@ -1,10 +1,6 @@
 import { buildEqualExclude } from '@/app/equal/logic/buildExclude';
 import { EQUAL_WINDOW } from '@/app/equal/constants/window';
-import {
-  findPrevDrawRow,
-  numsFromDrawRow,
-  poolWithoutNums,
-} from '@/app/recommend/logic/generation/prevDrawExclude';
+import { poolWithoutNums } from '@/app/recommend/logic/generation/prevDrawExclude';
 import { buildPastWinningKeys } from '@/app/recommend/logic/generation/pastWinKeys';
 import { pickStatsHistory } from '@/lib/pickStatsHistory';
 import { STATS_BAND_CASCADE_WINDOWS } from '@/lib/statsWindow';
@@ -16,12 +12,8 @@ export const buildGenArgs = (
   fullHistory: readonly WinningNumberRow[],
   selectedDraw: number,
 ) => {
-  const prevRow = findPrevDrawRow(fullHistory, selectedDraw);
   const equalWindow = pickStatsHistory(fullHistory, selectedDraw, EQUAL_WINDOW);
-  const excludedNumbers = buildEqualExclude(
-    equalWindow,
-    numsFromDrawRow(prevRow),
-  );
+  const excludedNumbers = buildEqualExclude(equalWindow);
   return {
     bandWindowHistories: STATS_BAND_CASCADE_WINDOWS.map((size) =>
       pickStatsHistory(fullHistory, selectedDraw, size),

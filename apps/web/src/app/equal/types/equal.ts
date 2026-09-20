@@ -12,6 +12,6 @@ export type EqualDataState = {
   loadError: string | null;
   analyzedDraws: number;
   buckets: EqualBuckets;
-  /** 추천에서 빼는 번호: 2회 이상 ∪ 직전 회차 7개 */
+  /** 추천에서 빼는 번호: 최근 6회 2회 이상 */
   excludeNums: number[];
 };

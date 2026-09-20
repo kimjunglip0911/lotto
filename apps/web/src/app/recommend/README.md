@@ -4,7 +4,7 @@
 
 ## 목적
 
-- **1부터 45 전체 번호 풀**에서 **제외 번호**(직전 회차 본6+보너스 ∪ 최근 6회 2회↑ 출현, 보너스 포함)를 뺀 뒤, 당첨 통계로 **목표 30세트**를 만들어 저장합니다.
+- **1부터 45 전체 번호 풀**에서 **제외 번호**(최근 6회 2회↑ 출현, 보너스 포함)를 뺀 뒤, 당첨 통계로 **목표 30세트**를 만들어 저장합니다.
 - **자리대 순위** — 기준 회차 직전 **전체** 표본(출현 번호만 순위, 미출현 제외).
 - **① 조합 생성** — **RANK N**은 저장본 조합분석 **N등** 자리대 ladder(1구→6구). 제외·이미 쓴 번호면 **그 자리만** 다음 등수. 비율 **1%까지 사용**, **0.x%는 사용하지 않음**. 그 자리 채택 목록이 끝나면 **1등부터 다시 순환**.
 - 생성 후보가 **기준 회차 이전 실제 당첨 본번호 6개 조합**과 같으면 제외합니다(보너스 번호 제외).
@@ -47,9 +47,9 @@ npm run lint
 - `@/lib/statsWindow.ts` — 윈도우 상수(전체)·`STATS_BAND_CASCADE_WINDOWS`
 - `logic/generation/fetchInputs.ts` — 당첨 이력(제외용) + 조합 분석 저장본
 - `@/lib/pickStatsHistory` — 제외 창용 기준 회차 직전 이력 슬라이스
-- `logic/generation/runPipeline.ts` — 생성·저장 파이프라인(저장본 자리대, 균등·직전 제외, 과거 당첨 조합 제외)
-- `logic/generation/buildGenArgs.ts` — 제외 = `buildEqualExclude`(6회 2회↑ ∪ 직전 7)
-- `logic/generation/prevDrawExclude.ts` — 직전 회차 행·번호 추출·풀 필터
+- `logic/generation/runPipeline.ts` — 생성·저장 파이프라인(저장본 자리대, 균등 2회↑ 제외, 과거 당첨 조합 제외)
+- `logic/generation/buildGenArgs.ts` — 제외 = `buildEqualExclude`(6회 2회↑)
+- `logic/generation/prevDrawExclude.ts` — 제외 번호를 뺀 풀 필터
 - `@/app/equal/logic/buildExclude.ts` — 제외 집합 계산(균등 페이지와 공유)
 - `logic/combo/generate.ts` — 30세트 생성(RANK N = N등 자리대)
 - `logic/combo/fillRange.ts` · `fillSlots.ts` — 전 구간 한 번에 채우기
@@ -64,8 +64,8 @@ npm run lint
 ## 주의사항
 
 - 백엔드 응답은 `unknown` 수신 후 `helpers/validators`로 검증합니다.
-- 저장 시 `excluded_numbers`에 **제외 번호 전체**(2회↑ ∪ 직전)를 넣습니다. 둘 다 없으면 빈 배열입니다.
-- 적용 규칙 ID: `full-pool-45`, `exclude-prev-draw-7`, `combination-rank-30sets`, `stats-window-all`, `pos-band-ranks-1-30`, `pos-band-ladder-fallback`, `pos-band-pct-ge-1-wrap`, `unused-pool-tail-fill`.
+- 저장 시 `excluded_numbers`에 **제외 번호**(6회 2회↑)를 넣습니다. 없으면 빈 배열입니다.
+- 적용 규칙 ID: `full-pool-45`, `combination-rank-30sets`, `stats-window-all`, `pos-band-ranks-1-30`, `pos-band-ladder-fallback`, `pos-band-pct-ge-1-wrap`, `unused-pool-tail-fill`.
 - **RANK N**은 저장본 조합분석 N등 자리대 ladder. 1% 미만은 그 자리 1등부터 순환. (번호당 3회 한도는 임시 비활성)
 - **과거 당첨 조합 제외**는 `selectedDraw` 기준 **이전 회차**의 본번호 6개만 비교합니다. 과거 회차를 선택해 재생성할 때도 해당 회차 자체는 제외 대상에 넣지 않습니다.
 - 미생성 슬롯은 **직전 세트를 되돌리며 다른 조합으로 재시도**(ripple recovery).

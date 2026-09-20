@@ -18,13 +18,14 @@ const mk = (
 });
 
 describe('buildGenArgs exclude', () => {
-  it('2회 이상과 직전 7개를 제외하고 풀에서 뺀다', () => {
+  it('2회 이상만 제외하고 전회차 전용 번호는 풀에 남긴다', () => {
     const history = [
       mk(1, [1, 2, 3, 4, 5, 6], 7),
       mk(2, [1, 8, 9, 10, 11, 12], 7),
     ];
     const { excludedNumbers, numberPool } = buildGenArgs(history, 3);
-    expect(excludedNumbers).toEqual([1, 7, 8, 9, 10, 11, 12]);
+    expect(excludedNumbers).toEqual([1, 7]);
+    expect(numberPool.includes(8)).toBe(true);
     for (const n of excludedNumbers) {
       expect(numberPool.includes(n)).toBe(false);
     }

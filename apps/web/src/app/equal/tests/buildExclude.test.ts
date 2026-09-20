@@ -14,16 +14,16 @@ describe('freqGeTwo', () => {
 });
 
 describe('buildEqualExclude', () => {
-  it('2회 이상과 직전 7개를 합치고 중복을 제거한다', () => {
+  it('2회 이상만 제외하고 전회차 전용 번호는 남긴다', () => {
     const rows = [
       draw(1, [1, 2, 3, 4, 5, 6], 7),
       draw(2, [1, 8, 9, 10, 11, 12], 7),
     ];
-    const prev = [8, 9, 10, 11, 12, 13, 7];
-    expect(buildEqualExclude(rows, prev)).toEqual([1, 7, 8, 9, 10, 11, 12, 13]);
+    expect(buildEqualExclude(rows)).toEqual([1, 7]);
+    expect(buildEqualExclude(rows)).not.toContain(13);
   });
 
-  it('직전만 있어도 제외 목록을 만든다', () => {
-    expect(buildEqualExclude([], [3, 1, 2])).toEqual([1, 2, 3]);
+  it('빈 창이면 제외 목록이 없다', () => {
+    expect(buildEqualExclude([])).toEqual([]);
   });
 });

@@ -7,5 +7,6 @@ describe('APPLIED_RULE_IDS', () => {
     expect(APPLIED_RULE_IDS).toContain('pos-band-pct-ge-1-wrap');
     expect(APPLIED_RULE_IDS.some((id) => id.startsWith('gap-'))).toBe(false);
     expect(APPLIED_RULE_IDS).not.toContain('equal-zero-ranks-18-20');
+    expect(APPLIED_RULE_IDS).not.toContain('exclude-prev-draw-7');
   });
 });

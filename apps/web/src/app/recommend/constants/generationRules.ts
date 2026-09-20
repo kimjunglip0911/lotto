@@ -2,7 +2,6 @@
 
 export const APPLIED_RULE_IDS = [
   'full-pool-45',
-  'exclude-prev-draw-7',
   'combination-rank-30sets',
   'stats-window-all',
   'pos-band-ranks-1-30',
