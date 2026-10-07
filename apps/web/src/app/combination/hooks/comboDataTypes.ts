@@ -1,8 +1,7 @@
-import type { PositionBandDistributionRow } from '../types';
+import type { ComboWinView } from '../types/window';
 
 export type UseCombinationAnalysisDataResult = {
   isLoading: boolean;
   loadError: string | null;
-  totalDraws: number;
-  positionBandRows: PositionBandDistributionRow[];
+  windows: ComboWinView[];
 };

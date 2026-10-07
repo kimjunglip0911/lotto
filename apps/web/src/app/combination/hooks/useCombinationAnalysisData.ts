@@ -1,17 +1,15 @@
 import { useEffect, useState } from 'react';
 import { loadStoredCombo } from '../api/loadStored';
+import type { ComboWinView } from '../types/window';
 import type { UseCombinationAnalysisDataResult } from './comboDataTypes';
 
 export type { UseCombinationAnalysisDataResult } from './comboDataTypes';
 
-/** 마운트 시 조합 분석 저장본을 불러온다. */
+/** 마운트 시 조합 분석 저장본과 기간별 집계를 불러온다. */
 export function useCombinationAnalysisData(): UseCombinationAnalysisDataResult {
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [totalDraws, setTotalDraws] = useState(0);
-  const [positionBandRows, setPositionBandRows] = useState<
-    UseCombinationAnalysisDataResult['positionBandRows']
-  >([]);
+  const [windows, setWindows] = useState<ComboWinView[]>([]);
 
   useEffect(() => {
     const ac = new AbortController();
@@ -22,14 +20,12 @@ export function useCombinationAnalysisData(): UseCombinationAnalysisDataResult {
       try {
         const data = await loadStoredCombo({ signal: ac.signal });
         if (!live) return;
-        setTotalDraws(data.totalDraws);
-        setPositionBandRows(data.rows);
+        setWindows(data.windows);
       } catch (err) {
         if (ac.signal.aborted || !live) return;
         console.error('Error loading combination analysis:', err);
         setLoadError('데이터를 불러오지 못했습니다.');
-        setTotalDraws(0);
-        setPositionBandRows([]);
+        setWindows([]);
       } finally {
         if (live) setIsLoading(false);
       }
@@ -41,5 +37,5 @@ export function useCombinationAnalysisData(): UseCombinationAnalysisDataResult {
     };
   }, []);
 
-  return { isLoading, loadError, totalDraws, positionBandRows };
+  return { isLoading, loadError, windows };
 }
