@@ -12,6 +12,11 @@ export async function listWinnersOn(
   return res.rows as Record<string, unknown>[];
 }
 
+/** 기간별 화면 집계용 당첨 전체. */
+export async function listWinners(): Promise<Record<string, unknown>[]> {
+  return pg.fetchAll(WinQ.LIST_ALL_WINNERS);
+}
+
 export async function listBandRows(): Promise<Record<string, unknown>[]> {
   return pg.fetchAll(BandQ.SELECT_ALL_BANDS);
 }

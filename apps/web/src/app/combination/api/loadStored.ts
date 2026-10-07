@@ -1,4 +1,4 @@
-import type { ComboStoredPayload } from '../logic/storedRows';
+import type { ComboPagePayload } from '../logic/storedRows';
 
 const COMBO_API_PATH = '/api/analysis/combination';
 
@@ -6,9 +6,9 @@ const COMBO_API_PATH = '/api/analysis/combination';
 export async function loadStoredCombo(opts?: {
   baseUrl?: string;
   signal?: AbortSignal;
-}): Promise<ComboStoredPayload> {
+}): Promise<ComboPagePayload> {
   const url = `${opts?.baseUrl ?? ''}${COMBO_API_PATH}`;
   const res = await fetch(url, { signal: opts?.signal, cache: 'no-store' });
   if (!res.ok) throw new Error(`Failed request: ${res.status} ${url}`);
-  return (await res.json()) as ComboStoredPayload;
+  return (await res.json()) as ComboPagePayload;
 }
