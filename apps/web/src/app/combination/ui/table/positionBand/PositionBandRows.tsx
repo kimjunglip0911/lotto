@@ -19,30 +19,26 @@ export function PositionBandRows({ rows }: Props) {
         }
         const rowBg = positionGroupRowBg(r.position);
         const groupTopRule = isFirstInPosition && i > 0 ? 'border-t-2 border-slate-500/45' : '';
-        const rowBottomRule = isLastInPosition
-          ? 'border-b border-slate-500/35'
-          : 'border-b border-white/[0.06]';
+        const rowBottomRule = isLastInPosition ? 'border-b border-slate-500/35' : 'border-b border-white/[0.06]';
 
         return (
           <tr key={`${r.position}-${r.bandLabel}`} className={`${groupTopRule} ${rowBottomRule}`}>
-            <td
-              className={`py-1.5 px-3 text-sky-200 tabular-nums text-center align-middle ${rowBg}`}
-            >
+            <td className={`py-1.5 px-1.5 text-sky-200 tabular-nums text-center align-middle ${rowBg}`}>
               {r.rank}등
             </td>
             {isFirstInPosition ? (
               <td
                 rowSpan={rowSpan}
-                className={`py-1.5 px-3 text-slate-200 tabular-nums text-center align-middle border-r border-slate-500/30 ${rowBg}`}
+                className={`py-1.5 px-1.5 text-slate-200 tabular-nums text-center align-middle border-r border-slate-500/30 ${rowBg}`}
               >
                 {r.position}번째
               </td>
             ) : null}
-            <td className={`py-1.5 px-3 text-slate-200 tabular-nums ${rowBg}`}>{r.bandLabel}</td>
-            <td className={`py-1.5 px-3 text-right text-slate-300 tabular-nums ${rowBg}`}>
+            <td className={`py-1.5 px-1.5 text-slate-200 tabular-nums ${rowBg}`}>{r.bandLabel}</td>
+            <td className={`py-1.5 px-1.5 text-right text-slate-300 tabular-nums ${rowBg}`}>
               {r.drawCount.toLocaleString()}
             </td>
-            <td className={`py-1.5 px-3 text-right text-sky-300 tabular-nums ${rowBg}`}>
+            <td className={`py-1.5 px-1.5 text-right text-sky-300 tabular-nums ${rowBg}`}>
               {r.percentage.toFixed(2)}%
             </td>
           </tr>

@@ -1,47 +1,32 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { buildPositionBandDistribution } from '@/app/combination/logic/buildPositionBandDistribution';
-import { rankPositionBandRows } from '@/app/combination/logic/rankPositionBands';
-import {
-  buildPositionRankLookup,
-  type PositionRankLookup,
-} from '@/app/recommend/helpers/positionRankLookup';
-import { withSortedMains } from '@/app/recommend/logic/combo/sortMains';
+import type { PositionRankLookup } from '@/app/recommend/helpers/positionRankLookup';
+import { lookupsFromHist, type WinLookups } from '@/app/recommend/logic/combo/winLookup';
 import { fetchWinningNumbersRange } from '@/lib/accu-nums/api';
-import { sliceLatestStatsHistory } from '@/lib/pickStatsHistory';
-import { STATS_POSITION_BAND_WINDOW } from '@/lib/statsWindow';
 
-const EMPTY_LOOKUP: PositionRankLookup = new Map();
+const EMPTY: PositionRankLookup = new Map();
 
-/** 기준 회차 직전 전체 표본으로 자리별 번호 순위 lookup */
+export const EMPTY_LOOKUPS: WinLookups = { '1y': EMPTY, '3y': EMPTY, all: EMPTY };
 
-export const usePositionRankLookup = (
-  apiUrl: string,
-  drawNo: number | null,
-): PositionRankLookup => {
-  const [lookup, setLookup] = useState<PositionRankLookup>(() => new Map());
+/** 기준 회차 직전 1년·3년·전체 자리 순위 */
+
+export const usePositionRankLookup = (apiUrl: string, drawNo: number | null): WinLookups => {
+  const [lookups, setLookups] = useState<WinLookups>(EMPTY_LOOKUPS);
 
   useEffect(() => {
     if (!drawNo) return;
-
     let isMounted = true;
     const abortController = new AbortController();
-
     const load = async () => {
       try {
         const rows = await fetchWinningNumbersRange(drawNo, { baseUrl: apiUrl });
         if (!isMounted || abortController.signal.aborted) return;
-
-        const windowRows = sliceLatestStatsHistory(rows, STATS_POSITION_BAND_WINDOW);
-        const sorted = windowRows.sort((a, b) => a.draw_no - b.draw_no).map(withSortedMains);
-        const { rows: flat } = buildPositionBandDistribution(sorted);
-        setLookup(buildPositionRankLookup(rankPositionBandRows(flat)));
+        setLookups(lookupsFromHist(rows));
       } catch {
-        if (isMounted) setLookup(new Map());
+        if (isMounted) setLookups(EMPTY_LOOKUPS);
       }
     };
-
     void load();
     return () => {
       isMounted = false;
@@ -49,5 +34,5 @@ export const usePositionRankLookup = (
     };
   }, [apiUrl, drawNo]);
 
-  return drawNo ? lookup : EMPTY_LOOKUP;
+  return drawNo ? lookups : EMPTY_LOOKUPS;
 };

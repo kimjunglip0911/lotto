@@ -3,8 +3,8 @@
 export const APPLIED_RULE_IDS = [
   'full-pool-45',
   'combination-rank-30sets',
-  'stats-window-all',
-  'pos-band-ranks-1-30',
+  'stats-window-1y-3y-all',
+  'pos-band-ranks-1-10',
   'pos-band-ladder-fallback',
   'pos-band-pct-ge-1-wrap',
   'unused-pool-tail-fill',

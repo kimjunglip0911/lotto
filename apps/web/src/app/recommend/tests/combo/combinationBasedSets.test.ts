@@ -185,7 +185,8 @@ describe('generateCombinationBasedSets', () => {
         Array.from({ length: TARGET_SET_COUNT }, (_, i) => `combo:rank${i + 1}`),
       );
       expect(r.summaryLines.some((l) => l.includes('1%'))).toBe(true);
-      expect(r.summaryLines.some((l) => l.includes('RANK N=N등'))).toBe(true);
+      expect(r.summaryLines.some((l) => l.includes('1년'))).toBe(true);
+      expect(r.summaryLines.some((l) => l.includes('10등'))).toBe(true);
       expect(r.summaryLines.some((l) => l.includes('미추첨 간격'))).toBe(false);
       expect(r.summaryLines.some((l) => l.includes('균등 0회'))).toBe(false);
       expect(r.summaryLines.some((l) => l.includes('leftover'))).toBe(false);

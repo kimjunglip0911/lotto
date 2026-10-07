@@ -1,5 +1,10 @@
+import type { FillCtx } from '@/app/recommend/logic/combo/fillCtx';
 import type { GeneratedSet } from '@/app/recommend/types/generatedSet';
 import type { WinningNumberRow } from '@/lib/accu-nums/types';
+
+export type StartGen =
+  | { ctx: FillCtx; lines: string[] }
+  | { result: CombinationGenerationResult };
 
 export type CombinationGenerationResult = {
   sets: GeneratedSet[];

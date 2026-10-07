@@ -1,7 +1,7 @@
 'use client';
 
 import type { GeneratedSet } from '@/app/recommend/types/generatedSet';
-import type { PositionRankLookup } from '@/app/recommend/helpers/positionRankLookup';
+import type { WinLookups } from '@/app/recommend/logic/combo/winLookup';
 import { SetList } from '@/app/recommend/ui/result/SetList';
 
 /** 추천 생성 결과 요약·세트 목록 */
@@ -12,7 +12,7 @@ type Props = {
   combinationSummaryLines?: string[];
   sets?: GeneratedSet[];
   winningNumbers?: number[];
-  rankLookup: PositionRankLookup;
+  rankLookup: WinLookups;
 };
 
 export const AnalysisResultList = ({
@@ -26,7 +26,7 @@ export const AnalysisResultList = ({
     <div className="mt-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className="rounded-xl border border-card-border/60 bg-card/30 px-5 py-6 text-sm text-slate-300 space-y-4">
         <h4 className="text-base font-semibold text-white">추천 생성 결과</h4>
-        <p>1~45 전체 번호 풀과 조합 분석(구간별 순위) 통계로 rank별 세트를 만듭니다.</p>
+        <p>1~45 전체 번호 풀로 세트를 만듭니다. 1~10은 1년, 11~20은 3년, 21~30은 전체 순위입니다.</p>
         {targetDrawNo ? <p className="text-slate-200">기준 회차: {targetDrawNo}회차</p> : null}
         {statusMessage ? <p className="text-emerald-300">{statusMessage}</p> : null}
         {combinationSummaryLines.length > 0 ? (

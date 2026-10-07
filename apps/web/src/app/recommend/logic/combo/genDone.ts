@@ -10,7 +10,7 @@ export const finishGen = (
 ): CombinationGenerationResult => {
   appendMissingProfileDiagnostics(ctx, lines);
   const sets = setsInProfileSlotOrder(ctx.profileSlots);
-  lines.push(`조합 세트: ${sets.length}개 (RANK N=N등 자리대)`);
+  lines.push(`조합 세트: ${sets.length}개 (1~10 1년·11~20 3년·21~30 전체)`);
   const warning =
     sets.length < TARGET_SET_COUNT
       ? `목표 ${TARGET_SET_COUNT}세트 중 ${sets.length}개만 생성되었습니다. 제약을 확인해 주세요.`

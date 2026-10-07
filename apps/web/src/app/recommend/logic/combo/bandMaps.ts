@@ -1,23 +1,20 @@
 import { COMBO_RANK_SLOT_ORDER } from '@/app/recommend/constants/comboSlots';
-import type { PositionBandDistributionRow } from '@/app/combination/types';
-import {
-  buildBandLadderForRankCascade,
-  buildBandTargetsForRankCascade,
-} from '@/app/recommend/logic/combo/buildLadder';
+import { buildBandLadderForRankCascade } from '@/app/recommend/logic/combo/buildLadder';
+import { slotBandRank, slotWinKey } from '@/app/recommend/logic/combo/slotWin';
+import type { WinFlats } from '@/app/recommend/logic/combo/winFlats';
 
-/** rank N마다 N등 자리대 ladder를 만든다 */
+/** 세트 1~10은 1년, 11~20은 3년, 21~30은 전체. 각 기간 등수는 1~10. */
 
-export const buildRankLadders = (
-  flatByWindow: readonly (readonly PositionBandDistributionRow[])[],
-) => {
+export const buildRankLadders = (flats: WinFlats) => {
   const targetsByRank = new Map<number, number[]>();
   const laddersByRank = new Map<number, number[][]>();
-  for (const rank of COMBO_RANK_SLOT_ORDER) {
-    const targets = buildBandTargetsForRankCascade(flatByWindow, rank);
-    const ladder = buildBandLadderForRankCascade(flatByWindow, rank);
-    if (!targets || !ladder) continue;
-    targetsByRank.set(rank, targets);
-    laddersByRank.set(rank, ladder);
+  for (const slot of COMBO_RANK_SLOT_ORDER) {
+    const flat = flats[slotWinKey(slot)];
+    const bandRank = slotBandRank(slot);
+    const ladder = buildBandLadderForRankCascade([flat], bandRank);
+    if (!ladder) continue;
+    targetsByRank.set(slot, ladder.map((rungs) => rungs[0]!));
+    laddersByRank.set(slot, ladder);
   }
   return { targetsByRank, laddersByRank };
 };

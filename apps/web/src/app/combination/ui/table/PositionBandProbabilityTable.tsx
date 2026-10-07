@@ -22,7 +22,7 @@ export function PositionBandProbabilityTable({ label, windowSize, totalDraws, ro
     windowSize == null ? ' 추천 생성 시 자리별 1등부터 순서대로 번호대를 우선 사용합니다.' : '';
 
   return (
-    <section className="rounded-2xl border border-card-border/30 bg-card-bg/60 p-4 space-y-3">
+    <section className="min-w-0 rounded-2xl border border-card-border/30 bg-card-bg/60 p-4 space-y-3">
       <div>
         <h3 className="text-xl font-semibold text-white">구간별 번호 확률 · {label}</h3>
         <p className="text-xs text-slate-400 mt-1">
@@ -37,7 +37,7 @@ export function PositionBandProbabilityTable({ label, windowSize, totalDraws, ro
         <p className="text-sm text-slate-300">집계할 당첨 이력이 없습니다.</p>
       ) : (
         <div className="overflow-x-auto overflow-y-auto max-h-[60vh] rounded-lg border border-card-border/20">
-          <table className="w-full min-w-[360px] text-sm text-left border-collapse">
+          <table className="w-full whitespace-nowrap text-xs text-left border-collapse">
             <BandHead />
             <tbody>
               <PositionBandRows rows={rankedRows} />

@@ -1,5 +1,6 @@
 import type { PositionBandDistributionRow } from '@/app/combination/types';
-import { eligibleSorted, wrapEligibleLadder } from '@/app/combination/logic/eligibleBands';
+import { wrapEligibleLadder } from '@/app/combination/logic/eligibleBands';
+import { topEligible } from '@/app/combination/logic/topElig';
 
 /** rank N 세트는 N등 band부터 ladder 시작 */
 export const bandTierForRank = (rank: number): number => rank;
@@ -9,7 +10,7 @@ export const primaryBandTargetsFromLadder = (
   ladder: readonly (readonly number[])[],
 ): number[] => ladder.map((rungs) => rungs[0]!);
 
-/** 6자리 각각 RANK N 시작 번호대(1%↑ 순환) */
+/** 6자리 각각 시작 등수 번호대. 1%↑ 10등 안에서 순환한다. */
 export const buildBandTargetsForRank = (
   flat: readonly PositionBandDistributionRow[],
   rank: number,
@@ -17,7 +18,7 @@ export const buildBandTargetsForRank = (
   if (rank < 1 || flat.length === 0) return null;
   const targets: number[] = [];
   for (let pos = 1; pos <= 6; pos++) {
-    const ladder = wrapEligibleLadder(eligibleSorted(flat, pos), rank);
+    const ladder = wrapEligibleLadder(topEligible(flat, pos), rank);
     if (ladder.length === 0) return null;
     targets.push(ladder[0]!);
   }
