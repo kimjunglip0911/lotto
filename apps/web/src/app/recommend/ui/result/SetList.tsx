@@ -1,8 +1,7 @@
 'use client';
 
 import { parseComboStrategyRank } from '@/app/recommend/logic/combo/orderSets';
-import { slotWinKey } from '@/app/recommend/logic/combo/slotWin';
-import type { WinLookups } from '@/app/recommend/logic/combo/winLookup';
+import { lookupForSlot, type WinLookups } from '@/app/recommend/logic/combo/winLookup';
 import type { GeneratedSet } from '@/app/recommend/types/generatedSet';
 import { SetRankTable } from '@/app/recommend/ui/result/SetRankTable';
 
@@ -29,7 +28,7 @@ export const SetList = ({ sets, rankLookup }: Props) => {
             key={`${set.method}-${set.num1}-${set.num2}-${index}`}
             set={set}
             index={index}
-            rankLookup={rankLookup[slotWinKey(parseComboStrategyRank(set.strategy))]}
+            rankLookup={lookupForSlot(rankLookup, parseComboStrategyRank(set.strategy))}
           />
         ))}
       </div>

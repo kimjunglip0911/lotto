@@ -6,7 +6,7 @@ import {
   type PositionRankLookup,
 } from '@/app/recommend/helpers/positionRankLookup';
 import { withSortedMains } from '@/app/recommend/logic/combo/sortMains';
-import { WIN_SIZES } from '@/app/recommend/logic/combo/slotWin';
+import { slotWinKey, WIN_SIZES } from '@/app/recommend/logic/combo/slotWin';
 import type { WinningNumberRow } from '@/lib/accu-nums/types';
 import { sliceLatestStatsHistory } from '@/lib/pickStatsHistory';
 
@@ -17,6 +17,14 @@ const oneLookup = (rows: readonly WinningNumberRow[], size: number): PositionRan
   const { rows: flat } = buildPositionBandDistribution(sliced);
   return buildPositionRankLookup(rankPositionBandRows(flat));
 };
+
+const EMPTY_LOOKUP: PositionRankLookup = new Map();
+
+/** 세트 등수에 맞는 기간 순위표. 없으면 빈 표. */
+export const lookupForSlot = (
+  lookups: WinLookups | undefined,
+  slotRank: number,
+): PositionRankLookup => lookups?.[slotWinKey(slotRank)] ?? EMPTY_LOOKUP;
 
 /** 이미 기준 회차 이전인 이력으로 1년·3년·전체 순위표 */
 export const lookupsFromHist = (rows: readonly WinningNumberRow[]): WinLookups => ({

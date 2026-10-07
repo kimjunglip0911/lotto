@@ -16,6 +16,7 @@ describe('positionRankLookup', () => {
     expect(rankAtPosition(lookup, 1, 1)).toBe(1);
     expect(rankAtPosition(lookup, 2, 10)).toBe(2);
     expect(rankAtPosition(lookup, 1, 10)).toBeNull();
+    expect(rankAtPosition(undefined, 1, 1)).toBeNull();
   });
 
   it('drawCountAtPosition은 자리·번호로 총 회차를 찾는다', () => {

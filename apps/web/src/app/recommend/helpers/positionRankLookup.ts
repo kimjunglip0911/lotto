@@ -30,10 +30,10 @@ export const buildPositionDrawCountLookup = (
 };
 
 export const rankAtPosition = (
-  lookup: PositionRankLookup,
+  lookup: PositionRankLookup | undefined,
   position: number,
   num: number,
-): number | null => lookup.get(lookupKey(position, num)) ?? null;
+): number | null => lookup?.get(lookupKey(position, num)) ?? null;
 
 export const drawCountAtPosition = (
   lookup: PositionDrawCountLookup,

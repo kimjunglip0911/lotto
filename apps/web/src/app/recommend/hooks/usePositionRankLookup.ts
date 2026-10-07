@@ -9,10 +9,14 @@ const EMPTY: PositionRankLookup = new Map();
 
 export const EMPTY_LOOKUPS: WinLookups = { '1y': EMPTY, '3y': EMPTY, all: EMPTY };
 
+const isWinLookups = (value: unknown): value is WinLookups =>
+  !!value && typeof value === 'object' && !('get' in value) && '1y' in value;
+
 /** 기준 회차 직전 1년·3년·전체 자리 순위 */
 
 export const usePositionRankLookup = (apiUrl: string, drawNo: number | null): WinLookups => {
   const [lookups, setLookups] = useState<WinLookups>(EMPTY_LOOKUPS);
+  const safe = isWinLookups(lookups) ? lookups : EMPTY_LOOKUPS;
 
   useEffect(() => {
     if (!drawNo) return;
@@ -34,5 +38,5 @@ export const usePositionRankLookup = (apiUrl: string, drawNo: number | null): Wi
     };
   }, [apiUrl, drawNo]);
 
-  return drawNo ? lookups : EMPTY_LOOKUPS;
+  return drawNo ? safe : EMPTY_LOOKUPS;
 };
